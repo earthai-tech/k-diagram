@@ -1,0 +1,39 @@
+# .readthedocs.yml
+# Read the Docs configuration file V2
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+version: 2
+
+# Set the version of Python and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.10" # Or "3.9", "3.8" - should match your supported versions
+    # Add other tools like nodejs, rust, golang if needed for your build
+
+# Optionally build PDF or Epub formats
+# formats:
+#  - pdf
+#  - epub
+
+# Define the build process for Python documentation
+python:
+  install:
+    # Install the k-diagram package itself from the current checkout.
+    # This ensures Sphinx can import it for autodoc and handles core deps.
+    - method: pip
+      path: .
+      # Optionally install with extras if needed for docs, e.g.:
+      # extras:
+      #  - dev
+
+    # Install additional requirements specific to building the docs
+    # (Sphinx, theme, extensions, and potentially core deps again for robustness)
+    - requirements: docs/requirements.txt
+
+# Build documentation using Sphinx
+sphinx:
+  # Correct path to the Sphinx configuration file relative to project root
+  configuration: docs/source/conf.py
+  # Fail the build if there are warnings (recommended for quality)
+  fail_on_warning: true
