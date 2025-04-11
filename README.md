@@ -1,13 +1,14 @@
 # k-diagram: Unveiling Forecasting Insights with Polar Diagnostics ðŸ§­
 
-[![PyPI version](https://img.shields.io/pypi/v/k-diagram.svg?style=flat-square)](https://pypi.org/project/k-diagram/)
+<!--[![PyPI version](https://img.shields.io/pypi/v/k-diagram.svg?style=flat-square)](https://pypi.org/project/k-diagram/)-->
 [![Python Versions](https://img.shields.io/pypi/pyversions/k-diagram?style=flat-square)](https://pypi.org/project/k-diagram/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/k-diagram?style=flat-square)](https://pypi.org/project/k-diagram/)
+<!--[![PyPI Downloads](https://img.shields.io/pypi/dm/k-diagram?style=flat-square)](https://pypi.org/project/k-diagram/)-->
 [![Build Status](https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square)](https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml)
 [![Documentation Status](https://readthedocs.org/projects/k-diagram/badge/?version=latest&style=flat-square)](https://k-diagram.readthedocs.io/en/latest/?badge=latest)
 [![Code Coverage](https://img.shields.io/codecov/c/github/earthai-tech/k-diagram?style=flat-square)](https://app.codecov.io/gh/earthai-tech/k-diagram)
 [![License](https://img.shields.io/pypi/l/k-diagram.svg?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) [![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md)
+<!--[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+[![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md)
 [![Code Style: Black](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
 **_Navigate the complexities of forecast uncertainty and model behavior with `k-diagram`'s specialized polar visualizations_**
