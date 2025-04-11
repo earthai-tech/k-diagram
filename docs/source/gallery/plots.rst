@@ -22,6 +22,7 @@ the resulting plot image.
    you save the plots (likely an ``images`` subdirectory relative to
    this file).
 
+.. _gallery_plot_uncertainty:
 
 ===========================
 Uncertainty Visualizations
@@ -29,6 +30,8 @@ Uncertainty Visualizations
 
 This section focuses on plots designed specifically for exploring,
 diagnosing, and communicating aspects of predictive uncertainty.
+
+.. _gallery_plot_actual_vs_predicted:
 
 ----------------------
 Actual vs. Predicted
@@ -71,6 +74,8 @@ sample-by-sample. Useful for assessing basic accuracy and bias.
    :alt: Actual vs. Predicted Plot Example
    :align: center
    :width: 75%
+
+.. _gallery_plot_anomaly_magnitude:
 
 --------------------
 Anomaly Magnitude
@@ -122,6 +127,8 @@ prediction interval [Qlow, Qup]. Shows the location (angle), type
    :align: center
    :width: 75%
 
+.. _gallery_plot_overall_coverage:
+
 --------------------
 Overall Coverage
 --------------------
@@ -168,6 +175,8 @@ across models. Shown here with a radar plot for two simulated models.
    :align: center
    :width: 70%
 
+.. _gallery_plot_coverage_diagnostic:
+
 ----------------------
 Coverage Diagnostic
 ----------------------
@@ -212,6 +221,8 @@ using bars.
    :alt: Coverage Diagnostic Plot Example (Bars)
    :align: center
    :width: 75%
+
+.. _gallery_plot_interval_consistency:
 
 -------------------------
 Interval Consistency
@@ -265,6 +276,8 @@ inconsistent width.
    :align: center
    :width: 75%
 
+.. _gallery_plot_interval_width:
+
 -------------------
 Interval Width
 -------------------
@@ -308,6 +321,8 @@ width. Color can represent width or an optional third variable (`z_col`).
    :alt: Interval Width Plot Example
    :align: center
    :width: 75%
+
+.. _gallery_plot_model_drift:
 
 ----------------
 Model Drift
@@ -355,6 +370,8 @@ model degradation over lead time.
    :align: center
    :width: 70%
 
+.. _gallery_plot_temporal_uncertainty:
+
 -------------------------
 Temporal Uncertainty
 -------------------------
@@ -398,6 +415,8 @@ time step to illustrate the uncertainty spread across samples.
    :alt: Temporal Uncertainty Plot Example (Quantiles)
    :align: center
    :width: 75%
+
+.. _gallery_plot_uncertainty_drift:
 
 --------------------
 Uncertainty Drift
@@ -446,6 +465,8 @@ the relative uncertainty width at each angle (location).
    :alt: Uncertainty Drift Rings Plot Example
    :align: center
    :width: 75%
+
+.. _gallery_plot_prediction_velocity:
 
 ----------------------
 Prediction Velocity
@@ -499,6 +520,7 @@ indicates velocity magnitude; color can indicate velocity or average Q50.
 
     <hr>
 
+.. _gallery_plot_model_evaluation:
 
 ===================================
 Model Evaluation (Taylor Diagrams)
@@ -508,6 +530,7 @@ This section showcases Taylor Diagrams, which are powerful tools for
 summarizing model performance by comparing standard deviation,
 correlation, and centered RMS difference against a reference dataset.
 
+.. _gallery_plot_taylor_diagram_flexible:
 ----------------------------------------------
 Taylor Diagram (Flexible Input & Background)
 ----------------------------------------------
@@ -561,6 +584,8 @@ standard deviation.
    :align: center
    :width: 80%
 
+.. _gallery_plot_taylor_diagram_background_shading_focus:
+
 -------------------------------------------
 Taylor Diagram (Background Shading Focus)
 -------------------------------------------
@@ -610,6 +635,8 @@ orientation.
    :alt: Taylor Diagram with Correlation Background Example
    :align: center
    :width: 80%
+
+.. _gallery_plot_taylor_diagram_basic:
 
 -----------------------------
 Taylor Diagram (Basic Plot)
@@ -665,6 +692,7 @@ reference. Uses a half-circle layout.
 
     <hr>
 
+.. _gallery_plot_feature_based:
 
 =============================
 Feature-Based Visualization
@@ -672,6 +700,8 @@ Feature-Based Visualization
 
 This section illustrates plots focused on understanding the influence
 and patterns of input features on model predictions.
+
+.. _gallery_plot_importance_fingerprint:
 
 --------------------------------
 Feature Importance Fingerprint
@@ -730,12 +760,16 @@ or models). This example shows raw (unnormalized) importance values.
 
     <hr> # Separator after Feature-Based section
 
+.. _gallery_plot_relationship_visualization:
+
 ============================
 Relationship Visualization
 ============================
 
 This section contains plots designed to visualize the relationship
 between true observed values and model predictions using polar coordinates.
+
+.. _gallery_plot_relationship:
 
 --------------------------
 Relationship Plot

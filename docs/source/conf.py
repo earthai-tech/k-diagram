@@ -134,7 +134,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = 'furo' # Use the Furo theme
-
+# extensions.append("sphinx_wagtail_theme")
+# html_theme = 'sphinx_wagtail_theme'
 # Theme options are theme-specific and customize the look and feel.
 # Consult the Furo documentation: https://pradyunsg.me/furo/customisation/
 html_theme_options = {
@@ -163,10 +164,10 @@ html_css_files = [
 ]
 
 # Optional: Add path to your logo file (relative to source directory)
-# html_logo = "_static/logo.png"
+html_logo = "_static/logo_k_diagram.png"
 
 # Optional: Add path to your favicon (relative to source directory)
-# html_favicon = "_static/favicon.ico"
+html_favicon = "_static/logo.ico"
 
 # HTML title
 html_title = f"{project} v{release} Documentation"

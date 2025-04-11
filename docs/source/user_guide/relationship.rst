@@ -34,7 +34,7 @@ true-vs-predicted relationships in polar coordinates:
 Detailed Explanations
 ---------------------
 
-Let's dive into the `plot_relationship` function.
+Let's dive into the :mod:`kdiagram.plot.relationship` function.
 
 .. _ug_plot_relationship:
 
@@ -47,40 +47,46 @@ relationship between a single set of true (observed) values and one or
 more sets of corresponding predicted values. It maps the true values to
 the angular position and the predicted values (normalized) to the radial
 position, allowing comparison of how different predictions behave across
-the range of true values.
+the range of true values. 
 
 **Mathematical Concept:**
 
-1.  **Angular Mapping (`theta`):** The angle :math:`\theta_i` for each
-    data point :math:`i` is determined by its corresponding true value
+1.  **Angular Mapping** ( :math:`\theta` ): Let's consider :math:`\upsilon` as 
+    the ``angular_angle``. The angle :math:`\theta_i` for each
+    data point :math:`i` is determined by its corresponding true value 
     :math:`y_{\text{true}_i}` based on the ``theta_scale`` parameter:
+    
     * ``'proportional'`` (Default): Linearly maps the range of
         `y_true` values to the specified angular coverage (`acov`).
+        
         .. math::
-            \theta_i = \theta_{offset} + \text{angular\_range} \cdot
+            \theta_i = \theta_{offset} + \upsilon \cdot
             \frac{y_{\text{true}_i} - \min(y_{\text{true}})}
             {\max(y_{\text{true}}) - \min(y_{\text{true}})}
+            
     * ``'uniform'``: Distributes points evenly across the angular
         range based on their index :math:`i`, ignoring the actual
         `y_true` value for positioning (useful if `y_true` isn't
         strictly ordered or continuous).
+        
         .. math::
-            \theta_i = \theta_{offset} + \text{angular\_range} \cdot
+            \theta_i = \theta_{offset} + \upsilon \cdot
             \frac{i}{N-1}
 
-    Where `angular_range` is determined by `acov` (e.g., :math:`2\pi`
+    Where :math:`\upsilon` is determined by `acov` (e.g., :math:`2\pi`
     for 'default', :math:`\pi` for 'half_circle') and :math:`\theta_{offset}`
     is an optional rotation.
 
-2.  **Radial Mapping (`r`):** For *each* prediction series `y_pred`, its
+2.  **Radial Mapping** :math:`r`: For *each* prediction series `y_pred`, its
     values are independently normalized to the range [0, 1] using min-max
     scaling. This normalized value determines the radius :math:`r_i` for
     that prediction series at angle :math:`\theta_i`.
+    
     .. math::
         r_i = \frac{y_{\text{pred}_i} - \min(y_{\text{pred}})}
         {\max(y_{\text{pred}}) - \min(y_{\text{pred}})}
 
-3.  **Custom Angle Labels (`z_values`):** If `z_values` are provided,
+3.  **Custom Angle Labels** :math:`z_{values}`: If :math:`z_{values}` are provided,
     the angular tick labels are replaced with these values (scaled to
     match the angular range), providing a way to label the angular axis
     with a variable other than the raw `y_true` values used for positioning.
@@ -129,7 +135,7 @@ the range of true values.
     absolute prediction magnitudes.
 
 **Example:**
-*(See the Gallery section below for a runnable code example and plot)*
+(See the :ref:`Gallery <gallery_plot_relationship>` section below for a runnable code example and plot)
 
 
 .. raw:: html

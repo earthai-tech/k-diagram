@@ -1,6 +1,6 @@
 .. _contributing:
 
-==============
+===============
 Contributing
 ===============
 
@@ -112,9 +112,9 @@ Submitting a Pull Request
 Code of Conduct
 ---------------
 
-Please note that this project is released with a Contributor Code of
-Conduct. By participating in this project you agree to abide by its
-terms. *(Optional: Add a link here if you create a CODE_OF_CONDUCT.md
-file)*. We aim for a welcoming and respectful community.
+Please note that this project is released with a Contributor
+`Code of Conduct <../CODE_OF_CONDUCT.md>`_. By participating in this
+project you agree to abide by its terms. We aim for a welcoming and
+respectful community.
 
 Thank you again for your contribution!

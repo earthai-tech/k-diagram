@@ -21,6 +21,8 @@ quantile naming patterns (e.g., ``prefix_date_qX.X`` or ``prefix_qX.X``).
 This example shows detection based on prefix, date, and returning
 different output types.
 
+.. _gallery_detect_quantiles:
+
 .. code-block:: python
    :linenos:
 
@@ -78,6 +80,8 @@ Uses :func:`~kdiagram.utils.build_q_column_names` to construct expected
 quantile column names based on patterns and validate their existence in
 a DataFrame.
 
+.. _gallery_build_q_names:
+
 .. code-block:: python
    :linenos:
 
@@ -125,6 +129,8 @@ Uses :func:`~kdiagram.utils.reshape_quantile_data` to transform
 wide-format quantile data (e.g., ``prefix_date_qX.X`` columns) into a
 format where each row is a location/time combination and different
 quantiles become columns (e.g., ``prefix_qX.X``).
+
+.. _gallery_reshape_q_data:
 
 .. code-block:: python
    :linenos:
@@ -180,6 +186,8 @@ time, quantile level, and the measurement value.
 *(Note: The exact output structure of melt_q_data might depend on its specific
 implementation; this example shows a typical "melted" structure.)*
 
+.. _gallery_melt_q_data:
+
 .. code-block:: python
    :linenos:
 
@@ -233,6 +241,8 @@ Uses :func:`~kdiagram.utils.pivot_q_data` to perform the inverse of
 melting; converts a long-format DataFrame back into a wide format where
 each time step and quantile combination becomes a separate column
 (e.g., ``prefix_date_qX.X``).
+
+.. _gallery_pivot_q_data:
 
 .. code-block:: python
    :linenos:

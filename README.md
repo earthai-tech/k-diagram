@@ -1,3 +1,7 @@
+<img src="docs/source/_static/k_diagram.svg"><br>
+
+-----------------------------------------------------
+
 # k-diagram: Unveiling Forecasting Insights with Polar Diagnostics 🧭
 
 

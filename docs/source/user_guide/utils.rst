@@ -14,7 +14,7 @@ conventions, generating standard column names, and reshaping data between
 wide and long formats suitable for different analysis or plotting tasks.
 
 Summary of Utility Functions
-----------------------------
+------------------------------
 
 .. list-table:: Utility Functions
    :widths: 40 60
@@ -52,12 +52,12 @@ Summary of Utility Functions
 
 
 Detailed Explanations
----------------------
+-----------------------
 
 .. _ug_detect_quantiles_in:
 
 Detecting Quantile Columns (:func:`~kdiagram.utils.detect_quantiles_in`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 Automatically scans a DataFrame's column names to identify those that
@@ -83,13 +83,12 @@ likely represent quantile data, based on common naming conventions
     data arrays, or a subset DataFrame).
 * Verifying which quantile levels are present in your data.
 
-**Example:**
-*(See the Gallery section below for a runnable code example)*
+**Example:** :ref:`View Gallery Example <gallery_detect_quantiles>`
 
 .. _ug_build_q_column_names:
 
 Building Quantile Column Names (:func:`~kdiagram.utils.build_q_column_names`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 Constructs expected quantile column names based on specified quantiles,
@@ -113,13 +112,12 @@ It then checks if these constructed names exist in the provided DataFrame.
 * Validating whether all expected quantile columns for a given analysis
     are present in the DataFrame.
 
-**Example:**
-*(See the Gallery section below for a runnable code example)*
+**Example:** :ref:`View Gallery Example <gallery_build_q_names>`
 
 .. _ug_reshape_quantile_data:
 
 Reshaping Quantile Data (Wide to Semi-Long) (:func:`~kdiagram.utils.reshape_quantile_data`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 Transforms a DataFrame from a "wide" format, where different time steps
@@ -148,13 +146,13 @@ time step, while different quantile levels become separate columns
     lower and upper bounds in the same row (e.g., interval width).
 * Simplifying DataFrames with numerous time-stamped quantile columns.
 
-**Example:**
-*(See the Gallery section below for a runnable code example)*
+**Example:** :ref:`View Gallery Example <gallery_reshape_q_data>` 
+
 
 .. _ug_melt_q_data:
 
 Melting Quantile Data (Wide to Long) (:func:`~kdiagram.utils.melt_q_data`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 Transforms a wide-format DataFrame containing time-stamped quantile
@@ -186,13 +184,12 @@ documenting based on the common understanding of "melting" to a long format.)*
     observation is a separate row.
 * Filtering or grouping data easily by time step or quantile level.
 
-**Example:**
-*(See the Gallery section below for a runnable code example)*
+**Example:** :ref:`View Gallery Example <gallery_melt_q_data>` 
 
 .. _ug_pivot_q_data:
 
 Pivoting Quantile Data (Long to Wide) (:func:`~kdiagram.utils.pivot_q_data`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 Performs the inverse operation of :func:`~kdiagram.utils.melt_q_data`. It
@@ -221,8 +218,7 @@ quantile level, following the pattern `prefix_date_qX.X`.
     quantiles spread across columns.
 * Creating summary tables or reports where different time points are columns.
 
-**Example:**
-*(See the Gallery section below for a runnable code example)*
+**Example:** :ref:`View Gallery Example <gallery_pivot_q_data>` 
 
 .. raw:: html
 
