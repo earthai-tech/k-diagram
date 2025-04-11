@@ -161,7 +161,7 @@ def plot_relationship(
 
     Examples
     --------
-    >>> from gofast.plot.suite import plot_relationship
+    >>> from kdiagram.plot.relationship import plot_relationship
     >>> import numpy as np
 
     # Create sample data

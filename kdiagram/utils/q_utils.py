@@ -93,7 +93,7 @@ def reshape_quantile_data(
 
     Examples
     --------
-    >>> from gofast.utils.q_utils import reshape_quantile_data
+    >>> from kdiagram.utils.q_utils import reshape_quantile_data
     >>> import pandas as pd
     >>> wide_df = pd.DataFrame({
     ...     'lon': [-118.25, -118.30],
@@ -299,7 +299,7 @@ def melt_q_data(
 
     Examples
     --------
-    >>> from gofast.utils.q_utils import melt_q_data
+    >>> from kdiagram.utils.q_utils import melt_q_data
     >>> import pandas as pd
     >>> wide_df = pd.DataFrame({
     ...     'lon': [-118.25, -118.30],
@@ -350,7 +350,7 @@ def melt_q_data(
     See Also
     --------
     pandas.melt : For reshaping DataFrames from wide to long format.
-    gofast.utils.q_utils.reshape_quantile_data : 
+    kdiagram.utils.q_utils.reshape_quantile_data : 
         Alternative method for reshaping quantile data.
 
 
@@ -586,7 +586,7 @@ def pivot_q_data(
 
     Examples
     --------
-    >>> from gofast.utils.q_utils import pivot_q_data
+    >>> from kdiagram.utils.q_utils import pivot_q_data
     >>> long_df = pd.DataFrame({
     ...     'lon': [-118.25, -118.25, -118.3],
     ...     'lat': [34.05, 34.05, 34.1],

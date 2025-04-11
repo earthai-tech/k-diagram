@@ -98,7 +98,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     
     Examples
     --------
-    >>> from gofast.core.diagnose_q import parse_qcols
+    >>> from kdiagram.utils.diagnose_q import parse_qcols
     >>> # Example dictionary
     >>> q_def = {'q10': 'low_10', 'q50': 'med_50', 'q90': 'hi_90'}
     >>> result = parse_qcols(q_def)
@@ -240,7 +240,7 @@ def check_forecast_mode(
         ``"validate"``, the function returns the validated 
        (or updated) quantile values. Default is ``"validate"``.
     *kw: dict, 
-        Additional keywords argument of :func:`gofast.core.diagnose_q`.
+        Additional keywords argument of :func:`kdiagram.utils.diagnose_q`.
  
     Returns
     -------
@@ -359,7 +359,7 @@ def to_iterable(
 
     Examples
     --------
-    >>> from gofast.core.diagnose_q import to_iterable
+    >>> from kdiagram.utils.diagnose_q import to_iterable
     >>> to_iterable("word", exclude_string=True)
     False
 
@@ -588,7 +588,7 @@ def validate_quantiles(
     Examples
     --------
     Basic validation:
-    >>> from gofast.core.diagnose_q import validate_quantiles
+    >>> from kdiagram.utils.diagnose_q import validate_quantiles
     >>> validate_quantiles([0.1, 0.5, 0.9])
     [0.1, 0.5, 0.9]
 
@@ -977,7 +977,7 @@ def detect_quantiles_in(
             
     Examples
     --------
-    >>> from gofast.core.diagnose_q import detect_quantiles_in
+    >>> from kdiagram.utils.diagnose_q import detect_quantiles_in
     >>> import pandas as pd
     
     # Basic detection
@@ -1207,7 +1207,7 @@ def build_q_column_names(
         
     Examples
     --------
-    >>> from gofast.core.diagnose_q import build_q_column_names
+    >>> from kdiagram.utils.diagnose_q import build_q_column_names
     >>> import pandas as pd
     
     # Basic usage with prefix
@@ -1227,7 +1227,7 @@ def build_q_column_names(
 
     See Also
     --------
-    gofast.core.diagnose_q.validate_quantiles : For quantile value validation
+    kdiagram.utils.diagnose_q.validate_quantiles : For quantile value validation
     pandas.Series.str.contains : For column pattern matching
     """
     is_frame(df, df_only=True, objname ="Data 'df'")
@@ -1377,7 +1377,7 @@ def detect_digits(
 
     Examples
     --------
-    >>> from gofast.core.diagnose_q import detect_digits
+    >>> from kdiagram.utils.diagnose_q import detect_digits
     >>> # Single string example:
     >>> detect_digits("subsidence_q10_step1")
     [10.0]
@@ -1554,7 +1554,7 @@ def validate_consistency_q(
 
     Examples
     --------
-    >>> from gofast.core.diagnose_q import validate_consistency_q
+    >>> from kdiagram.utils.diagnose_q import validate_consistency_q
     >>> user_quantiles = [0.1, 0.5, 0.9]
     >>> columns = ["subsidence_q10_step1", "subsidence_q50_step1", 
     ...            "subsidence_q90_step1", "other_column"]
@@ -1848,7 +1848,7 @@ def validate_qcols(
     
     Examples
     --------
-    >>> from gofast.core.diagnose_q import validate_qcols
+    >>> from kdiagram.utils.diagnose_q import validate_qcols
     >>> validate_qcols('q50')
     ['q50']
     >>> validate_qcols(['q10', 'q90'], ncols_exp='==2')
@@ -1997,7 +1997,7 @@ def build_qcols_multiple(
 
     Examples
     --------
-    >>> from gofast.core.diagnose_q import build_qcols_multiple
+    >>> from kdiagram.utils.diagnose_q import build_qcols_multiple
     >>> # 1) Use pre‑built list of pairs
     >>> q_pairs = [('q10', 'q90'), ('lwr', 'upr')]
     >>> build_qcols_multiple(q_cols=q_pairs)

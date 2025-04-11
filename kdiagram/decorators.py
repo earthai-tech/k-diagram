@@ -66,7 +66,7 @@ def check_non_emptiness(
     --------
     
     1) Decorator used without parentheses:
-       >>> from gofast.core.checks import check_non_emptiness
+       >>> from kdiagram.decorators import check_non_emptiness
        >>> @check_non_emptiness
        ... def func_first_arg(x):
        ...     return x
@@ -387,7 +387,7 @@ class SaveFile:
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> from gofast.core.io import SaveFile
+    >>> from kdiagram.decorators import SaveFile
     >>> from gofast.utils.datautils import to_categories
     
     >>> # Sample DataFrame
@@ -619,7 +619,7 @@ def save_file(func=None, *, data_index=0, dout='.csv'):
     Both save_file (function-based) and SaveFile (class-based) decorators
     are designed to allow users to save the returned DataFrame(s) from a 
     decorated function to a file, if needed. For more details and advanced
-    usage, please refer to the documentation of :class:`gofast.core.io.SaveFile`,
+    usage, please refer to the documentation of :class:`kdiagram.decorators.SaveFile`,
     as both operate in a similar manner.
     
     * When to Use SaveFile vs. save_file? 
@@ -633,7 +633,7 @@ def save_file(func=None, *, data_index=0, dout='.csv'):
     result using the rules described above.
     
     For full documentation and more advanced usage details, please check 
-    the documentation of :class:`gofast.core.io.SaveFile`.
+    the documentation of :class:`kdiagram.decorators.SaveFile`.
     """
     # If called without parentheses, `func` is the function object.
     # If called with parentheses, `func` is None on first pass

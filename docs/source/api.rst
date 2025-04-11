@@ -92,7 +92,7 @@ values using polar coordinates.
 .. _api_utils:
 
 Utility Functions (`kdiagram.utils`)
-------------------------------------
+--------------------------------------
 
 Helper functions primarily focused on detecting, validating, and
 manipulating quantile-related data within pandas DataFrames, often

@@ -160,7 +160,7 @@ def plot_feature_fingerprint(
     Examples
     --------
     >>> import numpy as np
-    >>> from gofast.plot.kdiagram import plot_feature_fingerprint
+    >>> from kdiagram.plot.feature_based import plot_feature_fingerprint
 
     **1. Random Example:**
 

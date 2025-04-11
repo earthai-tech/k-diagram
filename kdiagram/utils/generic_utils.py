@@ -46,7 +46,7 @@ def str2columns(
 
     Examples
     --------
-    >>> from gofast.core.checks import str2columns
+    >>> from kdiagram.utils.generic_utils import str2columns
     >>> text = "this.is an-example"
     >>> str2columns(text)
     ['this','is','an','example']
@@ -177,20 +177,20 @@ def count_functions(
 
     Examples
     --------
-    >>> from gofast.api.util import count_functions_classes
-    >>> count_functions_classes('gofast.api.util', include_class=True,
+    >>> from kdiagram.utils.generic_utils import count_functions_classes
+    >>> count_functions_classes('kdiagram.utils.generic_utils', include_class=True,
                                 return_counts=True)
     10
 
-    >>> count_functions('gofast.api.util', include_class=True,
+    >>> count_functions('kdiagram.utils.generic_utils', include_class=True,
                                 return_counts=False)
     ['ClassA', 'ClassB', 'func1', 'func2', 'func3']
 
-    >>> count_functions('gofast.api.util', include_class=False, 
+    >>> count_functions('kdiagram.utils.generic_utils', include_class=False, 
                                 return_counts=True, include_private=True)
     15
 
-    >>> count_functions('gofast.api.util', include_class=False, 
+    >>> count_functions('kdiagram.utils.generic_utils', include_class=False, 
                                 return_counts=False, include_private=True)
     ['_private_func1', '_private_func2', 'func1', 'func2']
 
@@ -487,7 +487,7 @@ def error_policy(
 
     Examples
     --------
-    >>> from gofast.core.utils import error_policy
+    >>> from kdiagram.utils.generic_utils import error_policy
     >>> # Basic usage:
     >>> resolved_error = error_policy('warn')
     >>> print(resolved_error)

@@ -35,7 +35,7 @@ class PandasDataHandlers:
 
     Examples
     --------
-    >>> from gofast.api.property import PandasDataHandlers
+    >>> from kdiagram.core.property import PandasDataHandlers
     >>> data_handler = PandasDataHandlers()
     
     # Reading a CSV file

@@ -64,7 +64,7 @@ def minmax_scaler(
     Examples
     --------
     >>> import numpy as np
-    >>> from gofast.utils.mathext import minmax_scaler
+    >>> from kdiagram.utils.mathext import minmax_scaler
     >>> X = np.array([[1, 2],[3, 4],[5, 6]])
     >>> X_scaled = minmax_scaler(X)
     >>> # X_scaled now lies in [0,1] per feature.

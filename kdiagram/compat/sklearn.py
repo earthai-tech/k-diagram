@@ -139,7 +139,7 @@ class Interval:
     `inclusive` parameter:
     
     >>> from numbers import Integral
-    >>> from gofast.compat.sklearn import Interval
+    >>> from kdiagram.compat.sklearn import Interval
     >>> interval = Interval(Integral, 1, 10, closed="left", inclusive=True)
     >>> interval
     
@@ -250,7 +250,7 @@ def type_of_target(y):
 
     Examples
     --------
-    >>> from gofast.compat.sklearn import type_of_target
+    >>> from kdiagram.compat.sklearn import type_of_target
 
     Binary classification:
 
@@ -479,7 +479,7 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
 
     Examples
     --------
-    >>> from gofast.compat.sklearn import validate_params
+    >>> from kdiagram.compat.sklearn import validate_params
     >>> @validate_params({
     ...     'step_name': [str],
     ...     'param_grid': [dict],

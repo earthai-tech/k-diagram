@@ -27,7 +27,7 @@ def beautify_dict(d, space=4, key=None, max_char=None):
 
     Examples:
     --------
-    >>> from gofast.api.util import beautify_dict
+    >>> from kdiagram.api.util import beautify_dict
     >>> dictionary = {
     ...     3: 'Home & Garden',
     ...     2: 'Health & Beauty',
@@ -113,7 +113,7 @@ def to_camel_case(text, delimiter=None, use_regex=False):
 
     Examples
     --------
-    >>> from gofast.api.util import to_camel_case
+    >>> from kdiagram.api.util import to_camel_case
     >>> to_camel_case('outlier_results', '_')
     'OutlierResults'
 
@@ -273,7 +273,7 @@ def get_terminal_size():
 
     Examples
     --------
-    >>> from gofast.api.util import get_terminal_size
+    >>> from kdiagram.api.util import get_terminal_size
     >>> terminal_width, terminal_height = get_terminal_size()
     >>> print("Terminal Width:", terminal_width)
     >>> print("Terminal Height:", terminal_height)

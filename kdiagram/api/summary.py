@@ -40,7 +40,7 @@ class ResultSummary(FlexDict):
        
     Examples
     --------
-    >>> from gofast.api.summary import ResultSummary
+    >>> from kdiagram.api.summary import ResultSummary
     >>> summary = ResultSummary(name="Data Check", pad_keys="auto", max_char=50)
     >>> results = {
         'long_string_data': "This is a very long string that needs truncation.",

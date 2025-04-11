@@ -20,7 +20,7 @@ class FlexDict(dict):
     --------
     Here is how you can use a `FlexDict`:
 
-    >>> from gofast.api.structures import FlexDict
+    >>> from kdiagram.api.bunch import FlexDict
     >>> fd = FlexDict(pkg='gofast', goal='simplify tasks', version='1.0')
     >>> fd['pkg']  # Standard dictionary access
     'gofast'

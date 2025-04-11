@@ -80,7 +80,7 @@ def columns_manager(
 
     Example
     -------
-    >>> from gofast.core.handlers import columns_manager
+    >>> from kdiagram.utils.handlers import columns_manager
     >>> columns_manager("col1, col2, col3", separator=",")
     ['col1', 'col2', 'col3']
 

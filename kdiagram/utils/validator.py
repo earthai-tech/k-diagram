@@ -49,7 +49,7 @@ def validate_length_range(length_range, sorted_values=True, param_name=None):
         
     Examples 
     --------
-    >>> from gofast.utils.validator import validate_length_range
+    >>> from kdiagram.utils.validator import validate_length_range
     >>> validate_length_range ( (202, 25) )
     (25, 202)
     >>> validate_length_range ( (202,) )
@@ -180,7 +180,7 @@ def contains_nested_objects(lst, strict=False, allowed_types=None):
 
     Examples
     --------
-    >>> from gofast.utils.validator import contains_nested_objects
+    >>> from kdiagram.utils.validator import contains_nested_objects
     >>> example_list1 = [{1, 2}, [3, 4], {'key': 'value'}]
     >>> example_list2 = [1, 2, 3, [4]]
     >>> example_list3 = [1, 2, 3, 4]
@@ -329,7 +329,7 @@ def is_in_if(
     
     Examples
     --------
-    >>> from gofast.core.checks import is_in_if
+    >>> from kdiagram.utils.validator import is_in_if
     >>> 
     >>> # Example 1: Check presence with error raising
     >>> o = ['apple', 'banana', 'cherry']
@@ -479,7 +479,7 @@ def exist_features(
 
     Examples
     --------
-    >>> from gofast.core.checks import exist_features
+    >>> from kdiagram.utils.validator import exist_features
     >>> import pandas as pd
 
     >>> # Sample DataFrame
@@ -688,7 +688,7 @@ def is_frame(
     Examples
     --------
     >>> import pandas as pd
-    >>> from gofast.utils.validator import is_frame
+    >>> from kdiagram.utils.validator import is_frame
 
     >>> df = pd.DataFrame({'A': [1,2,3]})
     >>> is_frame(df)
@@ -1020,7 +1020,7 @@ def array_to_frame(
 
     Examples
     --------
-    >>> from gofast.utils.validator import array_to_frame
+    >>> from kdiagram.utils.validator import array_to_frame
     >>> from sklearn.datasets import load_iris
     >>> data = load_iris()
     >>> X = data.data
@@ -1154,7 +1154,7 @@ def ensure_2d(X, output_format="auto"):
     Examples
     --------
     >>> import numpy as np 
-    >>> from gofast.utils.validator import ensure_2d
+    >>> from kdiagram.utils.validator import ensure_2d
     >>> X = np.array([1, 2, 3])
     >>> ensure_2d(X, output_format="array")
     array([[1],
@@ -1235,7 +1235,7 @@ def parameter_validator(
 
     Examples
     --------
-    >>> from gofast.utils.validator import parameter_validator
+    >>> from kdiagram.utils.validator import parameter_validator
     >>> validate_outlier_method = parameter_validator(
     ...  'outlier_method', ['z_score', 'iqr'])
     >>> outlier_method = "z_score"
@@ -1439,7 +1439,7 @@ def is_iterable(
 
     Examples
     --------
-    >>> from gofast.core.checks.is_iterable import is_iterable
+    >>> from kdiagram.utils.validator import is_iterable
     >>> is_iterable('iterable', exclude_string=True)
     False
     >>> is_iterable('iterable', exclude_string=True, transform=True)
@@ -1503,7 +1503,7 @@ def check_spatial_columns(
     Examples
     --------
     >>> import pandas as pd
-    >>> from gofast.core.checks import check_spatial_columns
+    >>> from kdiagram.utils.validator import check_spatial_columns
 
     >>> # Valid spatial columns
     >>> df = pd.DataFrame({

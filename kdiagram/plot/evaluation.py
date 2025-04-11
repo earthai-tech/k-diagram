@@ -195,7 +195,7 @@ def taylor_diagram(
     Examples
     --------
     >>> import numpy as np
-    >>> from gofast.plot.ml_viz import taylor_diagram
+    >>> from kdiagram.plot.evaluation import taylor_diagram
     >>> # Generate synthetic data
     >>> ref = np.random.randn(100)
     >>> preds = [
@@ -641,7 +641,7 @@ def plot_taylor_diagram_in(
     Examples
     --------
     >>> import numpy as np
-    >>> from gofast.plot.ml_viz import plot_taylor_diagram_in
+    >>> from kdiagram.plot.evaluation import plot_taylor_diagram_in
     >>> # Generate some synthetic data
     >>> np.random.seed(42)
     >>> reference = np.random.normal(0, 1, 100)
@@ -1020,7 +1020,7 @@ def plot_taylor_diagram(
     Examples
     --------
     >>> import numpy as np
-    >>> from gofast.plot.ml_viz import plot_taylor_diagram
+    >>> from kdiagram.plot.evaluation import plot_taylor_diagram
     >>> y_preds = [
     ...     np.random.normal(loc=0, scale=1, size=100),
     ...     np.random.normal(loc=0, scale=1.5, size=100)
