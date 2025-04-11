@@ -259,7 +259,7 @@ k-diagram plot_coverage_diagnostic data.csv \
 
 For detailed usage, API reference, and more examples, please visit the official documentation:
 
-**[k-diagram.readthedocs.io](https://k-diagram.readthedocs.io/)** *(Link needs to be live)*
+**[k-diagram.readthedocs.io](https://k-diagram.readthedocs.io/)** 
 
 -----
 
@@ -293,6 +293,6 @@ Please refer to the [CONTRIBUTING](https://k-diagram.readthedocs.io/en/latest/co
     origins or specific collaborations, you can reach the author:
 
       * **Name:** Laurent Kouadio
-      * 📧 **Email:** [mailto:etanoyau@gmail.com]
+      * 📧 **Email:** [etanoyau@gmail.com](mailto:etanoyau@gmail.com)
       * 💼 **LinkedIn:** [linkedin.com/in/laurent-kouadio-483b2baa](https://linkedin.com/in/laurent-kouadio-483b2baa)
       * 🆔 **ORCID:** [0000-0001-7259-7254](https://orcid.org/0000-0001-7259-7254)
