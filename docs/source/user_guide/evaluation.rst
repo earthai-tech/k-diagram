@@ -140,8 +140,8 @@ On the diagram:
     enhance interpretation.
 * Provides options for customizing reference display and label sizes.
 
-**Example:**
-*(See Gallery or function docstring for code and plot examples)*
+
+**Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_flexible>`
 
 .. _ug_plot_taylor_diagram_in:
 
@@ -194,8 +194,7 @@ of the background color field `CC` based on `radial_strategy`:
     focused on correlation or performance.
 * Offers fine control over plot orientation (`zero_location`, `direction`).
 
-**Example:**
-*(See Gallery or function docstring for code and plot examples)*
+**Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_background_shading_focus>`
 
 .. _ug_plot_taylor_diagram:
 
@@ -239,9 +238,7 @@ and correlation (:math:`\rho`) to the angular coordinate
 * May offer a more streamlined interface if fewer customization options
     are needed compared to `taylor_diagram` or `plot_taylor_diagram_in`.
 
-**Example:**
-*(See Gallery or function docstring for code and plot examples)*
-
+**Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_basic>`
 
 .. raw:: html
 

@@ -89,7 +89,7 @@ Running the code above will first print the head of the generated
 DataFrame and a summary of detected anomalies. It will then display
 a polar plot similar to this:
 
-.. image:: ../images/quickstart_anomaly_magnitude.png
+.. image:: /images/quickstart_anomaly_magnitude.png
    :alt: Example Anomaly Magnitude Plot
    :align: center
    :width: 80%
@@ -118,8 +118,8 @@ Next Steps
 Congratulations! You've created your first k-diagram plot.
 
 * Explore more plot types and their capabilities in the
-    :doc:`gallery`.
+  :doc:`Plot Gallery <gallery/index>`
 * Learn about the concepts behind the visualizations in the
-    :doc:`user_guide`.
-* Refer to the :doc:`api` documentation for detailed function
-    signatures and parameters.
+  :doc:`User Guide <user_guide/index>`
+* Refer to the :doc:`API Reference <api>` documentation for detailed function
+  signatures and parameters.

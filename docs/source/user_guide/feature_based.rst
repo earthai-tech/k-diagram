@@ -58,6 +58,7 @@ is the number of features.
 
 1.  **Angle Assignment:** Each feature :math:`j` is assigned an axis on
     the radar chart at an evenly spaced angle:
+    
     .. math::
         \theta_j = \frac{2 \pi j}{N}, \quad j = 0, 1, \dots, N-1
 
@@ -68,8 +69,10 @@ is the number of features.
 3.  **Normalization (Optional):** If ``normalize=True``, the importances
     within each layer (row) :math:`i` are scaled independently to the
     range [0, 1]:
+    
     .. math::
         r'_{ij} = \frac{r_{ij}}{\max_{k}(r_{ik})}
+        
     If the maximum importance in a layer is zero or less, the normalized
     values for that layer are set to zero. The radius plotted is then
     :math:`r'_{ij}`. If ``normalize=False``, the raw radius :math:`r_{ij}`
@@ -126,7 +129,7 @@ is the number of features.
     absolute importance scales differ significantly between layers.
 
 **Example:**
-*(See the Gallery section below for a runnable code example and plot)*
+*(See the :ref:`Gallery <gallery_plot_feature_based>` section below for a runnable code example and plot)*
 
 
 .. raw:: html

@@ -1,4 +1,4 @@
-.. _gallery_main:
+.. _gallery:
 
 =========
 Gallery

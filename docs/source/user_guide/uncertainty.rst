@@ -123,7 +123,7 @@ emphasize the error magnitude and direction.
     hour) more apparent than a standard time series plot.
 
 **Example:**
-*(See Gallery or Quick Start for code and plot example)*
+(See :ref:`Gallery <gallery_plot_actual_vs_predicted>` for code and plot examples)
 
 .. _ug_anomaly_magnitude:
 
@@ -198,8 +198,8 @@ a plotted point is :math:`r_i`.
     across the angular dimension.
 
 **Example:**
+(Refer to :ref:`Gallery <gallery_plot_anomaly_magnitude>` and runnable code examples)
 
-*(Refer to the Quick Start guide for a runnable code example and sample plot)*
 
 .. raw:: html
 
@@ -275,7 +275,7 @@ discrete): :math:`\text{Coverage} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{1}\{y_i =
     comparison.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_overall_coverage>` for code and plot examples)
 
 .. _ug_coverage_diagnostic:
 
@@ -350,7 +350,7 @@ The plot also typically shows the overall coverage rate
     the plot boundaries (0 and 1) and reference grid lines.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_coverage_diagnostic>` or function docstring for code and plot examples)
 
 .. _ug_interval_consistency:
 
@@ -431,7 +431,7 @@ steps, providing context.
     with different consistency levels.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_interval_consistency>` or function docstring for code and plot examples)
 
 .. raw:: html
 
@@ -502,7 +502,7 @@ the color typically represents the width :math:`w_i` itself.
     width (radius), and a third variable (color via ``z_col``).
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_interval_width>` or function docstring for code and plot examples)
 
 .. _ug_model_drift:
 
@@ -567,7 +567,7 @@ aggregated metric for that horizon if ``color_metric_cols`` is used.
     multiple forecast lead times.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_model_drift>` or function docstring for code and plot examples)
 
 .. _ug_temporal_uncertainty:
 
@@ -632,7 +632,7 @@ Each series :math:`k` is assigned a distinct color.
 * Can reveal shared cyclical patterns among the plotted series.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_temporal_uncertainty>` or function docstring for code and plot examples)
 
 .. raw:: html
 
@@ -716,7 +716,7 @@ Each ring :math:`t` receives a distinct color from the specified
 * Color coding aids in distinguishing and tracking specific time steps.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_uncertainty_drift>` or function docstring for code and plot examples)
 
 .. _ug_velocity:
 
@@ -792,7 +792,7 @@ absolute magnitude of the Q50 predictions
     of the prediction.
 
 **Example:**
-*(See Gallery or function docstring for code and plot examples)*
+(See :ref:`Gallery <gallery_plot_prediction_velocity>` or function docstring for code and plot examples)
 
 .. raw:: html
 
