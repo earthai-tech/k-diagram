@@ -59,9 +59,7 @@ related to `k-diagram`.
       title        = {{Understanding Uncertainty in Land Subsidence Forecasting}},
       journal      = {International Journal of Forecasting}
       note         = {Submitted},
-      year         = {2025}, % Target/Expected Publication Year
-      % url          = {https://arxiv.org/abs/xxxx.xxxxx} 
-      % doi        = {xx.xxxx/journal.xxxxxx} 
+      year         = {2025}, 
     }
     
     
@@ -78,11 +76,8 @@ land subsidence in Nansha and Zhongshan, China.
       author       = {Liu, Rong and Jiang, Shiyu and Kouadio, Kouao Laurent and Liu, Jianxin and Liu, Wenxiang and Qing, Zhanhui and Zheng, Zhiwen},
       title        = {{Forecasting Urban Land Subsidence in the Era of Rapid Urbanization and Climate Stress}},
       journal      = {Nature Sustainability},
-      year         = {2025}, % Target/Expected Publication Year
+      year         = {2025}, 
       note         = {Submitted},
-      % volume     = {XX},
-      % number     = {YY},
-      % pages      = {zzz--zzz}
     }
     
 
@@ -98,10 +93,9 @@ software package itself, targeting the open-source software community.
       author       = {Kouadio, Kouao Laurent},
       title        = {{k-diagram: Rethinking Forecasting Uncertainty via Polar-Based Visualization}},
       note         = {In preparation for submission to Journal of Open Source Software},
-      year         = {2025}, % Target/Expected Year
+      year         = {2025},
       howpublished = {\url{https://github.com/earthai-tech/k-diagram}},
       release      = |release|
-      % doi        = {xx.xxxx/joss.xxxxx} % Optional: Add DOI when published by JOSS
     }
 
 
