@@ -1,13 +1,11 @@
-# k-diagram: Unveiling Forecasting Insights with Polar Diagnostics ðŸ§­
+# k-diagram: Unveiling Forecasting Insights with Polar Diagnostics 🧭
 
-<!--[![PyPI version](https://img.shields.io/pypi/v/k-diagram.svg?style=flat-square)](https://pypi.org/project/k-diagram/)-->
+
 [![Python Versions](https://img.shields.io/pypi/pyversions/k-diagram?style=flat-square)](https://pypi.org/project/k-diagram/)
-<!--[![PyPI Downloads](https://img.shields.io/pypi/dm/k-diagram?style=flat-square)](https://pypi.org/project/k-diagram/)-->
 [![Build Status](https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square)](https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml)
 [![Documentation Status](https://readthedocs.org/projects/k-diagram/badge/?version=latest&style=flat-square)](https://k-diagram.readthedocs.io/en/latest/?badge=latest)
 [![Code Coverage](https://img.shields.io/codecov/c/github/earthai-tech/k-diagram?style=flat-square)](https://app.codecov.io/gh/earthai-tech/k-diagram)
 [![License](https://img.shields.io/pypi/l/k-diagram.svg?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE)
-<!--[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 [![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md)
 [![Code Style: Black](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
@@ -24,7 +22,7 @@ Built with applications like **environmental science forecasting** (e.g., land s
 
 ---
 
-## âœ¨ Why k-diagram?
+## ✨ Why k-diagram?
 
 * **Intuitive Polar Perspective:** Visualize multi-dimensional aspects like uncertainty spread, temporal drift, and spatial patterns in a compact circular layout.
 * **Targeted Diagnostics:** Functions specifically designed to assess interval coverage, consistency, anomaly magnitude, model velocity, and drift.
@@ -32,8 +30,8 @@ Built with applications like **environmental science forecasting** (e.g., land s
 * **Identify Model Weaknesses:** Pinpoint where and when your forecasts are less reliable or exhibit significant anomalies.
 * **Clear Communication:** Generate publication-ready plots to effectively communicate model performance and uncertainty characteristics.
 
-
 ---
+
 ## 📊 Gallery Highlights
 
 Get a visual taste of `k-diagram`'s capabilities! Below are a few key
@@ -70,7 +68,7 @@ kd.plot_coverage_diagnostic(
 )
 ````
 
-![Coverage Diagnostic Plot](docs/source/images/readme_coverage_diagnostic_plot.png)
+<img src="docs/source/images/readme_coverage_diagnostic_plot.png" alt="Coverage Diagnostic Plot" width="600"/>
 
 -----
 
@@ -95,7 +93,7 @@ kd.plot_anomaly_magnitude(
 )
 ```
 
-![Anomaly Magnitude Plot](docs/source/images/readme_prediction_anomaly_magnitude.png)
+<img src="docs/source/images/readme_prediction_anomaly_magnitude.png" alt="Anomaly Magnitude Plot" width="600"/>
 
 -----
 
@@ -109,6 +107,8 @@ kd.plot_anomaly_magnitude(
 import kdiagram as kd
 # (Requires df with multiple qlow/qup cols like sample_data_drift_uncertainty)
 # Example using dummy data generation:
+import pandas as pd
+import numpy as np
 years = range(2021, 2025)
 N=100
 df_drift = pd.DataFrame({'id': range(N)})
@@ -128,7 +128,7 @@ kd.plot_uncertainty_drift(
 )
 ```
 
-![Uncertainty Drift Plot](docs/source/images/readme_uncertainty_drift_plot.png)
+<img src="docs/source/images/readme_uncertainty_drift_plot.png" alt="Uncertainty Drift Plot" width="600"/>
 
 -----
 
@@ -140,6 +140,8 @@ kd.plot_uncertainty_drift(
 ```python
 # Code Snippet
 import kdiagram as kd
+import pandas as pd
+import numpy as np
 # Example using dummy data generation:
 N=120
 df_avp = pd.DataFrame({
@@ -155,16 +157,16 @@ kd.plot_actual_vs_predicted(
 )
 ```
 
-![Actual vs Predicted Plot](docs/source/images/readme_actual_vs_predicted.png)
+<img src="docs/source/images/readme_actual_vs_predicted.png" alt="Actual vs Predicted Plot" width="600"/>
 
----
+-----
 
 Many more examples, including plots for interval consistency, velocity,
 Taylor diagrams, and feature fingerprints, are available in the documentation.
 
 ➡️ **See the [Complete Gallery](https://k-diagram.readthedocs.io/en/latest/gallery/index.html)**
 
-## ðŸš€ Installation
+## 🚀 Installation
 
 Get `k-diagram` easily via pip:
 
@@ -184,11 +186,11 @@ pip install -e .[dev]
 
 *(The `[dev]` installs dependencies useful for testing and documentation)*
 
-**Dependencies:** `k-diagram` requires Python \>= 3.6 and standard scientific libraries like `numpy`, `pandas`, `matplotlib`, `seaborn`, and `scikit-learn`.
+**Dependencies:** `k-diagram` requires Python \>= 3.8 and standard scientific libraries like `numpy`, `pandas`, `matplotlib`, `seaborn`, and `scikit-learn`.
 
 -----
 
-## âš¡ Quick Start
+## ⚡ Quick Start
 
 Generate an **Interval Width** plot colored by the median prediction in just a few lines:
 
@@ -213,21 +215,23 @@ df['q50_val'] = df['q10_val'] + width / 2
 ax = kd.plot_interval_width(
     df=df,
     q_cols=['q10_val', 'q90_val'],  # Lower and Upper quantiles
-    z_col='q50_val',               # Color points by Q50 prediction
+    z_col='q50_val',                # Color points by Q50 prediction
     title='Prediction Interval Width (Colored by Median)',
     cmap='plasma',
     s=35,
-    cbar=True                      # Show color bar
+    cbar=True                       # Show color bar
 )
 
 # Plot is shown automatically (or use savefig='path/to/plot.png')
+# import matplotlib.pyplot as plt
 # plt.show() # Not needed if savefig is None
 ```
-![Interval Width Plot](docs/source/images/readme_prediction_interval_width)
+
+<img src="docs/source/images/readme_prediction_interval_width.png" alt="Interval Width Plot" width="600"/>
 
 -----
 
-## ðŸ’» Using the CLI
+## 💻 Using the CLI
 
 `k-diagram` also provides a command-line interface for generating plots directly from CSV files.
 
@@ -241,8 +245,8 @@ k-diagram --help
 
 ```bash
 k-diagram plot_coverage_diagnostic data.csv \
-    --actual_col actual_obs \
-    --q_cols q10_pred q90_pred \
+    --actual-col actual_obs \
+    --q-cols q10_pred q90_pred \
     --title "Coverage for My Model" \
     --savefig coverage_plot.png
 ```
@@ -251,15 +255,15 @@ k-diagram plot_coverage_diagnostic data.csv \
 
 -----
 
-## ðŸ“š Documentation
+## 📚 Documentation
 
 For detailed usage, API reference, and more examples, please visit the official documentation:
 
-**[k-diagram.readthedocs.io](https://www.google.com/search?q=https://k-diagram.readthedocs.io/)** *(Link needs to be live)*
+**[k-diagram.readthedocs.io](https://k-diagram.readthedocs.io/)** *(Link needs to be live)*
 
 -----
 
-## ðŸ™Œ Contributing
+## 🙌 Contributing
 
 Contributions are welcome\! Whether it's bug reports, feature suggestions, or code contributions, please get involved.
 
@@ -269,26 +273,26 @@ Contributions are welcome\! Whether it's bug reports, feature suggestions, or co
 4.  Make your changes and add tests.
 5.  Submit a Pull Request.
 
-Please refer to the `CONTRIBUTING.md` file (if available) for more detailed guidelines.
+Please refer to the [CONTRIBUTING](https://k-diagram.readthedocs.io/en/latest/contributing.html) page or the contributing section in the documentation for more detailed guidelines.
 
 -----
 
-## ðŸ“œ License
+## 📜 License
 
-`k-diagram` is distributed under the terms of the **Apache License 2.0**. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+`k-diagram` is distributed under the terms of the **Apache License 2.0**. See the [LICENSE](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE) file for details.
 
 -----
 
 ## 📞 Contact & Support
 
-* **Bug Reports & Feature Requests:** The best place to report issues,
+  * **Bug Reports & Feature Requests:** The best place to report issues,
     ask questions about usage, or request new features is the
     [**GitHub Issues**](https://github.com/earthai-tech/k-diagram/issues) page for the project.
 
-* **Author Contact:** For direct inquiries related to the project's
+  * **Author Contact:** For direct inquiries related to the project's
     origins or specific collaborations, you can reach the author:
-    * **Name:** Laurent Kouadio
-    * 📧 **Email:** <etanoyau@gmail.com>
-    * 💼 **LinkedIn:** [linkedin.com/in/laurent-kouadio-483b2baa](https://linkedin.com/in/laurent-kouadio-483b2baa)
-    * 🆔 **ORCID:** [0000-0001-7259-7254](https://orcid.org/0000-0001-7259-7254)
------
+
+      * **Name:** Laurent Kouadio
+      * 📧 **Email:** [mailto:etanoyau@gmail.com]
+      * 💼 **LinkedIn:** [linkedin.com/in/laurent-kouadio-483b2baa](https://linkedin.com/in/laurent-kouadio-483b2baa)
+      * 🆔 **ORCID:** [0000-0001-7259-7254](https://orcid.org/0000-0001-7259-7254)
