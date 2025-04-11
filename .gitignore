@@ -167,6 +167,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Ignore JOSS paper files (unpublished work)
+# These should only exist on specific branches for JOSS review/submission.
+paper.md
+paper.bib
+
 # Ruff stuff:
 .ruff_cache/
 
