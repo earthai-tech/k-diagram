@@ -35,6 +35,7 @@ dependencies:
   # Testing dependencies
   - pytest >=6.0
   - pytest-xdist # For parallel testing
+  - pytest-cov
 
   # Development/Utility dependencies
   - pip             # Ensure pip is available for installing the package itself
