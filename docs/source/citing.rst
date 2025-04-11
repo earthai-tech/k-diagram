@@ -57,7 +57,7 @@ related to `k-diagram`.
     @unpublished{kouadio_subsidence_ijf_2025,
       author       = {Kouadio, Kouao Laurent and Liu, Rong and Loukou, Kouamé Gbèlè Hermann and Liu, Rong}, 
       title        = {{Understanding Uncertainty in Land Subsidence Forecasting}},
-      journal      = {International Journal of Forecasting}
+      journal      = {International Journal of Forecasting},
       note         = {Submitted},
       year         = {2025}, 
     }
