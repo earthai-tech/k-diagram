@@ -2,8 +2,7 @@
 
 -----------------------------------------------------
 
-# k-diagram: Unveiling Forecasting Insights with Polar Diagnostics 🧭
-
+# Unveiling Forecasting Insights with Polar Diagnostics 
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/k-diagram?style=flat-square)](https://pypi.org/project/k-diagram/)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square)](https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml)
@@ -13,7 +12,7 @@
 [![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md)
 [![Code Style: Black](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
-**_Navigate the complexities of forecast uncertainty and model behavior with `k-diagram`'s specialized polar visualizations_**
+🧭 **_Navigate the complexities of forecast uncertainty and model behavior with `k-diagram`'s specialized polar visualizations_**
 
 `k-diagram` provides a suite of diagnostic polar plots ("k-diagrams") designed for comprehensive model evaluation, particularly uncertainty-aware forecasting. Go beyond traditional metrics and gain deeper insights into:
 

@@ -19,7 +19,6 @@ k-diagram: Polar Insights for Forecasting
     model's performance, stability, and potential weaknesses.
 
 .. container:: text-center
-    :margin: 1 0 2 0
 
     .. button-ref:: installation
         :color: primary
@@ -34,27 +33,30 @@ k-diagram: Polar Insights for Forecasting
 
         Quick Start Guide
 
-    .. button-ref:: gallery/index
-        :text: Plot Gallery      <-- Updated button target (optional but good)
+    .. button-ref:: gallery/index     
         :color: secondary
         :expand:
+        
+        Plot Gallery
+        
+.. card:: Key Features
+    :class-header: text-center sd-font-weight-bold
+    :margin: auto  
 
-.. panels::
-    :header: text-center
-    :column: col-lg-12 p-0
-
-    ---
-    :header: **Overview (from README)**
-    :body:
-
-    .. include:: ../../README.md
-       :parser: myst_parser.sphinx_
-       :start-after: ### ✨ Why k-diagram?
-       :end-before: ---
-
-       *(Note: This includes the main description from your README.md. Ensure
-       your README is up-to-date and located correctly relative to this
-       file, typically two levels up if index.rst is in docs/source/)*
+    * **Intuitive Polar Perspective:** Visualize multi-dimensional
+        aspects like uncertainty spread, temporal drift, and spatial
+        patterns in a compact circular layout.
+    * **Targeted Diagnostics:** Functions specifically designed to
+        assess interval coverage, consistency, anomaly magnitude, model
+        velocity, and drift.
+    * **Uncertainty-Aware Evaluation:** Move beyond point-forecast
+        accuracy and evaluate the reliability of your model's
+        uncertainty estimates.
+    * **Identify Model Weaknesses:** Pinpoint where and when your
+        forecasts are less reliable or exhibit significant anomalies.
+    * **Clear Communication:** Generate publication-ready plots to
+        effectively communicate model performance and uncertainty
+        characteristics.
 
 .. # Table of Contents Tree (often hidden and rendered by the theme's sidebar)
 .. # The 'hidden' option prevents it from being displayed directly here.
