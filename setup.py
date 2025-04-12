@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
-import os
-import subprocess
-import sys
 
 # Package metadata
 DISTNAME = "k-diagram"
@@ -11,7 +8,7 @@ LONG_DESCRIPTION = open('README.md', 'r', encoding='utf8').read()
 MAINTAINER = "Laurent Kouadio"
 MAINTAINER_EMAIL = 'etanoyau@gmail.com'
 URL = "https://github.com/earthai-tech/k-diagram"
-LICENSE = "BSD-3-Clause"
+LICENSE = "Apache-2.0"
 PROJECT_URLS = {
     "API Documentation": "https://k-diagram.readthedocs.io/en/latest/api_references.html",
     "Home page": "https://k-diagram.readthedocs.io",
@@ -31,17 +28,11 @@ _required_dependencies = [
     "scikit-learn"
 ]
 
-for package in _required_dependencies:
-    try:
-        __import__(package)
-    except ImportError:
-        print(f"{package} is required. Installing...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
 # Package data specification
 PACKAGE_DATA = {
     'kdiagram': [
-        'docs/*',
+        # 'data/*.json', 
+        # 'assets/*.txt'
     ],
 }
 setup_kwargs = {
@@ -61,10 +52,15 @@ setup_kwargs = {
     'python_requires': '>=3.9',
 }
 
+try:
+    import kdiagram 
+    VERSION = kdiagram.__version__
+except ImportError:
+    VERSION= "1.0" 
 
 setup(
     name=DISTNAME,
-    version="1.0.0",  # Replace with your version
+    version=VERSION, 
     author=MAINTAINER,
     author_email=MAINTAINER_EMAIL,
     maintainer=MAINTAINER,
@@ -81,10 +77,10 @@ setup(
         "Topic :: Software Development",
         "Topic :: Scientific/Engineering",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
