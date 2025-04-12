@@ -1,8 +1,8 @@
 .. _gallery_plots:
 
-===========
+=================
 Plot Gallery
-===========
+=================
 
 Welcome to the `k-diagram` plot gallery!
 
@@ -24,18 +24,18 @@ the resulting plot image.
 
 .. _gallery_plot_uncertainty:
 
-===========================
+==============================
 Uncertainty Visualizations
-===========================
+==============================
 
 This section focuses on plots designed specifically for exploring,
 diagnosing, and communicating aspects of predictive uncertainty.
 
 .. _gallery_plot_actual_vs_predicted:
 
-----------------------
+------------------------
 Actual vs. Predicted
-----------------------
+------------------------
 
 Compares actual observed values against point predictions (e.g., Q50)
 sample-by-sample. Useful for assessing basic accuracy and bias.
@@ -522,18 +522,19 @@ indicates velocity magnitude; color can indicate velocity or average Q50.
 
 .. _gallery_plot_model_evaluation:
 
-===================================
+=======================================
 Model Evaluation (Taylor Diagrams)
-===================================
+=======================================
 
 This section showcases Taylor Diagrams, which are powerful tools for
 summarizing model performance by comparing standard deviation,
 correlation, and centered RMS difference against a reference dataset.
 
 .. _gallery_plot_taylor_diagram_flexible:
-----------------------------------------------
+
+-----------------------------------------------
 Taylor Diagram (Flexible Input & Background)
-----------------------------------------------
+-----------------------------------------------
 
 Uses :func:`~kdiagram.plot.evaluation.taylor_diagram`. This example
 shows its flexibility by accepting raw data arrays and adding a
@@ -694,9 +695,9 @@ reference. Uses a half-circle layout.
 
 .. _gallery_plot_feature_based:
 
-=============================
+===============================
 Feature-Based Visualization
-=============================
+===============================
 
 This section illustrates plots focused on understanding the influence
 and patterns of input features on model predictions.
@@ -762,9 +763,9 @@ or models). This example shows raw (unnormalized) importance values.
 
 .. _gallery_plot_relationship_visualization:
 
-============================
+==============================
 Relationship Visualization
-============================
+==============================
 
 This section contains plots designed to visualize the relationship
 between true observed values and model predictions using polar coordinates.

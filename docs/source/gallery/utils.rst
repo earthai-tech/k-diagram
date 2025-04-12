@@ -1,8 +1,8 @@
 .. _gallery_utils:
 
-===========================
+=============================
 Utility Function Examples
-===========================
+=============================
 
 This section of the gallery demonstrates practical usage of the utility
 functions provided within `k-diagram`. These functions are primarily
