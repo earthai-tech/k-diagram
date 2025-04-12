@@ -23,7 +23,7 @@ KEYWORDS = "forecasting, uncertainty visualization, model evaluation"
 
 # Ensure dependencies are installed
 _required_dependencies = [
-    "numpy",
+    "numpy<2",
     "pandas",
     "scipy",
     "matplotlib",
