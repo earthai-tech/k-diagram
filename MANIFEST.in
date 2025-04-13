@@ -1,0 +1,67 @@
+# MANIFEST.in for k-diagram project
+
+# Include essential root files
+include LICENSE
+include README.md
+# include CITATION.cff  # Uncomment if you add this file
+include pyproject.toml  # If you use it
+include MANIFEST.in
+include setup.py
+# include setup.cfg     # Uncomment if you use this file
+
+# Include documentation source files (needed to build docs from sdist)
+# Excludes the built documentation (_build) later
+recursive-include docs/source *.rst
+recursive-include docs/source *.py
+recursive-include docs/source/_static *
+recursive-include docs/source/_templates *
+# recursive-include docs/source/gallery/images * # Optional: Include source images?
+include docs/Makefile
+include docs/make.bat
+include docs/requirements.txt # Include requirements needed to build docs
+
+# Include examples directory if it exists and you want it in the sdist
+# recursive-include examples *.py *.ipynb *.csv *.md
+
+# Include any non-code package data specified via include_package_data=True
+# or list specific files within the kdiagram package directory if needed
+# Example: include kdiagram/data/default_settings.json
+
+# --- Exclusions ---
+
+# Exclude compiled Python files, caches, compiled extensions
+global-exclude *.py[cod] __pycache__/* *.so *.dylib *.o *.a *.dll *.lib
+
+# Exclude the test suite from the source distribution
+recursive-exclude tests *
+exclude .coverage
+exclude coverage.xml
+exclude .pytest_cache
+
+# Exclude development / CI / environment files
+exclude .gitignore
+exclude .gitattributes
+# exclude .readthedocs.yml # Usually okay to include for context
+# exclude environment.yml  # Usually okay to include for context
+recursive-exclude .github *
+
+# Exclude common virtual environment directories
+recursive-exclude venv *
+recursive-exclude .venv *
+
+# Exclude common IDE directories
+recursive-exclude .* # Catches .git, .idea, .vscode etc.
+
+# Exclude build artifacts explicitly
+recursive-exclude build *
+recursive-exclude dist *
+recursive-exclude *.egg-info *
+recursive-exclude docs/_build *
+
+# Exclude benchmark or maintenance tool directories if they exist
+# recursive-exclude benchmarks *
+# recursive-exclude maint_tools *
+
+# Prune empty directories resulting from exclusions
+prune docs/_build
+# other prune directives if needed (e.g., prune tests/__pycache__)
