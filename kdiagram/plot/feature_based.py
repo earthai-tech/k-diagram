@@ -24,7 +24,7 @@ def plot_feature_fingerprint(
     show_grid=True,
     savefig=None
 ):
-    """Create a radar chart visualizing feature importance profiles.
+    r"""Create a radar chart visualizing feature importance profiles.
 
     This function generates a polar (radar) chart to visually
     compare the importance or contribution profiles of a set of
@@ -40,7 +40,7 @@ def plot_feature_fingerprint(
     circumstances.
 
     Parameters
-    ----------
+    -------------
     importances : array-like of shape (n_layers, n_features)
         The core data containing feature importance values. Each row
         represents a different layer (e.g., a zone, a year, a model)
@@ -101,18 +101,18 @@ def plot_feature_fingerprint(
         Default is ``None``.
 
     Returns
-    -------
+    ----------
     ax : matplotlib.axes.Axes
         The Matplotlib Axes object containing the radar chart. This
         can be used for further customization if needed.
 
     See Also
-    --------
+    -----------
     matplotlib.pyplot.polar : Underlying function for polar plots.
     numpy.linspace : Used for calculating angles.
 
     Notes
-    -----
+    -------
     - The function uses helper utilities like `ensure_2d` and
       `columns_manager` (assumed available) for input validation
       and preprocessing.
@@ -152,13 +152,8 @@ def plot_feature_fingerprint(
        :math:`2\pi`. The points are connected by lines, and optionally,
        the enclosed area is filled.
 
-    References
-    ----------
-    .. [1] Example reference format if needed, e.g., for a paper
-           describing radar chart usage in feature analysis.
-
     Examples
-    --------
+    -----------
     >>> import numpy as np
     >>> from kdiagram.plot.feature_based import plot_feature_fingerprint
 

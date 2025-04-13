@@ -467,7 +467,7 @@ def plot_taylor_diagram_in(
     the correlation with the reference.
 
     Parameters
-    ----------
+    -------------
     *y_preds : array-like
         One or more prediction arrays. Each array must be of the same
         length as `reference`. Each array-like object typically has
@@ -605,11 +605,10 @@ def plot_taylor_diagram_in(
         displayed. Default is `None`.
 
     Notes
-    -----
-    **Mathematical Formulation**
-
+    -------
+    
     The Taylor diagram displays two key statistics for each prediction
-    :math:`p` compared to the reference :math:`r`:
+    :math:`p` compared to the reference :math:`r` [1]_:
 
     1. **Correlation** (:math:`\\rho`):
        .. math::
@@ -639,7 +638,7 @@ def plot_taylor_diagram_in(
     `True`.
 
     Examples
-    --------
+    -----------
     >>> import numpy as np
     >>> from kdiagram.plot.evaluation import plot_taylor_diagram_in
     >>> # Generate some synthetic data
@@ -660,7 +659,7 @@ def plot_taylor_diagram_in(
     ... )
 
     See Also
-    --------
+    -----------
     - :func:`numpy.corrcoef` : Function to compute correlation.
     - :func:`numpy.std` : Function to compute standard deviation.
 
@@ -881,15 +880,15 @@ def plot_taylor_diagram(
     title: Optional[str]=None, 
     savefig: Optional[str]=None, 
 ):
-    """
+    r"""
     Plots a Taylor Diagram, which is used to graphically summarize 
     how closely a set of predictions match observations. The diagram 
     displays the correlation between each prediction and the 
     observations (`reference`) as the angular coordinate and the 
-    standard deviation as the radial coordinate.
+    standard deviation as the radial coordinate [1]_.
 
     Parameters
-    ----------
+    -------------
     y_preds : variable number of `ArrayLike`
         Each argument is a one-dimensional array containing the 
         predictions from different models. Each prediction array 
@@ -1018,7 +1017,7 @@ def plot_taylor_diagram(
         displayed. Default is `None`.
 
     Examples
-    --------
+    ----------
     >>> import numpy as np
     >>> from kdiagram.plot.evaluation import plot_taylor_diagram
     >>> y_preds = [
@@ -1037,7 +1036,7 @@ def plot_taylor_diagram(
     ... )
 
     Notes
-    -----
+    -------
     Taylor diagrams provide a visual way of assessing multiple 
     aspects of prediction performance in terms of their ability to 
     reproduce observational data. It's particularly useful in the 
@@ -1069,6 +1068,7 @@ def plot_taylor_diagram(
     .. [1] K. P. Taylor, "Summarizing multiple aspects of model performance 
        in a single diagram," Journal of Geophysical Research, vol. 106, 
        no. D7, pp. 7183-7192, 2001.
+       
     """
 
     # Convert inputs to 1D numpy arrays
