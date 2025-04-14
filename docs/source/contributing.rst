@@ -93,7 +93,7 @@ Submitting a Pull Request
 
     .. code-block:: bash
 
-       git push origin your-descriptive-branch-name
+       git push origin develop # [ develop as descriptive-branch-name]
 
 2.  **Open Pull Request:** Go to the original `k-diagram` repository
     on GitHub (`earthai-tech/k-diagram`) and open a Pull Request (PR)
@@ -113,7 +113,7 @@ Code of Conduct
 ---------------
 
 Please note that this project is released with a Contributor
-`Code of Conduct <../CODE_OF_CONDUCT.md>`_. By participating in this
+`Code of Conduct <../../CODE_OF_CONDUCT.md>`_. By participating in this
 project you agree to abide by its terms. We aim for a welcoming and
 respectful community.
 
