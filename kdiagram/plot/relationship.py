@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# License: Apache 2.0
+# Author: LKouadio <etanoyau@gmail.com>
+
 import warnings
 import matplotlib.pyplot as plt 
 import numpy as np 
@@ -38,14 +41,14 @@ def plot_relationship(
     z_label=None,
     savefig=None,
 ):
-    """
+    r"""
     Visualize the relationship between `y_true` and multiple `y_preds`
     using a circular or polar plot. The function allows flexible
     configurations such as angular coverage, z-values for replacing
     angle labels, and customizable axis labels.
 
     Parameters
-    ----------
+    -------------
     y_true : array-like
         The true values. Must be numeric, one-dimensional, and of the
         same length as the values in `y_preds`.
@@ -130,17 +133,12 @@ def plot_relationship(
     z_label : str, optional
         Label for the `z_values`, if provided. Defaults to `None`.
 
-    Returns
-    -------
-    None
-        Displays the polar plot. Does not return any value.
-
     Notes
-    -----
+    -------
     The function dynamically maps `y_true` to angular coordinates
-    based on the `theta_scale` and `acov` parameters. The `y_preds`
-    are normalized to radial coordinates between 0 and 1. Optionally,
-    `z_values` can replace angular labels with custom values.
+    based on the `theta_scale` and `acov` parameters [1]_. The `y_preds`
+    are normalized to radial coordinates between 0 and 1[2]_. Optionally,
+    `z_values` can replace angular labels with custom values [3]_.
 
     .. math::
         \theta = 
@@ -160,7 +158,7 @@ def plot_relationship(
         {\max(y_{\text{pred}}) - \min(y_{\text{pred}})}
 
     Examples
-    --------
+    ----------
     >>> from kdiagram.plot.relationship import plot_relationship
     >>> import numpy as np
 
@@ -189,12 +187,12 @@ def plot_relationship(
     ... )
 
     See Also
-    --------
+    ----------
     matplotlib.pyplot.polar : Polar plotting in Matplotlib.
     numpy.linspace : Uniformly spaced numbers.
 
     References
-    ----------
+    ------------
     .. [1] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
            Computing in Science & Engineering, 9(3), 90-95.
     .. [2] NumPy Documentation: https://numpy.org/doc/stable/

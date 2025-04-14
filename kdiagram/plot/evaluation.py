@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+#   License: Apache-2.0
+#   Author: LKouadio <etanoyau@gmail.com>
 
 from __future__ import annotations 
 import warnings 
@@ -428,11 +429,12 @@ def taylor_diagram(
         plt.show()
 
 
-@validate_params ({
-    'reference': ['array-like'], 
-    'names': [str, 'array-like', None ], 
-    'acov': [StrOptions({'default', 'half_circle'}), None], 
-    'zero_location': [StrOptions({'N','NE','E','S','SW','W','NW', 'SE'})], 
+@validate_params({
+    'reference': ['array-like'],
+    'names': [str, 'array-like', None ],
+    'acov': [StrOptions({'default', 'half_circle'}), None],
+    'zero_location': [StrOptions(
+        {'N','NE','E','S','SW','W','NW', 'SE'})],
     'direction': [Integral]
     })
 def plot_taylor_diagram_in(
@@ -451,204 +453,191 @@ def plot_taylor_diagram_in(
     cmap="viridis",
     shading='auto',
     shading_res=300,
-    radial_strategy=None, 
-    norm_c=False, 
-    norm_range=None, 
+    radial_strategy=None,
+    norm_c=False,
+    norm_range=None,
     cbar="off",
     fig_size=None,
     title=None,
     savefig=None,
 ):
-    r"""
-    Plot a Taylor Diagram with a background color map encoding the
-    correlation domain in polar form. This function provides a visually
-    appealing layout where the radial axis represents the standard
-    deviation of each prediction, while the angular axis is derived from
-    the correlation with the reference.
+    r"""Plot Taylor Diagram with background color map.
+
+    Generates a Taylor Diagram comparing predictions to a reference,
+    featuring a background color map encoding correlation or other
+    metrics based on the chosen strategy.
+
+    The diagram uses polar coordinates where the radial axis
+    represents the standard deviation (:math:`\sigma_p`) of each
+    prediction, and the angular axis represents the correlation
+    (:math:`\rho`) with the reference, typically via the angle
+    :math:`\theta = \arccos(\rho)`.
 
     Parameters
     ----------
     *y_preds : array-like
-        One or more prediction arrays. Each array must be of the same
-        length as `reference`. Each array-like object typically has
-        shape :math:`(n,)`, although multi-dimensional inputs can be
-        flattened internally.
+        One or more 1D prediction arrays (e.g., model outputs).
+        Each array must have the same length as `reference`.
+        Multi-dimensional inputs are flattened internally.
 
     reference : array-like
-        The reference (observed) array of shape :math:`(n,)`. It must
-        share the same length as each array in `*y_preds`.
+        The 1D reference (observed) array of shape :math:`(n,)`.
+        Must have the same length as each array in `*y_preds`.
 
     names : list of str or None, optional
-        Labels for each of the arrays in `*y_preds`. If provided, must
-        match the number of prediction arrays. If `None`, each prediction
-        is labeled as "Pred i" automatically.
+        Labels for each prediction array in `*y_preds`. Must match
+        the number of predictions if provided. If ``None``, defaults
+        like "Pred 1", "Pred 2" are used.
 
     acov : {'default', 'half_circle'}, optional
         Angular coverage of the diagram:
-        - ``'default'``: The diagram covers an angle of
-          :math:`\\pi` (180 degrees).
-        - ``'half_circle'``: The diagram covers an angle of
-          :math:`\\pi/2` (90 degrees).
-        If `acov` is `None`, it defaults to ``'half_circle'`` in the
-        current implementation.
+
+        - ``'default'``: Spans :math:`\pi` (180 degrees).
+        - ``'half_circle'``: Spans :math:`\pi/2` (90 degrees).
+
+        If ``None``, defaults to ``'half_circle'``.
 
     zero_location : {'N','NE','E','S','SW','W','NW','SE'}, optional
-        The position on the polar axis that corresponds to a correlation
-        of :math:`1.0`. For example, ``'W'`` (west) places the
-        correlation :math:`\\rho=1` to the left on the polar plot,
-        whereas ``'N'`` (north) places it at the top.
+        Position corresponding to perfect correlation (:math:`\rho=1`).
         Default is ``'E'``.
 
     direction : int, optional
-        Rotation direction for increasing angles. A value of
-        ``1`` sets a counter-clockwise rotation; ``-1`` sets a clockwise
-        rotation. Default is ``-1``.
+        Rotation direction for increasing angles (correlation).
+        ``1`` for counter-clockwise, ``-1`` for clockwise.
+        Default is ``-1``.
 
     only_points : bool, optional
-        If `True`, only the point markers for each prediction are
-        plotted, omitting the radial lines that connect each marker to
-        the origin. If `False`, radial lines are drawn. Default is
-        `False`.
+        If ``True``, plot only markers for predictions, omitting
+        radial lines from the origin. Default is ``False``.
 
     ref_color : str, optional
-        Color used to represent the reference standard deviation either
-        as an arc (if `draw_ref_arc` is `True`) or as a radial line (if
-        `draw_ref_arc` is `False`). Any valid matplotlib color is
-        accepted. Default is ``'red'``.
+        Color for the reference standard deviation marker (arc or
+        line/point). Default is ``'red'``.
 
     draw_ref_arc : bool, optional
-        If `True`, an arc is drawn at the reference standard deviation
-        to highlight its radial position. If `False`, a radial line is
-        drawn from the origin to the reference standard deviation.
-        Default is `True`.
+        If ``True`` (default), draw reference std dev as an arc.
+        If ``False``, draw as a radial line/point at angle zero.
 
     angle_to_corr : bool, optional
-        If `True`, the angular axis (theta) is labeled in terms of
-        correlation values from 0 to 1 (mapping angle
-        :math:`\\theta = \\arccos(\\rho)`), so that perfect correlation
-        :math:`\\rho = 1.0` maps to :math:`\\theta = 0`. If `False`,
-        the angular axis is displayed in degrees. Default is `True`.
+        If ``True`` (default), label the angular axis with
+        correlation values (:math:`\rho`). If ``False``, label with
+        degrees.
 
     marker : str, optional
-        Marker style used for plotting each prediction point.
-        For example, ``'o'`` for a circle or ``'^'`` for a triangle.
-        See matplotlib marker documentation for available options.
+        Marker style for prediction points (e.g., 'o', '^', 's').
         Default is ``'o'``.
 
     corr_steps : int, optional
-        Number of correlation intervals to be labeled on the angular
-        axis when `angle_to_corr` is `True`. A value of 6 creates
-        correlation tick labels from 0.00 to 1.00 in steps of 0.20.
-        Default is 6.
+        Number of correlation ticks (0 to 1) when `angle_to_corr`
+        is ``True``. Default is 6.
 
     cmap : str, optional
-        Colormap name used for the background mesh showing the
-        correlation domain. Any valid matplotlib colormap can be used,
-        such as ``'viridis'`` or ``'turbo'``. Default is ``'viridis'``.
+        Colormap name for the background mesh (e.g., 'viridis').
+        Default is ``'viridis'``.
 
     shading : {'auto', 'gouraud', 'nearest'}, optional
-        The shading method passed to matplotlib's ``pcolormesh`` for
-        rendering the background. Default is ``'auto'``.
+        Shading method for the background mesh (`pcolormesh`).
+        Default is ``'auto'``.
 
     shading_res : int, optional
-        Resolution factor for generating the background mesh grid in
-        both radial and angular dimensions. Larger values produce a
-        smoother background. Default is 300.
+        Resolution for the background mesh grid. Default is 300.
 
-    radial_strategy:  str, optional
-        Defines how the radial background is generated.
-        - `'convergence'`: Correlation is mapped using :math:`cos(theta)`,
-          where :math:`theta` represents the angular displacement. This
-          results in a color gradient converging from high correlation (1)
-          to low correlation (0 or -1, depending on the plot coverage).
-        - `'norm_r'`: Standardizes the radial distance by normalizing `r`
-          to the range `[0, 1]`, where `r` is scaled by the maximum 
-          radius (`rad_limit`).
-        - `'performance'`: Colors are mapped based on distance from 
-          the best-performing model, 
-          using an exponential decay function to highlight the 
-          best-performing region.
-        - `'rwf'` and `'center_focus'`: These are unsupported in this 
-          function. Consider using :func:`gofast.plot.plot_taylor_diagram`
-          instead.
+    radial_strategy : {'convergence', 'norm_r', 'performance'}, optional
+        Strategy for calculating background color values:
 
-    norm_c :bool, optional) 
-        If ``True``, normalizes the color values for a better
-        visual contrast. Ensures that the color distribution is 
-        balanced across the plot by scaling values between a
-        predefined range. Defaults to ``False``.
+        - ``'convergence'``: Color maps to correlation :math:`\cos(\theta)`.
+        - ``'norm_r'``: Color maps to normalized radius (std dev).
+        - ``'performance'``: Color highlights region near the best
+          performing input model.
 
-    norm_range: tuple, optional
-        Specifies the normalization range for color scaling 
-        when ``norm_c=True``.
-        The format should be `(min_value, max_value)`, where:
-        - `min_value`: The lower bound for normalization.
-        - `max_value`: The upper bound for normalization.
-        If `None`, it defaults to `(0, 1)`.
+        If ``None``, defaults to ``'performance'``. `'rwf'` and
+        `'center_focus'` are not supported here.
 
-    cbar : {'off', True, False}, optional
-        Determines whether a colorbar is displayed:
-        - ``'off'`` or `False`: No colorbar is shown.
-        - `True`: A colorbar is added to the figure.
+    norm_c : bool, optional
+        If ``True``, normalize background color values using
+        `norm_range`. Default is ``False``.
+
+    norm_range: tuple of (float, float), optional
+        Range `(min, max)` for background color normalization when
+        `norm_c` is ``True``. Default is ``(0, 1)``.
+
+    cbar : bool or {'off'}, optional
+        Control colorbar display for the background mesh.
+        ``'off'`` or ``False`` hides it, ``True`` shows it.
         Default is ``'off'``.
 
-    fig_size : (float, float), optional
-        Figure size in inches, e.g., ``(width, height)``. If `None`,
-        a default size of approximately ``(10, 8)`` is used.
+    fig_size : tuple of (float, float), optional
+        Figure size in inches ``(width, height)``. Default is ``(10, 8)``.
 
     title : str, optional
-        Title of the diagram. If `None`, defaults to ``"Taylor Diagram"``.
+        Title of the diagram. Default is ``"Taylor Diagram"``.
 
     savefig : str or None, optional
-        If provided with a string path such as ``"diagram.png"``, the
-        figure is saved to that path. If `None`, the figure is only
-        displayed. Default is `None`.
+        Path to save the figure (e.g., ``"diagram.png"``). If `None`,
+        the figure is displayed interactively. Default is `None`.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The Matplotlib Axes object containing the Taylor Diagram.
+        *(Note: Original code may not explicitly return ax.)*
+
+    Raises
+    ------
+    ValueError
+        If input arrays have inconsistent lengths or if invalid
+        parameter options are provided (e.g., for `acov`,
+        `zero_location`, `radial_strategy`).
+    TypeError
+        If non-numeric data is encountered in input arrays.
 
     Notes
     -----
-    **Mathematical Formulation**
+    The Taylor diagram [1]_ displays standard deviation (:math:`\sigma_p`)
+    and correlation (:math:`\rho`) relative to a reference (:math:`r`)
+    with standard deviation :math:`\sigma_r`.
 
-    The Taylor diagram displays two key statistics for each prediction
-    :math:`p` compared to the reference :math:`r`:
+    1.  **Correlation** (:math:`\rho`):
+        .. math::
+           \rho = \frac{\mathrm{Cov}(p, r)}{\sigma_p \sigma_r}
 
-    1. **Correlation** (:math:`\\rho`):
-       .. math::
-          \\rho = \\mathrm{corrcoef}(p, r)[0,1]
+    2.  **Standard Deviation** (:math:`\sigma_p`):
+        .. math::
+           \sigma_p = \sqrt{\frac{1}{n}
+           \sum_{i=1}^n (p_i - \bar{p})^2}
 
-       where :math:`\\mathrm{corrcoef}` is the Pearson correlation
-       coefficient, which can also be expressed as:
+    The plot uses polar coordinates where radius is :math:`\sigma_p`
+    and angle is :math:`\theta = \arccos(\rho)`. The distance from a
+    plotted point to the reference point represents the centered RMS
+    difference.
 
-       .. math::
-          \\rho = \\frac{\\mathrm{Cov}(p, r)}{\\sigma_p \\sigma_r}
+    See Also
+    --------
+    numpy.corrcoef : Compute correlation coefficients.
+    numpy.std : Compute standard deviation.
+    kdiagram.plot.evaluation.taylor_diagram : Flexible version accepting
+        stats or arrays.
+    kdiagram.plot.evaluation.plot_taylor_diagram : Basic version without
+        background shading.
 
-       with :math:`\\mathrm{Cov}(p, r)` being the covariance, and
-       :math:`\\sigma_p`, :math:`\\sigma_r` the standard deviations of
-       :math:`p` and :math:`r`.
-
-    2. **Standard Deviation** (:math:`\\sigma`):
-       .. math::
-          \\sigma = \\sqrt{\\frac{1}{n}
-          \\sum_{i=1}^n\\left(p_i - \\bar{p}\\right)^2}
-
-       where :math:`\\bar{p}` is the mean of the prediction array
-       :math:`p`.
-
-    On the diagram, the radial distance from the origin corresponds to
-    the standard deviation of the prediction, and the polar angle
-    corresponds to :math:`\\arccos(\\rho)` when `angle_to_corr` is
-    `True`.
+    References
+    ----------
+    .. [1] Taylor, K. E. (2001). Summarizing multiple aspects of model
+           performance in a single diagram. *Journal of Geophysical
+           Research*, 106(D7), 7183-7192.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from kdiagram.plot.evaluation import plot_taylor_diagram_in
-    >>> # Generate some synthetic data
+    >>> # Assuming function is imported:
+    >>> # from kdiagram.plot.evaluation import plot_taylor_diagram_in
     >>> np.random.seed(42)
     >>> reference = np.random.normal(0, 1, 100)
     >>> y_preds = [
     ...     reference + np.random.normal(0, 0.3, 100),
     ...     reference * 0.9 + np.random.normal(0, 0.8, 100)
     ... ]
+    >>> # ax = plot_taylor_diagram_in( # Capture axis if returned
     >>> plot_taylor_diagram_in(
     ...     *y_preds,
     ...     reference=reference,
@@ -656,19 +645,11 @@ def plot_taylor_diagram_in(
     ...     acov='half_circle',
     ...     zero_location='N',
     ...     direction=1,
-    ...     fig_size=(8, 8)
+    ...     fig_size=(8, 8),
+    ...     cbar=True,
+    ...     radial_strategy='convergence'
     ... )
-
-    See Also
-    --------
-    - :func:`numpy.corrcoef` : Function to compute correlation.
-    - :func:`numpy.std` : Function to compute standard deviation.
-
-    References
-    ----------
-    .. [1] Taylor, K. E. (2001). Summarizing multiple aspects of model
-           performance in a single diagram. *Journal of Geophysical
-           Research*, 106(D7), 7183-7192.
+    >>> # Plot is shown if savefig is None
     """
 
     # Flatten the reference and predictions
@@ -857,83 +838,68 @@ def plot_taylor_diagram_in(
     plt.show()
 
 
-@validate_params ({
-    'reference': ['array-like'], 
-    'names': [str, 'array-like', None ], 
-    'acov': [StrOptions({'default', 'half_circle'})], 
-    'zero_location': [StrOptions({'N','NE','E','S','SW','W','NW', 'SE'})], 
+@validate_params({
+    'reference': ['array-like'],
+    'names': [str, 'array-like', None ],
+    'acov': [StrOptions({'default', 'half_circle'})],
+    'zero_location': [StrOptions(
+        {'N','NE','E','S','SW','W','NW', 'SE'})],
     'direction': [Integral]
     })
 def plot_taylor_diagram(
     *y_preds: np.ndarray,
-    reference:  np.ndarray,
+    reference: np.ndarray,
     names: Optional[List[str]] = None,
     acov: str = "half_circle",
     zero_location: str = 'W',
     direction: int = -1,
     only_points: bool = False,
     ref_color: str = 'red',
-    draw_ref_arc: bool = ...,
-    angle_to_corr: bool = ..., 
-    marker='o', 
+    draw_ref_arc: bool = True,  
+    angle_to_corr: bool = True,  
+    marker='o',
     corr_steps=6,
     fig_size: Optional[Tuple[int, int]] = None,
-    title: Optional[str]=None, 
-    savefig: Optional[str]=None, 
+    title: Optional[str]=None,
+    savefig: Optional[str]=None,
 ):
-    """
-    Plots a Taylor Diagram, which is used to graphically summarize 
-    how closely a set of predictions match observations. The diagram 
-    displays the correlation between each prediction and the 
-    observations (`reference`) as the angular coordinate and the 
-    standard deviation as the radial coordinate.
+    r"""Plot a standard Taylor Diagram.
+
+    Graphically summarizes how closely a set of predictions match
+    observations (reference). The diagram displays the correlation
+    coefficient and standard deviation of each prediction relative
+    to the reference data [1]_.
 
     Parameters
     ----------
-    y_preds : variable number of `ArrayLike`
-        Each argument is a one-dimensional array containing the 
-        predictions from different models. Each prediction array 
-        should be the same length as the `reference` data array.
+    *y_preds : array-like
+        Variable number of 1D prediction arrays (e.g., model
+        outputs). Each must have the same length as `reference`.
 
-    reference : `ArrayLike`
-        A one-dimensional array containing the reference data against 
-        which the predictions are compared. This should have the same 
-        length as each prediction array.
+    reference : array-like
+        1D array of reference (observation) data. Must have the
+        same length as each prediction array in `*y_preds`.
 
-    names : list of `str`, optional
-        A list of names for each set of predictions. If provided, this 
-        list should be the same length as the number of `y_preds`. 
-        If not provided, predictions will be labeled as "Prediction 1", 
-        "Prediction 2", etc.
+    names : list of str, optional
+        Labels for each prediction series in `*y_preds`. Must match
+        the number of predictions if provided. If ``None``,
+        defaults like "Prediction 1", "Prediction 2" are used.
 
-    acov : `str`, optional
-        Determines the angular coverage of the plot.
+    acov : {'default', 'half_circle'}, default: "half_circle"
+        Determines the angular coverage (correlation range) of the
+        plot:
+
+        - ``'default'``: Spans 180 degrees (:math:`\pi`), covering
+          correlations from -1 to 1 (if applicable).
+        - ``'half_circle'``: Spans 90 degrees (:math:`\pi/2`),
+          covering positive correlations from 0 to 1.
+
+    zero_location : {'N','NE','E','S','SW','W','NW','SE'}, default: 'W'
+        Specifies the position on the polar plot corresponding to
+        perfect correlation (:math:`\rho=1`, angle=0). For example,
+        ``'N'`` (North) is top, ``'E'`` (East) is right, ``'W'``
+        (West) is left.
         
-        - `"default"`: The plot spans 180 degrees, typically covering
-          from the West (270°) to the East (90°).
-        - `"half_circle"`: The plot spans 90 degrees, which can be 
-          useful for focused comparisons.
-          
-        **Default:** `"half_circle"`
-
-    zero_location : `str`, optional
-        Specifies the location of the zero-degree angle on the polar plot.
-        This determines where the correlation coefficient of 1 (perfect
-        correlation) is placed on the diagram.
-        
-        **Accepted Values:**
-        
-        - `'N'`: North (top of the plot, 0°)
-        - `'NE'`: Northeast (45°)
-        - `'E'`: East (right side, 90°)
-        - `'SE'`: Southeast (135°)
-        - `'S'`: South (bottom, 180°)
-        - `'SW'`: Southwest (225°)
-        - `'W'`: West (left side, 270°)
-        - `'NW'`: Northwest (315°)
-        
-        **Default:** `'W'` (West)
-
         **Effects:**
         
         - **Positioning:** Changes the orientation of the diagram by rotating 
@@ -947,18 +913,9 @@ def plot_taylor_diagram(
           at the top of the plot.
         - Setting `zero_location='E'` places it on the right side.
 
-    direction : `int`, optional
-        Determines the direction in which the angles increase on the polar plot.
-        
-        **Accepted Values:**
-        
-        - `1`: Counter-clockwise direction. Angles increase in the 
-          traditional mathematical sense, moving from the zero location 
-          upwards.
-        - `-1`: Clockwise direction. Angles increase in the opposite 
-          direction, moving from the zero location downwards.
-        
-        **Default:** `-1` (Clockwise)
+    direction : {1, -1}, default: -1
+        Direction of increasing angle (decreasing correlation).
+        ``1`` for counter-clockwise, ``-1`` for clockwise.
 
         **Effects:**
         
@@ -974,101 +931,112 @@ def plot_taylor_diagram(
         - `direction=-1`: Correlation angles increase clockwise, which might 
           be preferred for specific visualization standards.
 
-    fig_size : `tuple`, optional
-        The size of the figure in inches as a tuple `(width, height)`. 
-        If not provided, defaults to `(10, 8)`.
-        
-    only_points : :class:`bool`, optional
-        If `only_points` is ``True``, only the markers for each prediction
-        are  drawn; the radial line from the origin to the marker is omitted.
-        Default is ``False``.
+    only_points : bool, default: False
+        If ``True``, only plot markers for predictions. If ``False``,
+        also draw radial lines from the origin to each marker.
 
-    ref_color : :class:`str`, optional
-        Color to use for the reference arc or line. Default is ``'red'``.
+    ref_color : str, default: 'red'
+        Color for the reference standard deviation marker (arc or
+        point/line). Accepts any valid matplotlib color format.
 
-    draw_ref_arc : :class:`bool`, optional
-        If `draw_ref_arc` is ``True``, the  reference standard deviation 
-        is shown as an arc in the diagram. If ``False``, a radial line is 
-        drawn in its place. Default is ``True``.
+    draw_ref_arc : bool, default: True
+        If ``True``, show the reference standard deviation as an arc.
+        If ``False``, show as a marker/line at angle zero.
 
-    angle_to_corr : :class:`bool`, optional
-        If `angle_to_corr` is ``True``, the angular ticks are replaced with 
-        correlation values from ``0.0`` to ``1.0``. If ``False``, angles in 
-        degrees are displayed. Default is ``True``.
+    angle_to_corr : bool, default: True
+        If ``True``, label the angular axis (theta) with correlation
+        values (:math:`\rho`). If ``False``, label with degrees.
 
-    marker : :class:`str`, optional
-        Marker style (e.g. ``'o'`` for circles, ``'s'`` for squares). 
-        Default is ``'o'``.
+    marker : str, default: 'o'
+        Marker style for the prediction points (e.g., 'o', 's', '^').
 
-    corr_steps : :class:`int`, optional
-        Number of ticks between 0 and 1 when `angle_to_corr` is ``True``. 
-        Default is ``6``.
+    corr_steps : int, default: 6
+        Number of ticks (intervals) between 0 and 1 correlation when
+        `angle_to_corr` is ``True``.
 
-    set_corr_angle : :class:`bool`, optional
-        If `set_corr_angle` is ``True``, the correlation approach is used 
-        to set angle ticks automatically. This is typically used along with
-        `angle_to_corr`. Default is ``True``.
-        
+    fig_size : tuple of (float, float), optional
+        Figure size in inches ``(width, height)``. If `None`,
+        defaults to ``(10, 8)``.
+
     title : str, optional
-        Title of the diagram. If `None`, defaults to ``"Taylor Diagram"``.
+        Title for the diagram. If `None`, defaults to
+        "Taylor Diagram".
 
     savefig : str or None, optional
-        If provided with a string path such as ``"diagram.png"``, the
-        figure is saved to that path. If `None`, the figure is only
-        displayed. Default is `None`.
+        Path to save the figure (e.g., ``"diagram.png"``). If `None`,
+        the figure is displayed interactively. Default is `None`.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The Matplotlib Axes object containing the Taylor Diagram.
+        *(Note: Original code implementation may need `return ax` added.)*
+
+    Raises
+    ------
+    ValueError
+        If input arrays have inconsistent lengths or if invalid
+        parameter options are provided for `acov`, `zero_location`,
+        or `direction`.
+    AssertionError
+        If length check inside the function fails (redundant with
+        ValueError from decorator likely).
+    TypeError
+        If non-numeric data is encountered in input arrays.
+
+    Notes
+    -----
+    Taylor diagrams visually assess model performance relative to
+    observations based on three statistics: the correlation
+    coefficient (:math:`R`), the standard deviation (:math:`\sigma`),
+    and the centered root-mean-square difference (RMSD).
+
+    The relationship is based on the law of cosines:
+    .. math::
+        RMSD^2 = \sigma_p^2 + \sigma_r^2 - 2\sigma_p \sigma_r R
+
+    where :math:`\sigma_p` and :math:`\sigma_r` are the standard
+    deviations of the prediction and reference, respectively.
+
+    On the diagram:
+     - Radial distance = Standard deviation (:math:`\sigma_p`)
+     - Angle = Correlation (:math:`\arccos(R)`)
+     - Distance to reference point = Centered RMSD
+
+    See Also
+    --------
+    numpy.corrcoef : Compute correlation coefficients.
+    numpy.std : Compute standard deviation.
+    kdiagram.plot.evaluation.taylor_diagram : Flexible version.
+    kdiagram.plot.evaluation.plot_taylor_diagram_in : Version with
+        background shading.
+
+    References
+    ----------
+    .. [1] Taylor, K. E. (2001). Summarizing multiple aspects of
+           model performance in a single diagram. *Journal of
+           Geophysical Research*, 106(D7), 7183-7192.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from kdiagram.plot.evaluation import plot_taylor_diagram
+    >>> # Assuming function is imported:
+    >>> # from kdiagram.plot.evaluation import plot_taylor_diagram
+    >>> np.random.seed(101)
+    >>> reference = np.random.normal(0, 1.0, 100)
     >>> y_preds = [
-    ...     np.random.normal(loc=0, scale=1, size=100),
-    ...     np.random.normal(loc=0, scale=1.5, size=100)
+    ...     reference * 0.8 + np.random.normal(0, 0.4, 100), # Model A
+    ...     reference * 0.5 + np.random.normal(0, 1.1, 100)  # Model B
     ... ]
-    >>> reference = np.random.normal(loc=0, scale=1, size=100)
+    >>> # ax = plot_taylor_diagram( # Capture axis if returned
     >>> plot_taylor_diagram(
-    ...     *y_preds, 
-    ...     reference=reference, 
-    ...     names=['Model A', 'Model B'], 
+    ...     *y_preds,
+    ...     reference=reference,
+    ...     names=['Model A', 'Model B'],
     ...     acov='half_circle',
-    ...     zero_location='N',
-    ...     direction=1,
-    ...     fig_size=(12, 10)
+    ...     zero_location='W', # Corr=1 on West axis
+    ...     fig_size=(9, 7)
     ... )
-
-    Notes
-    -----
-    Taylor diagrams provide a visual way of assessing multiple 
-    aspects of prediction performance in terms of their ability to 
-    reproduce observational data. It's particularly useful in the 
-    field of meteorology but can be applied broadly to any predictive 
-    models that need comparison to a reference.
-
-    The angular coordinate on the Taylor Diagram represents the 
-    correlation coefficient :math:`R` between each prediction and the 
-    reference, calculated as:
-
-    .. math::
-        R = \frac{\sum_{i=1}^n (y_i - \bar{y})(x_i - \bar{x})}
-        {\sqrt{\sum_{i=1}^n (y_i - \bar{y})^2} 
-        \sqrt{\sum_{i=1}^n (x_i - \bar{x})^2}}
-
-    where :math:`y_i` are the predictions, :math:`x_i` are the 
-    observations, and :math:`\bar{y}` and :math:`\bar{x}` are the 
-    means of the predictions and observations, respectively.
-
-    The radial coordinate represents the standard deviation :math:`\sigma`
-    of the predictions, calculated as:
-
-    .. math::
-        \sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n (y_i - \bar{y})^2}
-
-
-    References
-    ----------
-    .. [1] K. P. Taylor, "Summarizing multiple aspects of model performance 
-       in a single diagram," Journal of Geophysical Research, vol. 106, 
-       no. D7, pp. 7183-7192, 2001.
     """
 
     # Convert inputs to 1D numpy arrays

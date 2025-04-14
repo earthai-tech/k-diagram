@@ -89,7 +89,7 @@ software package itself, targeting the open-source software community.
 
 .. code-block:: bibtex
 
-    @misc{kouadio_kdiagram_joss_prep_2025,
+    @article{kouadio_kdiagram_joss_prep_2025,
       author       = {Kouadio, Kouao Laurent},
       title        = {{k-diagram: Rethinking Forecasting Uncertainty via Polar-Based Visualization}},
       note         = {In preparation for submission to Journal of Open Source Software},

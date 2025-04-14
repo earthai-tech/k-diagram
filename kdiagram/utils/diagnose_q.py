@@ -35,7 +35,7 @@ __all__= [
 ]
 
 def parse_qcols(q_cols, fallback_cols=None, error="warn"):
-    """
+    r"""
     parse_qcols is a utility function designed to interpret
     quantile column mappings from either a dictionary or list.
     It automatically identifies the lowest quantile, the median
@@ -58,7 +58,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     becomes the "lowest" and the maximum becomes the "highest."
     
     Parameters
-    ----------
+    ------------
     q_cols : dict or list, optional
         A collection of quantile definitions. If this
         parameter is a dictionary with keys like ``q10``,
@@ -74,7 +74,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
         'raise', error raises rather than warning issues.
     
     Returns
-    -------
+    ---------
     dict
         A dictionary containing:
         - ``lowest_col``: The column name of the lowest
@@ -89,7 +89,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
           quantiles were parsed.
     
     Notes
-    -----
+    -------
     By default, parse_qcols handles numeric quantile keys that
     begin with the letter 'q', followed by a valid float value
     (e.g., ``q10`` -> 10.0). Keys that cannot be converted into
@@ -97,7 +97,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     values from <parameter `fallback_cols`>.
     
     Examples
-    --------
+    ----------
     >>> from kdiagram.utils.diagnose_q import parse_qcols
     >>> # Example dictionary
     >>> q_def = {'q10': 'low_10', 'q50': 'med_50', 'q90': 'hi_90'}
@@ -105,12 +105,9 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     >>> result['lowest_col']
     'low_10'
     
-    See Also
-    --------
-    None currently.
     
     References
-    ----------
+    ------------
     .. [1] Doe, A., & Smith, J. (2021). Dynamic quantile
        extraction in large datasets. Journal of Data
        Diagnostics, 4(2), 101-110.
@@ -223,7 +220,7 @@ def check_forecast_mode(
     only performs the checks without modifying or returning ``q``.
 
     Parameters
-    ----------
+    ------------
     mode : str
         Forecast mode, either ``"point"`` or
         ``"quantile"``.
@@ -243,19 +240,19 @@ def check_forecast_mode(
         Additional keywords argument of :func:`kdiagram.utils.diagnose_q`.
  
     Returns
-    -------
+    ---------
     q : list of float or None
         The validated (or updated) quantile values if ``ops`` is 
         ``"validate"``; otherwise, returns ``None``.
     
     Raises
-    ------
+    --------
     ValueError
         If an inconsistency is detected and ``error`` is set to 
         ``"raise"``.
     
     Examples
-    --------
+    ----------
     >>> from gofast.utils.diagnose_q impor check_forecast_mode 
     >>> check_forecast_mode("point", q=[0.1, 0.5, 0.9])
     # Raises a ValueError or warns and returns None based on the error flag.
@@ -320,7 +317,7 @@ def to_iterable(
     and modify the input for flexible iterable handling.
 
     Parameters
-    ----------
+    ------------
     obj : Any
         Object to be evaluated or transformed into an iterable.
     exclude_string : bool, default=False
@@ -339,26 +336,26 @@ def to_iterable(
         Regular expression pattern for splitting strings when `parse_string=True`.
 
     Returns
-    -------
+    ---------
     bool or List[Any]
         Returns a boolean if `transform=False`, or an iterable if
         `transform=True`.
 
     Raises
-    ------
+    --------
     ValueError
         If `parse_string=True` without `transform=True`, or if `delimiter`
         is invalid.
 
     Notes
-    -----
+    -------
     - When `parse_string` is used, strings are split by `delimiter` to form a
       list of substrings.
     - `flatten` and `unique` apply only when `transform=True`.
     - Using `unique=True` ensures no duplicate values in the output.
 
     Examples
-    --------
+    ----------
     >>> from kdiagram.utils.diagnose_q import to_iterable
     >>> to_iterable("word", exclude_string=True)
     False
@@ -424,7 +421,7 @@ def validate_q_dict(q_dict, recheck=False):
     keys are within the valid range of quantiles [0, 1].
 
     Parameters
-    ----------
+    ------------
     q_dict : dict
         A dictionary where the keys represent quantiles (either as 
         strings like '0.1' or '10%') and the values are lists of 
@@ -436,7 +433,7 @@ def validate_q_dict(q_dict, recheck=False):
         all keys lie within the range [0, 1].
 
     Returns
-    -------
+    ---------
     dict
         A dictionary with numeric keys if conversion is successful, 
         otherwise the original dictionary. The keys are either floats 
@@ -444,7 +441,7 @@ def validate_q_dict(q_dict, recheck=False):
         be converted.
 
     Notes
-    -----
+    -------
     The function performs the following steps:
     
     1. Iterates over the dictionary to check whether each key can be 
@@ -463,7 +460,7 @@ def validate_q_dict(q_dict, recheck=False):
     '0.1') and percentage-based representations (e.g., '10%' becomes 0.1).
 
     Example
-    -------
+    ---------
     >>> q_dict = {'0.1': ['subsidence_q10'], '50%': ['subsidence_q50'], 
                   '90%': ['subsidence_q90']}
     >>> validate_q_dict(q_dict)
@@ -479,12 +476,12 @@ def validate_q_dict(q_dict, recheck=False):
     {0.1: ['subsidence_q10'], 2.0: ['subsidence_q200']}
 
     See Also
-    --------
+    ----------
    validate_quantiles`: 
        Validates if the values are valid quantiles in the range [0, 1].
 
     References
-    ----------
+    ------------
     .. [1] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in 
            statistical packages. The American Statistician, 50(4), 361-365.
     .. [2] Weiss, N. A. (2015). Introductory Statistics. Pearson.
@@ -535,7 +532,7 @@ def validate_quantiles(
 
     Ensures quantile inputs are valid probabilities :math:`q \in [0,1]` while 
     providing mechanisms for automatic value adjustment through different 
-    scaling strategies.
+    scaling strategies [1]_.
 
     .. math::
 
@@ -544,7 +541,7 @@ def validate_quantiles(
     where :math:`q_{\text{raw}}` is the input value requiring adjustment.
 
     Parameters
-    ----------
+    ------------
     quantiles : array-like
         Input values to validate. Accepts:
         - Numeric values in [0,1]
@@ -571,7 +568,7 @@ def validate_quantiles(
         - ``'individual'``: Scales each value independently
 
     Returns
-    -------
+    ---------
     list or numpy.ndarray
         Validated quantiles in specified format. Return type matches 
         ``asarray`` parameter.
@@ -586,7 +583,7 @@ def validate_quantiles(
         conversions
 
     Examples
-    --------
+    -----------
     Basic validation:
     >>> from kdiagram.utils.diagnose_q import validate_quantiles
     >>> validate_quantiles([0.1, 0.5, 0.9])
@@ -601,7 +598,7 @@ def validate_quantiles(
     array([0.123, 0.789], dtype=float32)
 
     Notes
-    -----
+    --------
     1. In ``mode='soft'``:
        - Percentages convert via :math:`\frac{\text{value}}{100}`
        - Integer scaling uses:
@@ -609,15 +606,15 @@ def validate_quantiles(
          - Individual: :math:`\frac{\text{value}}{10^{\text{self\_digits}}}`
 
     2. Rounding follows banker's rounding (numpy.round behavior) to minimize 
-       cumulative errors [1]_.
+       cumulative errors [2]_.
 
     See Also
-    --------
+    ----------
     gofast.stats.evaluate_quantiles : Evaluates quantile estimation accuracy
     numpy.quantile : Computes quantiles of array values
 
     References
-    ----------
+    ------------
     .. [1] IEEE Standard for Floating-Point Arithmetic. IEEE Std 754-2019.
 
     .. [2] Hyndman, R.J. & Fan, Y. (1996). Sample Quantiles in Statistical 

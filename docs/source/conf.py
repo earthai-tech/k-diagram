@@ -170,7 +170,7 @@ html_logo = "_static/logo_k_diagram.png"
 html_favicon = "_static/logo.ico"
 
 # HTML title
-html_title = f"{project} v{release} Documentation"
+html_title = f"{project} v{release}"
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = True # Set to False if you don't want source links

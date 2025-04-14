@@ -1,8 +1,8 @@
 .. _quickstart:
 
-=================
+==================
 Quick Start Guide
-=================
+==================
 
 This guide provides a minimal, runnable example to get you started
 with `k-diagram`. We'll generate some sample data and create our
@@ -94,10 +94,6 @@ a polar plot similar to this:
    :align: center
    :width: 80%
 
-*(**Note:** You need to run the code snippet above and save the
-resulting plot as ``quickstart_anomaly_magnitude.png`` in an
-``images`` subdirectory within your ``docs/source`` folder, or
-adjust the path accordingly.)*
 
 **Interpreting the Plot:**
 

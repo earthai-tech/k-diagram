@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#   License: Apache 2.0 
+#   Author: LKouadio <etanoyau@gmail.com>
+
+from __future__ import annotations 
 
 import re 
 import inspect

@@ -1,6 +1,175 @@
 # -*- coding: utf-8 -*-
+# Author: LKouadio <etanoyau@gmail.com>
+# License: Apache License 2.0 (see LICENSE file)
+
+"""
+Bunch Data Structure (:mod:`kdiagram.bunch`)
+==========================================
+
+Provides a dictionary-like object that allows accessing keys as
+attributes.
+"""
+from __future__ import annotations 
+import copy
+from typing import Any, Iterable
+
+__all__ = ["Bunch", "FlexDict"]
+
+class Bunch(dict):
+    """Dictionary-like container providing attribute-style access.
+
+    Acts as a standard Python dictionary but allows accessing keys as
+    attributes for convenience, similar to structures used in libraries
+    like scikit-learn for holding datasets or results.
+
+    Parameters
+    ----------
+    *args : tuple
+        Arguments passed directly to the `dict` constructor. Allows
+        initialization from mapping objects or iterables of key-value
+        pairs.
+    **kwargs : dict
+        Keyword arguments passed directly to the `dict` constructor.
+        Allows initialization using key=value pairs.
+
+    Examples
+    --------
+    >>> from kdiagram.bunch import Bunch
+    >>> b = Bunch(a=1, b='hello')
+    >>> b.a
+    1
+    >>> b['b']
+    'hello'
+    >>> b.c = [1, 2, 3]
+    >>> b['c']
+    [1, 2, 3]
+    >>> print(b)
+    Bunch({'a': 1, 'b': 'hello', 'c': [1, 2, 3]})
+    >>> 'a' in b
+    True
+    >>> list(b.keys())
+    ['a', 'b', 'c']
+    """
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize Bunch using dict constructor."""
+        super().__init__(*args, **kwargs)
+        # Bind __getattr__, __setattr__, __delattr__ early
+        # This helps ensure attribute access works immediately even if
+        # these methods were somehow masked by initial keys.
+        self.__dict__["__getattr__"] = super().__getattribute__("__getattr__")
+        self.__dict__["__setattr__"] = super().__getattribute__("__setattr__")
+        self.__dict__["__delattr__"] = super().__getattribute__("__delattr__")
+
+    def __getattr__(self, name: str) -> Any:
+        """Retrieve item via attribute access.
+
+        Called when `bunch.key` attribute access is used. Raises
+        AttributeError if the key is not found, mimicking standard
+        attribute behavior.
+
+        Parameters
+        ----------
+        name : str
+            The attribute (key) name being accessed.
+
+        Returns
+        -------
+        Any
+            The value associated with the key `name`.
+
+        Raises
+        ------
+        AttributeError
+            If `name` is not found as a key in the Bunch object.
+        """
+        try:
+            # Access the item using standard dictionary lookup
+            return self[name]
+        except KeyError:
+            # If key doesn't exist, raise AttributeError
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from None # Suppress context from KeyError
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Set item via attribute access.
+
+        Called when `bunch.key = value` attribute assignment is used.
+        Stores the item as a standard dictionary key-value pair.
+
+        Parameters
+        ----------
+        name : str
+            The attribute (key) name being assigned.
+        value : Any
+            The value to assign to the key `name`.
+        """
+        # Set the item using standard dictionary assignment
+        self[name] = value
+
+    def __delattr__(self, name: str) -> None:
+        """Delete item via attribute access.
+
+        Called when `del bunch.key` attribute deletion is used. Removes
+        the key-value pair from the dictionary. Raises AttributeError
+        if the key is not found.
+
+        Parameters
+        ----------
+        name : str
+            The attribute (key) name to delete.
+
+        Raises
+        ------
+        AttributeError
+            If `name` is not found as a key in the Bunch object.
+        """
+        try:
+            # Delete the item using standard dictionary deletion
+            del self[name]
+        except KeyError:
+            # If key doesn't exist, raise AttributeError
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from None # Suppress context from KeyError
+
+    def __repr__(self) -> str:
+        """Return a string representation indicating it's a Bunch."""
+        # Get the standard dictionary representation
+        dict_repr = super().__repr__()
+        # Wrap it to show it's a Bunch object
+        return f"Bunch({dict_repr})"
+
+    def __dir__(self) -> Iterable[str]:
+        """Provide attributes for tab-completion.
+
+        Includes dictionary keys in the list of attributes available
+        for interactive completion (e.g., in IPython/Jupyter).
+
+        Returns
+        -------
+        Iterable[str]
+            Combined list of standard attributes/methods and keys.
+        """
+        # Start with standard attributes/methods from dict
+        dynamic_attrs = set(super().__dir__())
+        # Add the dictionary keys
+        dynamic_attrs.update(self.keys())
+        return sorted(list(dynamic_attrs))
 
 
+    def copy(self) -> 'Bunch':
+        """Return a shallow copy of the Bunch."""
+        return Bunch(super().copy())
+    
+    def __copy__(self) -> 'Bunch':
+        """Support copy.copy()."""
+        return self.copy()
+    
+    def __deepcopy__(self, memodict={}) -> 'Bunch':
+        """Support copy.deepcopy()."""
+        return Bunch(copy.deepcopy(dict(self), memodict))
+    
 class FlexDict(dict):
     """
     A `FlexDict` is a dictionary subclass that provides flexible attribute-style

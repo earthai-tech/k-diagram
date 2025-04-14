@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#   License: Apache 2.0 
+#   Author: LKouadio <etanoyau@gmail.com>
 
 from __future__ import print_function
 import re

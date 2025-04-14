@@ -1,4 +1,23 @@
 # -*- coding: utf-8 -*-
+# Author: LKouadio <etanoyau@gmail.com>
+# License: Apache License 2.0 (see LICENSE file)
+
+# -------------------------------------------------------------------
+# Defines core properties, constants, and default settings for k-diagram.
+# Parts may be adapted or inspired by code originally found in the
+# 'gofast' package: https://github.com/earthai-tech/gofast
+# Original 'gofast' code licensed under BSD-3-Clause.
+# Modifications and 'k-diagram' are under Apache License 2.0.
+# -------------------------------------------------------------------
+"""
+Core Properties and Constants (:mod:`kdiagram.core.property`)
+===============================================================
+
+This module defines shared constants, default parameter values, string
+enumerations (like accepted options for plot arguments), configuration
+settings, or other core properties used internally throughout the
+`k-diagram` package to ensure consistency.
+"""
 
 import pandas as pd 
 

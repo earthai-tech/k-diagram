@@ -1,42 +1,22 @@
 # -*- coding: utf-8 -*-
-#   License: BSD-3-Clause
-#   Author: LKouadio <etanoyau@gmail.com>
+# File: kdiagram/compat/sklearn.py
+# Author: LKouadio <etanoyau@gmail.com>
+# License: Apache License 2.0
+# ---
+# This file contains compatibility utilities related to scikit-learn.
+# Parts may be adapted from the 'gofast' package:
+# https://github.com/earthai-tech/gofast
+# Original 'gofast' code licensed under BSD-3-Clause.
+# Modifications and 'k-diagram' are under Apache License 2.0.
+# ---
 
 """
-Provides compatibility utilities for different versions of
-scikit-learn (sklearn). It includes functions and feature flags that
-ensure smooth operation across various sklearn versions, handling
-breaking changes and deprecated features. The module includes 
-resampling utilities, scorer functions, and compatibility checks.
+Scikit-learn Compatibility Module (:mod:`kdiagram.compat.sklearn`)
+===================================================================
 
-Key functionalities include:
-- Resampling with sklearn's `resample`
-- Validation with `check_is_fitted`
-- Scorer retrieval with `get_scorer`
-- Feature and compatibility flags for sklearn versions
-
-The module ensures compatibility with sklearn versions less than 
-0.22.0, 0.23.0, and 0.24.0.
-
-Attributes
-----------
-SKLEARN_VERSION : packaging.version.Version
-    The installed scikit-learn version.
-SKLEARN_LT_0_22 : bool
-    True if the installed scikit-learn version is less than 0.22.0.
-SKLEARN_LT_0_23 : bool
-    True if the installed scikit-learn version is less than 0.23.0.
-SKLEARN_LT_0_24 : bool
-    True if the installed scikit-learn version is less than 0.24.0.
-
-Functions
----------
-resample
-    Resample arrays or sparse matrices in a consistent way.
-get_scorer
-    Get a scorer from string.
-check_is_fitted
-    Perform is_fitted validation for sklearn models.
+Provides helper utilities and compatibility shims for interacting with
+different versions of scikit-learn, ensuring smoother integration
+within the k-diagram package.
 """
 from packaging.version import Version, parse
 import inspect
