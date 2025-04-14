@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
-
+try:
+    import kdiagram 
+    VERSION = kdiagram.__version__
+except:
+    VERSION= "1.0.2" 
+    
 # Package metadata
 DISTNAME = "k-diagram"
 DESCRIPTION = "Rethinking Forecasting Uncertainty via Polar-Based Visualization"
@@ -51,12 +56,6 @@ setup_kwargs = {
     },
     'python_requires': '>=3.9',
 }
-
-try:
-    import kdiagram 
-    VERSION = kdiagram.__version__
-except ImportError:
-    VERSION= "1.0" 
 
 setup(
     name=DISTNAME,

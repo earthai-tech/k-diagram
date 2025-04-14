@@ -4,29 +4,35 @@
 include LICENSE
 include README.md
 # include CITATION.cff  # Uncomment if you add this file
-include pyproject.toml  # If you use it
+# include pyproject.toml # Uncomment if you use it
 include MANIFEST.in
 include setup.py
 # include setup.cfg     # Uncomment if you use this file
 
-# Include documentation source files (needed to build docs from sdist)
-# Excludes the built documentation (_build) later
+# --- Include files needed for PyPI description (README rendering) ---
+# Include everything in the _static directory (contains logo)
+recursive-include docs/source/_static *
+# Include specific images referenced in README.md (assuming naming convention)
+# This looks for files like 'readme_*.png' directly inside 'docs/source/images/'
+include docs/source/images/readme_*.png
+
+# --- Include documentation source files (for building docs from sdist) ---
 recursive-include docs/source *.rst
 recursive-include docs/source *.py
-recursive-include docs/source/_static *
+# Note: _static is already included above
 recursive-include docs/source/_templates *
-# recursive-include docs/source/gallery/images * # Optional: Include source images?
+# Optional: Include ALL gallery source images? (Uncomment if needed)
+# recursive-include docs/source/gallery/images *
 include docs/Makefile
 include docs/make.bat
-include kdiagram/datasets/data/min_zhongshan.csv # include the package dataset.
 include docs/requirements.txt # Include requirements needed to build docs
 
-# Include examples directory if it exists and you want it in the sdist
-# recursive-include examples *.py *.ipynb *.csv *.md
+# --- Include package data ---
+# Include the dataset bundled with the package
+include kdiagram/datasets/data/min_zhongshan.csv
 
-# Include any non-code package data specified via include_package_data=True
-# or list specific files within the kdiagram package directory if needed
-# Example: include kdiagram/data/default_settings.json
+# --- Include examples directory (if it exists) ---
+# recursive-include examples *.py *.ipynb *.csv *.md
 
 # --- Exclusions ---
 
@@ -50,8 +56,8 @@ recursive-exclude .github *
 recursive-exclude venv *
 recursive-exclude .venv *
 
-# Exclude common IDE directories
-recursive-exclude .* # Catches .git, .idea, .vscode etc.
+# Exclude common IDE directories and other hidden files/dirs like .git
+recursive-exclude .*
 
 # Exclude build artifacts explicitly
 recursive-exclude build *
@@ -65,4 +71,4 @@ recursive-exclude docs/_build *
 
 # Prune empty directories resulting from exclusions
 prune docs/_build
-# other prune directives if needed (e.g., prune tests/__pycache__)
+# prune tests/__pycache__ # Example
