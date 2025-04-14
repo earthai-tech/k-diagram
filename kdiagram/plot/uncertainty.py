@@ -54,7 +54,7 @@ __all__=[
      'plot_uncertainty_drift',
      'plot_velocity', 
 ]
-
+   
 def plot_coverage(
     y_true,
     *y_preds,
@@ -73,179 +73,212 @@ def plot_coverage(
     savefig=None,
     verbose=1 
 ):
-    """
-    Plot coverage scores for quantile or point forecasts and allow
-    multiple visualization styles (line, bar, pie, and radar).
+    r"""Plot overall coverage scores for forecast intervals or points.
 
-    This function computes and visualizes the fraction of times
-    the true values :math:`y_i` lie within predicted quantile
-    intervals or match point forecasts, for one or more models.
-    If multiple prediction arrays are passed (e.g. from different
-    models), this function compares their coverage on the same
-    figure through different plot types.
+    Computes and visualizes the empirical coverage rate, which is
+    the fraction of times the true values fall within predicted
+    quantile intervals (or match point forecasts). Supports comparing
+    multiple models or prediction sets using various chart types.
 
-    .. math::
-        \\text{coverage} = \\frac{1}{N}\\sum_{i=1}^{N}
-        1\\{\\hat{y}_{i}^{(\\ell)} \\leq y_i
-        \\leq \\hat{y}_{i}^{(u)}\\}
-
-    where :math:`\\hat{y}_{i}^{(\\ell)}` is the lower quantile
-    prediction for the :math:`i`th sample and :math:`\\hat{y}_{i}^{
-    (u)}` is the upper quantile prediction. The indicator function
-    :math:`1\\{\\cdot\\}` counts how many times the true value
-    :math:`y_i` lies within or on the boundaries of the predicted
-    interval.
+    This plot provides a high-level summary of whether prediction
+    intervals are well-calibrated on average across the entire
+    dataset. It's useful for quickly comparing the overall
+    reliability of uncertainty estimates from different models or
+    parameter settings before diving into finer diagnostics.
 
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True target values.
+        The ground truth target values. Must be a 1D array-like
+        object (list, NumPy array, pandas Series).
 
-    *y_preds : one or more array-like objects, each of shape
-        (n_samples,) or (n_samples, n_quantiles)
-        Predicted values from one or more models. If a 2D array is
-        passed, its columns are considered to be predictions for
-        different quantiles. If a 1D array is passed, it is treated
-        as a point forecast.
+    *y_preds : array-like
+        Variable number of prediction arrays. Each positional
+        argument should be an array-like object corresponding to a
+        model or prediction set. The shape determines interpretation:
+        - shape (n_samples, n_quantiles): Represents quantile
+          forecasts (e.g., lower, median, upper bounds). Coverage
+          is calculated based on the interval defined by the minimum
+          and maximum quantile columns provided (after sorting based
+          on `q` if given, or by value otherwise). Requires `q`
+          parameter for proper interval definition if quantiles
+          are not ordered.
+        - shape (n_samples,): Represents point forecasts. Coverage
+          is calculated as the proportion of exact matches to
+          `y_true` (typically near zero for continuous data).
 
-    names : list of str or None, optional
-        Names for each set of predictions. If None, default names
-        (e.g. "Model_1") are generated. If the length of `names`
-        is less than the number of prediction arrays, the rest
-        are auto-generated.
+    names : list of str, optional
+        Labels for each prediction set provided in `*y_preds`. Used
+        in legends and axis labels. If `None` or shorter than the
+        number of prediction sets, default names like "Model_1",
+        "Model_2", etc., are generated for the missing ones.
+        Default is ``None``.
 
-    q : list of float or None, optional
-        Quantile levels for each column of the 2D prediction arrays.
-        If provided, predictions for each row are sorted in ascending
-        order, and coverage is computed between the minimum and
-        maximum quantile predictions. If None, coverage is assumed
-        to be a point forecast unless a different approach is
-        implemented by the user.
+    q : list of float, optional
+        Quantile levels corresponding to the columns in 2D `y_preds`
+        arrays. Values must be between 0 and 1. Used to identify
+        and sort quantile columns correctly before determining the
+        interval bounds (minimum and maximum specified quantile) for
+        coverage calculation. Required if `y_preds` contains 2D
+        arrays representing unordered quantiles. Default is ``None``.
 
-    kind : str, optional (default='line')
-        Type of plot to use for displaying coverage. Possible
-        values are:
-        
-        - ``'line'``: Plots a line chart of coverage scores.
-        - ``'bar'``: Plots a bar chart of coverage scores.
-        - ``'pie'``: Creates a pie chart where each slice
-          corresponds to a model's coverage fraction relative
-          to the total coverage sum.
-        - ``'radar'``: Creates a radar chart placing each model's
-          coverage on a radial axis.
+    kind : {'line', 'bar', 'pie', 'radar'}, optional
+        The type of plot to generate for visualizing coverage scores.
+        Default is ``'line'``.
 
-    cmap : str, optional (default='viridis')
-        Colormap used in the pie chart. Each model slice is
-        assigned a color from this colormap. Also used more
-        generally if extended.
+        - ``'line'``: Line chart connecting coverage scores for
+          each prediction set.
+        - ``'bar'``: Bar chart showing the coverage score for each
+          prediction set.
+        - ``'pie'``: Pie chart where each slice represents a model's
+          coverage score as a fraction of the sum of all scores.
+        - ``'radar'``: Radar (spider) chart where each axis
+          represents a prediction set, and the distance along the
+          axis indicates its coverage score.
 
-    pie_startangle : float, optional (default=140)
-        Start angle for the pie chart in degrees.
+    cmap : str, optional
+        Matplotlib colormap name used for coloring slices in the
+        `'pie'` chart or the gradient fill in single-model radar
+        plots when ``cov_fill=True``. Default is ``'viridis'``.
 
-    pie_autopct : str, optional (default='%1.1f%%')
-        Format of the numeric label displayed on each pie slice.
+    pie_startangle : float, optional
+        Starting angle in degrees for the first slice in the `'pie'`
+        chart. Rotates the chart orientation. Default is 140.
 
-    radar_color : str, optional (default='tab:blue')
-        Main line and fill color for the radar chart.
+    pie_autopct : str or None, optional
+        String formatting pattern (e.g., ``'%1.1f%%'``) used to label
+        pie slices with their numeric value (percentage). If `None`,
+        no numeric labels are shown. Default is ``'%1.1f%%'``.
 
-    radar_fill_alpha : float, optional (default=0.25)
-        Alpha blending value for the filled area in the radar chart,
-        controlling transparency.
+    radar_color : str, optional
+        Color specification for the main line and optional fill in
+        the `'radar'` chart. Accepts any valid Matplotlib color.
+        Default is ``'tab:blue'``.
 
-    radar_line_style : str, optional (default='o-')
-        Marker and line style for the coverage in the radar chart,
-        for instance ``'o-'`` or ``'-'``.
-        
-    cov_fill : bool, default=False
-        Enable gradient fill for radar plots. For single models, creates
-        a radial gradient up to coverage value. For multiple models,
-        fills polygon areas.
-        
-    figsize : tuple of float, optional
-        Figure size (width, height) in inches passed to matplotlib.
+    radar_fill_alpha : float, optional
+        Transparency level (alpha) for the filled area in the
+        `'radar'` chart when ``cov_fill=True``. Value between 0
+        (transparent) and 1 (opaque). Default is 0.25.
 
-    title : str or None, optional
-        Title for the plot. If None, no title is displayed.
+    radar_line_style : str, optional
+        Matplotlib line and marker style string for the radar chart
+        outline (e.g., ``'o-'``, ``'--'``, ``':'``).
+        Default is ``'o-'``.
 
-    savefig : str or None, optional
-        Filename (and extension) for saving the figure. If None,
-        the figure is only displayed and not saved.
+    cov_fill : bool, optional
+        If ``True`` and ``kind='radar'``, fills the area under the
+        radar plot lines. For a single model, creates a radial
+        gradient; for multiple models, fills polygons.
+        Default is ``False``.
 
-    verbose : int, default=1
-        Control coverage score printing:
-            - 0: No output
-            - 1: Print formatted coverage summary
-       
+    figsize : tuple of (float, float), optional
+        Figure size ``(width, height)`` in inches. If ``None``, uses
+        Matplotlib's default figure size.
+
+    title : str, optional
+        Optional title for the plot. Default is ``None``.
+
+    savefig : str, optional
+        If not ``None``, specifies the full path (including filename
+        and extension, e.g., 'coverage.png') to save the figure.
+        If ``None``, the plot is displayed interactively.
+        Default is ``None``.
+
+    verbose : {0, 1}, optional
+        Controls printing of coverage scores to the console.
+        - ``0``: Silent.
+        - ``1``: Prints a formatted summary of coverage scores.
+        Default is ``1``.
+
     Returns
     -------
     None
-        This function renders a coverage plot and may save it,
-        depending on the `savefig` argument.
+        This function generates and displays or saves a Matplotlib plot
+        but does not return any object.
 
-    Notes
-    -----
-    - If `q` is specified and the predictions are 2D, the first
-      and last columns of the sorted prediction array determine
-      the coverage interval. Intermediate quantile columns are
-      not used directly but may be relevant in other analyses.
-    - If the predictions are 1D point forecasts, coverage is
-      computed as the fraction of exact matches
-      (:math:`\\hat{y}_i = y_i`), which typically remains 0
-      unless the data are discrete or artificially matched.
-    - Different plot types offer various perspectives:
-      - Bar or line charts present coverage per model on a
-        simple numerical scale (0 to 1).
-      - Pie charts represent each model's coverage fraction
-        out of the sum of coverages. 
-      - Radar charts place each model's coverage on a radial
-        axis for a comparative "spider" plot.
-        
-    1. For quantile predictions (2D arrays), coverage is computed between
-       the minimum and maximum quantiles per observation
-    2. Point forecast coverage (1D arrays) measures exact matches, which
-       is typically near-zero for continuous data
-    3. Radar plots with ``cov_fill=True`` display:
-        - Gradient fill from center to coverage value (single model)
-        - Transparent polygon fill (multiple models)
-        - Red reference line at coverage level (single model)
+    Raises
+    ------
+    ValueError
+        If `q` contains values outside (0, 1), or if `kind` is not
+        one of the allowed options, or if dimensions of `y_preds`
+        and `q` are incompatible.
+    TypeError
+        If inputs `y_true` or `y_preds` contain non-numeric data.
 
     See Also
     --------
-    gofast.plot.plot_roc : Receiver operating characteristic curve plotting
-    gofast.plot.plot_residuals : Diagnostic residual analysis plots
+    kdiagram.plot.uncertainty.plot_coverage_diagnostic : Plot point-wise
+        coverage status.
+    numpy.mean : Used to calculate the average coverage rate.
+
+    Notes
+    -----
+    The empirical coverage rate is a key metric for assessing the
+    calibration of probabilistic forecasts, particularly prediction
+    intervals [1]_.
+
+    **Calculation:**
+
+    - For quantile intervals (2D `y_preds`), the interval for each
+      sample :math:`i` is defined by the minimum and maximum
+      predicted values across the specified quantiles for that sample,
+      :math:`[\hat{y}_{i}^{(\ell)}, \hat{y}_{i}^{(u)}]`. Coverage is:
+          
+      .. math::
+         \text{Coverage} = \frac{1}{N}\sum_{i=1}^{N}
+         \mathbf{1}\{\hat{y}_{i}^{(\ell)} \leq y_i
+         \leq \hat{y}_{i}^{(u)}\}
+      where :math:`\mathbf{1}\{\cdot\}` is 1 if true, 0 otherwise.
+    - For point forecasts (1D `y_preds`), coverage is the proportion
+      of exact matches:
+      .. math::
+         \text{Coverage} = \frac{1}{N}\sum_{i=1}^{N}
+         \mathbf{1}\{ \hat{y}_i = y_i \}
+      This is typically very low for continuous :math:`y_true`.
+
+    **Interpretation:** Compare the calculated coverage score(s) to
+    the nominal coverage rate implied by the quantiles (e.g., 80%
+    for a Q10-Q90 interval). Scores far from the nominal rate suggest
+    miscalibration (intervals too wide or too narrow on average).
+
+    **Radar Plot Fill (`cov_fill=True`):**
+    - Single model: Shows a circular gradient fill from the center
+      out to the calculated coverage score radius, with a solid
+      reference line at the coverage score.
+    - Multiple models: Fills the polygon defined by the coverage
+      scores for all models with a semi-transparent color.
 
     References
     ----------
-    .. [1] Koenker, R. and Bassett, G. (1978). "Regression
-           quantiles." *Econometrica*, 46(1), 33–50.
+    .. [1] Gneiting, T., & Raftery, A. E. (2007). Strictly Proper
+           Scoring Rules, Prediction, and Estimation. *Journal of the
+           American Statistical Association*, 102(477), 359–378.
+           *(General reference on probabilistic forecast evaluation)*
 
     Examples
     --------
     >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_coverage
+    >>> from kdiagram.plot.uncertainty import plot_coverage 
     >>> # True values
-    >>> y_true = np.random.rand(100)
-    >>> y_pred = np.random.rand(100, 3)
-    >>> # 3-quantile predictions for a single model
-    >>> y_pred_q = np.random.rand(100, 3)
-    >>> q = [0.1, 0.5, 0.9]
-    >>> # Bar chart coverage
-    >>> plot_coverage(y_true, y_pred_q, q=q,
-    ...               names=['QuantModel'],
-    ...               kind='bar',
-    ...               title='Coverage (Bar)')
-    # Single model quantile coverage
-    >>> y_pred = np.random.rand(200, 3)
-    >>> plot_coverage(y_true, y_pred, q=[0.1, 0.5, 0.9],
-    ...               kind='radar', names=['QModel'],
-    ...               cov_fill=True, cmap='plasma')
-    >>> # Multiple models with radar plot
-    >>> y_pred_q2 = np.random.rand(100, 3)
-    >>> plot_coverage(y_true, y_pred_q, y_pred_q2,
-    ...               q=q,
-    ...               names=['Model1','Model2'],
-    ...               kind='radar',
-    ...               title='Coverage (Radar)')
+    >>> y_true = np.random.rand(100) * 10
+    >>> # 3-quantile predictions (Q10, Q50, Q90) for two models
+    >>> y_pred_A = np.sort(np.random.normal(
+    ...    loc=9, scale=2, size=(100, 3)), axis=1)
+    >>> y_pred_B = np.sort(np.random.normal(
+    ...    loc=11, scale=3, size=(100, 3)), axis=1)
+    >>> q_levels = [0.1, 0.5, 0.9]
+
+    >>> # Bar chart comparison
+    >>> plot_coverage(y_true, y_pred_A, y_pred_B, q=q_levels,
+    ...               names=['Model A', 'Model B'], kind='bar',
+    ...               title='Coverage Comparison (Bar)')
+
+    >>> # Radar chart comparison with fill
+    >>> plot_coverage(y_true, y_pred_A, y_pred_B, q=q_levels,
+    ...               names=['Model A', 'Model B'], kind='radar',
+    ...               title='Coverage Comparison (Radar)',
+    ...               cov_fill=True, cmap='Set2')
+
     """
 
     # Convert the true values to a numpy array for consistency
@@ -514,136 +547,178 @@ def plot_model_drift(
     grid_props: dict | None = None,
     savefig: str | None = None,
 ):
-    """Visualise forecast drift across prediction horizons.
+    r"""Visualize forecast drift across prediction horizons.
 
-    This utility renders a polar bar chart to depict how model
-    reliability *evolves* as the forecast horizon increases.
-    The radial coordinate encodes the *average* predictive
-    uncertainty  computed as the mean inter-quantile width
-    :math:`w_i = \mathbb{E}[q_{0.90} - q_{0.10}]`  while the
-    angular coordinate corresponds to successive horizons
-    (e.g. *2023 ? 2026*).
+    Renders a polar bar chart depicting how average model
+    uncertainty (or another metric) evolves as the forecast horizon
+    increases. Each bar corresponds to a specific forecast horizon,
+    arranged angularly.
 
-    The function is particularly helpful for identifying
-    *concept drift* or *model aging* [1]_. A steep radial growth
-    signals that uncertainty (or any supplied error metric)
-    inflates with lead-time, suggesting the need for model
-    retraining or data augmentation.
+    This plot is crucial for diagnosing model degradation over
+    longer lead times, often termed *concept drift* or *model
+    aging* [1]_. A distinct increase in bar height (radius) for
+    later horizons signals inflating uncertainty or error, potentially
+    indicating a need for model retraining or adjustments to account
+    for changing dynamics. Use this visualization to assess if your
+    model's reliability holds as you forecast further into the
+    future.
 
     Parameters
     ----------
     df : pandas.DataFrame
-        Tabular container holding at least the lower- and
-        upper-quantile columns for every horizon.
+        Input DataFrame containing the necessary quantile columns (or
+        columns specified in ``color_metric_cols``) for each forecast
+        horizon.
 
-    q_cols : list[tuple[str, str]] | None, optional
-        Pre-paired column tuples ``[(q10, q90), ...]``. If *None*,
-        both `q10_cols` *and* `q90_cols` must be supplied.
+    q_cols : list[tuple[str, str]], optional
+        A list where each element is a tuple containing the column
+        names for the lower and upper quantiles for a specific
+        horizon, e.g., ``[('q10_h1', 'q90_h1'), ('q10_h2', 'q90_h2')]``.
+        If ``None``, ``q10_cols`` and ``q90_cols`` must be provided
+        instead. Default is ``None``.
 
-    q10_cols, q90_cols : list[str] | None, optional
-        Alternative to `q_cols`. Provide **equal-length** lists of
-        lower (10-th) and upper (90-th) quantile columns.
+    q10_cols : list[str], optional
+        List of column names representing the lower quantile (e.g.,
+        10th percentile) for each successive horizon. Must be provided
+        if ``q_cols`` is ``None``. Must have the same length as
+        ``q90_cols`` and ``horizons`` (if provided). Default is ``None``.
 
-    horizons : list[str | int], optional
-        Labels mapped to the angular ticks. Defaults to
-        ``["Horizon 1", "Horizon 2", 
-]``.
+    q90_cols : list[str], optional
+        List of column names representing the upper quantile (e.g.,
+        90th percentile) for each successive horizon. Must be provided
+        if ``q_cols`` is ``None``. Must have the same length as
+        ``q10_cols`` and ``horizons`` (if provided). Default is ``None``.
 
-    color_metric_cols : list[str] | None, optional
-        Extra columns whose mean values colour the bars  e.g.
-        *RMSE* or *MAE*. If *None*, colours follow the primary
-        uncertainty metric.
+    horizons : list of str or int, optional
+        Labels corresponding to each forecast horizon (plotted on the
+        angular axis). The order must match the order in ``q_cols`` or
+        ``q10_cols``/``q90_cols``. If ``None``, generic labels like
+        "Horizon 1", "Horizon 2", ... are generated.
+        Default is ``None``.
 
-    acov : {'default', 'half_circle', 'quarter_circle',
-            'eighth_circle'}, default='quarter_circle'
-        Angular coverage of the plot. Use narrower sectors when
-        the number of horizons is small.
+    color_metric_cols : list of str, optional
+        If provided, the bars are colored based on the mean value of
+        these columns for each horizon (e.g., provide RMSE columns
+        like ``['rmse_h1', 'rmse_h2', ...]``). If ``None``, bars are
+        colored based on the calculated mean interval width (Q90-Q10).
+        Default is ``None``.
 
-    value_label : str, default='Uncertainty Width (Q90 - Q10)'
-        Y-axis label shown at the plot margin.
+    acov : {'default', 'half_circle', 'quarter_circle', \
+'eighth_circle'}, optional
+        Specifies the angular coverage (span) of the plot. Use narrower
+        sectors for fewer horizons. Default is ``'quarter_circle'``.
 
-    cmap : str, default='coolwarm'
-        Matplotlib-compatible colormap for bar colouring.
+        - ``'default'``: Full circle (:math:`2\pi`, 360°).
+        - ``'half_circle'``: Half circle (:math:`\pi`, 180°).
+        - ``'quarter_circle'``: Quarter circle (:math:`\pi/2`, 90°).
+        - ``'eighth_circle'``: Eighth circle (:math:`\pi/4`, 45°).
 
-    figsize : tuple[int, int], default=(8, 8)
-        Figure dimension in inches ``(width, height)``.
+    value_label : str, optional
+        Label displayed for the radial axis, describing the metric
+        represented by the bar height. Default is
+        ``'Uncertainty Width (Q90 - Q10)'``.
 
-    title : str, default='Model Forecast Drift Over Time'
-        Plot headline.
+    cmap : str, optional
+        Name of the Matplotlib colormap used to color the bars based
+        on their radial value (or the `color_metric_cols` value).
+        Default is ``'coolwarm'``.
 
-    show_grid : bool, default=True
-        Display radial grid lines for easier reading.
+    figsize : tuple of (float, float), optional
+        Figure dimensions ``(width, height)`` in inches. If ``None``,
+        uses the default ``(8, 8)``.
 
-    annotate : bool, default=True
-        Write the numeric value atop each bar.
+    title : str, optional
+        Headline text displayed above the plot. Default is
+        ``'Model Forecast Drift Over Time'``.
 
-    grid_props : dict | None, optional
-        Keyword overrides forwarded to
-        :py:meth:`matplotlib.axes.Axes.grid`.
+    show_grid : bool, optional
+        If ``True``, displays radial and angular grid lines to aid
+        interpretation. Default is ``True``.
 
-    savefig : str | None, optional
-        Output path. When provided, the figure is written to disk
-        instead of being displayed.
+    annotate : bool, optional
+        If ``True``, displays the numeric value (mean width or mean
+        color metric) on top of each bar. Default is ``True``.
+
+    grid_props : dict, optional
+        Dictionary of keyword arguments to customize the appearance
+        of the grid lines (passed to ``ax.grid()``). E.g.,
+        ``{'linestyle': ':', 'linewidth': 0.5}``. Default is ``None``.
+
+    savefig : str, optional
+        Full path and filename to save the plot (e.g., 'drift.pdf').
+        If ``None``, the plot is displayed interactively.
+        Default is ``None``.
 
     Returns
     -------
     matplotlib.axes.Axes
-        The polar axes containing the graphic  useful for further
-        customisation.
+        The polar axes object containing the bar chart, allowing
+        for further customization if desired.
 
-    Notes
-    -----
-    The radial quantity is obtained via
-
-    .. math::
-
-       w_i = \frac{1}{N}\sum_{n=1}^{N}\left(q_{0.90}^{(n)} -
-             q_{0.10}^{(n)}\right),
-
-    where :math:`N` is the number of samples and *i* indexes the
-    forecast horizon. When `acov` ? 'default', radii are
-    min-max-scaled to fit the restricted angular sector.
-
-    Examples
-    --------
-    >>> from kdiagram.plot.uncertainty import plot_model_drift
-    >>> ax = plot_model_drift(
-    ...     df=zhongshan_pred_2023_2026,
-    ...     q10_cols=[
-    ...         'subsidence_2023_q10', 'subsidence_2024_q10',
-    ...         'subsidence_2025_q10', 'subsidence_2026_q10'],
-    ...     q90_cols=[
-    ...         'subsidence_2023_q90', 'subsidence_2024_q90',
-    ...         'subsidence_2025_q90', 'subsidence_2026_q90'],
-    ...     horizons=[2023, 2024, 2025, 2026],
-    ...     acov='quarter_circle',
-    ...     title='Forecast Horizon Drift  Zhongshan')
-
-    >>> # Random demo with synthetic data
-    >>> rng = np.random.default_rng(seed=42)
-    >>> years = np.arange(1, 9)
-    >>> synth = pd.DataFrame({
-    ...     f'q10_{y}': rng.normal(loc=0, scale=1, size=100)
-    ...     for y in years})
-    >>> synth.update({
-    ...     f'q90_{y}': synth[f'q10_{y}'] +
-    ...     rng.uniform(0.5, 1.5, size=100)})
-    >>> plot_model_drift(synth,
-    ...                 q10_cols=[f'q10_{y}' for y in years],
-    ...                 q90_cols=[f'q90_{y}' for y in years])
+    Raises
+    ------
+    ValueError
+        If required quantile columns (`q_cols` or both `q10_cols`
+        and `q90_cols`) are missing from `df`, or if the lengths of
+        provided column lists/horizons mismatch.
+    TypeError
+        If data in the specified columns cannot be processed
+        numerically.
 
     See Also
     --------
-    gofast.plot.utils.build_qcols_multiple : Helper to pair
-        quantile columns.
-    gofast.plot.utils.set_axis_grid : Convenience wrapper for
-        grid styling.
+    kdiagram.plot.uncertainty.plot_uncertainty_drift : Visualize drift
+        of the uncertainty pattern using rings.
+    kdiagram.utils.plot.set_axis_grid : Helper for grid styling (if used).
+
+    Notes
+    -----
+    The primary radial value plotted for each horizon :math:`h` is the
+    mean interval width calculated across all :math:`N` samples:
+
+    .. math::
+       \bar{w}_h = \frac{1}{N}\sum_{j=1}^{N} \left( Q_{up, j, h} -
+       Q_{low, j, h} \right)
+
+    If ``color_metric_cols`` is provided, a similar average is
+    calculated for those columns to determine bar color.
+
+    Radii may be scaled relative to the maximum radius if a
+    restricted angular coverage (``acov`` is not 'default') is used,
+    to better fit the visual sector.
 
     References
     ----------
-    .. [1] Gama, J., liobaite, I., Bifet, A., Pechenizkiy, M.,
-       & Bouchachia, A. (2014). *A survey on concept drift
-       adaptation*. ACM Computing Surveys (CSUR), 46(4), 1-37.
+    .. [1] Gama, J., Žliobaitė, I., Bifet, A., Pechenizkiy, M., &
+           Bouchachia, A. (2014). A survey on concept drift
+           adaptation. *ACM Computing Surveys (CSUR)*, 46(4), 1-37.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> # Assuming function is imported
+    >>> # from kdiagram.plot.uncertainty import plot_model_drift
+    >>> # Example with synthetic data
+    >>> years = [2023, 2024, 2025, 2026]
+    >>> n_samples=50
+    >>> df_synth = pd.DataFrame()
+    >>> q10_cols, q90_cols = [], []
+    >>> for i, year in enumerate(years):
+    ...     ql, qu = f'val_{year}_q10', f'val_{year}_q90'
+    ...     q10_cols.append(ql); q90_cols.append(qu)
+    ...     q10 = np.random.rand(n_samples)*5 + i*0.5
+    ...     q90 = q10 + np.random.rand(n_samples)*2 + 1 + i*0.8
+    ...     df_synth[ql]=q10; df_synth[qu]=q90
+    ...
+    >>> ax = plot_model_drift(
+    ...     df=df_synth,
+    ...     q10_cols=q10_cols,
+    ...     q90_cols=q90_cols,
+    ...     horizons=years,
+    ...     acov='quarter_circle', # Use 90 degree span
+    ...     title='Synthetic Model Drift Example'
+    ... )
     """
     # 
     # 1. Pair quantile columns 
@@ -887,8 +962,8 @@ def plot_velocity(
     numpy.mean : Computes the arithmetic mean.
     matplotlib.pyplot.scatter : Creates scatter plots.
     matplotlib.pyplot.polar : Creates polar plots.
-    plot_polar_uncertainty_spread : Related function for plotting
-                                    uncertainty ranges.
+    kdiagram.plot.uncertainty.plot_uncertainty_drift : Visualizes
+        uncertainty width changes over time.
 
     Notes
     -----
@@ -1863,7 +1938,8 @@ def plot_anomaly_magnitude(
 
     See Also
     --------
-    plot_velocity : Visualize average velocity in polar coordinates.
+    kdiagram.plot.uncertainty.plot_velocity : 
+        Visualize average velocity in polar coordinates.
     plot_interval_consistency : Visualize consistency of interval widths.
     validate_qcols : Helper function for validating quantile columns.
     matplotlib.pyplot.scatter : Function used for plotting points.

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+# License: Apache 2.0
+# Author: LKouadio <etanoyau@gmail.com>
 
 import warnings 
 import matplotlib.pyplot as plt 
 import matplotlib.cm as cm
 import numpy as np 
+from typing import Optional, List, Tuple, Union, Any 
 
 from ..decorators import check_non_emptiness 
 from..utils.handlers import columns_manager 
@@ -14,15 +17,15 @@ __all__=['plot_feature_fingerprint']
 @check_non_emptiness (params =["importances"])
 def plot_feature_fingerprint(
     importances,
-    features=None,
-    labels=None,
-    normalize=True,
-    fill=True,
-    cmap='tab10',
-    title="Feature Impact Fingerprint",
-    figsize=(8, 8),
-    show_grid=True,
-    savefig=None
+    features: Optional[List[str]] = None,
+    labels: Optional[List[str]] = None,
+    normalize: bool = True,
+    fill: bool = True,
+    cmap: Union[str, List[Any]] = 'tab10', 
+    title: str = "Feature Impact Fingerprint",
+    figsize: Optional[Tuple[float, float]] = None, 
+    show_grid: bool = True,
+    savefig: Optional[str] = None
 ):
     r"""Create a radar chart visualizing feature importance profiles.
 
@@ -101,18 +104,18 @@ def plot_feature_fingerprint(
         Default is ``None``.
 
     Returns
-    ----------
+    --------
     ax : matplotlib.axes.Axes
         The Matplotlib Axes object containing the radar chart. This
         can be used for further customization if needed.
 
     See Also
-    -----------
+    ---------
     matplotlib.pyplot.polar : Underlying function for polar plots.
     numpy.linspace : Used for calculating angles.
 
     Notes
-    -------
+    ------
     - The function uses helper utilities like `ensure_2d` and
       `columns_manager` (assumed available) for input validation
       and preprocessing.
@@ -134,6 +137,7 @@ def plot_feature_fingerprint(
 
     1. **Angle Calculation**: Angles for each feature axis are
        calculated as:
+           
        .. math::
            \theta_j = \frac{2 \pi j}{N}, \quad j = 0, 1, \dots, N-1
 
@@ -153,7 +157,7 @@ def plot_feature_fingerprint(
        the enclosed area is filled.
 
     Examples
-    -----------
+    ---------
     >>> import numpy as np
     >>> from kdiagram.plot.feature_based import plot_feature_fingerprint
 

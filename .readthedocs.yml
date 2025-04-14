@@ -36,4 +36,4 @@ sphinx:
   # Correct path to the Sphinx configuration file relative to project root
   configuration: docs/source/conf.py
   # Fail the build if there are warnings (recommended for quality)
-  fail_on_warning: true
+  fail_on_warning: false

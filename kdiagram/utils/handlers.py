@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#   License: Apache 2.0 
+#   Author: LKouadio <etanoyau@gmail.com>
 
 import re 
 import inspect 
@@ -6,8 +8,6 @@ import warnings
 from collections.abc import Iterable
 
 from typing import ( 
-    Any, Callable, 
-    Dict, List, 
     Optional,
     Union
 )

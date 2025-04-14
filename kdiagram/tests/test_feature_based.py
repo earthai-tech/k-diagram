@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# test_feature_based_plots.py
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
