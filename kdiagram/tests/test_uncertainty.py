@@ -792,9 +792,9 @@ def sample_data_temporal():
 
 @pytest.mark.parametrize("dt_labels_provided", [True, False])
 @pytest.mark.parametrize("acov", ['default', 'quarter_circle'])
-@pytest.mark.parametrize("mask_degree", [True, False])
+@pytest.mark.parametrize("mask_angle", [True, False])
 def test_plot_uncertainty_drift_runs_ok(
-    sample_data_drift_uncertainty, dt_labels_provided, acov, mask_degree):
+    sample_data_drift_uncertainty, dt_labels_provided, acov, mask_angle):
     """Test plot_uncertainty_drift runs okay."""
     data = sample_data_drift_uncertainty
     dt_labels = data['dt_labels'] if dt_labels_provided else None
@@ -805,7 +805,7 @@ def test_plot_uncertainty_drift_runs_ok(
             qup_cols=data['qup_cols'],
             dt_labels=dt_labels,
             acov=acov,
-            mask_degree=mask_degree,
+            mask_angle=mask_angle,
             figsize=(7, 7)
         )
         assert isinstance(ax, Axes)
