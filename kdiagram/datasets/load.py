@@ -27,8 +27,8 @@ import numpy as np
 from typing import Optional, List, Union
 
 from ..api.bunch import Bunch
-from ._property import get_data, download_file_if_missing, RemoteMetadata
-from ._property import KD_DMODULE, KD_REMOTE_DATA_URL
+from ._property import get_data, download_file_if, RemoteMetadata
+from ._property import KD_DMODULE, KD_REMOTE_DATA_URL 
 
 __all__ = ["load_uncertainty_data", "load_zhongshan_subsidence"]
 
@@ -135,7 +135,19 @@ def load_zhongshan_subsidence(
     # --- Step 1: Determine file location (Cache > Package > Download) ---
     data_dir = get_data(data_home)
     filename = _ZHONGSHAN_METADATA.file
-    local_filepath = os.path.join(data_dir, filename)
+    if os.path.exists(os.path.join(data_dir, filename)): 
+        local_filepath = os.path.join(data_dir, filename)
+    else: 
+        try: 
+            # Construct the full path to the file within the package 
+            # using importlib.resources
+            local_filepath = str(resources.files(KD_DMODULE).joinpath(filename))
+            data_dir = os.path.dirname (local_filepath)
+            # took only the file in data path 
+        except: 
+            # fallback. 
+             local_filepath = os.path.join(data_dir, filename)
+        
     package_module_path = _ZHONGSHAN_METADATA.data_module
 
     filepath_to_load = None
@@ -144,7 +156,7 @@ def load_zhongshan_subsidence(
     if force_download:
         if download_if_missing:
              print(f"Forcing download of '{filename}'...")
-             dl_path = download_file_if_missing(
+             dl_path = download_file_if(
                  _ZHONGSHAN_METADATA, data_home=data_dir,
                  download_if_missing=True, error='warn', verbose=1
                  )
@@ -160,6 +172,7 @@ def load_zhongshan_subsidence(
                            f"download_if_missing is False.")
              # Proceed to check local cache/package only
 
+    
     # Check cache first (unless download was forced and succeeded)
     if filepath_to_load is None and os.path.exists(local_filepath):
         print(f"Loading dataset from cache: {local_filepath}")
@@ -192,8 +205,9 @@ def load_zhongshan_subsidence(
     # Attempt download if still not found and allowed
     if filepath_to_load is None and download_if_missing:
         print(f"Attempting download of '{filename}' to cache: {data_dir}")
-        filepath_to_load = download_file_if_missing(
-            _ZHONGSHAN_METADATA, data_home=data_dir,
+        filepath_to_load = download_file_if(
+            _ZHONGSHAN_METADATA, 
+            data_home=data_dir,
             download_if_missing=True,
             error='warn',
             verbose=1 # Use warn first
