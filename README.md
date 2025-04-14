@@ -6,10 +6,10 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square)](https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml)
 [![Documentation Status](https://readthedocs.org/projects/k-diagram/badge/?version=latest&style=flat-square)](https://k-diagram.readthedocs.io/en/latest/?badge=latest)
-[![Code Coverage](https://img.shields.io/codecov/c/github/earthai-tech/k-diagram?style=flat-square)](https://app.codecov.io/gh/earthai-tech/k-diagram)
-![GitHub License](https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&label=License&color=purple)
-[![Code Style: Black](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=flat-square)](https://github.com/psf/black)
+![GitHub License](https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&color=purple)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-Black-000000.svg?style=flat-square)](https://github.com/psf/black)
 [![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md)
+<!-- [![Code Coverage](https://img.shields.io/codecov/c/github/earthai-tech/k-diagram?style=flat-square)](https://app.codecov.io/gh/earthai-tech/k-diagram) -->
 
 🧭 **_Navigate the complexities of forecast uncertainty and model behavior with `k-diagram`'s specialized polar visualizations_**
 
