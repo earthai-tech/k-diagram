@@ -785,9 +785,6 @@ def sample_data_temporal():
         "theta_col": "id"
     }
 
-
-# --- Test Functions (New Batch) ---
-
 # == Tests for plot_uncertainty_drift ==
 
 @pytest.mark.parametrize("dt_labels_provided", [True, False])

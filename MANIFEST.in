@@ -18,6 +18,7 @@ recursive-include docs/source/_templates *
 # recursive-include docs/source/gallery/images * # Optional: Include source images?
 include docs/Makefile
 include docs/make.bat
+include kdiagram/datasets/data/min_zhongshan.csv # include the package dataset.
 include docs/requirements.txt # Include requirements needed to build docs
 
 # Include examples directory if it exists and you want it in the sdist
