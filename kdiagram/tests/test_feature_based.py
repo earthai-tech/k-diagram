@@ -9,7 +9,7 @@ kdiagram.plot.feature_based.
 
 import pytest
 import numpy as np
-import pandas as pd # Optional, if needed
+import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes

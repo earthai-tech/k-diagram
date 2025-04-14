@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#   License: BSD-3-Clause
+#   License: Apache-2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 """
@@ -2353,7 +2353,7 @@ def plot_uncertainty_drift(
     title: Optional[str] = None,
     show_grid: bool = True,
     show_legend: bool = True,
-    mask_degree: bool = True,
+    mask_angle: bool = True,
     savefig: Optional[str] = None
 ):
     """Polar plot visualizing temporal drift of uncertainty width.
@@ -2466,7 +2466,7 @@ def plot_uncertainty_drift(
         If ``True``, display a legend identifying the time step for
         each colored ring, using `dt_labels`.
 
-    mask_degree : bool, default=True
+    mask_angle : bool, default=True
         If ``True``, hide the angular tick labels (degrees). Recommended
         if the angular position is based on index.
 
@@ -2582,7 +2582,7 @@ def plot_uncertainty_drift(
     ...     band_height=0.1,      # Smaller uncertainty scaling
     ...     cmap='viridis',
     ...     title='Random Uncertainty Drift Example',
-    ...     mute_degree=False      # Show angle labels
+    ...     mute_angle=False      # Show angle labels
     ... )
     >>> # plt.show() called internally
 
@@ -2747,7 +2747,7 @@ def plot_uncertainty_drift(
     ax.set_thetamax(np.degrees(theta_max_rad)) # Expects degrees
 
     # Hide angular tick labels if requested
-    if mask_degree:
+    if mask_angle:
         ax.set_xticklabels([])
     # Configure grid
     if show_grid:

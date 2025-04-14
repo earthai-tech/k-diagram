@@ -97,7 +97,7 @@ def suppress_warnings(suppress: bool = True):
 
 # Suppress warnings by default when the package is initialized
 suppress_warnings()
-
+from . import datasets 
 from .plot import (
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,
@@ -133,4 +133,5 @@ __all__ = [
     "taylor_diagram",
     "plot_feature_fingerprint",
     "plot_relationship",
+    "datasets"
 ]

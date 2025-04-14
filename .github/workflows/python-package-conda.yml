@@ -54,6 +54,13 @@ jobs:
         # Generate coverage report for the 'kdiagram' package
         # Save report as coverage.xml for Codecov uploader
         pytest --cov=kdiagram --cov-report=xml -n auto kdiagram/tests
+        # This creates coverage.xml
+
+    # --- ADD THIS STEP ---
+    - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Print Debug Info on Failure
       if: failure() # Only run if previous steps failed

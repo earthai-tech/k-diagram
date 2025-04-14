@@ -30,7 +30,8 @@ forecasting models and data.
    uncertainty         
    evaluation          
    feature_based       
-   relationship        
+   relationship   
+   datasets                 
    utils               
 
 We hope this guide enhances your ability to leverage `k-diagram` for

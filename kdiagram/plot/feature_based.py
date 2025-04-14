@@ -5,8 +5,10 @@
 import warnings 
 import matplotlib.pyplot as plt 
 import matplotlib.cm as cm
-import numpy as np 
 from typing import Optional, List, Tuple, Union, Any 
+
+import numpy as np 
+import pandas as pd 
 
 from ..decorators import check_non_emptiness 
 from..utils.handlers import columns_manager 
@@ -260,6 +262,9 @@ def plot_feature_fingerprint(
     if normalize:
         # Calculate max per row (layer), keep dimensions for broadcasting
         # max_per_row shape: (n_layers, 1), e.g., (3, 1)
+        importance_matrix = importance_matrix.values if isinstance (
+            importance_matrix, pd.DataFrame) else importance_matrix 
+        
         max_per_row = importance_matrix.max(axis=1, keepdims=True)
 
         # Create a mask for rows with max_val > 0 (where normalization is safe)

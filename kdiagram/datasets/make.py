@@ -11,12 +11,12 @@ for demonstrating and testing the various plotting functions within
 the `k-diagram` package, particularly those focused on uncertainty.
 """
 from __future__ import annotations 
-import re
+
 import textwrap
 import warnings 
 import numpy as np
 import pandas as pd
-from typing import Optional, List, Union, Tuple, Dict, Any 
+from typing import Optional, List, Union, Tuple
 
 from ..api.bunch import Bunch
 

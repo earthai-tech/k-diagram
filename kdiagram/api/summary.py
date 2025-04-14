@@ -24,13 +24,14 @@ leveraging flexible data structures and formatting helpers.
 
 from __future__ import annotations 
 import copy
-from ..bunch import FlexDict
-from ..util import (
+from .util import (
     get_table_size,
     to_snake_case,
     to_camel_case,
     beautify_dict
 )
+
+from .bunch import FlexDict
 
 __all__ = ['ResultSummary'] 
 
