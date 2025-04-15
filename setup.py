@@ -4,7 +4,7 @@ try:
     import kdiagram 
     VERSION = kdiagram.__version__
 except:
-    VERSION= "1.0.2" 
+    VERSION= "1.0.3" 
     
 # Package metadata
 DISTNAME = "k-diagram"
