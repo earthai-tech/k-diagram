@@ -2,14 +2,18 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
+from numbers import Real 
 import warnings
 import matplotlib.pyplot as plt 
 import numpy as np 
+from typing import Optional, Tuple, List, Union, Any, Callable 
 
-from ..compat.sklearn import validate_params, StrOptions 
+from ..compat.sklearn import validate_params, StrOptions, type_of_target
 from ..utils.generic_utils import drop_nan_in 
-from ..utils.validator import validate_yy 
-from ..utils.plot import set_axis_grid 
+from ..utils.handlers import columns_manager
+from ..utils.metric_utils import get_scorer 
+from ..utils.plot import set_axis_grid  
+from ..utils.validator import validate_yy, is_iterable 
 
 __all__=['plot_relationship']
 
@@ -367,3 +371,4 @@ def plot_relationship(
     else:
         # Warning for non-GUI backend is expected here in test envs
         plt.show()
+

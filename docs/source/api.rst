@@ -61,6 +61,18 @@ Diagrams.
    ~kdiagram.plot.evaluation.plot_taylor_diagram_in
    ~kdiagram.plot.evaluation.plot_taylor_diagram
 
+Model Comparison (`kdiagram.plot.comparison`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Functions for comparing multi-model performances on a radar chart.
+
+.. autosummary::
+   :toctree: _autosummary/comparison
+   :nosignatures:
+
+   ~kdiagram.plot.comparison.plot_model_comparison 
+   
+   
 .. _api_feature_based: 
 
 Feature-Based Visualization (`kdiagram.plot.feature_based`)

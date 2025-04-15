@@ -129,7 +129,7 @@ is the number of features.
     absolute importance scales differ significantly between layers.
 
 **Example:**
-*(See the :ref:`Gallery <gallery_plot_feature_based>` section below for a runnable code example and plot)*
+(See the :ref:`Gallery <gallery_plot_feature_based>` section below for a runnable code example and plot)
 
 
 .. raw:: html

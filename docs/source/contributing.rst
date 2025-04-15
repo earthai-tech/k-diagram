@@ -63,12 +63,12 @@ Making Changes
 4.  **Testing:** `k-diagram` uses `pytest` for testing.
     * Add new tests for any new features you implement.
     * Add or update tests to cover any bug fixes.
-    * Ensure all tests pass before submitting your changes. Run tests
-        from the project root directory:
+    * Ensure all tests pass before submitting your changes. Run tests 
+    from the project root directory:
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-           pytest kdiagram/tests # Or simply 'pytest'
+       pytest kdiagram/tests # Or simply 'pytest'
 
 5.  **Documentation:** If your changes affect the user interface, add
     new features, or change behavior, please update the relevant
@@ -112,9 +112,11 @@ Submitting a Pull Request
 Code of Conduct
 ---------------
 
-Please note that this project is released with a Contributor
-`Code of Conduct <../../CODE_OF_CONDUCT.md>`_. By participating in this
-project you agree to abide by its terms. We aim for a welcoming and
-respectful community.
+All participants in the `k-diagram` project (contributors,
+maintainers, users in community spaces) are expected to adhere to
+the project's :doc:`Code of Conduct <code_of_conduct>`. Please review
+this document to understand the expected standards of behavior. We
+strive to foster an open, welcoming, and respectful community.
+
 
 Thank you again for your contribution!

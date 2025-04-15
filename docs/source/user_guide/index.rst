@@ -28,11 +28,13 @@ forecasting models and data.
    :caption: Guide Topics:
 
    uncertainty         
-   evaluation          
+   evaluation  
+   comparison               
    feature_based       
    relationship   
    datasets                 
-   utils               
+   utils
+   case_history              
 
 We hope this guide enhances your ability to leverage `k-diagram` for
 comprehensive forecast analysis. For detailed function parameters, please
