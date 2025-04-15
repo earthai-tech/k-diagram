@@ -6,10 +6,10 @@ import warnings
 import matplotlib.pyplot as plt 
 import numpy as np 
 
-from ..compat.sklearn import validate_params, StrOptions 
+from ..compat.sklearn import validate_params, StrOptions
 from ..utils.generic_utils import drop_nan_in 
-from ..utils.validator import validate_yy 
-from ..utils.plot import set_axis_grid 
+from ..utils.plot import set_axis_grid  
+from ..utils.validator import validate_yy
 
 __all__=['plot_relationship']
 
@@ -367,3 +367,4 @@ def plot_relationship(
     else:
         # Warning for non-GUI backend is expected here in test envs
         plt.show()
+

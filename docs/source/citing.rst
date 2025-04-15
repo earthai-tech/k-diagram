@@ -73,14 +73,13 @@ land subsidence in Nansha and Zhongshan, China.
 .. code-block:: bibtex
 
     @article{liu_subsidence_nat_sust_2025,
-      author       = {Liu, Rong and Jiang, Shiyu and Kouadio, Kouao Laurent and Liu, Jianxin and Liu, Wenxiang and Qing, Zhanhui and Zheng, Zhiwen},
+      author       = {Liu, Rong and Kouadio, Kouao Laurent and Jiang, Shiyu and Liu, Jianxin and Kouamelan, Serge Kouamelan and Liu, Wenxiang and Qing, Zhanhui and Zheng, Zhiwen},
       title        = {{Forecasting Urban Land Subsidence in the Era of Rapid Urbanization and Climate Stress}},
       journal      = {Nature Sustainability},
       year         = {2025}, 
       note         = {Submitted},
     }
-    
-
+       
 Software Paper (Planned JOSS Submission)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

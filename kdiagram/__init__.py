@@ -4,7 +4,7 @@
 
 """
 K-Diagram: Rethinking Forecasting Uncertainty via Polar-Based Visualization
-===========================================================================
+============================================================================
 `k-diagram` is a Python package designed to provide specialized diagnostic polar plots,
 called "k-diagrams," for comprehensive model evaluation and forecast analysis.
 """
@@ -30,7 +30,7 @@ def _lazy_import(module_name, alias=None):
 try:
     from ._version import version as __version__
 except ImportError:
-    __version__ = "1.0.2"
+    __version__ = "1.0.3"
 
 # Dependency check
 _required_dependencies = [
@@ -114,6 +114,7 @@ from .plot import (
     taylor_diagram,
     plot_feature_fingerprint,
     plot_relationship,
+    plot_model_comparison
 )
 
 __all__ = [
@@ -133,5 +134,5 @@ __all__ = [
     "taylor_diagram",
     "plot_feature_fingerprint",
     "plot_relationship",
-    # "datasets"
+    "plot_model_comparison"
 ]

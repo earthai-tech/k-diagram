@@ -75,6 +75,7 @@ k-diagram: Polar Insights for Forecasting
    gallery/index         
    api                   
    contributing
+   code_of_conduct
    citing
    release_notes       
    glossary
