@@ -12,16 +12,14 @@ tags:
 authors:
   - name: Kouao Laurent Kouadio
     orcid: 0000-0001-7259-7254 
-    affiliation: 1 # Affiliation marker
-# - name: Another Author # Add co-authors of the software itself if applicable
-#   orcid: 0000-0000-0000-0000
-#   affiliation: 1 # or 2 if different
+    affiliation: "1, 2" 
+
 affiliations:
- - name: Earth Observation & Applied Statistics Lab, School of Geosciences and Info-Physics, Central South University, Changsha, Hunan, China # TODO: Verify/Correct Affiliation
+ - name: School of Geosciences and Info-Physics, Central South University, Changsha, Hunan, 410083, China
    index: 1
-# - name: Second Affiliation # Add if needed
-#   index: 2
-date: 10 April 2025 # TODO: Update with submission date
+ - name: Hunan Key Laboratory of Nonferrous Resources and Geological Hazards Exploration, Changsha, Hunan, 410083, China
+   index: 2
+date: 10 May 2025 
 bibliography: paper.bib
 ---
 
@@ -59,7 +57,7 @@ that highlights patterns related to temporal progression or spatial
 distribution inherent in many forecasting problems. This gap became evident
 during research applying advanced deep learning models to forecast complex
 phenomena like urban land subsidence in challenging environments such as
-Zhongshan, China [@KouadioSubsidence2024]. While models could generate
+Nansha, China [@Liu2024]. While models could generate
 probabilistic forecasts, interpreting the spatiotemporal behavior of the
 predicted uncertainty remained difficult.
 
@@ -75,7 +73,7 @@ to be diagnosed.
 
 # Functionality
 
-`k-diagram` is implemented in Python, leveraging core scientific libraries
+`k-diagram` is implemented in Python \autoref{fig1:worflow}, leveraging core scientific libraries
 including `numpy` [@harris2020array], `pandas` [@mckinney-proc-scipy-2010;
 @reback2020pandas], `matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth],
 and `scikit-learn` [@scikit-learn]. Its main features include:
@@ -106,9 +104,46 @@ and `scikit-learn` [@scikit-learn]. Its main features include:
 * **Customization:** Plots offer various parameters for adjusting appearance,
     angular coverage (`acov`), colormaps, normalization, and labeling.
 
+![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:example}](docs/source/_static/paper_fig1.png)
+
+
+### Related Work
+
+The visualization methods implemented in `k-diagram` were developed alongside 
+research applying deep learning models to complex environmental forecasting 
+challenges. Specifically, these polar diagnostics were utilized to analyze 
+and interpret the uncertainty associated with land subsidence predictions 
+using an Extreme Temporal Fusion Transformer model in Zhongshan city, 
+China. The results and application context of that specific study are detailed 
+in a separate manuscript submitted to the International Journal of 
+Forecasting [@kouadio_subsidence_2025]. This JOSS paper focuses 
+specifically on the `k-diagram` software package itself – its design, 
+functionality, and general applicability for visualizing forecast uncertainty. 
+
+### Installation 
+
+The latest stable release of `k-diagram` is available on the Python Package 
+Index (PyPI) and can be installed using pip:
+
+```bash
+pip install k-diagram
+````
+Detailed installation instructions are available in the documentation.
+
+### Documentation
+
+Comprehensive documentation, including a User Guide explaining the concepts 
+behind the plots, a gallery of examples, and a detailed API reference, 
+is hosted on ReadTheDocs: [https://k-diagram.readthedocs.io/](https://k-diagram.readthedocs.io/).
+
+### License
+
+`k-diagram` is made available under the OSI-approved Apache License 2.0. The 
+full license text can be found in the `LICENSE` file in the root of the repository.
+
 # Example Usage
 
-The following snippet demonstrates generating an Anomaly Magnitude plot,
+The following snippet \autoref{fig2:example} demonstrates generating an Anomaly Magnitude plot,
 identifying where actual values fall outside the 10th-90th percentile
 prediction interval.
 
@@ -141,7 +176,9 @@ ax = kd.plot_anomaly_magnitude(
     q_cols=['q10', 'q90'], # Provide lower and upper bounds as a list
     title="Sample Anomaly Magnitude Plot",
     cbar=True,            # Show color bar indicating magnitude
-    verbose=0             # Suppress console summary for brevity
+    s=100,                # maker size adjusted 
+    verbose=0             # Suppress console summary for brevity 
+
 )
 # In a script, use plt.show() or ax.figure.savefig("plot.png")
 # plt.show() # Not needed if saving or in some environments
@@ -149,67 +186,7 @@ ax = kd.plot_anomaly_magnitude(
 ![Example k-diagram plot demonstrating [Specific Feature Shown, e.g., Anomaly Magnitude] for 
 simulated data. Red points indicate over-predictions, blue points under-predictions, 
 relative to the interval bounds. Radius indicates the magnitude of 
-the anomaly.](path/to/your/example_usage_plot.png)
-
-### Related Work
-
-The visualization methods implemented in `k-diagram` were developed alongside 
-research applying deep learning models to complex environmental forecasting 
-challenges. Specifically, these polar diagnostics were utilized to analyze 
-and interpret the uncertainty associated with land subsidence predictions 
-using an Extreme Temporal Fusion Transformer model in Nansha and Zhongshan, 
-China. The results and application context of that specific study are detailed 
-in a separate manuscript submitted to the International Journal of 
-Forecasting [@kouadio_subsidence_2024]. This JOSS paper focuses 
-specifically on the `k-diagram` software package itself – its design, 
-functionality, and general applicability for visualizing forecast uncertainty. 
-
-### Installation and Dependencies
-
-The latest stable release of `k-diagram` is available on the Python Package 
-Index (PyPI) and can be installed using pip:
-
-```bash
-pip install k-diagram
-````
-
-Alternatively, the development version can be installed from 
-the [GitHub repository](https://github.com/earthai-tech/k-diagram). `k-diagram` 
-requires Python \>= 3.8 and standard scientific Python libraries, including:
-
-  * NumPy [@harris2020array]
-  * Pandas [@mckinney2010data; @reback2020pandas] \* SciPy [@virtanen2020scipy]
-  * Matplotlib [@hunter2007matplotlib]
-  * Seaborn [@waskom2021seaborn]
-  * Scikit-learn [@pedregosa2011scikit]
-
-These core dependencies are automatically handled when installing via pip. 
-Detailed installation instructions are available in the documentation.
-
-### Documentation
-
-Comprehensive documentation, including a User Guide explaining the concepts 
-behind the plots, a gallery of examples, and a detailed API reference, 
-is hosted on ReadTheDocs: [https://k-diagram.readthedocs.io/](https://www.google.com/search?q=https://k-diagram.readthedocs.io/) (Please update this link if it's different).
-
-### Testing
-
-The package includes a suite of unit and integration tests developed using 
-the `pytest` framework. Tests are located in the `kdiagram/tests` directory 
-within the repository. They can be run locally after installing development 
-dependencies (`pip install -e .[dev]`) using the command:
-
-```bash
-pytest kdiagram/tests
-```
-
-Continuous integration checks are also run via GitHub Actions on pushes and 
-pull requests to ensure code quality and prevent regressions.
-
-### License
-
-`k-diagram` is made available under the OSI-approved Apache License 2.0. The 
-full license text can be found in the `LICENSE` file in the root of the repository.
+the anomaly.\label{fig2:example}](docs/sources/images/paper_fig2.png)
 
 ### Contributing
 
@@ -219,37 +196,18 @@ Please refer to the `CONTRIBUTING.rst` guide in the documentation (or repository
 for detailed guidelines on how to contribute. Development discussions and 
 issue tracking occur on the [GitHub repository](https://github.com/earthai-tech/k-diagram/issues).
 
+
 ### Acknowledgements
 
-We acknowledge [placeholder: funding sources, institutions, specific individuals who provided significant help or feedback during the software development, e.g., colleagues who tested early versions].
-We also thank the developers of the open-source scientific Python 
-stack (NumPy, SciPy, Pandas, Matplotlib, Scikit-learn, etc.) upon which `k-diagram` 
-is built. Finally, we appreciate the constructive feedback 
-from [placeholder: early users or reviewers, if any].
+We extend our sincere gratitude to the anonymous colleagues who provided 
+invaluable feedback during the development of `k-diagram`, as well as those 
+who rigorously tested its early iterations. Their insights and dedication 
+were instrumental in refining the software.
+
+We also appreciate the constructive feedback from early users and 
+reviewers, whose contributions have significantly enhanced the quality 
+and usability of the project.
+
 
 ### References
 
-```
-
----
-
-**Next Steps:**
-
-1.  **Create `paper.bib`:** Create a file named `paper.bib` (or similar, ensure it matches JOSS instructions if they specify a name) in the same directory as `paper.md`. Add the BibTeX entries for the references cited (using `[@key]`). Make sure to include entries for:
-    * `k-diagram` itself (e.g., `@software{kdiagram_software_2024,...}` - **get a Zenodo DOI!**)
-    * Your submitted IJF paper (`@unpublished{kouadio_subsidence_2024,...}`)
-    * Taylor, K. E. (2001) (`@article{taylor2001summarizing,...}`)
-    * Python (`@misc{python3,...}`)
-    * NumPy (`@article{harris2020array,...}`)
-    * SciPy (`@article{virtanen2020scipy,...}`)
-    * Matplotlib (`@article{hunter2007matplotlib,...}`)
-    * Pandas (`@inproceedings{mckinney2010data,...}` and/or the 2020 Zenodo reference)
-    * Scikit-learn (`@article{pedregosa2011scikit,...}`)
-    * Seaborn (`@article{waskom2021seaborn,...}`)
-    * *Any other specific references* mentioned in the sections you wrote earlier (Summary, Need, Functionality).
-2.  **Placeholders:** Fill in the `[placeholder ...]` text in the Acknowledgements section.
-3.  **Example Plot:** Generate the plot from your "Example Usage" section, save it (e.g., as `docs/paper/example_plot.png`), and update the path in the `![Caption](...)` tag. Write a concise, informative caption.
-4.  **Documentation Link:** Verify the ReadTheDocs link is correct.
-5.  **Repository Links:** Verify all GitHub links are correct (`earthai-tech/k-diagram`).
-6.  **Compile Check:** Use the JOSS GitHub Action or a local tool (like Pandoc with the JOSS template) to compile `paper.md` and `paper.bib` to ensure there are no formatting or citation errors. The JOSS documentation provides instructions on how to do this.
-7.  **Review JOSS Requirements:** Double-check all points under "Submission requirements" and "Substantial scholarly effort" in the JOSS guidelines provided. Ensure your repository meets the criteria (License, Issue Tracker, Tests, Documentation, Code Quality, LOC > 1000 generally preferred).

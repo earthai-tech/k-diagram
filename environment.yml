@@ -1,13 +1,13 @@
-# environment.yml (for k-diagram project)
+# environment.yml (for FusionLab project)
 #
 # Create this environment with:
 #   conda env create -f environment.yml
 # Activate the environment with:
-#   conda activate kdiagram-dev
+#   conda activate fusionlab-dev
 # Update the environment with:
 #   conda env update -f environment.yml --prune
 #
-name: kdiagram-dev  # Changed environment name
+name: fusionlab-dev  # Changed environment name
 
 channels:
   - conda-forge   # Prioritize conda-forge
@@ -15,30 +15,39 @@ channels:
 
 dependencies:
   # Core Python
-  - python>=3.8    # Specify minimum Python, e.g., 3.8 or higher
+  - python>=3.9    # Specify minimum Python version (3.9 or higher)
 
-  # k-diagram core dependencies (match setup.py/install_requires)
-  - numpy >=1.18,<2.0  # Pin numpy < 2.0 for broader compatibility for now
+  # FusionLab core dependencies (match setup.py/install_requires)
+  - numpy >=1.18,<2.0  # Pin numpy < 2.0 for broader compatibility
   - pandas >=1.0,<3.0  # Pin pandas < 3.0
   - scipy >=1.5
   - matplotlib >=3.3
   - seaborn >=0.11
-  - scikit-learn >=1.0 # Use a more recent baseline if needed
+  - scikit-learn >=1.0  # Use a more recent baseline if needed
+  # - torch              # For PyTorch support
+  - tensorflow          # For TensorFlow support
+  # - jax                 # For JAX support
 
   # Documentation dependencies (match docs/requirements.txt)
   - sphinx >=4.0,<8.0
-  - furo             # Theme
+  - furo              # Sphinx theme
   - sphinx-copybutton
   - myst-parser
   - sphinx-design
 
   # Testing dependencies
   - pytest >=6.0
-  - pytest-xdist # For parallel testing
-  - pytest-cov
+  - pytest-xdist       # For parallel testing
+  - pytest-cov         # For coverage reporting
 
   # Development/Utility dependencies
-  - pip             # Ensure pip is available for installing the package itself
-  - setuptools      # Needed for setup.py/builds
-  - flake8          # Linter
+  - pip                # Ensure pip is available for installing the package itself
+  - setuptools         # Needed for setup.py/builds
+  - flake8             # Linter
+  - black              # Auto-formatter
+  - isort              # To sort imports automatically
 
+  # Optional extras
+  - joblib             # For efficient job processing
+  - tqdm               # For progress bars
+  - pydantic           # For data validation
