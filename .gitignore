@@ -169,8 +169,8 @@ cython_debug/
 
 # Ignore JOSS paper files (unpublished work)
 # These should only exist on specific branches for JOSS review/submission.
-paper.md
-paper.bib
+# paper.md
+# paper.bib
 
 # Ruff stuff:
 .ruff_cache/

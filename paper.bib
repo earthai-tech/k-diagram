@@ -1,7 +1,5 @@
 %% paper.bib - BibTeX references for k-diagram JOSS paper
 
-%% --- Core Dependencies ---
-
 @misc{python3,
   author = {{Python Software Foundation}},
   title  = {Python Language Reference, version 3.x},
@@ -9,5 +7,121 @@
   note   = {Accessed: 2025-04-10} % Or specific version/date used
 }
 
+@article{Murphy1993What,
+  author    = {Murphy, Allan H. and Winkler, Robert L.},
+  title     = {What is a good forecast? Probability, surprise, consensus, information, and skill in the evaluation of forecasts},
+  journal   = {Weather and Forecasting},
+  volume    = {8},
+  number    = {3},
+  pages     = {287-303},
+  year      = {1993},
+  doi       = {10.1175/1520-0434(1993)008<0287:WIAGFP>2.0.CO;2},
+  publisher = {American Meteorological Society}
+}
+
+@article{Hunter:2007,
+  author    = {Hunter, J. D.},
+  title     = {Matplotlib: A 2D graphics environment},
+  journal   = {Computing in Science \& Engineering},
+  volume    = {9},
+  number    = {3},
+  pages     = {90-95},
+  year      = {2007},
+  doi       = {10.1109/MCSE.2007.55}
+}
+
+@article{Waskom2021,
+  author    = {Waskom, Michael L.},
+  title     = {Seaborn: statistical data visualization},
+  journal   = {Journal of Open Source Software},
+  volume    = {6},
+  number    = {60},
+  pages     = {3021},
+  year      = {2021},
+  doi       = {10.21105/joss.03021}
+}
+
+@article{scikit-learn,
+  title     = {Scikit-learn: Machine Learning in {Python}},
+  author    = {Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+               and Olsczewski, B. and Blondel, M. and Prejbal, F. and
+               Weiss, R. and Dubourg, V. and Vanderplas, J. and
+               Passos, A. and Cournapeau, D. and Brucher, M. and
+               Perrot, M. and Duchesnay, {\'E}.},
+  journal   = {Journal of Machine Learning Research},
+  volume    = {12},
+  pages     = {2825-2830},
+  year      = {2011}
+}
+
+@article{Liu2024,
+    author = {Liu, Jianxin and Liu, Wenxiang and Allechy, Fabrice Blanchard and Zheng, Zhiwen and Liu, Rong and Kouadio, Kouao Laurent},
+    doi = {https://doi.org/10.1016/j.jenvman.2024.120078},
+    journal = {Journal of Environmental Management},
+    number = {2024},
+    pages = {17},
+    title = {{Machine learning-based techniques for land subsidence simulation in an urban area}},
+    volume = {352},
+    year = {2024}
+}
+
+
 @article{harris2020array,
-  author  = {Harris, Charles R. and Millman, K. Jarrod and van der Walt, St{\'e}fan J. and Gommers, Ralf and Virtanen, Pauli and Cournapeau, David and Wieser, Eric and Taylor, Julian and Berg, Sebastian and Smith, Nathaniel J. and Kern, Robert and Picus, Matti and Hoyer, Stephan and van Kerkwijk, Marten H. and Brett, Matthew and Haldane, Allan and del R{\'i
+  title={Array programming with NumPy},
+  author={Charles R. Harris and K. Jarrod Millman and St\'efan J. van der Walt and Ralf Gommers and Pauli Virtanen and David Cournapeau and Eric Wieser and Julian Taylor and Stephan Memmesheimer and Tom Backx and others},
+  year=2020,
+  month=feb,
+  publisher={Nature Publishing Group},
+  volume={585},
+  number={7825},
+  pages={357--362},
+  doi = {10.1038/s41586-020-2649-2},
+  journal={Nature}
+}
+
+@article{mckinney-proc-scipy-2010,
+  author    = {McKinney, Wes},
+  title     = {{Data Structures for Statistical Computing in Python}},
+  booktitle = {Proceedings of the 9th Python in Science Conference},
+  editor    = {van der Walt, St{\'e}fan and Millman, Jarrod},
+  pages     = {56 - 61},
+  year      = {2010},
+  publisher = {SciPy}
+}
+
+@article{reback2020pandas,
+  title={pandas 1.0, a fundamental rewrite of the library},
+  author={Jeff Reback and Joris Van den Bossche and Wes McKinney and Terry J. Reedy and Garrett Bergstrom and Tom Augspurger and Martin Brooke and Simone Ciampi and Antony Lee and Irv Lustig and others},
+  journal={arXiv preprint arXiv:2005.03268},
+  year={2020}
+}
+
+@article{2020SciPy-NMeth,
+  title = {{SciPy 1.0: fundamental algorithms for scientific computing in Python}},
+  author = {{Virtanen}, P. and {Gommers}, R. and {Oliphant}, T.~E. and {Haberland}, M. and {Reddy}, T. and {Cournapeau}, D. and {Burovski}, E. and {Peterson}, P. and {Wehrer}, W. and {Huttunen}, J. and {H{\aa}cklin}, T. and {Straub}, S. and {Pike}, J. and {Petroff}, A. and {Conti}, K. and {Lieberman}, R. and {Pollard}, J. and {Nichols}, B. and {Raimi}, J. and {Hoydu}, E. and {Kerkwijk}, K.~B. and {Brett}, M. and {Haldane}, A. and {del R{\'{i}}o}, J. and {Manolopoulos}, G. and {Ivanov}, A. and {Millman}, K.~J. and {Wehner}, M.~C. and {Briggs}, S.~J. and {Yurkewycz}, N. and {Knothe}, R. and {Butterworth}, J. and {Goodman}, N. and {de la Vega}, S.~J. and {Routchenko}, O. and {Perron}, A. and {Rothberg}, Z. and {Ryaboy}, E. and {Williams}, N. and {Turrell}, P. and {Behnel}, S. and {Sieber}, L. and {Blake}, R. and {Kern}, B.~R. and {Larson}, R. and {Edwards}, C.~A. and {Fazio}, E. and {Juric}, I. and {Pitkanen}, T. and {Cijesek}, S. and {Taylor}, B.~E. and {Miller}, R.~T. and {Jessen}, E. and {Derksen}, D. and {Carey}, C.~J. and {Wejchert}, S. and {Olen{\'i}n}, S. and {Petrov}, A. and {Jachalsky}, A. and {Slavov}, V. and {Bokhove}, O. and {Jung}, J. and {Aivazis}, M. and {Hendriksen}, M.~D. and {Halderman}, K.~A. and {de Miranda Cardoso}, A. and {Levy}, D. and {V{\'a}zquez-Baeza}, Y.},
+  journal = {Nature Methods},
+  volume = {17},
+  number = {3},
+  pages = {261-272},
+  year = {2020},
+  doi = {10.1038/s41592-019-0686-2}
+}
+
+@article{Taylor2001,
+  author    = {Taylor, Karl E.},
+  title     = {Summarizing quantitative measures of model performance in a single diagram},
+  journal   = {Journal of Geophysical Research: Atmospheres},
+  volume    = {106},
+  number    = {D7},
+  pages     = {7183-7192},
+  year      = {2001},
+  doi       = {10.1029/2000JD900719}
+}
+
+@article{kouadio_subsidence_2025,
+  author = {Kouadio, Laurent and Liu, Rong and Loukou, Kouam{\'e} Gb{\`e}l{\`e} Hermann and Liu, Jianxin and Liu, Wenxiang},
+  title = {Understanding Uncertainty in Land Subsidence Forecasting},
+  journal = {International Journal of Forecasting},
+  year = {2025},
+  note = {Manuscript submitted}
+}
