@@ -73,7 +73,7 @@ to be diagnosed.
 
 # Functionality
 
-`k-diagram` is implemented in Python \autoref{fig1:worflow}, leveraging core scientific libraries
+`k-diagram` is implemented in Python (\autoref{fig1:worflow}), leveraging core scientific libraries
 including `numpy` [@harris2020array], `pandas` [@mckinney-proc-scipy-2010;
 @reback2020pandas], `matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth],
 and `scikit-learn` [@scikit-learn]. Its main features include:
@@ -143,7 +143,7 @@ full license text can be found in the `LICENSE` file in the root of the reposito
 
 # Example Usage
 
-The following snippet \autoref{fig2:example} demonstrates generating an Anomaly Magnitude plot,
+The following snippet demonstrates generating an Anomaly Magnitude plot (\autoref{fig2:example}),
 identifying where actual values fall outside the 10th-90th percentile
 prediction interval.
 
