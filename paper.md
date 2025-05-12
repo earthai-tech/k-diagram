@@ -176,7 +176,7 @@ ax = kd.plot_anomaly_magnitude(
     q_cols=['q10', 'q90'], # Provide lower and upper bounds as a list
     title="Sample Anomaly Magnitude Plot",
     cbar=True,            # Show color bar indicating magnitude
-    s=100,                # maker size adjusted 
+    s=100,                # marker size adjusted 
     verbose=0             # Suppress console summary for brevity 
 
 )
