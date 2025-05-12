@@ -104,7 +104,7 @@ and `scikit-learn` [@scikit-learn]. Its main features include:
 * **Customization:** Plots offer various parameters for adjusting appearance,
     angular coverage (`acov`), colormaps, normalization, and labeling.
 
-![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:example}](docs/source/_static/paper_fig1.png)
+![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:workflow}](docs/source/_static/paper_fig1.png)
 
 
 ### Related Work
@@ -183,10 +183,7 @@ ax = kd.plot_anomaly_magnitude(
 # In a script, use plt.show() or ax.figure.savefig("plot.png")
 # plt.show() # Not needed if saving or in some environments
 ```
-![Example k-diagram plot demonstrating [Specific Feature Shown, e.g., Anomaly Magnitude] for 
-simulated data. Red points indicate over-predictions, blue points under-predictions, 
-relative to the interval bounds. Radius indicates the magnitude of 
-the anomaly.\label{fig2:example}](docs/sources/images/paper_fig2.png)
+![Example k-diagram plot demonstrating [Specific Feature Shown, e.g., Anomaly Magnitude] for simulated data. Red points indicate overpredictions, blue points under-predictions,relative to the interval bounds. Radius indicates the magnitude of the anomaly.\label{fig2:example}](docs/source/images/paper_fig2.png)
 
 ### Contributing
 
