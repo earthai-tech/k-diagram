@@ -12,7 +12,7 @@ tags:
 authors:
   - name: Kouao Laurent Kouadio
     orcid: 0000-0001-7259-7254 
-    affiliation: "1, 2, 3" 
+    affiliation: "1, 2" 
 
 affiliations:
  - name: School of Geosciences and Info-Physics, Central South University, Changsha, Hunan, 410083, China
