@@ -119,7 +119,7 @@ The package is designed for ease of use and customization, allowing users to
 control plot aesthetics, angular coverage, and color mapping to tailor the 
 visualizations for their specific domain. Figure \@ref(fig:performance) demonstrates some of these key diagnostic plots.
 
-![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Actual vs Predicted (Q50): polar scatter of observed subsidence (black) and median forecasts (red), with connecting lines. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png){#fig:performance}
+![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Actual vs Predicted (Q50): polar scatter of observed subsidence (black) and median forecasts (red), with connecting lines. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
 
 ### Installation 
 
