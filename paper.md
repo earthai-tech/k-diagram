@@ -12,71 +12,79 @@ tags:
 authors:
   - name: Kouao Laurent Kouadio
     orcid: 0000-0001-7259-7254 
-    affiliation: "1, 2" 
+    affiliation: "1, 2, 3" 
 
 affiliations:
  - name: School of Geosciences and Info-Physics, Central South University, Changsha, Hunan, 410083, China
    index: 1
  - name: Hunan Key Laboratory of Nonferrous Resources and Geological Hazards Exploration, Changsha, Hunan, 410083, China
    index: 2
+
 date: 10 May 2025 
 bibliography: paper.bib
 ---
 
 # Summary
 
-`k-diagram` is an open-source Python package providing specialized
-diagnostic plots based on polar coordinates for the comprehensive
-evaluation of forecasting models, with a strong emphasis on understanding
-and visualizing predictive uncertainty. It offers a suite of functions
-('k-diagrams') to assess prediction interval coverage, consistency,
-anomaly magnitude, model drift across horizons, feature importance
-patterns, and standard evaluation metrics (e.g., via Taylor diagrams).
-Designed to complement traditional evaluation methods, `k-diagram` aids
-interpretability and facilitates deeper insights into forecast
-reliability, particularly for complex spatiotemporal systems relevant
-to environmental science and geohazard assessment.
+`k-diagram` is an open-source Python package designed for the in-depth 
+interpretation and diagnosis of probabilistic forecasts. Moving beyond 
+traditional aggregate metrics, the package provides a suite of novel 
+visualization tools, primarily based on polar coordinate systems, 
+to dissect the complex spatiotemporal structure of forecast uncertainty. 
+By mapping statistical properties such as sharpness, reliability, and 
+temporal stability onto intuitive geometric representations, `k-diagram` 
+enables researchers and practitioners to identify model biases, understand 
+forecast degradation over time, and communicate uncertainty characteristics 
+more effectively. The package is designed to be a practical extension 
+to the standard forecasting workflow [@Hong2025], providing the visual evidence needed 
+for more robust model evaluation and trustworthy, context-aware 
+decision-making.
 
 # Statement of Need
 
-Evaluating the performance of forecasting models, especially in high-stakes
-domains like environmental hazard prediction (e.g., land subsidence,
-flooding), requires moving beyond simple point-forecast accuracy metrics.
-Understanding the structure, reliability, and limitations of a model's
-predictive uncertainty is critical for risk assessment and informed
-decision-making [@Murphy1993What]. However, standard visualization tools
-often struggle to present multi-faceted uncertainty information
-(e.g., interval width, coverage success/failure, temporal drift)
-simultaneously and intuitively across many data points or locations.
+The evaluation of probabilistic forecasts has a rigorous theoretical 
+foundation based on concepts of calibration and sharpness, which are 
+jointly assessed using proper scoring rules [@Gneiting2007b]. However, 
+these scores are typically aggregated into a single value, which can 
+obscure vital information about a model's performance in heterogeneous 
+spatiotemporal settings. This is a critical limitation, as modern machine 
+learning models, such as Temporal Fusion Transformers [@Lim2021], 
+are increasingly applied to complex, high-dimensional problems where 
+understanding the local and temporal behavior of uncertainty is paramount. 
+A growing body of applied research highlights this challenge in fields as 
+diverse as predictive policing [@Rummens2021], energy forecasting [@Liu2021], 
+climatology [@Baillie2002] and geohazard [@Liu2024].
 
-Existing libraries provide excellent general plotting (e.g., `matplotlib`
-[@Hunter:2007], `seaborn` [@Waskom2021]) and some model evaluation metrics
-(e.g., `scikit-learn` [@scikit-learn]), but lack dedicated tools for the
-specific diagnostic visualization of uncertainty characteristics in a way
-that highlights patterns related to temporal progression or spatial
-distribution inherent in many forecasting problems. This gap became evident
-during research applying advanced deep learning models to forecast complex
-phenomena like urban land subsidence in challenging environments such as
-Nansha, China [@Liu2024]. While models could generate
-probabilistic forecasts, interpreting the spatiotemporal behavior of the
-predicted uncertainty remained difficult.
+While standard visualization tools exist, they are often not well-suited for the 
+specific task of diagnosing high-dimensional forecast uncertainty. 
+General-purpose libraries like matplotlib [@Hunter:2007] and seaborn 
+[@Waskom2021] provide the building blocks but lack dedicated functions 
+for these specialized diagnostics. Even established forecasting visualizations 
+like fan charts, which have seen recent innovations [@Sokol2025], are 
+primarily designed for single time series and do not scale well to 
+problems involving thousands of simultaneous forecasts. This creates a 
+critical gap between the generation of complex probabilistic forecasts 
+and the ability to interpret them effectively.
 
-`k-diagram` addresses this need by introducing a suite of visualizations
-primarily based on polar coordinates. This approach allows mapping different
-dimensions of forecast performance and uncertainty onto angle and radius,
-providing compact overviews and revealing patterns potentially obscured in
-Cartesian plots. For example, mapping time or sample index to angle allows
-visual inspection of consistency, drift, or anomaly clustering in a circular
-layout. `k-diagram` aims to make the analysis of predictive uncertainty
-more intuitive and actionable, treating uncertainty itself as a crucial signal
-to be diagnosed.
+`k-diagram` addresses this gap by providing a scalable and intuitive 
+toolkit designed specifically for the visual diagnosis of spatiotemporal 
+probabilistic forecasts [@Liu2024]. The package's novelty lies in its use of polar 
+coordinates to map different dimensions of forecast performance—such as 
+uncertainty magnitude, reliability, and temporal stability—onto angle and 
+radius. This approach provides compact overviews that reveal patterns 
+obscured in traditional Cartesian plots. By providing clear visual 
+answers to key diagnostic questions (e.g., "Where is a forecast least certain?", 
+"How is its uncertainty evolving?"), `k-diagram` serves as an essential tool 
+for any researcher or practitioner seeking to move beyond aggregate metrics 
+and gain a deeper, more actionable understanding of their forecasting models.
 
 # Functionality
 
-`k-diagram` is implemented in Python \autoref{fig1:worflow}, leveraging core scientific libraries
+`k-diagram` is implemented in Python [@python3; @10.5555/1593511],, leveraging core scientific libraries
 including `numpy` [@harris2020array], `pandas` [@mckinney-proc-scipy-2010;
 @reback2020pandas], `matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth],
-and `scikit-learn` [@scikit-learn]. Its main features include:
+and `scikit-learn` [@scikit-learn]. The core functionality is organized around diagnosing 
+key aspects of forecast quality \autoref{fig1:workflow}:
 
 * **Uncertainty Diagnostics:** A collection of polar plots under
     `kdiagram.plot.uncertainty` for visualizing:
@@ -106,19 +114,11 @@ and `scikit-learn` [@scikit-learn]. Its main features include:
 
 ![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:example}](docs/source/_static/paper_fig1.png)
 
+The package is designed for ease of use and customization, allowing users to 
+control plot aesthetics, angular coverage, and color mapping to tailor the 
+visualizations for their specific domain. Figure \@ref(fig:performance) demonstrates some of these key diagnostic plots.
 
-### Related Work
-
-The visualization methods implemented in `k-diagram` were developed alongside 
-research applying deep learning models to complex environmental forecasting 
-challenges. Specifically, these polar diagnostics were utilized to analyze 
-and interpret the uncertainty associated with land subsidence predictions 
-using an Extreme Temporal Fusion Transformer model in Zhongshan city, 
-China. The results and application context of that specific study are detailed 
-in a separate manuscript submitted to the International Journal of 
-Forecasting [@kouadio_subsidence_2025]. This JOSS paper focuses 
-specifically on the `k-diagram` software package itself – its design, 
-functionality, and general applicability for visualizing forecast uncertainty. 
+![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Actual vs Predicted (Q50): polar scatter of observed subsidence (black) and median forecasts (red), with connecting lines. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png){#fig:performance}
 
 ### Installation 
 
@@ -139,54 +139,18 @@ is hosted on ReadTheDocs: [https://k-diagram.readthedocs.io/](https://k-diagram.
 ### License
 
 `k-diagram` is made available under the OSI-approved Apache License 2.0. The 
-full license text can be found in the `LICENSE` file in the root of the repository.
+full license text can be found in the [LICENSE](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE) file in the root of the repository.
 
-# Example Usage
 
-The following snippet \autoref{fig2:example} demonstrates generating an Anomaly Magnitude plot,
-identifying where actual values fall outside the 10th-90th percentile
-prediction interval.
+# Example Application
+The visualization methods implemented in k-diagram were developed alongside research 
+applying deep learning models to complex environmental forecasting challenges [@kouadiob2025]. Specifically, 
+these polar diagnostics were utilized to analyze and interpret the uncertainty associated 
+with land subsidence predictions using an Extreme Temporal Fusion Transformer 
+model [@Kouadio2025] in Zhongshan city, China.
 
-```python
-import kdiagram as kd
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-
-# 1. Generate Sample Data
-np.random.seed(42)
-n_points = 180
-df = pd.DataFrame({'sample_id': range(n_points)})
-df['actual'] = np.random.normal(loc=20, scale=5, size=n_points)
-df['q10'] = df['actual'] - np.random.uniform(2, 6, size=n_points)
-df['q90'] = df['actual'] + np.random.uniform(2, 6, size=n_points)
-# Add anomalies
-under_indices = np.random.choice(n_points, 20, replace=False)
-df.loc[under_indices, 'actual'] = df.loc[under_indices, 'q10'] - \
-                                  np.random.uniform(1, 5, size=20)
-available = list(set(range(n_points)) - set(under_indices))
-over_indices = np.random.choice(available, 20, replace=False)
-df.loc[over_indices, 'actual'] = df.loc[over_indices, 'q90'] + \
-                                 np.random.uniform(1, 5, size=20)
-
-# 2. Create the Anomaly Magnitude Plot
-ax = kd.plot_anomaly_magnitude(
-    df=df,
-    actual_col='actual',
-    q_cols=['q10', 'q90'], # Provide lower and upper bounds as a list
-    title="Sample Anomaly Magnitude Plot",
-    cbar=True,            # Show color bar indicating magnitude
-    s=100,                # maker size adjusted 
-    verbose=0             # Suppress console summary for brevity 
-
-)
-# In a script, use plt.show() or ax.figure.savefig("plot.png")
-# plt.show() # Not needed if saving or in some environments
-```
-![Example k-diagram plot demonstrating [Specific Feature Shown, e.g., Anomaly Magnitude] for 
-simulated data. Red points indicate over-predictions, blue points under-predictions, 
-relative to the interval bounds. Radius indicates the magnitude of 
-the anomaly.\label{fig2:example}](docs/sources/images/paper_fig2.png)
+Full usage examples and a gallery of all plot types are available in the official 
+documentation [gallery section](https://k-diagram.readthedocs.io/en/latest/gallery/uncertainty.html).
 
 ### Contributing
 
@@ -195,7 +159,6 @@ feature requests, documentation improvements, and code contributions.
 Please refer to the `CONTRIBUTING.rst` guide in the documentation (or repository) 
 for detailed guidelines on how to contribute. Development discussions and 
 issue tracking occur on the [GitHub repository](https://github.com/earthai-tech/k-diagram/issues).
-
 
 ### Acknowledgements
 
