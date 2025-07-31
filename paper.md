@@ -80,6 +80,7 @@ and gain a deeper, more actionable understanding of their forecasting models.
 
 # Functionality
 
+
 `k-diagram` is implemented in Python [@python3; @10.5555/1593511],, leveraging core scientific libraries
 including `numpy` [@harris2020array], `pandas` [@mckinney-proc-scipy-2010;
 @reback2020pandas], `matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth],
@@ -112,7 +113,7 @@ key aspects of forecast quality \autoref{fig1:workflow}:
 * **Customization:** Plots offer various parameters for adjusting appearance,
     angular coverage (`acov`), colormaps, normalization, and labeling.
 
-![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:example}](docs/source/_static/paper_fig1.png)
+![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:workflow}](docs/source/_static/paper_fig1.png)
 
 The package is designed for ease of use and customization, allowing users to 
 control plot aesthetics, angular coverage, and color mapping to tailor the 
@@ -142,7 +143,7 @@ is hosted on ReadTheDocs: [https://k-diagram.readthedocs.io/](https://k-diagram.
 full license text can be found in the [LICENSE](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE) file in the root of the repository.
 
 
-# Example Application
+### Example Application
 The visualization methods implemented in k-diagram were developed alongside research 
 applying deep learning models to complex environmental forecasting challenges [@kouadiob2025]. Specifically, 
 these polar diagnostics were utilized to analyze and interpret the uncertainty associated 
@@ -151,6 +152,7 @@ model [@Kouadio2025] in Zhongshan city, China.
 
 Full usage examples and a gallery of all plot types are available in the official 
 documentation [gallery section](https://k-diagram.readthedocs.io/en/latest/gallery/uncertainty.html).
+
 
 ### Contributing
 
