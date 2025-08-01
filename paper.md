@@ -12,7 +12,7 @@ tags:
 authors:
   - name: Kouao Laurent Kouadio
     orcid: 0000-0001-7259-7254 
-    affiliation: "1, 2, 3" 
+    affiliation: "1, 2" 
 
 affiliations:
  - name: School of Geosciences and Info-Physics, Central South University, Changsha, Hunan, 410083, China
@@ -36,7 +36,7 @@ temporal stability onto intuitive geometric representations, `k-diagram`
 enables researchers and practitioners to identify model biases, understand 
 forecast degradation over time, and communicate uncertainty characteristics 
 more effectively. The package is designed to be a practical extension 
-to the standard forecasting workflow [@Hong2025], providing the visual evidence needed 
+to the standard forecasting workflow, providing the visual evidence needed 
 for more robust model evaluation and trustworthy, context-aware 
 decision-making.
 
@@ -62,7 +62,7 @@ General-purpose libraries like matplotlib [@Hunter:2007] and seaborn
 for these specialized diagnostics. Even established forecasting visualizations 
 like fan charts, which have seen recent innovations [@Sokol2025], are 
 primarily designed for single time series and do not scale well to 
-problems involving thousands of simultaneous forecasts. This creates a 
+problems involving thousands of simultaneous forecasts[@Hong2025]. This creates a 
 critical gap between the generation of complex probabilistic forecasts 
 and the ability to interpret them effectively.
 
@@ -80,7 +80,7 @@ and gain a deeper, more actionable understanding of their forecasting models.
 
 # Functionality
 
-`k-diagram` is implemented in Python [@python3; @10.5555/1593511],, leveraging core scientific libraries
+`k-diagram` is implemented in Python [@python3; @pythonbook], leveraging core scientific libraries
 including `numpy` [@harris2020array], `pandas` [@mckinney-proc-scipy-2010;
 @reback2020pandas], `matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth],
 and `scikit-learn` [@scikit-learn]. The core functionality is organized around diagnosing 
@@ -116,9 +116,9 @@ key aspects of forecast quality \autoref{fig1:workflow}:
 
 The package is designed for ease of use and customization, allowing users to 
 control plot aesthetics, angular coverage, and color mapping to tailor the 
-visualizations for their specific domain. Figure \@ref(fig:performance) demonstrates some of these key diagnostic plots.
+visualizations for their specific domain. \autoref{fig2:performance} demonstrates some of these key diagnostic plots.
 
-![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Actual vs Predicted (Q50): polar scatter of observed subsidence (black) and median forecasts (red), with connecting lines. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png){#fig:performance}
+![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Actual vs Predicted (Q50): polar scatter of observed subsidence (black) and median forecasts (red), with connecting lines. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
 
 ### Installation 
 
@@ -143,7 +143,7 @@ full license text can be found in the [LICENSE](https://github.com/earthai-tech/
 
 
 # Example Application
-The visualization methods implemented in k-diagram were developed alongside research 
+The visualization methods implemented in `k-diagram` were developed alongside research 
 applying deep learning models to complex environmental forecasting challenges [@kouadiob2025]. Specifically, 
 these polar diagnostics were utilized to analyze and interpret the uncertainty associated 
 with land subsidence predictions using an Extreme Temporal Fusion Transformer 
@@ -154,7 +154,7 @@ documentation [gallery section](https://k-diagram.readthedocs.io/en/latest/galle
 
 ### Contributing
 
-Contributions to `k-diagram` are highly encouraged\! We welcome bug reports, 
+Contributions to `k-diagram` are highly encouraged\! I welcome bug reports, 
 feature requests, documentation improvements, and code contributions. 
 Please refer to the `CONTRIBUTING.rst` guide in the documentation (or repository) 
 for detailed guidelines on how to contribute. Development discussions and 
@@ -162,12 +162,12 @@ issue tracking occur on the [GitHub repository](https://github.com/earthai-tech/
 
 ### Acknowledgements
 
-We extend our sincere gratitude to the anonymous colleagues who provided 
+I extend my sincere gratitude to the anonymous colleagues who provided 
 invaluable feedback during the development of `k-diagram`, as well as those 
 who rigorously tested its early iterations. Their insights and dedication 
 were instrumental in refining the software.
 
-We also appreciate the constructive feedback from early users and 
+I also appreciate the constructive feedback from early users and 
 reviewers, whose contributions have significantly enhanced the quality 
 and usability of the project.
 
