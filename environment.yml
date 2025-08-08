@@ -18,6 +18,7 @@ dependencies:
   - python>=3.9    # Specify minimum Python version (3.9 or higher)
 
   # FusionLab core dependencies (match setup.py/install_requires)
+  - numpydoc
   - numpy >=1.18,<2.0  # Pin numpy < 2.0 for broader compatibility
   - pandas >=1.0,<3.0  # Pin pandas < 3.0
   - scipy >=1.5

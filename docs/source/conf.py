@@ -53,6 +53,7 @@ release = pkg_version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'numpydoc', 
     'sphinx.ext.autodoc',         # Include documentation from docstrings
     'sphinx.ext.autosummary',     # Generate summary tables for API docs
     'sphinx.ext.napoleon',        # Support NumPy and Google style docstrings
@@ -80,6 +81,11 @@ napoleon_use_rtype = True         # Use :rtype: for return types
 napoleon_preprocess_types = True    # Process type strings into links
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
+
+# numpydoc configuration
+numpydoc_show_class_members   = False    # don't duplicate __init__ params under the class
+numpydoc_class_members_toctree = False   # keep methods out of the class TOC
+numpydoc_xref_param_type       = True    # auto-link types in parameter lists
 
 # Configure Autodoc settings
 autodoc_default_options = {
@@ -139,6 +145,37 @@ html_theme = 'furo' # Use the Furo theme
 # Theme options are theme-specific and customize the look and feel.
 # Consult the Furo documentation: https://pradyunsg.me/furo/customisation/
 html_theme_options = {
+    # ── VCS “Edit this page” -----------------------------------------------
+    "source_repository":  "https://github.com/earthai-tech/k-diagram/",
+    "source_branch":      "main",
+    "source_directory":   "docs/source/",
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url":  "https://github.com/earthai-tech/k-diagram",
+            "html": """
+                <svg viewBox="0 0 24 24" aria-hidden="true"
+                     height="1.35em" width="1.35em">
+                  <path fill="currentColor"
+                        d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2
+                           c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.2-.8.1-.8.1-.8
+                           1.3.1 2 1.3 2 1.3 1.2 2 3.1 1.4 3.8 1.1.1-.9.5-1.4.9-1.8
+                           -2.7-.3-5.4-1.4-5.4-6.3 0-1.4.5-2.5 1.3-3.4 0-.3-.6-1.5.1-3
+                           0 0 1-.3 3.3 1.3a11.4 11.4 0 0 1 6 0c2.2-1.6 3.3-1.3 3.3-1.3
+                           .7 1.5.1 2.7.1 3A5 5 0 0 1 21 13c0 4.9-2.7 6-5.4 6.3
+                           .6.5 1.1 1.4 1.1 2.8v4.2c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/>
+                </svg>
+            """,
+            "class": "",
+        },
+        {
+            "name": "PyPI",
+            "url":  "https://pypi.org/project/k-diagram/",
+            "html": "<span class='fa fa-box-open'></span>",
+            "class": "",
+        },
+    ],
+        
     # Example options:
     "light_css_variables": {
         "color_brand_primary": "#007ACC", # Example blue

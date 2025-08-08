@@ -40,13 +40,14 @@ def reshape_quantile_data(
     This method transforms columns that follow the naming pattern 
     ``{value_prefix}_{dt_value}_q{quantile}`` into a structured format,
     preserving spatial coordinates and adding the temporal dimension
-    based on extracted datetime values.
+    based on extracted datetime values [1]_.
 
     Parameters
     ----------
     df : pd.DataFrame
         Input DataFrame containing quantile columns. The columns should 
         follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
+
         - `value_prefix` is the base name for the quantile measurement
           (e.g., ``'predicted_subsidence'``)
         - `dt_val` is the datetime value (e.g., year or month)
@@ -88,6 +89,7 @@ def reshape_quantile_data(
     pd.DataFrame
         A reshaped DataFrame with quantiles as separate columns for each 
         quantile value. The DataFrame will have the following columns:
+
         - Spatial columns (if any)
         - Temporal column (specified by ``dt_col``)
         - ``{value_prefix}_q{quantile}`` value columns for each quantile
@@ -109,18 +111,20 @@ def reshape_quantile_data(
 
     Notes
     -----
+
     - The column names must follow the pattern 
       ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
     - The temporal dimension is determined by the ``dt_col`` argument.
     - Spatial columns are automatically detected or can be passed explicitly.
     - The quantiles are pivoted and separated into distinct columns 
-      based on the unique quantile values found in the DataFrame.
+      based on the unique quantile values found in the DataFrame [2]_.
       
     .. math::
 
         \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
 
-    Where:
+    where:
+
     - :math:`m` = Original row count
     - :math:`n` = Original columns (quantile + spatial + temporal)
     - :math:`p` = :math:`m \times t` (t = unique temporal values)
@@ -130,8 +134,8 @@ def reshape_quantile_data(
     See Also
     --------
     pandas.melt : For reshaping DataFrames from wide to long format.
-    gofast.utils.validator.melt_q_data : Alternative method for reshaping quantile data.
-    gofast.utils.validator.handle_error : Error handling utility for reshaping functions.
+    kdiagram.utils.q_utils.melt_q_data : Alternative method for reshaping quantile data.
+
     
     References
     ----------
@@ -238,13 +242,14 @@ def melt_q_data(
     This method transforms columns that follow the naming pattern 
     ``{value_prefix}_{dt_value}_q{quantile}`` into a structured long format
     with separated datetime and quantile columns. Handles spatial 
-    coordinates preservation through reshaping operations.
+    coordinates preservation through reshaping operations [1]_.
 
     Parameters
     ----------
     df : pd.DataFrame
         Input DataFrame containing quantile columns. The columns should 
         follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
+
         - `value_prefix` is the base name for the quantile measurement
           (e.g., ``'predicted_subsidence'``)
         - `dt_val` is the datetime value (e.g., year or month)
@@ -315,10 +320,10 @@ def melt_q_data(
        year  subs_q0.1  subs_q0.5  subs_q0.9
     0  2022        1.2        1.5        NaN
     1  2023        NaN        NaN        1.7
-    
+    >>> 
     >>> long_df.columns
     Index(['lon', 'lat', 'year', 'subs_q0.1', 'subs_q0.5'], dtype='object')
-
+    >>> 
     >>> long_df = melt_q_data(wide_df, 'subs', dt_name='year',
     ...                      spatial_cols=('lon', 'lat')) 
     >>> long_df
@@ -331,18 +336,20 @@ def melt_q_data(
     
     Notes
     -----
+
     - The column names must follow the pattern 
       ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
     - The temporal dimension is determined by the ``dt_name`` argument.
     - Spatial columns are automatically detected or can be passed explicitly.
     - The quantiles are pivoted and separated into distinct columns 
-      based on the unique quantile values found in the DataFrame.
+      based on the unique quantile values found in the DataFrame [2]_.
       
     .. math::
 
         \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
 
     Where:
+
     - :math:`m` = Original row count
     - :math:`n` = Original columns (quantile + spatial + temporal)
     - :math:`p` = :math:`m \times t` (t = unique temporal values)
@@ -543,7 +550,8 @@ def pivot_q_data(
 
         \mathbf{L}_{p \times k} \rightarrow \mathbf{W}_{m \times n}
         
-    Where:
+    where:
+
     - :math:`p` = Long format row count
     - :math:`k` = Spatial cols + temporal + quantile columns
     - :math:`m` = :math:`p / t` (t = unique temporal values)
@@ -603,11 +611,13 @@ def pivot_q_data(
     Notes
     -----
     1. Column requirements:
+
        - Must contain exactly one temporal column (``dt_col``)
        - Quantile columns must follow ``{prefix}_q{quantile}`` pattern
        - Spatial columns must be unique per location
 
-    2. Pivoting logic:
+    2. Pivoting logic [2]_:
+
        - Maintains original spatial coordinates through operations
        - Handles missing quantiles per temporal value based on ``error``
        - Preserves original data types for measurement values
@@ -615,8 +625,6 @@ def pivot_q_data(
     See Also
     --------
     pandas.pivot_table : Base pandas function for reshaping
-    to_long_data_q : Inverse transformation function
-    gofast.analysis.validate_spatial_coordinates : Spatial validation
 
     References
     ----------

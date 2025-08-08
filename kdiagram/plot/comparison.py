@@ -81,10 +81,13 @@ def plot_model_comparison(
         The performance metrics to calculate and plot. Default is
         ``None``, which triggers automatic metric selection based on
         the target type inferred from `y_true`:
+
         - **Regression:** Defaults to ``["r2", "mae", "mape", "rmse"]``.
         - **Classification:** Defaults to ``["accuracy", "precision",
           "recall"]``.
+
         Can be provided as:
+
         - A list of strings: Names of metrics known by scikit-learn
           or gofast's `get_scorer` (e.g., ``['r2', 'rmse']``).
         - A list of callables: Functions with the signature
@@ -204,9 +207,11 @@ def plot_model_comparison(
     across all models before plotting:
 
     - Min-Max ('norm'):
+
       .. math::
          S'_{m,k} = \frac{S_{m,k} - \min_j(S_{m,j})}{\max_j(S_{m,j}) - \min_j(S_{m,j})}
     - Standard ('std'):
+
       .. math::
          S'_{m,k} = \frac{S_{m,k} - \text{mean}_j(S_{m,j})}{\text{std}_j(S_{m,j})}
 
@@ -231,26 +236,26 @@ def plot_model_comparison(
 
     Examples
     --------
-    >>> from kdiagram.plot.relationship import plot_model_comparison 
+    >>> from kdiagram.plot.comparison import plot_model_comparison 
     >>> import numpy as np
-
+    >>> 
     >>> # Example 1: Regression task
     >>> y_true_reg = np.array([3, -0.5, 2, 7, 5])
     >>> y_pred_r1 = np.array([2.5, 0.0, 2.1, 7.8, 5.2])
     >>> y_pred_r2 = np.array([3.2, 0.2, 1.8, 6.5, 4.8])
     >>> times = [0.1, 0.5] # Training times in seconds
     >>> names = ['ModelLin', 'ModelTree']
-    >>> ax1 = plot_factory_ops(y_true_reg, y_pred_r1, y_pred_r2,
+    >>> ax1 = plot_model_comparison(y_true_reg, y_pred_r1, y_pred_r2,
     ...                        train_times=times, names=names,
     ...                        metrics=['r2', 'mae', 'rmse'], # Specify metrics
     ...                        title="Regression Model Comparison",
     ...                        scale='norm') # Normalize for comparison
-
+    >>> 
     >>> # Example 2: Classification task (requires appropriate y_true/y_pred)
     >>> y_true_clf = np.array([0, 1, 0, 1, 1, 0])
     >>> y_pred_c1 = np.array([0, 1, 0, 1, 0, 0]) # Model 1 preds
     >>> y_pred_c2 = np.array([0, 1, 1, 1, 1, 0]) # Model 2 preds
-    >>> ax2 = plot_factory_ops(y_true_clf, y_pred_c1, y_pred_c2,
+    >>> ax2 = plot_model_comparison(y_true_clf, y_pred_c1, y_pred_c2,
     ...                        names=["LogReg", "SVM"],
     ...                        # Uses default classification metrics
     ...                        title="Classification Model Comparison",

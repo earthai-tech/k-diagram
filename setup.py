@@ -4,7 +4,7 @@ try:
     import kdiagram 
     VERSION = kdiagram.__version__
 except:
-    VERSION= "1.0.3" 
+    VERSION= "1.1.0" 
     
 # Package metadata
 DISTNAME = "k-diagram"
@@ -25,6 +25,7 @@ KEYWORDS = "forecasting, uncertainty visualization, model evaluation"
 
 # Ensure dependencies are installed
 _required_dependencies = [
+    "numpydoc", 
     "numpy<2",
     "pandas",
     "scipy",
