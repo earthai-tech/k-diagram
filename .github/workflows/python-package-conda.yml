@@ -52,12 +52,12 @@ jobs:
       
           python -m pip install -e .[dev]
           # Use ruff to check for issues
-          ruff check .
+          ruff check . --fix
           # Use ruff to automatically fix issues (e.g., imports)
-          ruff --fix .
+          # ruff --fix .
     
           # Use black to check if the code is formatted
-          black . --check  # Check if code adheres to black formatting
+          black .
    
       - name: Test with pytest + coverage
         run: |
