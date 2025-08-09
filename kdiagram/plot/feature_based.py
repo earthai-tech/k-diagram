@@ -146,6 +146,7 @@ def plot_feature_fingerprint(
     2. **Normalization** (if `normalize=True`): Each row
        :math:`\mathbf{r}_i = (r_{i0}, r_{i1}, \dots, r_{i,N-1})` is
        normalized:
+
        .. math::
            r'_{ij} = \frac{r_{ij}}{\max_{k}(r_{ik})}
        If :math:`\max_{k}(r_{ik}) = 0`, :math:`r'_{ij}` is set to 0.

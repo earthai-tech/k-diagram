@@ -111,9 +111,11 @@ def taylor_diagram(
         `ref_std`. Default is `False`.
 
     radial_strategy : {'rwf', 'convergence', 'center_focus',
-                       'performance'}, optional
+        'performance'}, optional
+
         Strategy for computing the background mesh (when
         `cmap` is not `None`):
+
         * ``'rwf'``: Radial weighting function that uses
           correlation and deviation distance in an exponential
           form.
@@ -141,10 +143,12 @@ def taylor_diagram(
     ref_props : dict or None, optional
         Dictionary of reference plot properties, such as line
         style, color, or width. Supported keys include:
+
         * ``'label'``: Legend label for the reference.
         * ``'lc'``: Line color/style for the reference arc.
         * ``'color'``: Color/style for the reference point.
         * ``'lw'``: Line width.
+
         If not given, defaults to a green line and black point.
 
     fig_size : (float, float) or None, optional
@@ -174,6 +178,7 @@ def taylor_diagram(
     :math:`r`:
 
     1. **Standard Deviation**:
+
        .. math::
           \sigma_p = \sqrt{\frac{1}{n}
           \sum_{i=1}^{n}\bigl(p_i - \bar{p}\bigr)^2}
@@ -181,6 +186,7 @@ def taylor_diagram(
        where :math:`\bar{p}` is the mean of :math:`p`.
 
     2. **Correlation**: :math:`\rho`
+
        .. math::
           \rho = \frac{\mathrm{Cov}(p, r)}
           {\sigma_p \; \sigma_r}
@@ -598,10 +604,12 @@ def plot_taylor_diagram_in(
     with standard deviation :math:`\sigma_r`.
 
     1.  **Correlation** (:math:`\rho`):
+
         .. math::
            \rho = \frac{\mathrm{Cov}(p, r)}{\sigma_p \sigma_r}
 
     2.  **Standard Deviation** (:math:`\sigma_p`):
+
         .. math::
            \sigma_p = \sqrt{\frac{1}{n}
            \sum_{i=1}^n (p_i - \bar{p})^2}
@@ -629,8 +637,7 @@ def plot_taylor_diagram_in(
     Examples
     --------
     >>> import numpy as np
-    >>> # Assuming function is imported:
-    >>> # from kdiagram.plot.evaluation import plot_taylor_diagram_in
+    >>> from kdiagram.plot.evaluation import plot_taylor_diagram_in
     >>> np.random.seed(42)
     >>> reference = np.random.normal(0, 1, 100)
     >>> y_preds = [
@@ -726,6 +733,8 @@ def plot_taylor_diagram_in(
         CC= minmax_scaler(CC, feature_range=norm_range)
 
     # plot background
+    # Turn off grid to avoid the deprecation error
+    ax.grid(False)
     c = ax.pcolormesh(
         TH,
         RR,
@@ -735,7 +744,7 @@ def plot_taylor_diagram_in(
         vmin=-1 if angle_max==np.pi else 0,
         vmax=1
     )
-
+    ax.grid(True, which="both")
     # convert each correlation to an angle
     angles = np.arccos(corrs)
     radii  = stds
@@ -992,6 +1001,7 @@ def plot_taylor_diagram(
     and the centered root-mean-square difference (RMSD).
 
     The relationship is based on the law of cosines:
+
     .. math::
         RMSD^2 = \sigma_p^2 + \sigma_r^2 - 2\sigma_p \sigma_r R
 
@@ -999,9 +1009,10 @@ def plot_taylor_diagram(
     deviations of the prediction and reference, respectively.
 
     On the diagram:
-     - Radial distance = Standard deviation (:math:`\sigma_p`)
-     - Angle = Correlation (:math:`\arccos(R)`)
-     - Distance to reference point = Centered RMSD
+
+    - Radial distance = Standard deviation (:math:`\sigma_p`)
+    - Angle = Correlation (:math:`\arccos(R)`)
+    - Distance to reference point = Centered RMSD
 
     See Also
     --------
@@ -1020,8 +1031,7 @@ def plot_taylor_diagram(
     Examples
     --------
     >>> import numpy as np
-    >>> # Assuming function is imported:
-    >>> # from kdiagram.plot.evaluation import plot_taylor_diagram
+    >>> from kdiagram.plot.evaluation import plot_taylor_diagram
     >>> np.random.seed(101)
     >>> reference = np.random.normal(0, 1.0, 100)
     >>> y_preds = [

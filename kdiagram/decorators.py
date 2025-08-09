@@ -325,6 +325,8 @@ def isdf(func):
         
         # Proceed with conversion if necessary
         if data is not None and not isinstance(data, pd.DataFrame):
+            if isinstance(data, list): 
+                data = np.asarray(data)
             try:
                 if columns and len(columns) != data.shape[1]:
                     data = pd.DataFrame(data)

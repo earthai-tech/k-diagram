@@ -15,6 +15,13 @@ html[data-theme="light"] {
     --color-brand-secondary: #36456e; /* SlateBlue */
     /* Tertiary: Sea Green from logo_k_diagram.png */
     --color-brand-tertiary: #2E8B57; /* SeaGreen */
+    
+    /* --- Sidebar Overrides (Light Mode) --- */
+    --color-sidebar-background:       var(--color-background-secondary);
+    --color-sidebar-background-hover: var(--color-table-hover-bg-tint);  /* or whatever tint you like */
+    --color-sidebar-link-text:        var(--color-foreground-secondary);
+    --color-sidebar-link-text--top-level: var(--color-foreground-primary);
+
 
     /* --- Status Colors --- */
     --color-warning-border: #f57c00;  /* Amber */
@@ -52,7 +59,13 @@ html[data-theme="dark"] {
     --color-brand-content: #F08080; /* Light Coral */
     --color-brand-secondary: #8a9bcd; /* Light Slate Blue */
     --color-brand-tertiary: #66bbab; /* Light Sea Green */
-
+    
+    /* --- Sidebar Overrides (Dark Mode) --- */
+    --color-sidebar-background:       var(--color-background-secondary);
+    --color-sidebar-background-hover: var(--color-table-hover-bg-tint);
+    --color-sidebar-link-text:        var(--color-foreground-muted);
+    --color-sidebar-link-text--top-level: var(--color-foreground-primary);
+    
     /* --- Status Colors (Dark Mode) --- */
     --color-warning-border: #ffa726; /* Lighter Amber */
     --color-warning-bg-tint: 20%;
@@ -335,13 +348,19 @@ table.docutils tbody tr:hover {
 /*--------------------------------------------------------------------------
  * Sidebar Customization (Furo) - Updated Hover
  *--------------------------------------------------------------------------*/
-.sidebar-drawer {
-    width: 18rem;
-    border-right: 1px solid var(--color-border);
-}
+
 .toc-drawer > .toc-tree {
      padding-inline-start: 1.5rem;
 }
+/* only target the first UL under .toc-drawer */
+.toc-drawer > .toc-tree > li.current > a.reference {
+  /* your active‐link styles */
+  background-image: none !important;
+  background-color: var(--color-brand-primary)!important;
+  color: var(--color-background-primary) !important;
+  font-weight: 600;
+}
+
 .sidebar-drawer .reference {
     transition: background-color 0.15s ease-in-out,
                 color 0.15s ease-in-out,
@@ -351,19 +370,25 @@ table.docutils tbody tr:hover {
     margin: 1px 0;
     display: block;
 }
+
 .sidebar-drawer .reference:hover {
-    /* Use Primary Red for hover background */
-    background-color: var(--color-brand-primary);
-    /* Ensure text is readable on Primary Red */
+    /* kill the Furo gradient */
+    background-image: none !important;
+    /* then draw a solid background */
+    background-color: var(--color-brand-primary) !important;
+    /* and keep the text dark */
     color: var(--color-background-primary) !important;
     padding-left: 1.1em;
 }
-.sidebar-drawer li.current > a.reference { /* Current page link */
-    /* Keep using Primary Red for active/current link */
-    background-color: var(--color-brand-primary);
-    color: var(--color-background-primary) !important;
-    font-weight: 600;
+
+
+/* "undo" the highlight for nested current links */
+.sidebar-drawer .toc-tree li li.current > a.reference {
+  background: none !important;
+  color: var(--color-sidebar-link-text) !important;
+  font-weight: normal !important;
 }
+
 
 /*--------------------------------------------------------------------------
  * Sphinx Design Components (Refined)
@@ -418,3 +443,5 @@ table.docutils tbody tr:hover {
 .sd-card .sd-card-body {
     padding: 1.2em;
 }
+
+

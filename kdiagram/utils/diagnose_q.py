@@ -923,8 +923,8 @@ def detect_quantiles_in(
     value validation.
 
     Identifies columns containing quantile data through structured naming 
-    conventions and value validation. Supports both absolute and normalized 
-    quantile representations through mode-based value adjustment.
+    conventions and value validation [1]_. Supports both absolute and normalized 
+    quantile representations through mode-based value adjustment [2]_.
 
 
     Parameters
@@ -972,28 +972,6 @@ def detect_quantiles_in(
         q_{\text{raw}} & \text{if } q \in [0,1] \text{ and } mode=\text{'strict'}
         \end{cases}
             
-    Examples
-    --------
-    >>> from kdiagram.utils.diagnose_q import detect_quantiles_in
-    >>> import pandas as pd
-    
-    # Basic detection
-    >>> df = pd.DataFrame({'sales_q0.25': [4.2], 'sales_q0.75': [5.8]})
-    >>> detect_quantiles_in(df, col_prefix='sales')
-    ['sales_q0.25', 'sales_q0.75']
-
-    # Temporal quantile filtering
-    >>> df = pd.DataFrame({'temp_2023_q0.5': [22.1], 'temp_2024_q0.5': [23.4]})
-    >>> detect_quantiles_in(df, dt_value=['2023'], return_types='q_val')
-    [0.5]
-
-    # Value normalization
-    >>> df = pd.DataFrame({'risk_q150': [0.8]})
-    >>> detect_quantiles_in(df, mode='soft', return_types='q_val')
-    [1.0]
-
-    Notes
-    -----
     1. Column name pattern requirements:
        - Requires ``_qX`` suffix where X is numeric
        - Temporal format: ``{prefix}_{date}_q{value}``
@@ -1002,16 +980,37 @@ def detect_quantiles_in(
     2. Value adjustment in soft mode uses piecewise function:
        - Clips values to [0,1] range
        - Preserves original values within valid range
+       
+    Examples
+    --------
+    >>> from kdiagram.utils.diagnose_q import detect_quantiles_in
+    >>> import pandas as pd
+    >>> 
+    >>> # Basic detection
+    >>> df = pd.DataFrame({'sales_q0.25': [4.2], 'sales_q0.75': [5.8]})
+    >>> detect_quantiles_in(df, col_prefix='sales')
+    ['sales_q0.25', 'sales_q0.75']
+    >>> 
+    >>> # Temporal quantile filtering
+    >>> df = pd.DataFrame({'temp_2023_q0.5': [22.1], 'temp_2024_q0.5': [23.4]})
+    >>> detect_quantiles_in(df, dt_value=['2023'], return_types='q_val')
+    [0.5]
+    >>> 
+    >>> # Value normalization
+    >>> df = pd.DataFrame({'risk_q150': [0.8]})
+    >>> detect_quantiles_in(df, mode='soft', return_types='q_val')
+    [1.0]
 
     See Also
     --------
-    gofast.utils.validate_quantiles : For quantile value validation
+    kdiagram.utils.validate_quantiles : For quantile value validation
     pandas.DataFrame.filter : For column selection by pattern
 
     References
     ----------
     .. [1] Regular Expression HOWTO, Python Documentation
     .. [2] Pandas API Reference: DataFrame operations
+    
     """
     
     is_frame(df, df_only=True, objname ="Data 'df'")
@@ -1206,18 +1205,19 @@ def build_q_column_names(
     --------
     >>> from kdiagram.utils.diagnose_q import build_q_column_names
     >>> import pandas as pd
-    
-    # Basic usage with prefix
+    >>> 
+    >>> # Basic usage with prefix
     >>> df = pd.DataFrame(columns=['price_q0.25', 'price_2023_q0.5'])
     >>> build_q_column_names(df, [0.25, 0.5], 'price')
-    # if strict_match ts
+    >>> 
+    >>> # if strict_match ts
     ['price_q0.25', 'price_2023_q0.5']
-
-    # Date-filtered search
+    >>> 
+    >>> # Date-filtered search
     >>> build_q_column_names(df, [0.5], 'price', dt_value=['2023'])
     ['price_2023_q0.5']
-
-    # Unprefixed columns
+    >>> 
+    >>> # Unprefixed columns
     >>> df = pd.DataFrame(columns=['q0.75', '2024_q0.9'])
     >>> build_q_column_names(df, [0.75, 0.9])
     ['q0.75', '2024_q0.9']

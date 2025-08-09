@@ -1,0 +1,91 @@
+.. _release_v1_0_3:
+
+----------------
+Version 1.0.3
+----------------
+*(Released: 2025-04-15)*
+
+This release improves documentation robustness, fixes bugs found
+during strict Sphinx builds and testing, refines the dataset API,
+and enhances visual styling.
+
+Enhancements |Enhancement|
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* |Enhancement| Added synthetic dataset generators:
+  :func:`~kdiagram.datasets.make_taylor_data`,
+  :func:`~kdiagram.datasets.make_multi_model_quantile_data`,
+  :func:`~kdiagram.datasets.make_cyclical_data`,
+  :func:`~kdiagram.datasets.make_fingerprint_data`.
+* |Enhancement| Added
+  :func:`~kdiagram.datasets.load_zhongshan_subsidence` with
+  caching and optional downloading.
+* |Enhancement| Refined dataset API with ``as_frame`` for loaders
+  (e.g., :func:`~kdiagram.datasets.load_uncertainty_data`) to
+  return a :class:`~kdiagram.bunch.Bunch` or a
+  :class:`pandas.DataFrame`.
+* |Enhancement| Refactored model comparison into
+  :mod:`kdiagram.plot.comparison` via
+  :func:`~kdiagram.plot.comparison.plot_model_comparison`.
+* |Enhancement| Added :mod:`kdiagram.utils.metric_utils` and
+  :func:`~kdiagram.utils.metric_utils.get_scorer`.
+* |Enhancement| Added :mod:`kdiagram.utils.io` and dataset property
+  helpers in :mod:`kdiagram.datasets._property` (adapted from
+  ``gofast``).
+* |Build| Improved CLI (`kdiagram.cli`) with full argument parsing
+  and better help.
+* |Docs| Enhanced docs theme (``custom.css``) with refined palette,
+  improved tables, clearer admonitions, smoother hover effects.
+* |Build| Added ``CODE_OF_CONDUCT.md``.
+
+Bug Fixes |Fix|
+~~~~~~~~~~~~~~~
+
+* |Fix| Resolved many ReST formatting errors in docstrings across
+  modules (e.g., ``evaluation.py``, ``uncertainty.py``,
+  ``feature_based.py``) to pass strict Sphinx builds (``-W``).
+  Fixed headers, underlines, indentation, lists, footnotes. (#nnn)
+* |Fix|
+  :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`:
+  fixed ``ValueError`` during normalization due to NumPy
+  broadcasting. (#nnn)
+* |Fix| Dataset loaders (e.g., ``load_uncertainty_data``,
+  ``load_zhongshan_subsidence``) now populate ``q10_cols``,
+  ``q50_cols``, ``q90_cols`` consistently in returned Bunch.
+  (#nnn)
+* |Fix|
+  :func:`~kdiagram.plot.relationship.plot_relationship`:
+  replaced ``c=`` with ``color=`` for single-color scatter to
+  silence Matplotlib warning. (#nnn)
+* |Fix| Prevented potential divide-by-zero during normalization in
+  dataset generators and plotting functions.
+* |Fix| ``download_file_if_missing`` now prefers package resources,
+  then cache, then download-to-cache, fixing file location issues.
+  (#nnn)
+* |Fix| Addressed likely packaging issues in ``setup.py`` (removed
+  internal dependency installs; temporarily hardcoded version)
+  that caused ``twine check`` metadata errors. (#nnn)
+
+Documentation |Docs|
+~~~~~~~~~~~~~~~~~~~~
+
+* |Docs| Fixed ``index.rst`` errors around ``sphinx-design``
+  directives (``container :margin:``, ``panels``, ``button-ref
+  :text:``). Replaced problematic ``include`` with inline RST when
+  ``myst-parser`` failed. (#nnn)
+* |Docs| Cleaned numerous small RST warnings (title underlines,
+  toctrees, broken links) across docs.
+* |Docs| Restructured Gallery into sub-sections (now linking to
+  ``uncertainty.rst``, ``evaluation.rst``, etc.).
+* |Docs| Added “Analysis and Interpretation” sections to all Plot
+  Gallery examples via ``topic`` directives.
+* |Docs| Added User Guide pages for **Datasets**, **Model
+  Comparison**, and **Motivation**; updated UG index. (#nnn)
+* |Docs| Linked ``CODE_OF_CONDUCT.md`` from ``CONTRIBUTING.rst``.
+* |Docs| Added ``CITING.rst`` and ``GLOSSARY.rst``.
+* |Docs| Updated README badges and image sizing; corrected Markdown
+  comments.
+* |Build| Updated ``docs/requirements.txt`` and
+  ``.readthedocs.yml``; set ``fail_on_warning: false`` temporarily.
+* |Docs| Polished utility and compatibility module docstrings with
+  proper attribution.

@@ -17,24 +17,37 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-import datetime
-# Adjust the path depending on where your conf.py is relative to the package
-# Assuming conf.py is in docs/source and kdiagram is in the root project dir
-sys.path.insert(0, os.path.abspath('../../'))
+# -- Path setup --------------------------------------------------------------
+import os, sys, datetime, warnings # noqa
+from pathlib import Path
 
-# =================
-# pip install furo sphinx-copybutton
-# =================
-# Try to import the package version
+ROOT = Path(__file__).resolve().parents[2]  # repo root
+sys.path.insert(0, str(ROOT))               # only needed for source builds
+
+# Try to import package & version; otherwise read pyproject.toml
 try:
-    import kdiagram
-    pkg_version = kdiagram.__version__
-except ImportError:
-    print("Warning: kdiagram package not found. Version set to 'dev'.")
-    pkg_version = 'dev'
+    import kdiagram as kd
+    pkg_version = kd.__version__
+except Exception:
+    # Read version from pyproject.toml so the docs still show the real version
+    try:
+        import tomllib  # Py 3.11+
+    except ModuleNotFoundError:
+        import tomli as tomllib  # add to docs/dev deps for 3.9/3.10
+    data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    pkg_version = data["project"]["version"]
+else:
+    # Silence only the noisy SyntaxWarnings during docs build
+    kd.configure_warnings(
+        "ignore",
+        categories=["SyntaxWarning"],
+        modules=[r"^(numpy|matplotlib|pandas)\."]
+    )
 
+# Fallback: if kd wasn't importable, apply an equivalent filter directly
+if "kd" not in globals():
+    warnings.filterwarnings("ignore", category=SyntaxWarning,
+                            module=r"^(numpy|matplotlib|pandas)\.")
 
 # -- Project information -----------------------------------------------------
 
@@ -53,6 +66,7 @@ release = pkg_version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'numpydoc', 
     'sphinx.ext.autodoc',         # Include documentation from docstrings
     'sphinx.ext.autosummary',     # Generate summary tables for API docs
     'sphinx.ext.napoleon',        # Support NumPy and Google style docstrings
@@ -80,6 +94,11 @@ napoleon_use_rtype = True         # Use :rtype: for return types
 napoleon_preprocess_types = True    # Process type strings into links
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
+
+# numpydoc configuration
+numpydoc_show_class_members   = False    # don't duplicate __init__ params under the class
+numpydoc_class_members_toctree = False   # keep methods out of the class TOC
+numpydoc_xref_param_type       = True    # auto-link types in parameter lists
 
 # Configure Autodoc settings
 autodoc_default_options = {
@@ -139,6 +158,37 @@ html_theme = 'furo' # Use the Furo theme
 # Theme options are theme-specific and customize the look and feel.
 # Consult the Furo documentation: https://pradyunsg.me/furo/customisation/
 html_theme_options = {
+    # ── VCS “Edit this page” -----------------------------------------------
+    "source_repository":  "https://github.com/earthai-tech/k-diagram/",
+    "source_branch":      "main",
+    "source_directory":   "docs/source/",
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url":  "https://github.com/earthai-tech/k-diagram",
+            "html": """
+                <svg viewBox="0 0 24 24" aria-hidden="true"
+                     height="1.35em" width="1.35em">
+                  <path fill="currentColor"
+                        d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2
+                           c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.2-.8.1-.8.1-.8
+                           1.3.1 2 1.3 2 1.3 1.2 2 3.1 1.4 3.8 1.1.1-.9.5-1.4.9-1.8
+                           -2.7-.3-5.4-1.4-5.4-6.3 0-1.4.5-2.5 1.3-3.4 0-.3-.6-1.5.1-3
+                           0 0 1-.3 3.3 1.3a11.4 11.4 0 0 1 6 0c2.2-1.6 3.3-1.3 3.3-1.3
+                           .7 1.5.1 2.7.1 3A5 5 0 0 1 21 13c0 4.9-2.7 6-5.4 6.3
+                           .6.5 1.1 1.4 1.1 2.8v4.2c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/>
+                </svg>
+            """,
+            "class": "",
+        },
+        {
+            "name": "PyPI",
+            "url":  "https://pypi.org/project/k-diagram/",
+            "html": "<span class='fa fa-box-open'></span>",
+            "class": "",
+        },
+    ],
+        
     # Example options:
     "light_css_variables": {
         "color_brand_primary": "#007ACC", # Example blue
@@ -152,6 +202,22 @@ html_theme_options = {
     "sidebar_hide_name": False, # Show project name in sidebar
     "navigation_with_keys": True,
 }
+
+# -- Custom Roles for Release Notes (rst_epilog) -------------------------
+# These substitutions are appended to the end of every processed RST file.
+# Defines roles like |Feature|, |Fix|, etc., using CSS classes for styling.
+# Allow shorthand references for main function interface
+rst_epilog = """
+.. |Feature| replace:: :bdg-success:`Feature`
+.. |New| replace:: :bdg-success:`New`
+.. |Fix| replace:: :bdg-info:`Fix`
+.. |Enhancement| replace:: :bdg-info:`Enhancement`
+.. |Breaking| replace:: :bdg-danger:`Breaking`
+.. |API Change| replace:: :bdg-warning:`API Change`
+.. |Docs| replace:: :bdg-secondary:`Docs`
+.. |Build| replace:: :bdg-primary:`Build`
+.. |Tests| replace:: :bdg-primary:`Tests`
+"""
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -76,6 +76,7 @@ def plot_relationship(
     theta_scale : {'proportional', 'uniform'}, default='proportional'
         Determines how `y_true` values are mapped to angular
         coordinates (`theta`):
+
         - ``'proportional'``: Maps `y_true` proportionally to the
           angular range (e.g., 0 to 360° or a subset defined by
           `acov`).
@@ -83,8 +84,10 @@ def plot_relationship(
           the angular range.
 
     acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'}, 
-           default='default'
+        default='default'
+
         Specifies the angular coverage of the plot:
+
         - ``'default'``: Full circle (360°).
         - ``'half_circle'``: Half circle (180°).
         - ``'quarter_circle'``: Quarter circle (90°).
@@ -137,7 +140,7 @@ def plot_relationship(
     -------
     The function dynamically maps `y_true` to angular coordinates
     based on the `theta_scale` and `acov` parameters [1]_. The `y_preds`
-    are normalized to radial coordinates between 0 and 1[2]_. Optionally,
+    are normalized to radial coordinates between 0 and 1 [2]_. Optionally,
     `z_values` can replace angular labels with custom values [3]_.
 
     .. math::
@@ -159,23 +162,21 @@ def plot_relationship(
 
     Examples
     ----------
+
     >>> from kdiagram.plot.relationship import plot_relationship
     >>> import numpy as np
-
-    # Create sample data
+    >>> # Create sample data
     >>> y_true = np.random.rand(100)
     >>> y_pred1 = y_true + np.random.normal(0, 0.1, size=100)
     >>> y_pred2 = y_true + np.random.normal(0, 0.2, size=100)
-
-    # Full circle visualization
+    >>> # Full circle visualization
     >>> plot_relationship(
     ...     y_true, y_pred1, y_pred2,
     ...     names=["Model A", "Model B"],
     ...     acov="default",
     ...     title="Full Circle Visualization"
     ... )
-
-    # Half-circle visualization with z-values
+    >>> # Half-circle visualization with z-values
     >>> z_values = np.linspace(0, 100, len(y_true))
     >>> plot_relationship(
     ...     y_true, y_pred1, 
