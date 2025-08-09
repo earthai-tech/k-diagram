@@ -51,6 +51,7 @@ jobs:
           # If you switch to Ruff:
       
           python -m pip install -e .[dev]
+          ruff --fix .
           black .  # Automatically formats the code
           ruff check .
 
