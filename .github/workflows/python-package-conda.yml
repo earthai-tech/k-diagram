@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         # Run unless it's a PR from a fork AND ensure a token is present
-        if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) && secrets.CODECOV_TOKEN != '' }}
+        # if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) && secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
