@@ -1,0 +1,131 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "k-diagram"
+version = "1.1.0"
+description = "Rethinking Forecasting Uncertainty via Polar-Based Visualization"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [{ name = "Laurent Kouadio", email = "etanoyau@gmail.com" }]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+keywords = ["forecasting", "uncertainty visualization", "model evaluation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development",
+  "Topic :: Scientific/Engineering",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix"
+]
+dependencies = [
+  "numpydoc>=1.6",
+  "numpy>=1.22",          # I'm preparing 2.x support; pin can be loosened further after CI passes
+  "pandas",
+  "scipy",
+  "matplotlib",
+  "seaborn",
+  "scikit-learn"
+]
+
+[project.urls]
+"Home page" = "https://k-diagram.readthedocs.io"
+"API Documentation" = "https://k-diagram.readthedocs.io/en/latest/api_references.html"
+"Installation guide" = "https://k-diagram.readthedocs.io/en/latest/installation.html"
+"User guide" = "https://k-diagram.readthedocs.io/en/latest/user_guide.html"
+"Bug Tracker" = "https://github.com/earthai-tech/k-diagram/issues"
+"Source" = "https://github.com/earthai-tech/k-diagram"
+
+[project.scripts]
+k-diagram = "kdiagram.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=4.1",
+  "pytest-xdist", 
+  "sphinx>=7.0",
+  "furo",
+  "sphinx-copybutton",
+  "myst-parser",
+  "sphinx-design",
+  "black>=24.0",
+  "ruff>=0.4",
+  "coverage[toml]>=7.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["kdiagram*"]
+
+# If you ship non-Python files later, add globs here.
+[tool.setuptools.package-data]
+kdiagram = []
+
+# -----------------------------
+# Consolidated tool config here
+# -----------------------------
+[tool.pytest.ini_options]
+addopts = "-ra --cov=kdiagram --cov-report=xml"
+testpaths = ["tests"]
+# Keep warnings actionable; don’t globally suppress in code.
+filterwarnings = [
+  "error::DeprecationWarning",
+  "ignore:FigureCanvasAgg is non-interactive:UserWarning",
+  "ignore:All-NaN slice encountered:RuntimeWarning",
+  # keep SyntaxWarning visible by default; adjust only if a specific dep is noisy:
+  # "ignore::SyntaxWarning:numpy\\..*",
+  # explicitly ignore this one *only while migrating*
+  "ignore:np.find_common_type is deprecated:DeprecationWarning:numpy",
+  "ignore:.*tight_layout.*:UserWarning"
+]
+
+[tool.coverage.run]
+source = ["kdiagram"]        # measure only the package
+branch = true
+parallel = true
+omit = [
+ # "kdiagram/tests/*",        # never count tests
+  "kdiagram/__init__.py",    # optional: module that only re-exports
+  #"kdiagram/cli.py",         # optional: skip CLI wrapper if not tested
+  #"kdiagram/api/*",          # optional: exclude API shims if you want
+  #"kdiagram/compat/*",       # optional: exclude compat layer
+  "kdiagram/datasets/data/*",     # optional: data loaders 
+  "kdiagram/datasets/_property.py",     
+  "kdiagram/cli.py:2090-9999",  
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision = 1
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+  "def __repr__",
+]
+
+
+[tool.black]
+line-length = 88
+target-version = ["py39","py310","py311","py312"]
+
+# I'm standardizing on Ruff (supersedes flake8 + isort)
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = ["E","F","I","B","UP"]
+ignore = []
+exclude = ["docs"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kdiagram"]
+

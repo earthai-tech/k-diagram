@@ -26,11 +26,17 @@ def _lazy_import(module_name, alias=None):
     else:
         globals()[module_name] = _lazy_loader
 
-# Define the version
+
+# Version (single source)
 try:
-    from ._version import version as __version__
-except ImportError:
-    __version__ = "1.1.0"
+    from importlib.metadata import version, PackageNotFoundError  # Py ≥3.8
+except ImportError:  # pragma: no cover
+    from importlib_metadata import version, PackageNotFoundError  # backport
+
+try:
+    __version__ = version("k-diagram")  # distribution name from pyproject.toml
+except PackageNotFoundError:             # running from source without install
+    __version__ = "1.1.0" # # same as pyproject.toml
 
 # Dependency check
 _required_dependencies = [
@@ -56,47 +62,9 @@ if _missing_dependencies:
     warnings.warn("Some dependencies are missing. K-Diagram may not function correctly:\n" +
                   "\n".join(_missing_dependencies), ImportWarning)
 
-# Suppress FutureWarnings or SyntaxWarning if desired, but allow users
-# to re-enable them
-# Define the warning categories and their corresponding actions
-_WARNING_CATEGORIES = {
-    "FutureWarning": FutureWarning,
-    "SyntaxWarning": SyntaxWarning
-}
+# Re-export config helpers
+from .config import configure_warnings, warnings_config  # noqa: F401
 
-# Default actions for each warning category
-_WARNINGS_STATE = {
-    "SyntaxWarning": "ignore"
-}
-
-def suppress_warnings(suppress: bool = True):
-    """
-    Suppress or re-enable FutureWarnings and SyntaxWarnings.
-
-    Function allows users to suppress specific warnings globally within
-    the package. By default, it suppresses both `FutureWarning` and 
-    `SyntaxWarning`. Users can re-enable these warnings by setting 
-    `suppress=False`.
-
-    Parameters
-    ----------
-    suppress : bool, default=True
-        - If `True`, suppresses `FutureWarning` and `SyntaxWarning` by setting 
-          their filter to the action specified in `_WARNINGS_STATE`.
-        - If `False`, re-enables the warnings by resetting their filter to 
-          the default behavior.
-    """
-    for warning_name, action in _WARNINGS_STATE.items():
-        category = _WARNING_CATEGORIES.get(warning_name, Warning)
-        if suppress:
-            # Suppress the warning by applying the specified action
-            warnings.filterwarnings(action, category=category)
-        else:
-            # Re-enable the warning by resetting to default behavior
-            warnings.filterwarnings("default", category=category)
-
-# Suppress warnings by default when the package is initialized
-suppress_warnings()
 # from . import datasets 
 from .plot import (
     plot_actual_vs_predicted,
@@ -119,6 +87,8 @@ from .plot import (
 
 __all__ = [
     "__version__",
+    "configure_warnings",
+    "warnings_config",
     "plot_actual_vs_predicted",
     "plot_anomaly_magnitude",
     "plot_coverage_diagnostic",

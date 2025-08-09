@@ -121,6 +121,131 @@ performance profile.
 **Example:**
 (See the :ref:`Model Comparison Example <gallery_plot_model_comparison>`
 in the Gallery)
-*(Note: Ensure the label `_gallery_plot_model_comparison` exists before
-the corresponding example in your gallery file, likely
-`gallery/evaluation.rst` or `gallery/comparison.rst` if you create one.)*
+
+
+.. _ug_plot_reliability:
+
+Reliability Diagram (:func:`~kdiagram.plot.comparison.plot_reliability_diagram`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+This function draws a **reliability (calibration) diagram** to assess how
+well **predicted probabilities** match **observed frequencies**. It supports
+one or many models on the same figure, multiple binning strategies, optional
+error bars (e.g., Wilson intervals), and a counts panel for diagnosing data
+sparsity across probability ranges.
+
+**Mathematical Concept:**
+
+Given binary labels :math:`y_j \in \{0,1\}` and predicted probabilities
+:math:`p_j \in [0,1]` (optionally with per-sample weights
+:math:`w_j \ge 0`), probabilities are partitioned into bins via a
+binning rule :math:`b(\cdot)` (uniform or quantile).
+
+For bin :math:`i`, define the (weighted) bin weight
+
+.. math::
+   W_i \;=\; \sum_{j=1}^{N} w_j \, \mathbf{1}\{ b(p_j) = i \}, 
+   \qquad
+   W \;=\; \sum_{i} W_i \;=\; \sum_{j=1}^{N} w_j.
+
+Within each bin, compute the **mean confidence** (x–axis) and **observed
+frequency** (y–axis):
+
+.. math::
+   \mathrm{conf}_i \;=\; 
+   \frac{1}{W_i} \sum_{j=1}^{N} w_j \, p_j \, \mathbf{1}\{ b(p_j)=i \},
+   \qquad
+   \mathrm{acc}_i \;=\;
+   \frac{1}{W_i} \sum_{j=1}^{N} w_j \, y_j \, \mathbf{1}\{ b(p_j)=i \}.
+
+Each bin yields a point :math:`(\mathrm{conf}_i, \mathrm{acc}_i)`. A perfectly
+calibrated model satisfies :math:`\mathrm{acc}_i \approx \mathrm{conf}_i` for
+all bins, i.e., points lie on the diagonal :math:`y=x`.
+
+**Uncertainty in observed frequency.**
+When :math:`W_i` is sufficiently large, a normal approximation can be used for
+:math:`\mathrm{acc}_i` with standard error
+
+.. math::
+   \mathrm{SE}_i \;\approx\; 
+   \sqrt{ \frac{\mathrm{acc}_i \, (1-\mathrm{acc}_i)}{W_i} }.
+
+Alternatively, the **Wilson interval** (95%) for a binomial proportion with
+:math:`z = 1.96` provides a more stable interval, especially for small counts:
+
+.. math::
+   \hat{p} \;=\; \mathrm{acc}_i, \quad
+   n \;=\; W_i, \quad
+   \tilde{p} \;=\; \frac{\hat{p} + \frac{z^2}{2n}}
+                         {1 + \frac{z^2}{n}}, \quad
+   \mathrm{half\_width} \;=\;
+   \frac{z}{1+\frac{z^2}{n}} 
+   \sqrt{ \frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2} }.
+
+.. math::
+   \mathrm{CI}_i \;=\; 
+   \Big[\, \tilde{p} - \mathrm{half\_width},\;
+           \tilde{p} + \mathrm{half\_width} \,\Big].
+
+(With sample weights, :math:`n` is treated as an **effective count**.)
+
+**Aggregate calibration metrics.**
+
+* **Expected Calibration Error (ECE)** (L1 form):
+
+  .. math::
+     \mathrm{ECE} \;=\; \sum_{i} \frac{W_i}{W} 
+     \;\big|\mathrm{acc}_i - \mathrm{conf}_i\big|.
+
+* **Maximum Calibration Error (MCE)** (optional concept):
+
+  .. math::
+     \mathrm{MCE} \;=\; \max_i \;\big|\mathrm{acc}_i - \mathrm{conf}_i\big|.
+
+* **Brier score** (mean squared error on probabilities):
+
+  .. math::
+     \mathrm{Brier} \;=\; 
+     \frac{1}{W}\sum_{j=1}^{N} w_j \, (p_j - y_j)^2.
+  
+Lower ECE/MCE/Brier indicate better calibration (and accuracy for Brier).
+
+**Interpretation:**
+
+* **Diagonal (:math:`y=x`):** Reference for perfect calibration.
+  * Points **above** diagonal :math:`(\mathrm{acc}_i > \mathrm{conf}_i)`
+    ⇒ model is **under-confident** in that bin.
+  * Points **below** diagonal :math:`(\mathrm{acc}_i < \mathrm{conf}_i)`
+    ⇒ model is **over-confident** in that bin.
+* **Counts panel:** A histogram of :math:`p_j` per bin reveals data
+  coverage; sparse bins tend to have larger uncertainty intervals.
+* **Multiple models:** Curves are overlaid; compare proximity to
+  the diagonal and reported ECE/Brier in the legend.
+
+**Binning strategies:**
+
+* **Uniform:** fixed-width bins on :math:`[0,1]` (e.g., 10 bins).
+* **Quantile:** bins formed so each has (approximately) equal counts.
+  This stabilizes variance of :math:`\mathrm{acc}_i` but can yield
+  irregular edges if many identical scores occur.
+
+**Use Cases:**
+
+* **Calibrating classifiers** that output probabilities (logistic regression,
+  gradient boosting, neural nets).
+* **Comparing models or calibration methods** (e.g., Platt scaling vs.
+  isotonic regression).
+* **Communicating reliability**: the diagram shows at a glance if a model
+  is systematically over-/under-confident and where.
+
+**Advantages:**
+
+* **Local view** of calibration (per bin) instead of a single scalar.
+* **Uncertainty-aware** via bin-wise intervals.
+* **Distribution-aware** with the counts panel, showing score sharpness
+  and data coverage.
+
+**Example:**
+(See the :ref:`Gallery example <gallery_plot_reliability>` for a complete,
+runnable snippet that saves an image and returns per-bin statistics.)

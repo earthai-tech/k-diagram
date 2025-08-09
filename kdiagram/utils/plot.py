@@ -6,38 +6,31 @@ from __future__ import print_function
 import re
 from typing import Optional, List
 
-def set_axis_grid(
-    ax, 
-    show_grid: bool=True, 
-    grid_props: dict = None
-) -> None:
-    """
-    Robustly set grid properties on one or more matplotlib axes.
 
-    Parameters:
-        ax: A matplotlib Axes object or a list/tuple of Axes.
-        show_grid: If True, enable the grid with the specified properties.
-                   If False, disable the grid.
-        grid_props: A dictionary of grid properties to pass to ax.grid.
-                    The key 'visible' will be removed to avoid conflicts.
-
-    Returns:
-        None
-    """
+def set_axis_grid(ax, show_grid: bool = True, grid_props: dict = None) -> None:
+    """Robustly set grid properties on one or more matplotlib axes."""
     # Ensure grid_props is a dictionary.
-    props = grid_props.copy() if grid_props is not None else {
+    grid_props = grid_props.copy() if grid_props is not None else {
         'linestyle': ':', 'alpha': 0.7}
-    # Remove the 'visible' key if present to avoid dual assignment.
-    props.pop("visible", None)
     
-    # If multiple axes are provided, iterate over each.
-    if isinstance(ax, (list, tuple)):
-        for a in ax:
-            a.grid(show_grid, **props)
-    else:
-        a = ax
-        a.grid(show_grid, **props)
+    props = dict(grid_props or {})
+    props.pop("visible", None)
 
+    axes = ax if isinstance(ax, (list, tuple)) else [ax]
+
+    which = props.pop('which', "both")
+    axis = props.pop("axis", 'both')
+        
+    for a in axes:
+        if show_grid:
+            # Turn on both major & minor. Apply props only when enabling.
+            a.grid(True, which=which, axis=axis, **props)
+        else:
+            # Turn off both major & minor.
+            a.grid(False, which=which, axis=axis)
+            # And force-hide any already-created grid line artists.
+            for gl in a.get_xgridlines() + a.get_ygridlines():
+                gl.set_visible(False)
 
 def is_valid_kind(
     kind: str,

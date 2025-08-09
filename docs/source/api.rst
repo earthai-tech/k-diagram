@@ -71,6 +71,7 @@ Functions for comparing multi-model performances on a radar chart.
    :nosignatures:
 
    ~kdiagram.plot.comparison.plot_model_comparison 
+   ~kdiagram.plot.comparison.plot_reliability_diagram 
    
    
 .. _api_feature_based: 

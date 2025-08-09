@@ -1,21 +1,752 @@
 # -*- coding: utf-8 -*-
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
+""" Model comparison plots."""
+from __future__ import annotations
 
 from numbers import Real 
 import warnings
+
+
+from typing import ( 
+    Literal, Optional, 
+    Tuple, List, Union, Any,
+    Callable, Dict 
+)
+
 import matplotlib.pyplot as plt 
-import numpy as np 
-from typing import Optional, Tuple, List, Union, Any, Callable 
+import matplotlib.cm as cm
+import numpy as np
+import pandas as pd  
 
 from ..compat.sklearn import validate_params, StrOptions, type_of_target
 from ..utils.generic_utils import drop_nan_in 
 from ..utils.handlers import columns_manager
 from ..utils.metric_utils import get_scorer 
 from ..utils.plot import set_axis_grid  
-from ..utils.validator import validate_yy, is_iterable 
+from ..utils.validator import validate_yy, is_iterable, _assert_all_types 
 
-__all__=[ 'plot_model_comparison']
+
+__all__ = ["plot_reliability_diagram", 'plot_model_comparison']
+
+@validate_params({
+    "y_true": ['array-like'],
+    "strategy": [StrOptions({'uniform', 'quantile'})],
+    "error_bars": [StrOptions({'wilson', 'normal', 'none'})],
+    "counts_panel": [StrOptions({'none', 'bottom'})],
+    "counts_norm": [StrOptions({'fraction', 'count'})]
+})
+def plot_reliability_diagram(
+    y_true,
+    *y_preds,
+    names: Optional[List[str]] = None,
+    sample_weight: Optional[Union[List[float], np.ndarray]] = None,
+    n_bins: int = 10,
+    strategy: str = "uniform",
+    positive_label: Union[int, float, str] = 1,
+    class_index: Optional[int] = None,
+    clip_probs: Tuple[float, float] = (0.0, 1.0),
+    normalize_probs: bool = True,
+    error_bars: str = "wilson",
+    conf_level: float = 0.95,
+    show_diagonal: bool = True,
+    diagonal_kwargs: Optional[Dict[str, Any]] = None,
+    show_ece: bool = True,
+    show_brier: bool = True,
+    counts_panel: str = "bottom",
+    counts_norm: Literal['fraction', 'count'] = "fraction",
+    counts_alpha: float = 0.35,
+    figsize: Optional[Tuple[float, float]] = (9, 7),
+    title: Optional[str] = None,
+    xlabel: Optional[str] = "Predicted probability",
+    ylabel: Optional[str] = "Observed frequency",
+    cmap: str = "tab10",
+    color_palette: Optional[List[Any]] = None,
+    marker: str = "o",
+    s: int = 40,
+    linewidth: float = 2.0,
+    alpha: float = 0.9,
+    connect: bool = True,
+    legend: bool = True,
+    legend_loc: str = "best",
+    show_grid: bool = True,
+    grid_props: Optional[dict] = None,
+    xlim: Tuple[float, float] = (0.0, 1.0),
+    ylim: Tuple[float, float] = (0.0, 1.0),
+    savefig: Optional[str] = None,
+    return_data: bool = False,
+    **kw, # for future extension
+):
+    # -------------- input handling -------------- #
+    if len(y_preds) == 0:
+        raise ValueError(
+            "Provide at least one prediction array via *y_preds."
+        )
+
+    names = columns_manager(names, to_string=True) or []
+    if len(names) < len(y_preds):
+        names.extend(
+            [f"Model_{i+1}" for i in range(len(names), len(y_preds))]
+        )
+    if len(names) > len(y_preds):
+        warnings.warn(
+            (
+                f"Received {len(names)} names for {len(y_preds)} models. "
+                "Extra names ignored."
+            ),
+            UserWarning,
+        )
+        names = names[: len(y_preds)]
+
+    y_true = np.asarray(y_true)
+    if type_of_target(y_true) not in ("binary", "multiclass"):
+        raise ValueError(
+            "y_true must be a classification target. "
+            "Binary reliability is expected."
+        )
+    y_bin = (y_true == positive_label).astype(int)
+
+    prob_list: List[np.ndarray] = []
+    for arr in y_preds:
+        arr = np.asarray(arr)
+        prob_list.append(_to_prob_vector(arr, class_index))
+
+    if sample_weight is None:
+        y_bin, *prob_list = drop_nan_in(
+            y_bin, *prob_list, error='raise'
+        )
+        w = np.ones_like(y_bin, dtype=float)
+    else:
+        w = np.asarray(sample_weight, dtype=float)
+        y_bin, *prob_list, w = drop_nan_in(
+            y_bin, *prob_list, w, error='raise'
+        )
+
+    clip_lo, clip_hi = clip_probs
+    clipped_flag = False
+    new_probs = []
+    for p in prob_list:
+        p0 = p.copy()
+        p1 = _prep_probs(
+            p0, clip_lo, clip_hi, normalize_probs
+        )
+        if not np.allclose(p0, p1):
+            clipped_flag = True
+        new_probs.append(p1)
+    prob_list = new_probs
+    if clipped_flag:
+        warnings.warn(
+            (
+                "Some predicted probabilities were normalized/clipped "
+                f"to [{clip_lo}, {clip_hi}]."
+            ),
+            UserWarning,
+        )
+
+    edges, centers = _build_bins(
+        prob_list, n_bins, strategy, clip_lo, clip_hi
+    )
+    z = _z_from_conf(conf_level)
+
+    # -------------- colors & layout -------------- #
+    colors = _colors(cmap, color_palette, len(prob_list))
+
+    if counts_panel == "bottom":
+        fig = plt.figure(figsize=figsize)
+        gs = fig.add_gridspec(
+            2, 1, height_ratios=(3.0, 1.0), hspace=0.12
+        )
+        ax = fig.add_subplot(gs[0, 0])
+        axb = fig.add_subplot(gs[1, 0], sharex=ax)
+    else:
+        fig, ax = plt.subplots(figsize=figsize)
+        axb = None
+
+    # -------------- compute & plot -------------- #
+
+    per_model: Dict[str, pd.DataFrame] = {}
+
+    for i, (name, p, col) in enumerate(
+        zip(names, prob_list, colors)
+    ):
+        stats = _bin_stats(
+            p, y_bin, w, edges, error_bars, z
+        )
+        ece = float(np.nansum(stats["ece"]))
+        br = _brier(p, y_bin, w)
+
+        df = pd.DataFrame(
+            {
+                "bin_left": edges[:-1],
+                "bin_right": edges[1:],
+                "bin_center": centers,
+                "n": stats["n"],
+                "w_sum": stats["wsum"],
+                "p_mean": stats["pmean"],
+                "y_rate": stats["yrate"],
+                "y_low": stats["ylo"],
+                "y_high": stats["yhi"],
+                "ece_contrib": stats["ece"],
+            }
+        )
+        per_model[name] = df
+
+        valid = df["w_sum"].to_numpy() > 0
+        x = df.loc[valid, "p_mean"].to_numpy()
+        y = df.loc[valid, "y_rate"].to_numpy()
+        ylo = df.loc[valid, "y_low"].to_numpy()
+        yhi = df.loc[valid, "y_high"].to_numpy()
+
+        if error_bars.lower() != "none":
+            yerr = np.vstack(
+                [y - ylo, yhi - y]
+            )
+            ax.errorbar(
+                x, y, yerr=yerr, fmt='none',
+                ecolor=col, elinewidth=1.0,
+                capsize=2, alpha=alpha * 0.85,
+            )
+
+        ax.scatter(
+            x, y, c=[col], s=s, marker=marker, alpha=alpha
+        )
+        if connect and len(x) > 1:
+            ax.plot(
+                x, y, color=col, linewidth=linewidth,
+                alpha=alpha
+            )
+
+        label = name
+        pieces = []
+        if show_ece:
+            pieces.append(f"ECE={ece:.3f}")
+        if show_brier:
+            pieces.append(f"Brier={br:.3f}")
+        if pieces:
+            label = f"{label} ({', '.join(pieces)})"
+
+        ax.plot(
+            [], [], color=col,
+            marker=marker,
+            linestyle='-' if connect else 'None',
+            linewidth=linewidth,
+            label=label,
+        )
+
+        if axb is not None:
+            bw = (edges[1:] - edges[:-1])
+            slot = bw * 0.8 / max(1, len(prob_list))
+            left = edges[:-1] + i * slot
+            vals = df["w_sum"].to_numpy()
+            if counts_norm == "fraction":
+                denom = vals.sum() if vals.sum() > 0 else 1.0
+                vals = vals / denom
+            axb.bar(
+                left, vals, width=slot, align='edge',
+                color=col, alpha=counts_alpha,
+                label=name,
+            )
+
+    # -------------- format axes -------------- #
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    if title:
+        ax.set_title(title)
+
+    if show_diagonal:
+        diag_kw = {
+            "color": "gray",
+            "linestyle": "--",
+            "linewidth": 1.2,
+            "alpha": 0.9,
+        }
+        if diagonal_kwargs:
+            _assert_all_types(
+                diagonal_kwargs, dict, objname="'diagonal_kwargs'"
+            )
+            diag_kw.update(diagonal_kwargs)
+        ax.plot((0.0, 1.0), (0.0, 1.0), **diag_kw)
+
+    set_axis_grid(
+        ax, show_grid=show_grid, grid_props=grid_props
+    )
+
+    if legend:
+        ax.legend(loc=legend_loc)
+
+    if axb is not None:
+        axb.set_xlim(*xlim)
+        axb.axhline(0, color='gray', lw=0.8)
+        axb.set_xlabel(xlabel or "Predicted probability")
+        axb.set_ylabel(
+            "Frac." if counts_norm == "fraction" else "Count"
+        )
+        set_axis_grid(
+            axb, show_grid=True, grid_props={"alpha": 0.25}
+        )
+        h, l = axb.get_legend_handles_labels()
+        if h and l:
+            axb.legend(loc='upper right', fontsize=8)
+
+    plt.tight_layout()
+
+    if savefig:
+        try:
+            fig.savefig(
+                savefig, bbox_inches='tight', dpi=300
+            )
+            print(f"Plot saved to {savefig}")
+        except Exception as e:
+            print(f"Error saving plot to {savefig}: {e}")
+    else:
+        plt.show()
+
+    if return_data:
+        return ax, per_model
+    return ax
+
+# ------------------ helpers ------------------ #
+def _z_from_conf(cf: float) -> float:
+    table = {
+        0.80: 1.2815515655,
+        0.90: 1.6448536269,
+        0.95: 1.9599639845,
+        0.975: 2.241402728,
+        0.99: 2.5758293035,
+    }
+    return table.get(round(cf, 3), 1.9599639845)
+
+def _to_prob_vector(
+    arr: np.ndarray,
+    ci: Optional[int]
+) -> np.ndarray:
+    if arr.ndim == 1:
+        return arr.astype(float, copy=False)
+    if arr.ndim == 2:
+        idx = arr.shape[1] - 1 if ci is None else ci
+        if idx < 0 or idx >= arr.shape[1]:
+            raise ValueError(
+                (
+                    "class_index out of bounds for 2D predictions: "
+                    f"{idx} not in [0, {arr.shape[1]-1}]"
+                )
+            )
+        return arr[:, idx].astype(float, copy=False)
+    raise ValueError(
+        "Predictions must be 1D probabilities or "
+        "(n_samples, n_classes) arrays."
+    )
+
+def _prep_probs(
+    p: np.ndarray,
+    clip_lo: float,
+    clip_hi: float,
+    do_norm: bool
+) -> np.ndarray:
+    p = np.asarray(p, dtype=float)
+    if do_norm:
+        pmin, pmax = np.nanmin(p), np.nanmax(p)
+        if (pmin < -1e-9) or (pmax > 1.0 + 1e-9):
+            rng = pmax - pmin
+            if rng > 1e-12:
+                p = (p - pmin) / rng
+    p = np.clip(p, clip_lo, clip_hi)
+    return p
+
+def _build_bins(
+    probs_list: List[np.ndarray],
+    nb: int,
+    strat: str,
+    low: float,
+    high: float
+) -> Tuple[np.ndarray, np.ndarray]:
+    if strat == "uniform":
+        edges = np.linspace(low, high, nb + 1)
+    else:
+        allp = np.concatenate(probs_list)
+        q = np.linspace(0.0, 1.0, nb + 1)
+        edges = np.quantile(allp, q)
+        edges = np.unique(edges)
+        if len(edges) - 1 < nb:
+            warnings.warn(
+                (
+                    "Not enough unique quantile edges; "
+                    "falling back to uniform bins."
+                ),
+                UserWarning,
+            )
+            edges = np.linspace(low, high, nb + 1)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    return edges, centers
+
+def _bin_stats(
+    p: np.ndarray,
+    y: np.ndarray,
+    w: np.ndarray,
+    edges: np.ndarray,
+    ebars: str,
+    zval: float
+) -> Dict[str, np.ndarray]:
+    nb = len(edges) - 1
+    eps = 1e-12
+    idx = np.digitize(p, edges, right=False) - 1
+    idx[idx < 0] = 0
+    idx[idx >= nb] = nb - 1
+
+    n = np.zeros(nb, dtype=float)
+    wsum = np.zeros(nb, dtype=float)
+    pmean = np.zeros(nb, dtype=float)
+    yr = np.zeros(nb, dtype=float)
+
+    for b in range(nb):
+        m = (idx == b)
+        if not np.any(m):
+            continue
+        ww = w[m]
+        pp = p[m]
+        yy = y[m]
+        wsum[b] = ww.sum()
+        n[b] = float(m.sum())
+        denom = max(wsum[b], eps)
+        pmean[b] = float(np.dot(ww, pp) / denom)
+        yr[b] = float(np.dot(ww, yy) / denom)
+
+    if ebars.lower() == "none":
+        ylo = np.full_like(yr, np.nan)
+        yhi = np.full_like(yr, np.nan)
+    elif ebars.lower() == "normal":
+        neff = np.maximum(wsum, eps)
+        se = np.sqrt(np.clip(yr * (1.0 - yr) / neff, 0.0, 1.0))
+        ylo = np.clip(yr - zval * se, 0.0, 1.0)
+        yhi = np.clip(yr + zval * se, 0.0, 1.0)
+    else:
+        neff = np.maximum(wsum, eps)
+        ylo = np.empty_like(yr)
+        yhi = np.empty_like(yr)
+        for i in range(nb):
+            ph = yr[i]
+            n_ = neff[i]
+            if n_ <= eps:
+                ylo[i] = np.nan
+                yhi[i] = np.nan
+                continue
+            denom = 1.0 + (zval**2) / n_
+            center = (ph + (zval**2) / (2.0 * n_)) / denom
+            rad = (
+                zval
+                * np.sqrt(
+                    (ph * (1.0 - ph) + (zval**2) / (4.0 * n_)) / n_
+                )
+            ) / denom
+            ylo[i] = np.clip(center - rad, 0.0, 1.0)
+            yhi[i] = np.clip(center + rad, 0.0, 1.0)
+
+    totw = max(w.sum(), eps)
+    wbin = wsum / totw
+    ece_contrib = wbin * np.abs(yr - pmean)
+
+    return {
+        "n": n,
+        "wsum": wsum,
+        "pmean": pmean,
+        "yrate": yr,
+        "ylo": ylo,
+        "yhi": yhi,
+        "wbin": wbin,
+        "ece": ece_contrib,
+    }
+
+def _brier(p: np.ndarray, y: np.ndarray, w: np.ndarray) -> float:
+    return float(np.average((p - y) ** 2, weights=w))
+
+def _colors(
+    cmap_name: str,
+    palette: Optional[List[Any]],
+    k: int
+) -> List[Any]:
+    if palette is not None:
+        return [palette[i % len(palette)] for i in range(k)]
+    try:
+        cmo = cm.get_cmap(cmap_name)
+    except ValueError:
+        warnings.warn(
+            f"Invalid cmap '{cmap_name}'. Using 'tab10' instead.",
+            UserWarning,
+        )
+        cmo = cm.get_cmap('tab10')
+    if hasattr(cmo, 'colors') and len(cmo.colors) >= k:
+        return list(cmo.colors[:k])
+    if k == 1:
+        return [cmo(0.5)]
+    return [cmo(i / (k - 1)) for i in range(k)]
+
+
+plot_reliability_diagram.__doc__ = r"""\
+Plot a reliability diagram (calibration plot) for one or more
+classification models.
+
+This compares **predicted probabilities** to **observed
+frequencies** across bins of predicted probability. Perfect
+calibration lies on the diagonal :math:`y=x`.
+
+Parameters
+----------
+y_true : array-like of shape (n_samples,)
+    Ground truth labels. For binary calibration, values are
+    compared to ``positive_label`` after validation and
+    flattening.
+
+*y_preds : array-like(s)
+    One or more model predictions. Each item may be:
+    - 1D array of positive-class probabilities in ``[0, 1]``.
+    - 2D array of shape ``(n_samples, n_classes)``; use
+      ``class_index`` to select a column. If omitted, the
+      last column is used.
+
+names : list of str, optional
+    Labels for each model curve. If fewer names are provided
+    than models, placeholders like ``'Model_1'`` are appended.
+
+sample_weight : array-like of shape (n_samples,), optional
+    Per-sample weights used for observed frequencies, ECE,
+    and Brier score. If ``None``, equal weights are used.
+
+n_bins : int, default=10
+    Number of probability bins.
+
+strategy : {'uniform', 'quantile'}, default='uniform'
+    Binning strategy.
+    - ``'uniform'``: equally spaced edges in ``[0, 1]``.
+    - ``'quantile'``: edges are empirical quantiles of the
+      pooled predictions. If edges are not unique, the method
+      falls back to uniform binning with a warning.
+
+positive_label : int or float or str, default=1
+    Label in ``y_true`` treated as the positive class when
+    constructing the binary target.
+
+class_index : int, optional
+    Column index to pick from 2D probability arrays. If
+    omitted, the last column is used.
+
+clip_probs : tuple of (float, float), default=(0.0, 1.0)
+    Inclusive clipping range applied to predictions. A warning
+    is issued if clipping occurs.
+
+normalize_probs : bool, default=True
+    If ``True``, attempts to linearly rescale predictions into
+    ``[0, 1]`` when minor out-of-range values are detected,
+    then applies clipping.
+
+error_bars : {'wilson', 'normal', 'none'}, default='wilson'
+    Per-bin uncertainty for observed frequencies.
+    - ``'wilson'``: Wilson interval using ``conf_level``.
+    - ``'normal'``: normal approximation.
+    - ``'none'``: no error bars.
+
+conf_level : float, default=0.95
+    Confidence level used for error bars when applicable.
+
+show_diagonal : bool, default=True
+    Draw the reference diagonal :math:`y=x`.
+
+diagonal_kwargs : dict, optional
+    Matplotlib keyword arguments for the diagonal reference
+    line (e.g., ``linestyle``, ``color``).
+
+show_ece : bool, default=True
+    Compute Expected Calibration Error (ECE) and append a
+    summary to each model label.
+
+show_brier : bool, default=True
+    Compute (weighted) Brier score and append a summary to
+    each model label.
+
+counts_panel : {'none', 'bottom'}, default='bottom'
+    If not ``'none'``, draw a compact histogram below the main
+    panel that shows per-bin totals for each model.
+
+counts_norm : {'fraction', 'count'}, default='fraction'
+    Normalization for the counts panel. ``'fraction'`` divides
+    by the total weight; ``'count'`` shows raw weighted sums.
+
+counts_alpha : float, default=0.35
+    Alpha for bars in the counts panel.
+
+figsize : tuple of (float, float), default=(9, 7)
+    Figure size for the layout. When ``counts_panel='bottom'``,
+    a two-row gridspec is used.
+
+title : str, optional
+    Title for the plot. If ``None``, no title is set.
+
+xlabel : str, optional
+    Label for the x-axis. Defaults to
+    ``'Predicted probability'``.
+
+ylabel : str, optional
+    Label for the y-axis. Defaults to
+    ``'Observed frequency'``.
+
+cmap : str, default='tab10'
+    Matplotlib colormap name used to generate model colors.
+
+color_palette : list, optional
+    Explicit list of colors. When provided, colors are cycled
+    from this list instead of the colormap.
+
+marker : str, default='o'
+    Marker used for the bin points.
+
+s : int, default=40
+    Marker size for the bin points.
+
+linewidth : float, default=2.0
+    Line width used when connecting bin points.
+
+alpha : float, default=0.9
+    Alpha for points and lines in the main panel.
+
+connect : bool, default=True
+    Connect bin points with a line for each model.
+
+legend : bool, default=True
+    Display a legend. Summary metrics (ECE, Brier) are shown
+    next to model names when enabled.
+
+legend_loc : str, default='best'
+    Legend location passed to Matplotlib.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization (e.g., ``linestyle``, ``alpha``).
+
+xlim : tuple of (float, float), default=(0.0, 1.0)
+    X-axis limits.
+
+ylim : tuple of (float, float), default=(0.0, 1.0)
+    Y-axis limits.
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+return_data : bool, default=False
+    If ``True``, return ``(ax, data_dict)`` where values are
+    per-model ``pandas.DataFrame`` objects with per-bin stats:
+    ``['bin_left', 'bin_right', 'bin_center', 'n', 'w_sum',
+    'p_mean', 'y_rate', 'y_low', 'y_high', 'ece_contrib']``.
+    Otherwise, return only the Matplotlib axes.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    Axes of the main calibration plot. When
+    ``counts_panel='bottom'``, the second axes (counts panel)
+    is not returned.
+
+Notes
+-----
+Calibration compares *confidence* to *accuracy* within bins.
+For bin :math:`b`, let :math:`\hat{p}_i` be predictions and
+:math:`y_i\in\{0,1\}` be binary targets with weights
+:math:`w_i\ge 0`. Define the weighted bin mean probability
+and accuracy as
+
+.. math::
+
+   \bar{p}_b \;=\;
+   \frac{\sum_{i\in b} w_i \hat{p}_i}
+        {\sum_{i\in b} w_i},
+   \qquad
+   \bar{y}_b \;=\;
+   \frac{\sum_{i\in b} w_i y_i}
+        {\sum_{i\in b} w_i}.
+
+The Expected Calibration Error (ECE) is
+
+.. math::
+
+   \mathrm{ECE}
+   \;=\;
+   \sum_b
+   \left(
+     \frac{\sum_{i\in b} w_i}{\sum_i w_i}
+   \right)
+   \left|
+     \bar{y}_b - \bar{p}_b
+   \right|.
+
+The (weighted) Brier score is
+
+.. math::
+
+   \mathrm{Brier}
+   \;=\;
+   \frac{\sum_i
+     w_i \left(\hat{p}_i - y_i\right)^2}
+        {\sum_i w_i}.
+
+Wilson confidence intervals for :math:`\bar{y}_b` use
+:math:`z = \Phi^{-1}\!\left(\tfrac{1+\alpha}{2}\right)` and
+effective count :math:`n_b=\sum_{i\in b} w_i`:
+
+.. math::
+
+   \mathrm{center}
+   \;=\;
+   \frac{\bar{y}_b + \frac{z^2}{2 n_b}}
+        {1 + \frac{z^2}{n_b}},
+   \qquad
+   \mathrm{radius}
+   \;=\;
+   \frac{z}{1 + \frac{z^2}{n_b}}
+   \sqrt{\frac{\bar{y}_b(1-\bar{y}_b)}{n_b}
+         + \frac{z^2}{4 n_b^2}}.
+
+The interval is
+:math:`[\mathrm{center}-\mathrm{radius},
+\mathrm{center}+\mathrm{radius}]`,
+clipped to ``[0, 1]``. The normal interval replaces the term
+with the usual standard error
+:math:`\sqrt{\bar{y}_b(1-\bar{y}_b)/n_b}`.
+
+When ``strategy='quantile'``, bin edges are the empirical
+quantiles of the pooled predictions. If many identical values
+exist, edges can collapse; in that case, the function falls
+back to uniform edges with a warning.
+
+Examples
+--------
+Binary example with quantile bins and Wilson intervals.
+
+>>> import numpy as np
+>>> from kdiagram.plot.comparison import \
+...     plot_reliability_diagram
+>>> rng = np.random.default_rng(0)
+>>> y = (rng.random(1000) < 0.4).astype(int)
+>>> p1 = 0.4 * np.ones_like(y) + 0.15 * rng.random(len(y))
+>>> p2 = 0.4 * np.ones_like(y) + 0.05 * rng.random(len(y))
+>>> ax = plot_reliability_diagram(
+...     y, p1, p2,
+...     names=['Wide', 'Tight'],
+...     n_bins=12,
+...     strategy='quantile',
+...     error_bars='wilson',
+...     counts_panel='bottom',
+...     show_ece=True,
+...     show_brier=True,
+...     title=('Reliability Diagram '
+...            '(Quantile bins + Wilson CIs)'),
+... )
+"""
 
 @validate_params({
     'train_times': ['array-like', None],

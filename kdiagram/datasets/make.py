@@ -293,9 +293,11 @@ def make_cyclical_data(
         or plot_temporal_uncertainty.
         """)
 
-        # Create and return Bunch object
-        target_array = df[target_name[0]].values
-        data_array = df[feature_names + prediction_cols_list].values
+        # Build arrays with a uniform dtype to avoid pandas -> np.find_common_type
+        num_cols = feature_names + prediction_cols_list
+    
+        target_array = df[target_name[0]].to_numpy(dtype=np.float64, copy=True)
+        data_array   = df[num_cols].to_numpy(dtype=np.float64, copy=True)
 
         return Bunch(
             frame=df[target_name + feature_names + prediction_cols_list], 
@@ -781,8 +783,11 @@ def make_uncertainty_data(
     else:
         # Create Bunch object
         numeric_cols = feature_names + target_names + pred_cols_sorted
-        data_array = df[numeric_cols].values # Data array (optional)
-        target_array = df[target_names[0]].values
+        # data_array = df[numeric_cols].values # Data array (optional)
+        # target_array = df[target_names[0]].values
+        target_array = df[target_names[0]].to_numpy(dtype=np.float64, copy=True)
+        data_array   = df[numeric_cols].to_numpy(dtype=np.float64, copy=True)
+        
 
         # Create detailed description string
         descr = textwrap.dedent(f"""\

@@ -256,6 +256,7 @@ def plot_coverage(
                 R, Theta = np.meshgrid(r, theta)
                 
                 # Create gradient using specified colormap
+                ax.grid(False)
                 ax.pcolormesh(
                     Theta, R, R, 
                     cmap=cmap, 
@@ -263,6 +264,7 @@ def plot_coverage(
                     alpha=radar_fill_alpha,
                     zorder=0  # Place behind main plot
                 )
+                ax.grid(True, which="both")
                 # Add red circle at coverage value
                 ax.plot(
                     theta, 
@@ -3147,6 +3149,12 @@ def plot_actual_vs_predicted(
     >>> # plt.show() called internally
 
     """
+    # If theta_col is provided but currently unused, warn:
+    if theta_col is not None:
+        warnings.warn("`theta_col` is currently ignored"
+                      " by plot_actual_vs_predicted.", 
+                      UserWarning
+                     )
     # --- Input Validation and Preparation ---
     # Basic checks handled by decorators
     # Check existence of primary columns
@@ -3184,6 +3192,13 @@ def plot_actual_vs_predicted(
                       UserWarning)
         return None
     N = len(data)
+    
+    if N > 2_000:
+        warnings.warn(
+            "Large number of samples; consider "
+            "saving the figure instead of showing.", 
+            UserWarning
+        )
 
     # --- Angular Coordinate Calculation ---
     acov_map = { # Map name to angular range in radians
@@ -3234,7 +3249,7 @@ def plot_actual_vs_predicted(
     # Warning: This loop can be very slow for large N
     # Consider alternatives like fill_between if performance is critical
     # and data can be meaningfully sorted by theta.
-    if N > 5000: # Add warning for potentially slow loop
+    if N > 5_000: # Add warning for potentially slow loop
          warnings.warn(
              f"Plotting difference lines for {N} points individually."
              f" This may be slow. Consider using `line=False` or sampling data.",
@@ -4180,11 +4195,13 @@ def plot_coverage_diagnostic(
             # Normalize Z based on [0, 1] range for colormap
             norm_gradient = Normalize(vmin=0, vmax=1.0)
             # Plot the gradient mesh
+            ax.grid(False) 
             ax.pcolormesh(
                 T, R, Z, shading='auto', cmap=grad_cmap_obj,
                 alpha=0.20, # Make gradient subtle
                 norm=norm_gradient # Ensure consistent color mapping
             )
+            ax.grid(True, which="both")
         except ValueError:
              warnings.warn(f"Invalid `gradient_cmap` ('{gradient_cmap}')."
                            f" Skipping background gradient.", UserWarning)

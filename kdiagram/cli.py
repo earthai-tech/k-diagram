@@ -9,23 +9,8 @@ Allows users to generate diagnostic plots directly from the command line
 by providing data via CSV files.
 """
 
-# --- Helper Functions (Keep existing - Omitted here for brevity) ---
-# def read_csv_to_df(filepath: str) -> pd.DataFrame | None: ...
-# def read_csv_to_numpy(filepath: str, delimiter=',') -> np.ndarray | None: ...
-# --- END Helper Functions ---
 
-
-# --- CLI Command Handler Functions ---
-
-# Keep existing handlers:
-# _cli_plot_coverage(args)
-# _cli_plot_model_drift(args)
-# _cli_plot_velocity(args)
-# _cli_plot_interval_consistency(args)
-# _cli_plot_anomaly_magnitude(args)
-# _cli_plot_uncertainty_drift(args)
-# (Omitted here for brevity)
-
+from __future__ import annotations 
 import argparse
 import sys
 import pandas as pd

@@ -1,73 +1,80 @@
 # .github/workflows/python-package-conda.yml
-# Workflow for k-diagram using Conda
+name: Python Package (k-diagram)
 
-name: Python Package using Conda (k-diagram)
-
-# Trigger on pushes to main/develop and pull requests targeting main/develop
 on:
   push:
-    branches:
-      - main
-      - develop # Add other branches if needed
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
-      - develop # Add other branches if needed
+    branches: [main, develop]
 
 jobs:
-  build-test-linux: # Renamed job for clarity
+  build-test-linux:
     runs-on: ubuntu-latest
     defaults:
       run:
-        shell: bash -l {0} # Use login shell for conda activation
+        shell: bash -l {0}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]  # test minimum + latest you support
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4 # Use latest checkout action
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v3 # Use latest setup action
-      with:
-        activate-environment: kdiagram-dev # Use the correct env name
-        environment-file: environment.yml # Point to your env file
-        python-version: "3.10" # Specify Python version (must be compatible with env file)
-        auto-activate-base: false
-        # Conda configuration options can be added here if needed later
-        # channel-priority: strict
+      - name: Set up Miniforge (Mamba)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          use-mamba: true
+          activate-environment: kdiagram-dev
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          # NOTE: intentionally omit auto-activate-base to avoid alias warning
 
-    - name: Install k-diagram package
-      run: |
-        python -m pip install . --no-deps --force-reinstall
-        # --no-deps: Assume conda handled dependencies
-        # --force-reinstall: Ensure local package overwrites any cached version
+      - name: Show conda info
+        run: |
+          conda info
+          conda list
 
-    - name: Lint with flake8
-      run: |
-        echo "Running flake8 linter..."
-        # Max line length 88 is common (used by Black formatter)
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=12 --max-line-length=88 --statistics
+      - name: Install k-diagram (no deps; conda handled them)
+        run: |
+          python -m pip install . --no-deps --force-reinstall
 
-    - name: Test with pytest and Generate Coverage
-      run: |
-        echo "Running pytest with coverage..."
-        # Generate coverage report for the 'kdiagram' package
-        # Save report as coverage.xml for Codecov uploader
-        pytest --cov=kdiagram --cov-report=xml -n auto kdiagram/tests
+      - name: Lint (flake8 or ruff)
+        run: |
+          echo "Running flake8 linter..."
+          # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # flake8 . --count --exit-zero --max-complexity=12 --max-line-length=88 --statistics
+          # If you switch to Ruff:
+      
+          python -m pip install -e .[dev]
+          black --check .
+          ruff check .
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4 # Use latest version
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }} # Get token from Codecov, add to repo secrets
-        fail_ci_if_error: true # Optional: fail build if upload fails
-        
-    - name: Print Debug Info on Failure
-      if: failure() # Only run if previous steps failed
-      run: |
-        echo "::group::Debug Information" # Group output in GitHub Actions UI
-        echo "PATH=$PATH"
-        echo "--- Conda Info ---"
-        conda info
-        echo "--- Conda List ---"
-        conda list
-        echo "::endgroup::"
+      - name: Test with pytest + coverage
+        run: |
+          echo "Running pytest with coverage..."
+          pytest -n auto --cov=kdiagram --cov-report=xml --cov-report=term-missing tests/
+
+      - name: Upload coverage to Codecov
+        # Run unless it's a PR from a fork AND ensure a token is present
+        if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) && secrets.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml                 # default path from pytest-cov
+          name: linux-py${{ matrix.python-version }}
+          flags: unittests
+          fail_ci_if_error: true
+
+      - name: Print Debug Info on Failure
+        if: failure()
+        run: |
+          echo "::group::Debug Information"
+          echo "PATH=$PATH"
+          conda info
+          conda list
+          echo "::endgroup::"

@@ -111,3 +111,104 @@ comparison.
      comparative model performance for reports or presentations.
    * **Identifying Trade-offs:** Clearly visualize if improving one
      metric comes at the cost of another (e.g., accuracy vs. speed).
+     
+     
+.. _gallery_plot_reliability:
+
+-----------------------------------------
+Model Reliability (Calibration) Diagram
+-----------------------------------------
+
+Uses :func:`~kdiagram.plot.comparison.plot_reliability_diagram` to
+compare **predicted probabilities** to **observed frequencies** across
+probability bins. A perfectly calibrated model lies on the
+:math:`y=x` diagonal.
+
+.. code-block:: python
+   :linenos:
+
+   import numpy as np
+   import matplotlib.pyplot as plt
+   import kdiagram.plot.comparison as kdc
+
+   # --- Binary data generation (slightly miscalibrated vs. tighter) ---
+   np.random.seed(0)
+   n = 1000
+   y = (np.random.rand(n) < 0.4).astype(int)
+
+   # Model 1: wider/noisier probabilities around 0.4
+   p1 = 0.4 * np.ones_like(y) + 0.15 * np.random.rand(n)
+   # Model 2: tighter probabilities around 0.4
+   p2 = 0.4 * np.ones_like(y) + 0.05 * np.random.rand(n)
+
+   # --- Plotting ---
+   ax, data = kdc.plot_reliability_diagram(
+       y, p1, p2,
+       names=["Wide", "Tight"],
+       n_bins=12,
+       strategy="quantile",      # quantile-based binning
+       error_bars="wilson",      # 95% Wilson CIs per bin
+       counts_panel="bottom",    # show counts histogram below
+       show_ece=True,            # compute & display ECE
+       show_brier=True,          # compute & display Brier score
+       title="Gallery: Reliability Diagram (Quantile + Wilson CIs)",
+       savefig="images/gallery_reliability_diagram.png",
+       return_data=True,         # get per-bin stats back
+   )
+   plt.close()
+
+.. image:: ../images/gallery_reliability_diagram.png
+   :alt: Example Reliability (Calibration) Diagram
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Reliability Diagram** assesses probability calibration by
+   plotting per-bin **observed event frequency** against the **mean
+   predicted probability**. The closer the curve is to the diagonal
+   line :math:`y=x`, the better the calibration.
+
+   **How to read it:**
+   
+   * **Diagonal (reference):** Perfect calibration. Points above the
+     diagonal indicate the model is *under-confident* (events happen
+     more often than predicted); points below indicate *over-confidence*.
+   * **Markers & line:** Each marker is a bin; its x-position is the
+     average predicted probability in that bin, its y-position is the
+     observed fraction of positives in that bin.
+   * **Error bars:** Per-bin uncertainty (e.g., Wilson intervals) for
+     the observed frequency.
+   * **Counts panel:** Shows how many samples fall into each bin (or the
+     fraction, if normalized), helping diagnose data sparsity.
+
+   **Reported metrics (optional):**
+   
+   * **ECE (Expected Calibration Error):**
+   
+     :math:`\mathrm{ECE} = \sum_{i} w_i \, \lvert \mathrm{acc}_i -
+     \mathrm{conf}_i \rvert`, where :math:`\mathrm{acc}_i` is the
+     observed frequency, :math:`\mathrm{conf}_i` is the mean predicted
+     probability in bin :math:`i`, and :math:`w_i` is the bin weight
+     (optionally sample-weighted).
+     
+   * **Brier score:** Mean squared error on probabilities
+     :math:`\frac{1}{N}\sum_{j=1}^{N}(p_j - y_j)^2` (optionally
+     weighted). Lower is better.
+
+   **🔍 Key insights from this example:**
+   
+   * *Wide* shows larger deviations from the diagonal—more miscalibration.
+   * *Tight* hugs the diagonal more closely—better calibrated.
+   * The counts panel reveals how well the binning covers the probability
+     range and whether any bins are data-sparse (wider error bars).
+
+   **💡 When to use:**
+   
+   * **Probability calibration checks** for binary classifiers producing
+     scores/probabilities.
+   * **Comparing multiple models** (or post-calibration methods like
+     Platt scaling/Isotonic regression) on the same dataset.
+   * **Communicating** both calibration quality (curve vs. diagonal) and
+     **data support** (counts per bin).

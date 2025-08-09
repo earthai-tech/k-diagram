@@ -157,5 +157,5 @@ def test_plot_feature_fingerprint_normalize_zeros(sample_data_fingerprint):
     except Exception as e:
         pytest.fail(f"plot_feature_fingerprint normalize with zeros failed: {e}")
         
-if __name__=="__main__": 
+if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

@@ -17,24 +17,37 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-import datetime
-# Adjust the path depending on where your conf.py is relative to the package
-# Assuming conf.py is in docs/source and kdiagram is in the root project dir
-sys.path.insert(0, os.path.abspath('../../'))
+# -- Path setup --------------------------------------------------------------
+import os, sys, datetime, warnings # noqa
+from pathlib import Path
 
-# =================
-# pip install furo sphinx-copybutton
-# =================
-# Try to import the package version
+ROOT = Path(__file__).resolve().parents[2]  # repo root
+sys.path.insert(0, str(ROOT))               # only needed for source builds
+
+# Try to import package & version; otherwise read pyproject.toml
 try:
-    import kdiagram
-    pkg_version = kdiagram.__version__
-except ImportError:
-    print("Warning: kdiagram package not found. Version set to 'dev'.")
-    pkg_version = 'dev'
+    import kdiagram as kd
+    pkg_version = kd.__version__
+except Exception:
+    # Read version from pyproject.toml so the docs still show the real version
+    try:
+        import tomllib  # Py 3.11+
+    except ModuleNotFoundError:
+        import tomli as tomllib  # add to docs/dev deps for 3.9/3.10
+    data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    pkg_version = data["project"]["version"]
+else:
+    # Silence only the noisy SyntaxWarnings during docs build
+    kd.configure_warnings(
+        "ignore",
+        categories=["SyntaxWarning"],
+        modules=[r"^(numpy|matplotlib|pandas)\."]
+    )
 
+# Fallback: if kd wasn't importable, apply an equivalent filter directly
+if "kd" not in globals():
+    warnings.filterwarnings("ignore", category=SyntaxWarning,
+                            module=r"^(numpy|matplotlib|pandas)\.")
 
 # -- Project information -----------------------------------------------------
 
@@ -189,6 +202,22 @@ html_theme_options = {
     "sidebar_hide_name": False, # Show project name in sidebar
     "navigation_with_keys": True,
 }
+
+# -- Custom Roles for Release Notes (rst_epilog) -------------------------
+# These substitutions are appended to the end of every processed RST file.
+# Defines roles like |Feature|, |Fix|, etc., using CSS classes for styling.
+# Allow shorthand references for main function interface
+rst_epilog = """
+.. |Feature| replace:: :bdg-success:`Feature`
+.. |New| replace:: :bdg-success:`New`
+.. |Fix| replace:: :bdg-info:`Fix`
+.. |Enhancement| replace:: :bdg-info:`Enhancement`
+.. |Breaking| replace:: :bdg-danger:`Breaking`
+.. |API Change| replace:: :bdg-warning:`API Change`
+.. |Docs| replace:: :bdg-secondary:`Docs`
+.. |Build| replace:: :bdg-primary:`Build`
+.. |Tests| replace:: :bdg-primary:`Tests`
+"""
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

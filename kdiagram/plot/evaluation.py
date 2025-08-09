@@ -733,6 +733,8 @@ def plot_taylor_diagram_in(
         CC= minmax_scaler(CC, feature_range=norm_range)
 
     # plot background
+    # Turn off grid to avoid the deprecation error
+    ax.grid(False)
     c = ax.pcolormesh(
         TH,
         RR,
@@ -742,7 +744,7 @@ def plot_taylor_diagram_in(
         vmin=-1 if angle_max==np.pi else 0,
         vmax=1
     )
-
+    ax.grid(True, which="both")
     # convert each correlation to an angle
     angles = np.arccos(corrs)
     radii  = stds
