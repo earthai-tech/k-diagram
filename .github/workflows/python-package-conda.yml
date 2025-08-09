@@ -52,7 +52,7 @@ jobs:
       
           python -m pip install -e .[dev]
           # Use ruff to check for issues
-          ruff check . --fix
+          ruff check . --unsafe-fixes
           # Use ruff to automatically fix issues (e.g., imports)
           # ruff --fix .
     
