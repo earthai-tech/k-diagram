@@ -51,7 +51,7 @@ jobs:
           # If you switch to Ruff:
       
           python -m pip install -e .[dev]
-          black --check .
+          black .  # Automatically formats the code
           ruff check .
 
       - name: Test with pytest + coverage
