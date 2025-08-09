@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # test_uncertainty_plots.py
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
@@ -8,28 +7,29 @@ Pytest suite for testing uncertainty visualization functions in
 kdiagram.plot.uncertainty.
 """
 
-import pytest
-import numpy as np
-import pandas as pd
+from unittest.mock import patch
+
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes 
-from unittest.mock import patch 
+import numpy as np
+import pandas as pd
+import pytest
+from matplotlib.axes import Axes
 
 from kdiagram.plot.uncertainty import (
-    plot_coverage,          
-    plot_model_drift,       
-    plot_velocity,          
-    plot_interval_consistency, 
-    plot_anomaly_magnitude,   
-    plot_uncertainty_drift,   
-    plot_actual_vs_predicted, 
-    plot_interval_width,      
+    PerformanceWarning,  #, InternalError
+    plot_actual_vs_predicted,
+    plot_anomaly_magnitude,
+    plot_coverage,
     plot_coverage_diagnostic,
-    plot_temporal_uncertainty 
+    plot_interval_consistency,
+    plot_interval_width,
+    plot_model_drift,
+    plot_temporal_uncertainty,
+    plot_uncertainty_drift,
+    plot_velocity,
 )
 
-from kdiagram.plot.uncertainty import PerformanceWarning #, InternalError
 # --- Pytest Configuration ---
 # Use a non-interactive backend for matplotlib to avoid plots
 # popping up during tests. 'Agg' is a good choice.

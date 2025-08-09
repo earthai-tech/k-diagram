@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
 
@@ -19,11 +18,11 @@ operations, such as downloading files from URLs (with progress),
 moving files, and checking for resource existence within packages.
 """
 
-from __future__ import annotations 
+from __future__ import annotations
 
 import os
-import warnings
 import shutil
+import warnings
 from typing import Optional
 
 HAS_REQUESTS = True
@@ -319,7 +318,7 @@ def download_file(url, filename , dstpath =None ):
     
     """
    
-    import requests 
+    import requests
     print("{:-^70}".format(f" Please, Wait while {os.path.basename(filename)}"
                           " is downloading. ")) 
     with requests.get(url, stream=True) as r:

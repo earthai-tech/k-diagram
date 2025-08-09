@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # File: kdiagram/datasets/load.py
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
@@ -14,21 +13,27 @@ datasets suitable for demonstrating and testing `k-diagram`
 visualizations. Datasets can be returned as pandas DataFrames or
 structured Bunch objects.
 """
-from __future__ import annotations 
+from __future__ import annotations
 
 import os
 import re
-import shutil 
+import shutil
 import textwrap
 import warnings
-from importlib import resources 
-import pandas as pd
+from importlib import resources
+from typing import List, Optional, Union
+
 import numpy as np
-from typing import Optional, List, Union
+import pandas as pd
 
 from ..api.bunch import Bunch
-from ._property import get_data, download_file_if, RemoteMetadata
-from ._property import KD_DMODULE, KD_REMOTE_DATA_URL 
+from ._property import (
+    KD_DMODULE,
+    KD_REMOTE_DATA_URL,
+    RemoteMetadata,
+    download_file_if,
+    get_data,
+)
 
 __all__ = ["load_uncertainty_data", "load_zhongshan_subsidence"]
 

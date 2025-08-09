@@ -1,27 +1,28 @@
-# -*- coding: utf-8 -*-
 #   License: Apache-2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import annotations 
-import warnings 
+from __future__ import annotations
+
+import warnings
 from numbers import Integral
-from typing import ( 
-    Optional, Tuple, List,
+from typing import (
+    List,
+    Optional,
+    Tuple,
 )
+
+import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.pyplot as plt 
 
-from ..compat.sklearn import validate_params, StrOptions 
-from ..utils.handlers import columns_manager 
-from ..utils.mathext import minmax_scaler 
-from ..utils.validator import ( 
-    check_consistent_length, 
-    contains_nested_objects, 
-    validate_yy, 
-    validate_length_range, 
-    
+from ..compat.sklearn import StrOptions, validate_params
+from ..utils.handlers import columns_manager
+from ..utils.mathext import minmax_scaler
+from ..utils.validator import (
+    check_consistent_length,
+    contains_nested_objects,
+    validate_length_range,
+    validate_yy,
 )
-
 from ._properties import TDG_DIRECTIONS
 
 __all__= [    

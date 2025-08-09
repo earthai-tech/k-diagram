@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0 Licence
 # Author: L. Kouadio <etanoyau@gmail.com>
 
@@ -10,12 +9,15 @@ by providing data via CSV files.
 """
 
 
-from __future__ import annotations 
+from __future__ import annotations
+
 import argparse
 import sys
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 # Import package itself for version (if available)
 try:
     import kdiagram
@@ -28,30 +30,24 @@ else:
     # --- Import plotting functions ---
     # Assuming the structure kdiagram -> plot -> uncertainty.py
     # Import ALL uncertainty plot functions intended for CLI
+    from kdiagram.plot.evaluation import (
+        plot_taylor_diagram,
+        plot_taylor_diagram_in,
+        taylor_diagram,
+    )
+    from kdiagram.plot.feature_based import plot_feature_fingerprint
+    from kdiagram.plot.relationship import plot_relationship
     from kdiagram.plot.uncertainty import (
-        plot_actual_vs_predicted, # Added
+        plot_actual_vs_predicted,  # Added
         plot_anomaly_magnitude,
-        plot_coverage_diagnostic, # Added
+        plot_coverage,
+        plot_coverage_diagnostic,  # Added
         plot_interval_consistency,
-        plot_interval_width,      # Added
+        plot_interval_width,  # Added
         plot_model_drift,
-        plot_temporal_uncertainty,# Added
+        plot_temporal_uncertainty,  # Added
         plot_uncertainty_drift,
         plot_velocity,
-        plot_coverage,
-    )
-    
-    
-    from kdiagram.plot.evaluation import (
-        taylor_diagram,
-        plot_taylor_diagram_in,
-        plot_taylor_diagram
-    )
-    from kdiagram.plot.feature_based import (
-        plot_feature_fingerprint
-    )
-    from kdiagram.plot.relationship import (
-        plot_relationship
     )
 
 # ... (rest of imports like kdiagram package for version) ...

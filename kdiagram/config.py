@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 """ k-diagram configs."""
 
 import warnings
+from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Iterable, Optional, Union, Pattern
+from re import Pattern
+from typing import Optional, Union
 
 # Map string names to warning classes for convenience
 _WARNING_NAME_MAP = {

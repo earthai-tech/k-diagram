@@ -1,31 +1,23 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 """ Model comparison plots."""
 from __future__ import annotations
 
-from numbers import Real 
 import warnings
+from numbers import Real
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 
-
-from typing import ( 
-    Literal, Optional, 
-    Tuple, List, Union, Any,
-    Callable, Dict 
-)
-
-import matplotlib.pyplot as plt 
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd  
+import pandas as pd
 
-from ..compat.sklearn import validate_params, StrOptions, type_of_target
-from ..utils.generic_utils import drop_nan_in 
+from ..compat.sklearn import StrOptions, type_of_target, validate_params
+from ..utils.generic_utils import drop_nan_in
 from ..utils.handlers import columns_manager
-from ..utils.metric_utils import get_scorer 
-from ..utils.plot import set_axis_grid  
-from ..utils.validator import validate_yy, is_iterable, _assert_all_types 
-
+from ..utils.metric_utils import get_scorer
+from ..utils.plot import set_axis_grid
+from ..utils.validator import _assert_all_types, is_iterable, validate_yy
 
 __all__ = ["plot_reliability_diagram", 'plot_model_comparison']
 
@@ -330,10 +322,10 @@ def _to_prob_vector(
         idx = arr.shape[1] - 1 if ci is None else ci
         if idx < 0 or idx >= arr.shape[1]:
             raise ValueError(
-                (
+                
                     "class_index out of bounds for 2D predictions: "
                     f"{idx} not in [0, {arr.shape[1]-1}]"
-                )
+                
             )
         return arr[:, idx].astype(float, copy=False)
     raise ValueError(

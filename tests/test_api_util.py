@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import re
 import warnings
@@ -6,7 +5,6 @@ import warnings
 import pytest
 
 from kdiagram.api import util
-
 
 # ---------- helpers ----------
 

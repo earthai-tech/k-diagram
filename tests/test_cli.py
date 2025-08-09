@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
 
-from __future__ import annotations 
-import argparse, sys
+from __future__ import annotations
+
 import os
 import sys
-import types
-import builtins
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
-
 import pytest
 
 # Use a non-interactive backend

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 import types
 import warnings
@@ -6,10 +5,9 @@ import warnings
 import pytest
 
 from kdiagram.config import (
-    configure_warnings,
-    warnings_config,
-    suppress_warnings,
     _resolve_category,
+    configure_warnings,
+    suppress_warnings,
 )
 
 

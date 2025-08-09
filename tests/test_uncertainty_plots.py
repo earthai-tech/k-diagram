@@ -1,19 +1,20 @@
+import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
-import matplotlib
+
 matplotlib.use("Agg")  # headless
 import matplotlib.pyplot as plt
 
 from kdiagram.plot.uncertainty import (
-    plot_coverage,
-    plot_model_drift,
-    plot_velocity,
-    plot_interval_consistency,
-    plot_anomaly_magnitude,
-    plot_uncertainty_drift,
     plot_actual_vs_predicted,
+    plot_anomaly_magnitude,
+    plot_coverage,
+    plot_interval_consistency,
     plot_interval_width,
+    plot_model_drift,
+    plot_uncertainty_drift,
+    plot_velocity,
 )
 
 

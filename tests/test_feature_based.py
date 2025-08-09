@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
@@ -7,11 +6,10 @@ Pytest suite for testing feature-based visualization functions in
 kdiagram.plot.feature_based.
 """
 
-import pytest
-import numpy as np
-import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 from matplotlib.axes import Axes
 
 # --- Import function to test ---

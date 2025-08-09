@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
 # -------------------------------------------------------------------
@@ -22,16 +21,12 @@ to facilitate the creation of informative summaries, potentially
 leveraging flexible data structures and formatting helpers.
 """
 
-from __future__ import annotations 
+from __future__ import annotations
+
 import copy
-from .util import (
-    get_table_size,
-    to_snake_case,
-    to_camel_case,
-    beautify_dict
-)
 
 from .bunch import FlexDict
+from .util import beautify_dict, get_table_size, to_camel_case, to_snake_case
 
 __all__ = ['ResultSummary'] 
 

@@ -1,8 +1,10 @@
 
 import warnings
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")  # non-interactive backend for tests
 import matplotlib.pyplot as plt
 import pytest

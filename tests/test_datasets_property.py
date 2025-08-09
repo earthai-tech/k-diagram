@@ -1,18 +1,17 @@
-# -*- coding: utf-8 -*-
 import os
-import io
-import shutil
 from contextlib import contextmanager
 from pathlib import Path
+
 import pytest
 
+import kdiagram.datasets._property as prop_mod
 from kdiagram.datasets._property import (
+    RemoteMetadata,
+    download_file_if,
     get_data,
     remove_data,
-    download_file_if,
-    RemoteMetadata,
 )
-import kdiagram.datasets._property as prop_mod
+
 
 # --- helper: fake downloader that "creates" the file in cache
 def fake_dl(url, filename, dstpath, **kwargs):

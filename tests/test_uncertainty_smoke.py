@@ -1,11 +1,11 @@
 # tests/test_uncertainty_smoke.py
-import numpy as np
 import matplotlib.pyplot as plt
 import pytest
 
 from kdiagram.plot.uncertainty import (
-    plot_interval_width, plot_coverage_diagnostic,
+    plot_interval_width,
 )
+
 
 @pytest.fixture(autouse=True)
 def mpl_agg(monkeypatch):

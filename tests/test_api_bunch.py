@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 import copy
+
 import pytest
 
 from kdiagram.api.bunch import Bunch, FlexDict
-
 
 # ---------- Bunch ----------
 

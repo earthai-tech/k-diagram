@@ -1,19 +1,14 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0 
 #   Author: LKouadio <etanoyau@gmail.com>
 
-import re 
-import inspect 
-import warnings 
+import inspect
+import re
+import warnings
 from collections.abc import Iterable
+from typing import Optional, Union
 
-from typing import ( 
-    Optional,
-    Union
-)
+from .generic_utils import str2columns
 
-from .generic_utils import str2columns 
- 
 
 def columns_manager(
     columns: Optional[Union[str, list, tuple]],  

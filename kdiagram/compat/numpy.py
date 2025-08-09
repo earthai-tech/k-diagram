@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 

@@ -1,5 +1,6 @@
 # tests/test_compat_numpy.py
 import warnings
+
 import numpy as np
 import pytest
 

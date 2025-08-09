@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
 
@@ -9,9 +8,11 @@ Bunch Data Structure (:mod:`kdiagram.bunch`)
 Provides a dictionary-like object that allows accessing keys as
 attributes.
 """
-from __future__ import annotations 
+from __future__ import annotations
+
 import copy
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 __all__ = ["Bunch", "FlexDict"]
 
@@ -158,15 +159,15 @@ class Bunch(dict):
         return sorted(list(dynamic_attrs))
 
 
-    def copy(self) -> 'Bunch':
+    def copy(self) -> Bunch:
         """Return a shallow copy of the Bunch."""
         return Bunch(super().copy())
     
-    def __copy__(self) -> 'Bunch':
+    def __copy__(self) -> Bunch:
         """Support copy.copy()."""
         return self.copy()
     
-    def __deepcopy__(self, memodict={}) -> 'Bunch':
+    def __deepcopy__(self, memodict={}) -> Bunch:
         """Support copy.deepcopy()."""
         return Bunch(copy.deepcopy(dict(self), memodict))
     

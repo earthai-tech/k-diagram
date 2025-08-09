@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
 
@@ -10,15 +9,14 @@ This module provides functions to create synthetic datasets tailored
 for demonstrating and testing the various plotting functions within
 the `k-diagram` package, particularly those focused on uncertainty.
 """
-from __future__ import annotations 
+from __future__ import annotations
 
 import textwrap
-import warnings 
+import warnings
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
-from typing import Optional, List, Union, Tuple
 
 from ..api.bunch import Bunch
 

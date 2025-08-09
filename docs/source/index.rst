@@ -77,7 +77,7 @@ k-diagram: Polar Insights for Forecasting
    contributing
    code_of_conduct
    citing
-   release_notes       
+   release_notes/index       
    glossary
    license
 

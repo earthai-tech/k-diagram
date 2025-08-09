@@ -1,19 +1,15 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0 
 #   Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import annotations 
+from __future__ import annotations
 
-import re 
 import inspect
+import re
 import warnings
-from typing import ( 
-    Any,
-    Dict, 
-    Optional, 
-    List 
-)
-import numpy as np 
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+
 
 def str2columns(
     text: str,

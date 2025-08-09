@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
 import re
-import math
-import warnings
+
 import numpy as np
 import pytest
 
 from kdiagram.utils.generic_utils import (
-    str2columns,
-    smart_format,
     count_functions,
     drop_nan_in,
-    get_valid_kwargs,
     error_policy,
+    get_valid_kwargs,
+    smart_format,
+    str2columns,
 )
 
 # ---------------------------

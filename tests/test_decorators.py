@@ -1,15 +1,17 @@
-import os
-import io
 import warnings
-import types
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from kdiagram.decorators import (
-    check_non_emptiness, isdf, SaveFile, save_file,
-    _is_arraylike_empty, _perform_save, _extract_dataframe
+    SaveFile,
+    _is_arraylike_empty,
+    check_non_emptiness,
+    isdf,
+    save_file,
 )
+
 
 # -----------------------------
 # Helpers & common fixtures

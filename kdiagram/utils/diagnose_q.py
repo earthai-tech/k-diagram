@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
@@ -8,22 +7,23 @@ Provides utilities for handling quantile data in various formats
 and ensuring compatibility with expected structures.
 """
 
-import re 
-import warnings 
 import operator
-from typing import ( 
-    List, 
-    Union, 
-    Any, 
-    Optional, 
-    Sequence, 
-    Tuple, 
-    Dict, 
+import re
+import warnings
+from collections.abc import Sequence
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
 )
-import numpy as np 
-import pandas as pd 
 
-from .validator import is_in_if, is_frame  
+import numpy as np
+import pandas as pd
+
+from .validator import is_frame, is_in_if
 
 __all__= [ 
     'to_iterable',  'validate_quantiles', 

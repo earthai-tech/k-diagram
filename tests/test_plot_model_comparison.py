@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # File: new test_comparison_plots.py
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
@@ -8,18 +7,18 @@ Pytest suite for testing model comparison visualization functions in
 kdiagram.plot.relationship (or wherever plot_model_comparison lives).
 """
 
-import pytest
-import numpy as np
-import pandas as pd
+
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 from matplotlib.axes import Axes
-from typing import Optional, List, Union, Tuple, Any, Callable
 
 # --- Import function to test ---
 # Adjust the import path based on your project structure
 try:
     from kdiagram.plot.comparison import plot_model_comparison
+
     # If it depends on get_scorer, ensure it's importable
     from kdiagram.utils.metric_utils import get_scorer
     _SKIP_TESTS = False

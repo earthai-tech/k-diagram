@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0 
 #   Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import print_function
 import re
-from typing import Optional, List
+from typing import List, Optional
 
 
 def set_axis_grid(ax, show_grid: bool = True, grid_props: dict = None) -> None:

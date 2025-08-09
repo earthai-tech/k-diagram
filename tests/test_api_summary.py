@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 import re
+
 import pytest
 
-from kdiagram.api.summary import ResultSummary
 import kdiagram.api.summary as summary_mod
+from kdiagram.api.summary import ResultSummary
 
 
 def test_resultsummary_add_results_creates_snake_case_attrs_and_stores_copy():

@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 
 import os
-import re  
-import shutil 
-import warnings 
+import re
+import shutil
+import warnings
+
 
 def beautify_dict(d, space=4, key=None, max_char=None):
     """

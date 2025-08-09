@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # File: kdiagram/datasets/_property.py 
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
@@ -25,13 +24,13 @@ loading functions within the :mod:`kdiagram.datasets` subpackage and
 are not guaranteed to have a stable API for end-users.
 """
 
-from __future__ import annotations 
+from __future__ import annotations
 
 import os
 import shutil
 import warnings
-from importlib import resources # Used in download_file_if # noqa 
 from collections import namedtuple
+from importlib import resources  # Used in download_file_if # noqa 
 from typing import Optional, Union
 from urllib.parse import urljoin
 

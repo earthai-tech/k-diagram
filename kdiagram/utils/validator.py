@@ -1,25 +1,24 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0 
 #   Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import print_function
+import numbers
 import warnings
-from collections.abc import Iterable 
-import numbers 
-import scipy.sparse as sp
-
-from typing import ( 
-    Any, 
-    List, 
+from collections.abc import Iterable
+from typing import (
+    Any,
+    List,
     Optional,
-    Union, 
     Tuple,
-    Type, 
+    Type,
+    Union,
 )
+
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 
-from .generic_utils import smart_format, str2columns 
+from .generic_utils import smart_format, str2columns
+
 
 def validate_length_range(length_range, sorted_values=True, param_name=None):
     """
@@ -114,7 +113,7 @@ def validate_yy(
     tuple
         The validated y_true and y_pred arrays, potentially flattened.
     """
-    from ..compat.sklearn import type_of_target 
+    from ..compat.sklearn import type_of_target
 
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)

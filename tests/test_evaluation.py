@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # test_evaluation_plots.py
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
@@ -8,19 +7,17 @@ Pytest suite for testing model evaluation functions (Taylor Diagrams) in
 kdiagram.plot.evaluation.
 """
 
-import pytest
-import numpy as np
-import pandas as pd # May be needed if functions internally use it
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
+import numpy as np
+import pytest
 
 # --- Import functions to test ---
 # Adjust the import path based on your project structure
 from kdiagram.plot.evaluation import (
-    taylor_diagram,
+    plot_taylor_diagram,
     plot_taylor_diagram_in,
-    plot_taylor_diagram
+    taylor_diagram,
 )
 
 # --- Pytest Configuration ---

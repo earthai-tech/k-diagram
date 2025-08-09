@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # test_relationship_plots.py
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
@@ -8,11 +7,11 @@ Pytest suite for testing relationship visualization functions in
 kdiagram.plot.relationship.
 """
 
-import pytest
-import numpy as np
-import pandas as pd # Noqa  Often useful for data setup
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd  # Noqa  Often useful for data setup
+import pytest
 
 # --- Import function to test ---
 # Adjust the import path based on your project structure

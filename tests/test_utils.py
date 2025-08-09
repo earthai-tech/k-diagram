@@ -1,15 +1,13 @@
-import re
-import os
-import numpy as np
 import pandas as pd
 import pytest
 
+from kdiagram.compat.numpy import NP_INT
 from kdiagram.utils.q_utils import (
-    reshape_quantile_data,
     melt_q_data,
     pivot_q_data,
+    reshape_quantile_data,
 )
-from kdiagram.compat.numpy import NP_INT 
+
 # --- Fixtures ----------------------------------------------------------------
 
 @pytest.fixture

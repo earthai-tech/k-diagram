@@ -1,18 +1,17 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
-import warnings 
-import matplotlib.pyplot as plt 
+import warnings
+from typing import Any, List, Optional, Tuple, Union
+
 import matplotlib.cm as cm
-from typing import Optional, List, Tuple, Union, Any 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
-import numpy as np 
-import pandas as pd 
-
-from ..decorators import check_non_emptiness 
-from..utils.handlers import columns_manager 
-from ..utils.validator import ensure_2d 
+from ..decorators import check_non_emptiness
+from ..utils.handlers import columns_manager
+from ..utils.validator import ensure_2d
 
 __all__=['plot_feature_fingerprint']
 

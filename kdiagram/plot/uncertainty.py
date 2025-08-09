@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #   License: Apache-2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
@@ -13,34 +12,30 @@ related diagnostics using polar coordinates.
 from __future__ import annotations
 
 import warnings
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from matplotlib.colors import Normalize
-
-import numpy as np
-import pandas as pd 
-
 from typing import (
     Any,
     Dict,
     List,
+    Optional,
     Tuple,
     Union,
-    Optional,
 )
+
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.colors import Normalize
+
 from ..api.summary import ResultSummary
+from ..decorators import check_non_emptiness, isdf
+from ..utils.diagnose_q import build_qcols_multiple, detect_quantiles_in, validate_qcols
+from ..utils.handlers import columns_manager
+from ..utils.plot import set_axis_grid
 from ..utils.validator import (
     _assert_all_types,
     exist_features,
-    )
-from ..utils.diagnose_q import (
-    detect_quantiles_in,
-    validate_qcols,
-    build_qcols_multiple
 )
-from ..utils.handlers import columns_manager
-from ..utils.plot import set_axis_grid
-from ..decorators import isdf, check_non_emptiness
 
 __all__=[
      'plot_actual_vs_predicted',

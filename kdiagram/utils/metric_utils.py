@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 # File: kdiagram/utils/metric_utils.py
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Any, List
+from typing import Any, Callable, Dict, List
 
 __all__ = ["get_scorer", "available_scorers"]
 

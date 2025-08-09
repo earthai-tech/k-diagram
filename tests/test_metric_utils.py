@@ -1,18 +1,18 @@
-import pytest
 import numpy as np
+import pytest
 
 sklearn = pytest.importorskip("sklearn")
 from sklearn.metrics import (
-    mean_squared_error,
-    mean_absolute_error,
-    r2_score,
-    precision_score,
-    recall_score,
-    f1_score,
     explained_variance_score,
+    f1_score,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_score,
+    r2_score,
+    recall_score,
 )
 
-from kdiagram.utils.metric_utils import get_scorer, available_scorers
+from kdiagram.utils.metric_utils import available_scorers, get_scorer
 
 
 def test_available_scorers_contains_core_aliases():

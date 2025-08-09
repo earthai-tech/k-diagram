@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0 
 #   Author: LKouadio <etanoyau@gmail.com>
 
+from typing import (
+    Optional,
+    Tuple,
+    Union,
+)
+
 import numpy as np
 import pandas as pd
-from typing import ( 
-    Optional, 
-    Tuple, 
-    Union, 
-)
-from .validator import validate_length_range 
+
+from .validator import validate_length_range
 
 __all__=["minmax_scaler"]
 

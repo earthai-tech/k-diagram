@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
 
@@ -19,7 +18,8 @@ settings, or other core properties used internally throughout the
 `k-diagram` package to ensure consistency.
 """
 
-import pandas as pd 
+import pandas as pd
+
 
 class PandasDataHandlers:
     """ 

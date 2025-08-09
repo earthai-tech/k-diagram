@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
 import warnings
-import matplotlib.pyplot as plt 
-import numpy as np 
 
-from ..compat.sklearn import validate_params, StrOptions
-from ..utils.generic_utils import drop_nan_in 
-from ..utils.plot import set_axis_grid  
+import matplotlib.pyplot as plt
+import numpy as np
+
+from ..compat.sklearn import StrOptions, validate_params
+from ..utils.generic_utils import drop_nan_in
+from ..utils.plot import set_axis_grid
 from ..utils.validator import validate_yy
 
 __all__=['plot_relationship']

@@ -1,6 +1,7 @@
 # tests/test_utils_handlers.py
 import re
 import types
+
 import pytest
 
 from kdiagram.utils.handlers import columns_manager

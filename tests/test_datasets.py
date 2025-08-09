@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 
@@ -8,10 +7,11 @@ in kdiagram.datasets.
 """
 
 import os
-import pytest
+from unittest.mock import MagicMock, patch  # noqa
+
 import numpy as np
 import pandas as pd
-from unittest.mock import patch, MagicMock # noqa
+import pytest
 
 # Assuming datasets and Bunch are importable from top-level kdiagram
 import kdiagram.datasets as kdd

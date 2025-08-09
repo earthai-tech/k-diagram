@@ -1,10 +1,11 @@
 # tests/test_utils_plot.py
-import pytest
 import matplotlib
+import pytest
+
 matplotlib.use("Agg")  # headless backend for CI
 import matplotlib.pyplot as plt
 
-from kdiagram.utils.plot import set_axis_grid, is_valid_kind
+from kdiagram.utils.plot import is_valid_kind, set_axis_grid
 
 
 # ----------------------------

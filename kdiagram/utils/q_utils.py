@@ -1,23 +1,22 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0 
 #   Author: LKouadio <etanoyau@gmail.com>
 
 """
 Provides utility functions for quantile extraction and validation.
 """
-from __future__ import annotations 
+from __future__ import annotations
 
-import re 
-import warnings 
-from typing import List, Optional, Union, Tuple 
+import re
+import warnings
+from typing import List, Optional, Tuple, Union
 
-import pandas as pd 
+import pandas as pd
 
 from ..decorators import SaveFile, check_non_emptiness
-from .diagnose_q import validate_quantiles 
-from .generic_utils import error_policy 
-from .handlers import columns_manager 
-from .validator import is_frame, exist_features, check_spatial_columns  
+from .diagnose_q import validate_quantiles
+from .generic_utils import error_policy
+from .handlers import columns_manager
+from .validator import check_spatial_columns, exist_features, is_frame
 
 __all__ =["reshape_quantile_data", "melt_q_data", "pivot_q_data"]
 
