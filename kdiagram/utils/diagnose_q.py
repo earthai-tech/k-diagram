@@ -1,38 +1,42 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 """
-Diagnose and validating quantile-related operations. 
-Provides utilities for handling quantile data in various formats 
+Diagnose and validating quantile-related operations.
+Provides utilities for handling quantile data in various formats
 and ensuring compatibility with expected structures.
 """
 
-import re 
-import warnings 
 import operator
-from typing import ( 
-    List, 
-    Union, 
-    Any, 
-    Optional, 
-    Sequence, 
-    Tuple, 
-    Dict, 
+import re
+import warnings
+from collections.abc import Sequence
+from typing import (
+    Any,
+    Optional,
+    Union,
 )
-import numpy as np 
-import pandas as pd 
 
-from .validator import is_in_if, is_frame  
+import numpy as np
+import pandas as pd
 
-__all__= [ 
-    'to_iterable',  'validate_quantiles', 
-    'validate_quantiles_in', 'validate_q_dict',
-    'check_forecast_mode', 'detect_quantiles_in',
-    'build_q_column_names','detect_digits', 
-    'validate_consistency_q', 'parse_qcols', 
-    'validate_qcols', 'build_qcols_multiple'
+from .validator import is_frame, is_in_if
+
+__all__ = [
+    "to_iterable",
+    "validate_quantiles",
+    "validate_quantiles_in",
+    "validate_q_dict",
+    "check_forecast_mode",
+    "detect_quantiles_in",
+    "build_q_column_names",
+    "detect_digits",
+    "validate_consistency_q",
+    "parse_qcols",
+    "validate_qcols",
+    "build_qcols_multiple",
 ]
+
 
 def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     r"""
@@ -44,19 +48,19 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     through a parsed dictionary. This utility helps streamline
     the process of extracting quantile-based columns for later
     processing or plotting [1]_.
-    
+
     Given a set of quantiles in :math:`q`, typically named
     like ``q10``, ``q50``, ``q90``, parse_qcols attempts to
     extract the numeric part of each name. For example:
-    
+
     .. math::
        q_{key} = \\text{float}(\\text{key}[1:])
-    
+
     If ``'q50'`` is found, it is treated as the median quantile.
     Otherwise, parse_qcols uses the central element of the
     sorted list of parsed quantiles. The minimum quantile
     becomes the "lowest" and the maximum becomes the "highest."
-    
+
     Parameters
     ------------
     q_cols : dict or list, optional
@@ -72,7 +76,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     error : {'warn', 'raise', 'ignore'}, optional
         A function used to warn about parsing issues. If
         'raise', error raises rather than warning issues.
-    
+
     Returns
     ---------
     dict
@@ -87,7 +91,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
           floats to their column names.
         - ``valid``: A boolean indicating whether valid
           quantiles were parsed.
-    
+
     Notes
     -------
     By default, parse_qcols handles numeric quantile keys that
@@ -95,7 +99,7 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     (e.g., ``q10`` -> 10.0). Keys that cannot be converted into
     floats are ignored. If none are valid, parse_qcols returns
     values from <parameter `fallback_cols`>.
-    
+
     Examples
     ----------
     >>> from kdiagram.utils.diagnose_q import parse_qcols
@@ -104,8 +108,8 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     >>> result = parse_qcols(q_def)
     >>> result['lowest_col']
     'low_10'
-    
-    
+
+
     References
     ------------
     .. [1] Doe, A., & Smith, J. (2021). Dynamic quantile
@@ -118,18 +122,18 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
 
     # Prepare output structure with defaults
     output = {
-        'lowest_col':  fallback_cols[0],
-        'median_col':  fallback_cols[1],
-        'highest_col': fallback_cols[2],
-        'parsed_qvals': {},
-        'valid': False
+        "lowest_col": fallback_cols[0],
+        "median_col": fallback_cols[1],
+        "highest_col": fallback_cols[2],
+        "parsed_qvals": {},
+        "valid": False,
     }
 
     # If q_cols is not provided, return fallback immediately
     if not q_cols:
         return output
-    
-    if isinstance (q_cols, str): 
+
+    if isinstance(q_cols, str):
         q_cols = [q_cols]
     # If q_cols is a list, convert to dict with dummy keys (q0, q1, etc.)
     if isinstance(q_cols, (list, tuple)):
@@ -139,69 +143,64 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     parsed = {}
     for k, col_name in q_cols.items():
         if not isinstance(k, str):
-            msg =f"Quantile key '{k}' is not a string. Skipped." 
-            if error =="warn": 
-                warnings.warn(msg)
-            elif error =="raise": 
-                raise TypeError (msg)
+            msg = f"Quantile key '{k}' is not a string. Skipped."
+            if error == "warn":
+                warnings.warn(msg, stacklevel=2)
+            elif error == "raise":
+                raise TypeError(msg)
             continue
-        if not k.startswith('q'):
-            msg=(f"Key '{k}' is not prefixed with 'q'. Skipped.")
-            if error =="warn": 
-                warnings.warn(msg)
-            elif error =="raise": 
-                raise ValueError (msg)
+        if not k.startswith("q"):
+            msg = f"Key '{k}' is not prefixed with 'q'. Skipped."
+            if error == "warn":
+                warnings.warn(msg, stacklevel=2)
+            elif error == "raise":
+                raise ValueError(msg)
             continue
         # Attempt to convert 'q10' -> 10.0
         try:
             q_val = float(k[1:])
             parsed[q_val] = col_name
-        except ValueError as e :
-            msg=(f"Cannot parse quantile '{k}'. Skipped.")
-            if error =="warn": 
-                warnings.warn(msg)
-            elif error =="raise": 
-                raise ValueError (msg) from e 
-    
+        except ValueError as e:
+            msg = f"Cannot parse quantile '{k}'. Skipped."
+            if error == "warn":
+                warnings.warn(msg, stacklevel=2)
+            elif error == "raise":
+                raise ValueError(msg) from e
+
     # If nothing valid was parsed, return fallback
     if not parsed:
-        msg=(
+        msg = (
             "No valid quantile columns found in `q_cols`. "
             "Falling back to explicit columns if provided."
         )
-        if error =="warn": 
-            warnings.warn(msg)
-        elif error =="raise": 
-            raise ValueError (msg)
-            
+        if error == "warn":
+            warnings.warn(msg, stacklevel=2)
+        elif error == "raise":
+            raise ValueError(msg)
+
         return output
 
     # Sort parsed q-values
     sorted_qvals = sorted(parsed.keys())
-    output['parsed_qvals'] = parsed
-    output['valid'] = True
+    output["parsed_qvals"] = parsed
+    output["valid"] = True
 
     # The lowest quantile
-    output['lowest_col'] = parsed[sorted_qvals[0]]
+    output["lowest_col"] = parsed[sorted_qvals[0]]
     # The highest quantile
-    output['highest_col'] = parsed[sorted_qvals[-1]]
+    output["highest_col"] = parsed[sorted_qvals[-1]]
 
     # For median, prefer '50' if it exists, else pick middle
     if 50.0 in parsed:
-        output['median_col'] = parsed[50.0]
+        output["median_col"] = parsed[50.0]
     else:
         mid_idx = len(sorted_qvals) // 2
-        output['median_col'] = parsed[sorted_qvals[mid_idx]]
+        output["median_col"] = parsed[sorted_qvals[mid_idx]]
 
     return output
 
-def check_forecast_mode(
-    mode, 
-    q=None, 
-    error="raise", 
-    ops="validate", 
-    **kw
-    ):
+
+def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
     r"""
     Check consistency between forecast mode and quantile values.
 
@@ -215,8 +214,8 @@ def check_forecast_mode(
     either warn the user and set `q` to the default values
     ``[0.1, 0.5, 0.9]`` (if ``error=="warn"``) or raise a
     ValueError (if ``error=="raise"``).
-    
-    Additionally, if ``ops`` is set to ``"check_only"``, the function 
+
+    Additionally, if ``ops`` is set to ``"check_only"``, the function
     only performs the checks without modifying or returning ``q``.
 
     Parameters
@@ -232,41 +231,39 @@ def check_forecast_mode(
         detected. If set to ``"warn"``, a warning is issued
         and a default behavior is applied.
     ops : str, optional
-        Operation mode. If set to ``"check_only"``, the function only 
-        performs the checks without returning any value. If set to 
-        ``"validate"``, the function returns the validated 
+        Operation mode. If set to ``"check_only"``, the function only
+        performs the checks without returning any value. If set to
+        ``"validate"``, the function returns the validated
        (or updated) quantile values. Default is ``"validate"``.
-    *kw: dict, 
+    *kw: dict,
         Additional keywords argument of :func:`kdiagram.utils.diagnose_q`.
- 
+
     Returns
     ---------
     q : list of float or None
-        The validated (or updated) quantile values if ``ops`` is 
+        The validated (or updated) quantile values if ``ops`` is
         ``"validate"``; otherwise, returns ``None``.
-    
+
     Raises
     --------
     ValueError
-        If an inconsistency is detected and ``error`` is set to 
+        If an inconsistency is detected and ``error`` is set to
         ``"raise"``.
-    
+
     Examples
     ----------
-    >>> from gofast.utils.diagnose_q impor check_forecast_mode 
+    >>> from gofast.utils.diagnose_q impor check_forecast_mode
     >>> check_forecast_mode("point", q=[0.1, 0.5, 0.9])
     # Raises a ValueError or warns and returns None based on the error flag.
-    
+
     >>> check_forecast_mode("quantile", q=None, error="warn")
     # Issues a warning and returns [0.1, 0.5, 0.9].
-    
+
     """
     # Ensure mode is valid.
     if mode not in ["point", "quantile"]:
-        raise ValueError(
-            "mode must be either 'point' or 'quantile'."
-        )
-    
+        raise ValueError("mode must be either 'point' or 'quantile'.")
+
     # Handle the case for "point" mode.
     if mode == "point":
         if q is not None:
@@ -275,11 +272,11 @@ def check_forecast_mode(
                 "Resetting q to None."
             )
             if error == "warn":
-                warnings.warn(msg)
-                
+                warnings.warn(msg, stacklevel=2)
+
             elif error == "raise":
                 raise ValueError(msg)
-                
+
             q = None
     # Handle the case for "quantile" mode.
     elif mode == "quantile":
@@ -289,20 +286,21 @@ def check_forecast_mode(
                 "Setting default quantiles to [0.1, 0.5, 0.9]."
             )
             if error == "warn":
-                warnings.warn(msg)
-                
+                warnings.warn(msg, stacklevel=2)
+
             elif error == "raise":
                 raise ValueError(msg)
-            
+
             q = [0.1, 0.5, 0.9]
-        # then validate quantiles 
-        q= validate_quantiles (q, **kw)
+        # then validate quantiles
+        q = validate_quantiles(q, **kw)
     # If ops is "check_only", simply return None.
     if ops == "check_only":
         return None
     else:
         return q
-    
+
+
 def to_iterable(
     obj: Any,
     exclude_string: bool = False,
@@ -310,8 +308,8 @@ def to_iterable(
     parse_string: bool = False,
     flatten: bool = False,
     unique: bool = False,
-    delimiter: str = r'[ ,;|\t\n]+'
-) -> Union[bool, List[Any]]:
+    delimiter: str = r"[ ,;|\t\n]+",
+) -> Union[bool, list[Any]]:
     r"""
     Determines if an object is iterable, with options to transform, parse,
     and modify the input for flexible iterable handling.
@@ -376,8 +374,9 @@ def to_iterable(
         raise ValueError("Set 'transform=True' when using 'parse_string=True'.")
 
     # Check if object is iterable (excluding strings if specified)
-    is_iterable = hasattr(obj, '__iter__') and not (
-        exclude_string and isinstance(obj, str))
+    is_iterable = hasattr(obj, "__iter__") and not (
+        exclude_string and isinstance(obj, str)
+    )
 
     # If transformation is not needed, return the boolean check
     if not transform:
@@ -401,8 +400,9 @@ def to_iterable(
 
     return obj
 
-def _flatten(nested_list: Any) -> List[Any]:
-    """ Helper function to recursively flatten a nested list structure. """
+
+def _flatten(nested_list: Any) -> list[Any]:
+    """Helper function to recursively flatten a nested list structure."""
     flattened = []
     for element in nested_list:
         if isinstance(element, (list, tuple, set)):
@@ -411,84 +411,85 @@ def _flatten(nested_list: Any) -> List[Any]:
             flattened.append(element)
     return flattened
 
+
 def validate_q_dict(q_dict, recheck=False):
     """
-    Converts the keys of a dictionary of quantile columns (`q_dict`) from 
-    string representations to numeric values (float) if possible. If the key 
-    cannot be converted to a number, it returns the dictionary as is. 
+     Converts the keys of a dictionary of quantile columns (`q_dict`) from
+     string representations to numeric values (float) if possible. If the key
+     cannot be converted to a number, it returns the dictionary as is.
 
-    Optionally validates the quantiles after conversion to ensure that all 
-    keys are within the valid range of quantiles [0, 1].
+     Optionally validates the quantiles after conversion to ensure that all
+     keys are within the valid range of quantiles [0, 1].
 
-    Parameters
-    ------------
-    q_dict : dict
-        A dictionary where the keys represent quantiles (either as 
-        strings like '0.1' or '10%') and the values are lists of 
-        column names associated with those quantiles.
-        
-    recheck : bool, optional, default=False
-        If `True`, the keys of the dictionary will be validated as 
-        quantiles after the conversion. This validation checks that 
-        all keys lie within the range [0, 1].
+     Parameters
+     ------------
+     q_dict : dict
+         A dictionary where the keys represent quantiles (either as
+         strings like '0.1' or '10%') and the values are lists of
+         column names associated with those quantiles.
 
-    Returns
-    ---------
-    dict
-        A dictionary with numeric keys if conversion is successful, 
-        otherwise the original dictionary. The keys are either floats 
-        representing quantiles or the original keys if they cannot 
-        be converted.
+     recheck : bool, optional, default=False
+         If `True`, the keys of the dictionary will be validated as
+         quantiles after the conversion. This validation checks that
+         all keys lie within the range [0, 1].
 
-    Notes
-    -------
-    The function performs the following steps:
-    
-    1. Iterates over the dictionary to check whether each key can be 
-       converted to a numeric value.
-    2. If a key is a string containing a percentage (e.g., '10%'), 
-       it removes the '%' sign and divides the value by 100 to 
-       convert it to a float.
-    3. If a key can be successfully converted, it is stored as a 
-       floating-point number in the resulting dictionary.
-    4. If the conversion fails (due to a `ValueError`, `TypeError`, or 
-       `AttributeError`), the original key is retained in the dictionary.
-    5. If `recheck` is `True`, it validates the converted quantiles by 
-       ensuring they are in the range [0, 1].
+     Returns
+     ---------
+     dict
+         A dictionary with numeric keys if conversion is successful,
+         otherwise the original dictionary. The keys are either floats
+         representing quantiles or the original keys if they cannot
+         be converted.
 
-    The function is designed to handle both direct float conversions (e.g., 
-    '0.1') and percentage-based representations (e.g., '10%' becomes 0.1).
+     Notes
+     -------
+     The function performs the following steps:
 
-    Example
-    ---------
-    >>> q_dict = {'0.1': ['subsidence_q10'], '50%': ['subsidence_q50'], 
-                  '90%': ['subsidence_q90']}
-    >>> validate_q_dict(q_dict)
-    {0.1: ['subsidence_q10'], 0.5: ['subsidence_q50'], 0.9: ['subsidence_q90']}
+     1. Iterates over the dictionary to check whether each key can be
+        converted to a numeric value.
+     2. If a key is a string containing a percentage (e.g., '10%'),
+        it removes the '%' sign and divides the value by 100 to
+        convert it to a float.
+     3. If a key can be successfully converted, it is stored as a
+        floating-point number in the resulting dictionary.
+     4. If the conversion fails (due to a `ValueError`, `TypeError`, or
+        `AttributeError`), the original key is retained in the dictionary.
+     5. If `recheck` is `True`, it validates the converted quantiles by
+        ensuring they are in the range [0, 1].
 
-    >>> q_dict = {'0.1': ['subsidence_q10'], '0.5': ['subsidence_q50'], 
-                  '0.9': ['subsidence_q90']}
-    >>> validate_q_dict(q_dict)
-    {'0.1': ['subsidence_q10'], 0.5: ['subsidence_q50'], 'high': ['subsidence_q90']}
+     The function is designed to handle both direct float conversions (e.g.,
+     '0.1') and percentage-based representations (e.g., '10%' becomes 0.1).
 
-    >>> q_dict = {'0.1': ['subsidence_q10'], '200%': ['subsidence_q200']}
-    >>> validate_q_dict(q_dict, recheck=True)
-    {0.1: ['subsidence_q10'], 2.0: ['subsidence_q200']}
+     Example
+     ---------
+     >>> q_dict = {'0.1': ['subsidence_q10'], '50%': ['subsidence_q50'],
+                   '90%': ['subsidence_q90']}
+     >>> validate_q_dict(q_dict)
+     {0.1: ['subsidence_q10'], 0.5: ['subsidence_q50'], 0.9: ['subsidence_q90']}
 
-    See Also
-    ----------
-   validate_quantiles`: 
-       Validates if the values are valid quantiles in the range [0, 1].
+     >>> q_dict = {'0.1': ['subsidence_q10'], '0.5': ['subsidence_q50'],
+                   '0.9': ['subsidence_q90']}
+     >>> validate_q_dict(q_dict)
+     {'0.1': ['subsidence_q10'], 0.5: ['subsidence_q50'], 'high': ['subsidence_q90']}
 
-    References
-    ------------
-    .. [1] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in 
-           statistical packages. The American Statistician, 50(4), 361-365.
-    .. [2] Weiss, N. A. (2015). Introductory Statistics. Pearson.
+     >>> q_dict = {'0.1': ['subsidence_q10'], '200%': ['subsidence_q200']}
+     >>> validate_q_dict(q_dict, recheck=True)
+     {0.1: ['subsidence_q10'], 2.0: ['subsidence_q200']}
+
+     See Also
+     ----------
+    validate_quantiles`:
+        Validates if the values are valid quantiles in the range [0, 1].
+
+     References
+     ------------
+     .. [1] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in
+            statistical packages. The American Statistician, 50(4), 361-365.
+     .. [2] Weiss, N. A. (2015). Introductory Statistics. Pearson.
     """
     # Initialize an empty dictionary to store the converted quantiles
     new_q_cols = {}
-    
+
     if not isinstance(q_dict, dict):
         raise TypeError(
             f"Expected a dictionary for `q_dict`, but "
@@ -501,7 +502,7 @@ def validate_q_dict(q_dict, recheck=False):
         try:
             # Check if the key contains a percentage sign and convert it
             if "%" in str(key):
-                key_float = float(key.replace('%', '')) / 100.0
+                key_float = float(key.replace("%", "")) / 100.0
             else:
                 # Directly convert the key to float
                 key_float = float(key)
@@ -513,25 +514,26 @@ def validate_q_dict(q_dict, recheck=False):
             new_q_cols[key] = value
 
     if recheck:
-        # Validate the quantiles after conversion 
+        # Validate the quantiles after conversion
         # (i.e., ensure keys are between 0 and 1)
-        validate_quantiles(list(new_q_cols.keys()), dtype='float64')
+        validate_quantiles(list(new_q_cols.keys()), dtype="float64")
 
     return new_q_cols
 
+
 def validate_quantiles(
-    quantiles, 
-    asarray=False, 
-    round_digits=2, 
-    dtype=None, 
-    mode="strict", 
-    scale_method="uniform"
+    quantiles,
+    asarray=False,
+    round_digits=2,
+    dtype=None,
+    mode="strict",
+    scale_method="uniform",
 ):
     r"""
     Validate and normalize quantile values with flexible conversion rules.
 
-    Ensures quantile inputs are valid probabilities :math:`q \in [0,1]` while 
-    providing mechanisms for automatic value adjustment through different 
+    Ensures quantile inputs are valid probabilities :math:`q \in [0,1]` while
+    providing mechanisms for automatic value adjustment through different
     scaling strategies [1]_.
 
     .. math::
@@ -552,15 +554,15 @@ def validate_quantiles(
         - ``True``: Returns numpy array
         - ``False``: Returns Python list
     round_digits : int, default=2
-        Number of decimal places for rounding to mitigate floating-point 
+        Number of decimal places for rounding to mitigate floating-point
         precision issues
     dtype : str or numpy.dtype, default='float32'
-        Output data type. Supported values: 'float32' (TF-compatible) or 
+        Output data type. Supported values: 'float32' (TF-compatible) or
         'float64' (high precision)
     mode : {'strict', 'soft'}, default='strict'
         Validation strictness:
         - ``'strict'``: Rejects values outside [0,1]
-        - ``'soft'``: Converts percentages and scales integers using 
+        - ``'soft'``: Converts percentages and scales integers using
            ``scale_method``
     scale_method : {'uniform', 'individual'}, default='uniform'
         Scaling strategy for ``mode='soft'``:
@@ -570,16 +572,16 @@ def validate_quantiles(
     Returns
     ---------
     list or numpy.ndarray
-        Validated quantiles in specified format. Return type matches 
+        Validated quantiles in specified format. Return type matches
         ``asarray`` parameter.
 
     Raises
     ------
     TypeError
-        For non-numeric inputs in ``mode='strict'`` or invalid types in 
+        For non-numeric inputs in ``mode='strict'`` or invalid types in
         ``mode='soft'``
     ValueError
-        For values outside [0,1] in ``mode='strict'`` or invalid scaling 
+        For values outside [0,1] in ``mode='strict'`` or invalid scaling
         conversions
 
     Examples
@@ -605,7 +607,7 @@ def validate_quantiles(
          - Uniform: :math:`\frac{\text{value}}{10^{\text{max\_digits}}}`
          - Individual: :math:`\frac{\text{value}}{10^{\text{self\_digits}}}`
 
-    2. Rounding follows banker's rounding (numpy.round behavior) to minimize 
+    2. Rounding follows banker's rounding (numpy.round behavior) to minimize
        cumulative errors [2]_.
 
     See Also
@@ -617,16 +619,13 @@ def validate_quantiles(
     ------------
     .. [1] IEEE Standard for Floating-Point Arithmetic. IEEE Std 754-2019.
 
-    .. [2] Hyndman, R.J. & Fan, Y. (1996). Sample Quantiles in Statistical 
+    .. [2] Hyndman, R.J. & Fan, Y. (1996). Sample Quantiles in Statistical
            Packages. The American Statistician, 50(4), 361-365.
     """
     quantiles = to_iterable(quantiles, transform=True, flatten=True)
-  
+
     if mode == "soft":
-        quantiles = _process_soft_quantiles(
-            quantiles, 
-            scale_method=scale_method
-        )
+        quantiles = _process_soft_quantiles(quantiles, scale_method=scale_method)
 
     if not isinstance(quantiles, (list, np.ndarray)):
         raise TypeError(
@@ -636,20 +635,21 @@ def validate_quantiles(
 
     dtype = _get_valid_dtype(dtype)
     quantiles_np = np.array(quantiles, dtype=dtype)
-    
+
     _validate_quantile_values(quantiles_np)
     quantiles_np = np.round(quantiles_np, decimals=round_digits)
-    
+
     return quantiles_np if asarray else quantiles_np.tolist()
+
 
 def _process_soft_quantiles(quantiles, scale_method):
     """Process quantiles in soft mode with scaling adjustments."""
     scaled_values = []
     scale_candidates = []
-    
+
     for q in quantiles:
         q_val, needs_scaling = _process_single_quantile(q)
-        
+
         if needs_scaling:
             scale_candidates.append(q_val)
             scaled_values.append(None)
@@ -657,23 +657,20 @@ def _process_soft_quantiles(quantiles, scale_method):
             scaled_values.append(q_val)
 
     if scale_candidates:
-        scaled = _apply_scaling(
-            scale_candidates, 
-            scale_method=scale_method
-        )
+        scaled = _apply_scaling(scale_candidates, scale_method=scale_method)
         scaled_values = _merge_scaled_values(scaled_values, scaled)
 
     return scaled_values
+
 
 def _process_single_quantile(q):
     """Process individual quantile value for soft mode."""
     original = q
     q = _convert_string_quantile(q)
-    
+
     if not isinstance(q, (int, float)):
         raise TypeError(
-            f"Quantile {original} must be numeric. "
-            f"Received {type(q).__name__}."
+            f"Quantile {original} must be numeric. " f"Received {type(q).__name__}."
         )
 
     if q < 0:
@@ -683,130 +680,124 @@ def _process_single_quantile(q):
         return q, False
 
     if not np.isclose(q, int(q)):
-        raise ValueError(
-            f"Non-integer out-of-range quantile: {original}"
-        )
-        
+        raise ValueError(f"Non-integer out-of-range quantile: {original}")
+
     return int(q), True
+
 
 def _convert_string_quantile(q):
     """Convert string quantiles to numeric values."""
     if isinstance(q, str):
-        q = q.strip().rstrip('%')
+        q = q.strip().rstrip("%")
         try:
             value = float(q)
-            if '%' in q:
+            if "%" in q:
                 value /= 100.0
             return value
         except ValueError:
-            raise ValueError(
-                f"Could not convert string quantile: {q}"
-            ) from None
+            raise ValueError(f"Could not convert string quantile: {q}") from None
     return q
+
 
 def _apply_scaling(scale_candidates, scale_method):
     """Apply scaling strategy to out-of-range quantiles."""
     if scale_method == "uniform":
         max_digits = max(len(str(q)) for q in scale_candidates)
-        divisor = 10 ** max_digits
+        divisor = 10**max_digits
         return [q / divisor for q in scale_candidates]
-    
+
     if scale_method == "individual":
-        return [
-            q / (10 ** len(str(q))) 
-            for q in scale_candidates
-        ]
-    
+        return [q / (10 ** len(str(q))) for q in scale_candidates]
+
     raise ValueError(
-        f"Invalid scale_method: {scale_method}. "
-        "Choose 'uniform' or 'individual'."
+        f"Invalid scale_method: {scale_method}. " "Choose 'uniform' or 'individual'."
     )
+
 
 def _merge_scaled_values(values, scaled):
     """Merge scaled values back into original quantile list."""
     result = []
     scale_idx = 0
-    
+
     for val in values:
         if val is None:
             result.append(scaled[scale_idx])
             scale_idx += 1
         else:
             result.append(val)
-            
+
     return result
+
 
 def _get_valid_dtype(dtype):
     """Validate and return proper numpy dtype."""
-    dtype_map = {
-        "float32": np.float32, 
-        "float64": np.float64
-    }
-    
+    dtype_map = {"float32": np.float32, "float64": np.float64}
+
     if dtype is None:
         return np.float32
-    
+
     if isinstance(dtype, str) and dtype in dtype_map:
         return dtype_map[dtype]
-    
+
     return dtype if dtype in (np.float32, np.float64) else np.float32
+
 
 def _validate_quantile_values(quantiles_np):
     """Core validation for quantile value requirements."""
     if not np.issubdtype(quantiles_np.dtype, np.number):
         raise ValueError("All quantiles must be numeric.")
-        
+
     if np.any((quantiles_np < 0) | (quantiles_np > 1)):
         raise ValueError(
             "Quantiles must be in [0, 1] range. "
             "Use 'soft' mode for automatic scaling."
         )
 
-def validate_quantiles_in(
-    quantiles, 
-    asarray=False, 
-    round_digits=1, 
-    dtype=None, 
-    mode="strict", 
 
-    ):
+def validate_quantiles_in(
+    quantiles,
+    asarray=False,
+    round_digits=1,
+    dtype=None,
+    mode="strict",
+):
     """
-    Validates the input quantiles and optionally returns the output as a 
-    numpy array or list, with an option to round the quantiles to a 
-    specified number of decimal places to avoid floating-point precision 
+    Validates the input quantiles and optionally returns the output as a
+    numpy array or list, with an option to round the quantiles to a
+    specified number of decimal places to avoid floating-point precision
     issues.
 
-    Quantiles are numerical values used in statistical analysis to 
-    divide a distribution into intervals. They must lie within the 
+    Quantiles are numerical values used in statistical analysis to
+    divide a distribution into intervals. They must lie within the
     range [0, 1] as they represent proportions of data [1]_.
 
     Parameters
     ----------
     quantiles : list or numpy.ndarray
-        Input array-like containing quantile values to be validated. 
+        Input array-like containing quantile values to be validated.
         The values must be numeric and within the range [0, 1].
-        
+
     asarray : bool, optional
-        Determines the output format. If `True`, the validated 
-        quantiles are returned as a numpy array. If `False`, they 
+        Determines the output format. If `True`, the validated
+        quantiles are returned as a numpy array. If `False`, they
         are returned as a list. Default is `False`.
 
     round_digits : int, optional, default=1
-        The number of decimal places to which the quantiles should be 
-        rounded. This helps avoid floating-point precision errors such as 
-        `0.10000000149011612` being displayed as `0.1`. By default, 
+        The number of decimal places to which the quantiles should be
+        rounded. This helps avoid floating-point precision errors such as
+        `0.10000000149011612` being displayed as `0.1`. By default,
         quantiles are rounded to 1 decimal place.
-        
+
     dtype : numpy.dtype, optional, default=np.float32
         The data type for the quantiles array. Use `np.float32`
-        for compatibility with TensorFlow or `np.float64` for higher 
+        for compatibility with TensorFlow or `np.float64` for higher
         precision. The dtype determines the precision used for quantiles
         during validation and rounding.
 
     Returns
     -------
     list or numpy.ndarray
-        A list or numpy array of validated quantile values, depending 
+        A list or numpy array of validated quantile values, depending
         on the value of `asarray`.
 
     Raises
@@ -815,28 +806,28 @@ def validate_quantiles_in(
         If the input `quantiles` is not a list or numpy array.
 
     ValueError
-        If any element of `quantiles` is not numeric or lies outside 
+        If any element of `quantiles` is not numeric or lies outside
         the range [0, 1].
 
     Notes
     -----
-    Quantiles, denoted as :math:`q \in [0, 1]`, represent the fraction 
+    Quantiles, denoted as :math:`q \in [0, 1]`, represent the fraction
     of observations below a certain value in a distribution:
-    
+
     .. math::
 
         Q(q) = \inf \{ x \in \mathbb{R} : P(X \leq x) \geq q \}
 
-    where :math:`Q(q)` is the quantile function, and :math:`q` is the 
+    where :math:`Q(q)` is the quantile function, and :math:`q` is the
     proportion [2]_.
 
-    This function ensures that all values in `quantiles` adhere to 
+    This function ensures that all values in `quantiles` adhere to
     this definition by checking:
-    
+
     1. The type of `quantiles`.
     2. The numerical nature of its elements.
     3. The range of its values.
-    4. The optional rounding of the quantiles to a specified number 
+    4. The optional rounding of the quantiles to a specified number
        of decimal places.
 
     Examples
@@ -861,63 +852,64 @@ def validate_quantiles_in(
 
     References
     ----------
-    .. [1] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in 
+    .. [1] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in
            statistical packages. The American Statistician, 50(4), 361-365.
     .. [2] Weiss, N. A. (2015). Introductory Statistics. Pearson.
 
     """
     # Convert quantiles to a list if necessary
     quantiles = to_iterable(quantiles, transform=True, flatten=True)
-  
+
     # Validate input type: must be list or numpy array
     if not isinstance(quantiles, (list, np.ndarray)):
         raise TypeError(
             "Quantiles must be a list or numpy array. Received "
             f"{type(quantiles).__name__!r}."
         )
-    
+
     # Define a dictionary for mapping string dtype names to numpy float types
     dtypes = {"float32": np.float32, "float64": np.float64}
 
     # Check if dtype is a string, and convert
     # it to the corresponding numpy dtype
-    if dtype is None: 
-        dtype = 'float32'
+    if dtype is None:
+        dtype = "float32"
     if isinstance(dtype, str):
         if dtype not in dtypes:
             raise ValueError(
                 f"Unsupported dtype string: {dtype}."
                 " Supported values are 'float32' or 'float64'."
-        )
+            )
         # Convert string to corresponding numpy dtype
-        dtype = dtypes[dtype]  
+        dtype = dtypes[dtype]
 
-    # Convert input to numpy array for consistent 
+    # Convert input to numpy array for consistent
     # processing using the specified dtype
     quantiles = np.array(quantiles, dtype=dtype)
-    
+
     # Validate that all elements are numeric
     if not np.issubdtype(quantiles.dtype, np.number):
         raise ValueError("All quantile values must be numeric.")
-    
+
     # Validate that all values are within the range [0, 1]
     if not np.all((quantiles >= 0) & (quantiles <= 1)):
         raise ValueError("All quantile values must be in the range [0, 1].")
-    
+
     # Round quantiles to the specified number of decimal places
     quantiles = np.round(quantiles, decimals=round_digits)
-    
+
     # Return quantiles in the desired format
     return quantiles if asarray else quantiles.tolist()
+
 
 def detect_quantiles_in(
     df: pd.DataFrame,
     col_prefix: Optional[str] = None,
-    dt_value: Optional[List[str]] = None,
-    mode: str = 'soft',
+    dt_value: Optional[list[str]] = None,
+    mode: str = "soft",
     return_types: str = "columns",
-    verbose: int = 0
-) -> Union[List[str], List[float], List[np.ndarray], pd.DataFrame, None]:
+    verbose: int = 0,
+) -> Union[list[str], list[float], list[np.ndarray], pd.DataFrame, None]:
     r"""
     Detect quantile columns in a DataFrame using naming patterns and 
     value validation.
@@ -1012,51 +1004,47 @@ def detect_quantiles_in(
     .. [2] Pandas API Reference: DataFrame operations
     
     """
-    
-    is_frame(df, df_only=True, objname ="Data 'df'")
+
+    is_frame(df, df_only=True, objname="Data 'df'")
     df.columns = df.columns.astype(str)
-    col_prefix = col_prefix or ''
-    
+    col_prefix = col_prefix or ""
+
     quantile_columns = []
     found_quantiles = set()
-    
-    _log_verbose(f"Scanning DataFrame columns with prefix: {col_prefix}",
-                 verbose, 1
-                )
-    
+
+    _log_verbose(f"Scanning DataFrame columns with prefix: {col_prefix}", verbose, 1)
+
     for col in df.columns:
-        result = _process_column(
-            col, df, col_prefix, dt_value, mode, verbose
-        )
+        result = _process_column(col, df, col_prefix, dt_value, mode, verbose)
         if result:
             q_val, col_data = result
             found_quantiles.add(q_val)
-            _store_results(q_val, col_data, quantile_columns,
-                           return_types, col)
+            _store_results(q_val, col_data, quantile_columns, return_types, col)
 
     _log_verbose(f"Quantiles detected: {sorted(found_quantiles)}", verbose, 3)
-    
+
     return _format_output(quantile_columns, found_quantiles, return_types, df)
+
 
 def _process_column(
     col: str,
     df: pd.DataFrame,
     prefix: str,
-    dt_values: Optional[List[str]],
+    dt_values: Optional[list[str]],
     mode: str,
-    verbose: int
+    verbose: int,
 ) -> Optional[tuple]:
     """Process individual column for quantile detection."""
     # Handle both cases: with or without prefix
     if prefix:
         # Remove the prefix part
         if col.startswith(f"{prefix}_"):
-            col_match = col[len(prefix)+1:]  # Remove prefix and underscore
+            col_match = col[len(prefix) + 1 :]  # Remove prefix and underscore
         else:
             return None  # If the column does not start with the prefix, skip it
     else:
         col_match = col  # No prefix, use the column name directly
-    
+
     match, q_str = _check_column_match(col_match, dt_values)
     if not match:
         return None
@@ -1070,24 +1058,23 @@ def _process_column(
     _log_verbose(f"Found quantile match: {col} with value: {q_val}", verbose, 2)
     return q_val, df[col].values
 
+
 def _check_column_match(
-    remainder: str,
-    dt_values: Optional[List[str]],
-    prefix: Optional[str] = None
+    remainder: str, dt_values: Optional[list[str]], prefix: Optional[str] = None
 ) -> tuple:
     """Check if column remainder matches date and quantile patterns."""
     # Match quantile pattern like q0.25
-    quantile_pattern = re.compile(r'q([\d\.]+)$')  
-    # Case 1: If a date filter is provided, look for 
+    quantile_pattern = re.compile(r"q([\d\.]+)$")
+    # Case 1: If a date filter is provided, look for
     # columns matching the date and quantile patterns
     if dt_values:
         for d_str in dt_values:
             date_pattern = f"^{d_str}_q"  # Include date check
             # Match column with date filter
-            if remainder.startswith(date_pattern):  
+            if remainder.startswith(date_pattern):
                 m = quantile_pattern.search(remainder)
                 return (True, m.group(1)) if m else (False, None)
-    
+
     # Case 2: If no date filter is provided,
     # look for quantile matches
     else:
@@ -1095,8 +1082,8 @@ def _check_column_match(
         m = quantile_pattern.search(remainder)
         if m:
             # Return the quantile value (e.g., 0.25)
-            return (True, m.group(1))  
-    
+            return (True, m.group(1))
+
     return (False, None)
 
 
@@ -1106,60 +1093,63 @@ def _extract_quantile_value(q_str: str, mode: str) -> float:
         q_val = float(q_str)
     except ValueError:
         raise ValueError(f"Invalid quantile format: {q_str}")
-    
+
     # Use centralized validation from validate_quantiles
     validated = validate_quantiles(
-        [q_val], mode=mode, scale_method='individual', 
-        round_digits =2, 
-        dtype= np.float64, 
+        [q_val],
+        mode=mode,
+        scale_method="individual",
+        round_digits=2,
+        dtype=np.float64,
     )
     return validated[0]
+
 
 def _store_results(
     q_val: float,
     col_data: np.ndarray,
     quantile_columns: list,
-    return_types: str, 
-    col: str, 
+    return_types: str,
+    col: str,
 ) -> None:
     """Store results based on requested return type."""
-    if return_types == 'values':
+    if return_types == "values":
         quantile_columns.append(col_data)
-    elif return_types == 'q_val':
+    elif return_types == "q_val":
         quantile_columns.append(q_val)
     else:
         quantile_columns.append(col)
 
+
 def _format_output(
-    quantile_columns: list,
-    found_quantiles: set,
-    return_types: str,
-    df: pd.DataFrame
-) -> Union[List, pd.DataFrame, None]:
+    quantile_columns: list, found_quantiles: set, return_types: str, df: pd.DataFrame
+) -> Union[list, pd.DataFrame, None]:
     """Format final output based on return_types."""
     if not quantile_columns:
         return None
 
-    if return_types == 'frame':
+    if return_types == "frame":
         return df[quantile_columns]
-    if return_types == 'q_val':
+    if return_types == "q_val":
         return sorted(found_quantiles)
-    if return_types == 'values':
+    if return_types == "values":
         return np.vstack(quantile_columns) if quantile_columns else []
     return sorted(quantile_columns)
+
 
 def _log_verbose(message: str, verbose_level: int, required_level: int) -> None:
     """Centralized verbose logging control."""
     if verbose_level >= required_level:
         print(message)
-        
+
+
 def build_q_column_names(
     df: pd.DataFrame,
-    quantiles: List[Union[float, str]],
+    quantiles: list[Union[float, str]],
     value_prefix: Optional[str] = None,
-    dt_value: Optional[List[Union[str, int]]] = None,
-    strict_match: bool = True
-) -> List[str]:
+    dt_value: Optional[list[Union[str, int]]] = None,
+    strict_match: bool = True,
+) -> list[str]:
     r"""
     Generate and validate quantile column names following naming conventions.
 
@@ -1227,11 +1217,13 @@ def build_q_column_names(
     kdiagram.utils.diagnose_q.validate_quantiles : For quantile value validation
     pandas.Series.str.contains : For column pattern matching
     """
-    is_frame(df, df_only=True, objname ="Data 'df'")
+    is_frame(df, df_only=True, objname="Data 'df'")
     # Validate and normalize inputs
     valid_quantiles = validate_quantiles(
-        quantiles, mode='soft', round_digits=2, 
-        dtype='float64', 
+        quantiles,
+        mode="soft",
+        round_digits=2,
+        dtype="float64",
     )
     date_strings = _process_dt_values(dt_value)
     df.columns = df.columns.astype(str)
@@ -1243,81 +1235,66 @@ def build_q_column_names(
         return [col for col in candidates if col in df.columns]
 
     # Flexible pattern matching
-    pattern = _build_flexible_pattern(
-        valid_quantiles, value_prefix, date_strings
-    )
+    pattern = _build_flexible_pattern(valid_quantiles, value_prefix, date_strings)
     return [col for col in df.columns if pattern.search(col)]
 
+
 def _generate_strict_candidates(
-    quantiles: List[float],
-    prefix: Optional[str],
-    dates: List[str]
-) -> List[str]:
+    quantiles: list[float], prefix: Optional[str], dates: list[str]
+) -> list[str]:
     """Generate exact match candidates in all valid formats."""
     candidates = []
     for q in quantiles:
         # Decimal format (q0.25)
-        dec_str = f"q{q:.4f}".rstrip('0').rstrip('.')
+        dec_str = f"q{q:.4f}".rstrip("0").rstrip(".")
         # Percentage format (q25)
         pct_str = f"q{int(round(q * 100))}"
-        
+
         for fmt in [dec_str, pct_str]:
             # Temporal candidates
             if dates:
                 candidates.extend(
-                    f"{prefix}_{d}_{fmt}" if prefix else f"{d}_{fmt}"
-                    for d in dates
+                    f"{prefix}_{d}_{fmt}" if prefix else f"{d}_{fmt}" for d in dates
                 )
             # Non-temporal candidates
-            candidates.append(
-                f"{prefix}_{fmt}" if prefix else fmt
-            )
+            candidates.append(f"{prefix}_{fmt}" if prefix else fmt)
     return list(set(candidates))  # Remove duplicates
 
+
 def _build_flexible_pattern(
-    quantiles: List[float],
-    prefix: Optional[str],
-    dates: List[str]
+    quantiles: list[float], prefix: Optional[str], dates: list[str]
 ) -> re.Pattern:
     """Build regex pattern for flexible quantile matching."""
     # Quantile alternatives (0.25|25)
-    q_alternatives = '|'.join(
-        f"{q:.4f}".rstrip('0').rstrip('.') + '|' + str(int(round(q * 100)))
+    q_alternatives = "|".join(
+        f"{q:.4f}".rstrip("0").rstrip(".") + "|" + str(int(round(q * 100)))
         for q in quantiles
     )
-    
+
     # Prefix component
-    prefix_part = f"{re.escape(prefix)}_?" if prefix else ''
-    
+    prefix_part = f"{re.escape(prefix)}_?" if prefix else ""
+
     # Date component
-    date_part = (
-        f"({'|'.join(map(re.escape, dates))})_+" 
-        if dates 
-        else r'\d{4}_?|'
-    )
-    
+    date_part = f"({'|'.join(map(re.escape, dates))})_+" if dates else r"\d{4}_?|"
+
     return re.compile(
-        rf"^{prefix_part}(?:{date_part})?q({q_alternatives})\b",
-        flags=re.IGNORECASE
+        rf"^{prefix_part}(?:{date_part})?q({q_alternatives})\b", flags=re.IGNORECASE
     )
 
-def _process_dt_values(
-    dt_values: Optional[List[Union[str, int]]]
-) -> List[str]:
+
+def _process_dt_values(dt_values: Optional[list[Union[str, int]]]) -> list[str]:
     """Normalize temporal values to standardized strings."""
-    return (
-        [str(v).strip() for v in dt_values] 
-        if dt_values 
-        else []
-    )
+    return [str(v).strip() for v in dt_values] if dt_values else []
+
+
 def detect_digits(
-    value, 
+    value,
     pattern: str = None,
     as_q: bool = False,
     return_unique: bool = False,
     sort: bool = False,
     error: str = "ignore",
-    verbose: int = 0
+    verbose: int = 0,
 ) -> list:
     r"""
     Detect numeric values in a string or list of strings.
@@ -1339,13 +1316,13 @@ def detect_digits(
         A string or a list of strings from which to extract numeric values.
     pattern       : str, optional
         A custom regular expression pattern. If ``None``, the default is:
-        
+
         - If ``as_q`` is True:
-        
+
           ``"(?<=_q)(\\d+(?:\\.\\d+)?)(?=(_step|$))"``.
-        
+
         - Otherwise:
-        
+
           ``(?<!\d)(\d+(?:\.\d+)?)(?!\d)""``.
     as_q          : bool, optional
         If True, converts each detected numeric value to a quantile value
@@ -1379,8 +1356,8 @@ def detect_digits(
     >>> detect_digits("subsidence_q10_step1")
     [10.0]
     >>> # List of strings:
-    >>> detect_digits(["subsidence_q10_step1", 
-    ...                "subsidence_q50_step1", 
+    >>> detect_digits(["subsidence_q10_step1",
+    ...                "subsidence_q50_step1",
     ...                "subsidence_q89_step1"])
     [10.0, 50.0, 89.0]
     >>> # With conversion to quantile (soft mode):
@@ -1413,14 +1390,12 @@ def detect_digits(
     # If no custom regex pattern is provided, select a default pattern.
     if pattern is None:
         if as_q:
-            # Use a pattern to capture numbers after '_q' 
+            # Use a pattern to capture numbers after '_q'
             # and before '_step' or end-of-string.
-            pattern = (
-                r"(?<=_q)(\d+(?:\.\d+)?)(?=(_step|$))"
-            )
+            pattern = r"(?<=_q)(\d+(?:\.\d+)?)(?=(_step|$))"
         else:
             # General robust digit detection using word boundaries.
-            pattern =r"(?<!\d)(\d+(?:\.\d+)?)(?!\d)"
+            pattern = r"(?<!\d)(\d+(?:\.\d+)?)(?!\d)"
             # #r"(?<!\d)(\d+)(?!\d)" #r"\b\d+(?:\.\d+)?\b"
 
     # Compile the regex pattern.
@@ -1448,31 +1423,24 @@ def detect_digits(
                 digits.append(num)
             except ValueError as exc:
                 if error == "raise":
-                    raise ValueError(
-                        f"Could not convert '{match}' to float."
-                    ) from exc
+                    raise ValueError(f"Could not convert '{match}' to float.") from exc
                 elif error == "warn":
                     if verbose >= 1:
-                        print(
-                            f"[WARN] Skipping value '{match}': conversion failed."
-                        )
+                        print(f"[WARN] Skipping value '{match}': conversion failed.")
                 # If error is "ignore", continue without appending.
                 continue
 
-    # If conversion to quantile is requested, 
+    # If conversion to quantile is requested,
     # convert numbers using soft mode.
     if as_q:
         digits = validate_quantiles(
-            digits,
-            mode="soft",
-            round_digits=2,
-            dtype=np.float64
+            digits, mode="soft", round_digits=2, dtype=np.float64
         )
 
     # Remove duplicates if requested.
     if return_unique:
         digits = list(set(digits))
-    
+
     # Optionally sort the detected numbers.
     if sort:
         digits = sorted(digits)
@@ -1482,87 +1450,88 @@ def detect_digits(
 
     return digits
 
+
 def validate_consistency_q(
-    user_q: List[float], 
-    q_items: Union [str, List[Any]], 
-    error: str = "raise", 
-    mode: str = "soft", 
+    user_q: list[float],
+    q_items: Union[str, list[Any]],
+    error: str = "raise",
+    mode: str = "soft",
     msg: Optional[str] = None,
-    default_to: str= "valid_q", 
-    verbose: int = 0
+    default_to: str = "valid_q",
+    verbose: int = 0,
 ):
     r"""
-    Validate the consistency of user-specified quantile values with those 
+    Validate the consistency of user-specified quantile values with those
     auto-detected from the input.
 
     This function compares the quantile values provided in ``user_q``
-    with the numeric values extracted from ``q_items`` (using 
-    :func:`detect_digits` with ``as_q=True``). Let :math:`Q_{user}` be the 
-    set of quantile values provided by the user and :math:`Q_{det}` be the 
-    set of quantile values detected from ``q_items``. In soft mode, the 
+    with the numeric values extracted from ``q_items`` (using
+    :func:`detect_digits` with ``as_q=True``). Let :math:`Q_{user}` be the
+    set of quantile values provided by the user and :math:`Q_{det}` be the
+    set of quantile values detected from ``q_items``. In soft mode, the
     function returns the intersection, i.e.,
 
     .. math::
        Q_{valid} = Q_{user} \cap Q_{det},
 
-    whereas in strict mode, it expects an exact match and returns 
+    whereas in strict mode, it expects an exact match and returns
     :math:`Q_{user}` directly.
 
     Parameters
     ----------
     user_q         : list of float
-        A list of quantile values provided by the user. These represent 
+        A list of quantile values provided by the user. These represent
         the expected quantiles for evaluation or forecasting.
     q_items        : Union[str, List[str], pandas.DataFrame]
-        The source from which quantile values are auto-detected. This can be 
-        a string, a list of strings, or a DataFrame whose columns contain 
+        The source from which quantile values are auto-detected. This can be
+        a string, a list of strings, or a DataFrame whose columns contain
         quantile information.
     error          : str, optional
-        Determines the error handling behavior if the user-specified 
+        Determines the error handling behavior if the user-specified
         quantiles do not match the detected values. Options are:
           - ``"raise"`` : Raise a ValueError.
           - ``"warn"``  : Emit a warning and continue.
           - ``"ignore"``: Silently ignore mismatches.
         Default is ``"raise"``.
     mode           : str, optional
-        The matching mode. In ``"soft"`` mode (default), the function returns 
-        the intersection of user and detected quantiles. In ``"strict"`` mode, 
-        the user-specified quantiles must exactly match those detected, and 
+        The matching mode. In ``"soft"`` mode (default), the function returns
+        the intersection of user and detected quantiles. In ``"strict"`` mode,
+        the user-specified quantiles must exactly match those detected, and
         the function returns ``user_q``.
     msg            : str, optional
-        A custom error message to use if inconsistencies are found. If not 
+        A custom error message to use if inconsistencies are found. If not
         provided, a default message is generated.
-    default_to: str, default='valid_q' 
-       Return kind when inconsistent numbers found in quantiles. 
-       In ``'soft'`` mode, it controls whether to return the 'valid_q' 
-       valids quantiles or ``'auto_q'``for automatic_detected quanties. 
-       Defaut is the ``'valid_q'``. 
-       
+    default_to: str, default='valid_q'
+       Return kind when inconsistent numbers found in quantiles.
+       In ``'soft'`` mode, it controls whether to return the 'valid_q'
+       valids quantiles or ``'auto_q'``for automatic_detected quanties.
+       Defaut is the ``'valid_q'``.
+
     verbose       : int, optional
-        Verbosity level for debugging output. Higher values (e.g., 5 or above) 
+        Verbosity level for debugging output. Higher values (e.g., 5 or above)
         yield more detailed logs. Default is 0.
 
     Returns
     -------
     list
-        A sorted list of validated quantile values (as floats) that are 
-        consistent between the user-specified values and those detected 
+        A sorted list of validated quantile values (as floats) that are
+        consistent between the user-specified values and those detected
         from ``q_items``.
 
     Examples
     --------
     >>> from kdiagram.utils.diagnose_q import validate_consistency_q
     >>> user_quantiles = [0.1, 0.5, 0.9]
-    >>> columns = ["subsidence_q10_step1", "subsidence_q50_step1", 
+    >>> columns = ["subsidence_q10_step1", "subsidence_q50_step1",
     ...            "subsidence_q90_step1", "other_column"]
     >>> validate_consistency_q(user_quantiles, columns)
     [0.1, 0.5, 0.9]
 
     Notes
     -----
-    This function leverages :func:`detect_digits` to extract numeric quantile 
-    values from the input and :func:`is_in_if` to compute the intersection 
-    between the user-specified and detected quantiles. In soft mode, minor 
+    This function leverages :func:`detect_digits` to extract numeric quantile
+    values from the input and :func:`is_in_if` to compute the intersection
+    between the user-specified and detected quantiles. In soft mode, minor
     discrepancies are tolerated; strict mode requires an exact match.
 
     See Also
@@ -1584,27 +1553,19 @@ def validate_consistency_q(
         q_items = q_items.columns
 
     # Detect quantile values from q_items using detect_digits in quantile mode.
-    detected_q_values = detect_digits(
-        q_items, 
-        as_q=True, 
-        sort=True, 
-        return_unique=True
-    )
+    detected_q_values = detect_digits(q_items, as_q=True, sort=True, return_unique=True)
     if verbose >= 5:
         print(f"[DEBUG] Detected quantile values: {detected_q_values}")
 
     # Use is_in_if to get the intersection between user_q and detected_q_values.
     valid_quantiles = is_in_if(
-        sorted(user_q), 
-        detected_q_values, 
-        error=error, 
-        return_intersect=True
+        sorted(user_q), detected_q_values, error=error, return_intersect=True
     )
     if verbose >= 5:
         print(f"[DEBUG] Valid quantiles after intersection: {valid_quantiles}")
 
     # If valid_quantiles is not empty, sort it; otherwise, handle error.
-    
+
     if valid_quantiles:
         valid_quantiles = sorted(valid_quantiles)
     else:
@@ -1614,28 +1575,26 @@ def validate_consistency_q(
             f" {user_q} != {detected_q_values}"
         )
         err_msg = msg if msg is not None else default_err
-        suff = ". Returning " + ( 
-            "an empty list." if default_to =='valid_q' else ( 
-            "the detected values instead."
-            )
+        suff = ". Returning " + (
+            "an empty list."
+            if default_to == "valid_q"
+            else ("the detected values instead.")
         )
         if error == "raise":
             raise ValueError(err_msg)
         elif error == "warn":
-            warnings.warn(
-                err_msg + f"{suff}", 
-                UserWarning)
-        
-        return [] if mode=="valid_q" else detected_q_values 
-    
+            warnings.warn(err_msg + f"{suff}", UserWarning, stacklevel=2)
+
+        return [] if mode == "valid_q" else detected_q_values
 
     # In strict mode, expect the user_q to exactly match the detected quantiles.
     if mode == "strict":
         # valid_quantiles = user_q
-        valid_quantiles = _verify_identical_items( 
-            user_q, detected_q_values, 
-            ops="validate", 
-            objname="quantiles list", 
+        valid_quantiles = _verify_identical_items(
+            user_q,
+            detected_q_values,
+            ops="validate",
+            objname="quantiles list",
         )
 
     # Check consistency in count between valid and detected quantiles.
@@ -1646,38 +1605,37 @@ def validate_consistency_q(
             f"{len(detected_q_values)} ({detected_q_values})."
         )
         err_msg = msg if msg is not None else default_err
-        
+
         suff = " Returning " + (
-            "valid_quantiles instead." if default_to=='valid_q'
-            else  ( "detected values instead.")
+            "valid_quantiles instead."
+            if default_to == "valid_q"
+            else ("detected values instead.")
         )
-        if default_to =='valid_q': 
+        if default_to == "valid_q":
             if error == "raise":
                 raise ValueError(err_msg)
             elif error == "warn":
-                warnings.warn(err_msg +f"{suff}", UserWarning)
-        else: # 'auto_q'
-            if error =="warn": 
-                warnings.warn(
-                    err_msg + f"{suff}", UserWarning
-            )
-            valid_quantiles =detected_q_values
-        
+                warnings.warn(err_msg + f"{suff}", UserWarning, stacklevel=2)
+        else:  # 'auto_q'
+            if error == "warn":
+                warnings.warn(err_msg + f"{suff}", UserWarning, stacklevel=2)
+            valid_quantiles = detected_q_values
+
     # Optionally sort the result if not already
     # sorted (redundant here, but for safety).
-    return sorted(valid_quantiles) 
+    return sorted(valid_quantiles)
 
 
 def _verify_identical_items(
-    list1, 
-    list2, 
-    mode: str = "unique", 
-    ops: str = "check_only", 
-    error: str = "raise", 
-    objname: str = None, 
+    list1,
+    list2,
+    mode: str = "unique",
+    ops: str = "check_only",
+    error: str = "raise",
+    objname: str = None,
 ) -> Union[bool, list]:
     """
-    Check if two lists contain identical elements according 
+    Check if two lists contain identical elements according
     to the specified mode.
 
     In "unique" mode, the function compares the unique elements
@@ -1709,7 +1667,7 @@ def _verify_identical_items(
 
     Examples
     --------
-    >>> from gofast.core.generic import verify_identical_items 
+    >>> from gofast.core.generic import verify_identical_items
     >>> list1 = [0.1, 0.5, 0.9]
     >>> list2 = [0.1, 0.5, 0.9]
     >>> verify_identical_items(list1, list2, mode="unique", ops="validate")
@@ -1731,8 +1689,7 @@ def _verify_identical_items(
     if ops not in ("check_only", "validate"):
         raise ValueError("ops must be either 'check_only' or 'validate'")
     if error not in ("raise", "warn", "ignore"):
-        raise ValueError(
-            "error must be one of 'raise', 'warn', or 'ignore'")
+        raise ValueError("error must be one of 'raise', 'warn', or 'ignore'")
 
     # Ascending mode: compare each element in order.
     if mode == "ascending":
@@ -1745,22 +1702,22 @@ def _verify_identical_items(
                 raise ValueError(msg)
             elif error == "warn":
                 import warnings
-                warnings.warn(msg, UserWarning)
+
+                warnings.warn(msg, UserWarning, stacklevel=2)
             return False
-        
+
         differences = []
         for idx, (a, b) in enumerate(zip(list1, list2)):
             if a != b:
                 differences.append((idx, a, b))
         if differences:
-            msg = (
-                f"Differences in {objname or 'object lists'}: {differences}."
-            )
+            msg = f"Differences in {objname or 'object lists'}: {differences}."
             if error == "raise":
                 raise ValueError(msg)
             elif error == "warn":
                 import warnings
-                warnings.warn(msg, UserWarning)
+
+                warnings.warn(msg, UserWarning, stacklevel=2)
             return False
         return True if ops == "check_only" else list1
 
@@ -1781,20 +1738,17 @@ def _verify_identical_items(
                 raise ValueError(msg)
             elif error == "warn":
                 import warnings
-                warnings.warn(msg, UserWarning)
+
+                warnings.warn(msg, UserWarning, stacklevel=2)
             return False
         return True if ops == "check_only" else unique1
 
 
 def validate_qcols(
-    q_cols: Union[
-        str,
-        int,
-        Sequence[Any]
-    ],
+    q_cols: Union[str, int, Sequence[Any]],
     ncols_exp: Optional[str] = None,
-    err_msg: Optional[str] = None
-) -> List[str]:
+    err_msg: Optional[str] = None,
+) -> list[str]:
     """
     Validate and standardise a collection of column names that
     represent quantiles or prediction outputs. The function
@@ -1802,47 +1756,47 @@ def validate_qcols(
     strings, removes blanks, and—optionally—checks that the
     final list length satisfies an expectation expressed in
     `<ncols_exp>`.
-    
+
     .. math::
        \text{valid} = \bigl\{\,c \mid c \neq ''\bigr\}
-    
+
     If an expectation is supplied, the function compares
     :math:`|\,\text{valid}\,|` to the requested condition and
     raises an error if the test fails.
-    
+
     Parameters
     ----------
-    q_cols : list, str, tuple or set  
+    q_cols : list, str, tuple or set
         Column names to validate. May be a single string, an
         iterable of names, or any mixture thereof. Non‑string
         entries are cast to string.
-    
-    ncols_exp : str or None, optional  
+
+    ncols_exp : str or None, optional
         Expectation on the number of columns. The string must
-        begin with a comparison operator (``'==', '>=', '<=',  
+        begin with a comparison operator (``'==', '>=', '<=',
         '!=', '>'`` or ``'<'``) followed by an integer, e.g.
         ``'>=2'`` or ``'==3'``. If *None*, no length check is
         applied.
-    
-    err_msg : str or None, optional  
+
+    err_msg : str or None, optional
         Custom message to raise if the expectation in
         `<ncols_exp>` is not met. If *None*, a default message
         is generated.
-    
+
     Returns
     -------
-    list  
+    list
         A cleaned list of column names that meet all checks.
-    
+
     Raises
     ------
-    TypeError  
+    TypeError
         If `<q_cols>` is not a recognised container or string.
-    
-    ValueError  
+
+    ValueError
         If `<q_cols>` is empty after cleaning, or if the length
         check in `<ncols_exp>` fails.
-    
+
     Examples
     --------
     >>> from kdiagram.utils.diagnose_q import validate_qcols
@@ -1852,18 +1806,18 @@ def validate_qcols(
     ['q10', 'q90']
     >>> validate_qcols(('p1', 'p2', ''), ncols_exp='>=2')
     ['p1', 'p2']
-    
+
     Notes
     -----
     The expectation string is parsed by splitting on the first
     occurring comparison operator and casting the remainder to
     int. This avoids ambiguous patterns and guarantees that
     ``ops[op](len(cols), expected)`` is evaluated safely.
-    
+
     See Also
     --------
     operator : Built‑in module providing comparison functions.
-    
+
     References
     ----------
     .. [1] Harris, C. R. *et al.* (2020). Array programming
@@ -1873,8 +1827,7 @@ def validate_qcols(
     # Step‑1  : convert <q_cols> to a list of strings
     if q_cols is None:
         raise ValueError(
-            "`q_cols` cannot be None. Provide at least "
-            "one column name."
+            "`q_cols` cannot be None. Provide at least " "one column name."
         )
 
     if isinstance(q_cols, (str, int)):
@@ -1882,70 +1835,54 @@ def validate_qcols(
     elif isinstance(q_cols, (tuple, set, list)):
         q_cols = [str(col) for col in q_cols]
     else:
-        raise TypeError(
-            "`q_cols` must be a list, tuple, set or "
-            "single string."
-        )
+        raise TypeError("`q_cols` must be a list, tuple, set or " "single string.")
 
     # Remove blanks and strip white‑space
-    q_cols = [
-        col.strip()
-        for col in q_cols
-        if col.strip()
-    ]
+    q_cols = [col.strip() for col in q_cols if col.strip()]
 
     if len(q_cols) == 0:
-        raise ValueError(
-            "`q_cols` is empty after cleaning."
-        )
+        raise ValueError("`q_cols` is empty after cleaning.")
 
     # Step‑2  : optional length expectation check
     if ncols_exp:
-        _ops: Dict[str, Any] = {
-            '==': operator.eq,
-            '=' : operator.eq,
-            '!=': operator.ne,
-            '>=': operator.ge,
-            '<=': operator.le,
-            '>' : operator.gt,
-            '<' : operator.lt,
+        _ops: dict[str, Any] = {
+            "==": operator.eq,
+            "=": operator.eq,
+            "!=": operator.ne,
+            ">=": operator.ge,
+            "<=": operator.le,
+            ">": operator.gt,
+            "<": operator.lt,
         }
 
         # longest operators first (>=, <=, !=, ==)
         for sym in sorted(_ops, key=len, reverse=True):
             if ncols_exp.startswith(sym):
-                num_str = ncols_exp[len(sym):].strip()
+                num_str = ncols_exp[len(sym) :].strip()
                 if not num_str.isdigit():
-                    raise ValueError(
-                        f"Invalid expectation syntax "
-                        f"'{ncols_exp}'."
-                    )
+                    raise ValueError(f"Invalid expectation syntax " f"'{ncols_exp}'.")
                 expected = int(num_str)
                 if not _ops[sym](len(q_cols), expected):
                     raise ValueError(
                         err_msg
-                        or
-                        f"Expected {ncols_exp}, got "
-                        f"{len(q_cols)}: {q_cols}"
+                        or f"Expected {ncols_exp}, got " f"{len(q_cols)}: {q_cols}"
                     )
                 break
         else:
-            raise ValueError(
-                f"Invalid `ncols_exp` format: "
-                f"{ncols_exp}"
-            )
+            raise ValueError(f"Invalid `ncols_exp` format: " f"{ncols_exp}")
 
     return q_cols
 
+
 def build_qcols_multiple(
-    q_cols: Optional[Sequence[Tuple[str, ...]]] = None,
-    qlow_cols: Optional[Sequence[str]]          = None,
-    qup_cols: Optional[Sequence[str]]           = None,
-    qmed_cols: Optional[Sequence[str]]          = None,
+    q_cols: Optional[Sequence[tuple[str, ...]]] = None,
+    qlow_cols: Optional[Sequence[str]] = None,
+    qup_cols: Optional[Sequence[str]] = None,
+    qmed_cols: Optional[Sequence[str]] = None,
     *,
-    enforce_triplet: bool                       = False,
-    allow_pair_when_median: bool                = False,
-) -> List[Tuple[str, ...]]:
+    enforce_triplet: bool = False,
+    allow_pair_when_median: bool = False,
+) -> list[tuple[str, ...]]:
     """
     Assemble and validate tuples of quantile columns.
 
@@ -1999,13 +1936,13 @@ def build_qcols_multiple(
     >>> q_pairs = [('q10', 'q90'), ('lwr', 'upr')]
     >>> build_qcols_multiple(q_cols=q_pairs)
     [('q10', 'q90'), ('lwr', 'upr')]
-    
+
     >>> # 2) Separate lower / upper lists (no median)
     >>> lows = ['q10', 'lwr']
     >>> ups  = ['q90', 'upr']
     >>> build_qcols_multiple(qlow_cols=lows, qup_cols=ups)
     [('q10', 'q90'), ('lwr', 'upr')]
-    
+
     >>> # 3) Triplets with median enforced
     >>> meds = ['q50', 'mid']
     >>> build_qcols_multiple(
@@ -2015,7 +1952,7 @@ def build_qcols_multiple(
     ...     enforce_triplet=True
     ... )
     [('q10', 'q50', 'q90'), ('lwr', 'mid', 'upr')]
-    
+
     >>> # 4) Ignore supplied median and still get pairs
     >>> build_qcols_multiple(
     ...     qlow_cols=lows,
@@ -2031,14 +1968,10 @@ def build_qcols_multiple(
     # --------------------------------------------------
     if q_cols is not None:
         if not all(isinstance(t, (list, tuple)) for t in q_cols):
-            raise ValueError(
-                "`q_cols` must be an iterable of tuples."
-            )
+            raise ValueError("`q_cols` must be an iterable of tuples.")
         sizes = {len(t) for t in q_cols}
         if sizes - {2, 3}:
-            raise ValueError(
-                "`q_cols` tuples must have length 2 or 3."
-            )
+            raise ValueError("`q_cols` tuples must have length 2 or 3.")
         if enforce_triplet and sizes != {3}:
             raise ValueError(
                 "`enforce_triplet=True` requires every "
@@ -2058,24 +1991,19 @@ def build_qcols_multiple(
             "`qlow_cols` and `qup_cols` must be given."
         )
     if len(qlow_cols) != len(qup_cols):
-        raise ValueError(
-            "`qlow_cols` and `qup_cols` must be the same "
-            "length."
-        )
+        raise ValueError("`qlow_cols` and `qup_cols` must be the same " "length.")
 
     # -- median logic
     if qmed_cols is not None and not allow_pair_when_median:
         if len(qmed_cols) != len(qlow_cols):
             raise ValueError(
-                "`qmed_cols` must be the same length as "
-                "`qlow_cols` and `qup_cols`."
+                "`qmed_cols` must be the same length as " "`qlow_cols` and `qup_cols`."
             )
         tuples = list(zip(qlow_cols, qmed_cols, qup_cols))
     else:
         if enforce_triplet:
             raise ValueError(
-                "`enforce_triplet=True` but no median "
-                "columns were supplied."
+                "`enforce_triplet=True` but no median " "columns were supplied."
             )
         tuples = list(zip(qlow_cols, qup_cols))
 

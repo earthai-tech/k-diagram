@@ -1,22 +1,26 @@
-# -*- coding: utf-8 -*-
 # File: kdiagram/utils/metric_utils.py
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Any, List
+from typing import Any, Callable
+from ..compat.sklearn import (
+    mean_squared_error as compat_mse,
+    root_mean_squared_error as compat_rmse,
+)
 
 __all__ = ["get_scorer", "available_scorers"]
 
 # Cache for the internal scorer registry so we only build it once.
-_SCORERS_CACHE: Dict[str, Callable[..., float]] | None = None
+_SCORERS_CACHE: dict[str, Callable[..., float]] | None = None
 
 
 def _load_sklearn_metrics():
     """Lazy import sklearn.metrics; raise a clear error if missing."""
     try:
         import sklearn.metrics as sm  # type: ignore
+
         return sm
     except Exception as exc:
         raise ImportError(
@@ -25,20 +29,21 @@ def _load_sklearn_metrics():
         ) from exc
 
 
-def _build_registry() -> Dict[str, Callable[..., float]]:
+def _build_registry() -> dict[str, Callable[..., float]]:
     """
     Build the internal mapping of common metric aliases to callables
     with signature (y_true, y_pred, **kwargs) -> score.
     """
     sm = _load_sklearn_metrics()
-
+    
     # --- Wrappers to normalize behavior/aliases ---
     def _rmse(y_true, y_pred, **kw):
-        # squared=False -> RMSE
-        return sm.mean_squared_error(y_true, y_pred, squared=False, **kw)
-
+        # Use the compatibility function for RMSE
+        return compat_rmse(y_true, y_pred, **kw)
+    
     def _mse(y_true, y_pred, **kw):
-        return sm.mean_squared_error(y_true, y_pred, squared=True, **kw)
+        # Use the compatibility function for MSE
+        return compat_mse(y_true, y_pred, squared=True, **kw)
 
     def _precision_weighted(y_true, y_pred, **kw):
         kw.setdefault("average", "weighted")
@@ -56,7 +61,7 @@ def _build_registry() -> Dict[str, Callable[..., float]]:
         return sm.f1_score(y_true, y_pred, **kw)
 
     # --- Core registry (lowercase keys) ---
-    registry: Dict[str, Callable[..., float]] = {
+    registry: dict[str, Callable[..., float]] = {
         # Regression
         "r2": sm.r2_score,
         "r2_score": sm.r2_score,
@@ -91,7 +96,7 @@ def _build_registry() -> Dict[str, Callable[..., float]]:
     return registry
 
 
-def _get_registry() -> Dict[str, Callable[..., float]]:
+def _get_registry() -> dict[str, Callable[..., float]]:
     global _SCORERS_CACHE
     if _SCORERS_CACHE is None:
         _SCORERS_CACHE = _build_registry()
@@ -152,7 +157,7 @@ def get_scorer(scoring: str) -> Callable[[Any, Any], float]:
     )
 
 
-def available_scorers() -> List[str]:
+def available_scorers() -> list[str]:
     """
     List the metric aliases available in the internal registry.
     (This does not enumerate every function in sklearn.metrics.)

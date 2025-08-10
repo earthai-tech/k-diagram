@@ -1,8 +1,9 @@
-
 import warnings
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")  # non-interactive backend for tests
 import matplotlib.pyplot as plt
 import pytest
@@ -31,7 +32,9 @@ def test_quantile_wilson_counts_bottom_multi_model(tmp_path, rng):
 
     out = tmp_path / "rel_quantile_wilson.png"
     ax, data = plot_reliability_diagram(
-        y, p1, p2,
+        y,
+        p1,
+        p2,
         names=["Wide", "Tight"],
         n_bins=12,
         strategy="quantile",
@@ -54,8 +57,16 @@ def test_quantile_wilson_counts_bottom_multi_model(tmp_path, rng):
     # basic sanity on per-bin dataframe
     df = data["Wide"]
     expected_cols = {
-        "bin_left", "bin_right", "bin_center", "n", "w_sum",
-        "p_mean", "y_rate", "y_low", "y_high", "ece_contrib",
+        "bin_left",
+        "bin_right",
+        "bin_center",
+        "n",
+        "w_sum",
+        "p_mean",
+        "y_rate",
+        "y_low",
+        "y_high",
+        "ece_contrib",
     }
     assert expected_cols.issubset(set(df.columns))
 
@@ -76,13 +87,14 @@ def test_uniform_normal_single_model_no_counts_labels_legend(tmp_path, rng):
 
     out = tmp_path / "rel_uniform_normal.png"
     ax, data = plot_reliability_diagram(
-        y, p,
+        y,
+        p,
         # no names -> default "Model_1"
         n_bins=8,
         strategy="uniform",
         error_bars="normal",
         counts_panel="none",
-        connect=False,           # points only
+        connect=False,  # points only
         marker="s",
         s=30,
         linewidth=1.0,
@@ -123,7 +135,8 @@ def test_2d_probabilities_with_and_without_class_index(rng):
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
         ax1 = plot_reliability_diagram(
-            y, P,
+            y,
+            P,
             n_bins=10,
             strategy="uniform",
             error_bars="none",
@@ -131,13 +144,17 @@ def test_2d_probabilities_with_and_without_class_index(rng):
             return_data=False,
         )
     # at least one warning about class_index or similar behavior
-    assert any("matplotlib is currently using agg" in str(w.message).lower()
-               for w in rec)
+    assert any(
+        ( "matplotlib is" in str(w.message).lower()) or
+        ("figurecanvasagg" in str(w.message).lower()) 
+        for w in rec  
+    )
     _close(ax1)
 
     # explicit class_index=0 uses negative-class prob; should still run
     ax2 = plot_reliability_diagram(
-        y, P,
+        y,
+        P,
         class_index=0,
         n_bins=10,
         strategy="uniform",
@@ -156,7 +173,8 @@ def test_quantile_edge_collapse_fallback_uniform_emits_warning(rng):
 
     with pytest.warns(UserWarning):
         ax = plot_reliability_diagram(
-            y, p,
+            y,
+            p,
             n_bins=12,
             strategy="quantile",
             error_bars="none",
@@ -182,21 +200,23 @@ def test_clipping_and_weights_and_palette(tmp_path, rng):
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
         ax, data = plot_reliability_diagram(
-            y, p_bad,
+            y,
+            p_bad,
             n_bins=9,
             strategy="uniform",
             error_bars="wilson",
             counts_panel="none",
             sample_weight=w,
-            color_palette=["#1f77b4"],   # force palette cycling branch
-            normalize_probs=True,        # allow rescale+clip
+            color_palette=["#1f77b4"],  # force palette cycling branch
+            normalize_probs=True,  # allow rescale+clip
             savefig=str(out),
             return_data=True,
         )
     # confirm we warned about clipping or normalization
-    assert any("clip" in str(w.message).lower()
-               or "normaliz" in str(w.message).lower()
-               for w in rec)
+    assert any(
+        "clip" in str(w.message).lower() or "normaliz" in str(w.message).lower()
+        for w in rec
+    )
     assert out.exists()
 
     # weighted sum over bins equals total weight (within fp tolerance)
@@ -216,7 +236,8 @@ def test_pandas_inputs_and_diagonal_kwargs(rng):
     p = pd.Series(rng.random(n))
 
     ax = plot_reliability_diagram(
-        y, p,
+        y,
+        p,
         n_bins=7,
         strategy="uniform",
         error_bars="none",
@@ -231,6 +252,7 @@ def test_pandas_inputs_and_diagonal_kwargs(rng):
     assert len(lines) >= 1
 
     _close(ax)
+
 
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

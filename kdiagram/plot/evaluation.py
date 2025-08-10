@@ -1,34 +1,31 @@
-# -*- coding: utf-8 -*-
 #   License: Apache-2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import annotations 
-import warnings 
+from __future__ import annotations
+
+import warnings
 from numbers import Integral
-from typing import ( 
-    Optional, Tuple, List,
-)
+
+import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.pyplot as plt 
 
-from ..compat.sklearn import validate_params, StrOptions 
-from ..utils.handlers import columns_manager 
-from ..utils.mathext import minmax_scaler 
-from ..utils.validator import ( 
-    check_consistent_length, 
-    contains_nested_objects, 
-    validate_yy, 
-    validate_length_range, 
-    
+from ..compat.sklearn import StrOptions, validate_params
+from ..utils.handlers import columns_manager
+from ..utils.mathext import minmax_scaler
+from ..utils.validator import (
+    check_consistent_length,
+    contains_nested_objects,
+    validate_length_range,
+    validate_yy,
 )
-
 from ._properties import TDG_DIRECTIONS
 
-__all__= [    
-    'plot_taylor_diagram',
-    'plot_taylor_diagram_in',     
-    'taylor_diagram', 
-   ]
+__all__ = [
+    "plot_taylor_diagram",
+    "plot_taylor_diagram_in",
+    "taylor_diagram",
+]
+
 
 def taylor_diagram(
     stddev=None,
@@ -42,7 +39,7 @@ def taylor_diagram(
     radial_strategy="rwf",
     norm_c=False,
     power_scaling=1.0,
-    marker='o',
+    marker="o",
     ref_props=None,
     fig_size=None,
     size_props=None,
@@ -157,7 +154,7 @@ def taylor_diagram(
 
     size_props : dict or None, optional
         Optional dictionary to control tick and label sizes.
-        For instance: 
+        For instance:
         ``{'ticks': 12, 'labels': 14}``.
         Can be used to adjust the font sizes of the radial and
         angular ticks and labels.
@@ -226,62 +223,47 @@ def taylor_diagram(
 
     # Create polar subplot
     fig, ax = plt.subplots(
-        subplot_kw={'projection': 'polar'},
-        figsize=fig_size or (8, 6)
+        subplot_kw={"projection": "polar"}, figsize=fig_size or (8, 6)
     )
 
     # Handle reference properties
     ref_props = ref_props or {}
-    ref_label = ref_props.pop('label', 'Reference')
-    ref_color = ref_props.pop('lc', 'red')
-    ref_point = ref_props.pop('color', 'k*')
-    ref_lw = ref_props.pop('lw', 2)
+    ref_label = ref_props.pop("label", "Reference")
+    ref_color = ref_props.pop("lc", "red")
+    ref_point = ref_props.pop("color", "k*")
+    ref_lw = ref_props.pop("lw", 2)
 
     # Compute stddev and corrcoef from predictions if needed
-    if (stddev is None or corrcoef is None):
-        if (y_preds is None or reference is None):
+    if stddev is None or corrcoef is None:
+        if y_preds is None or reference is None:
             raise ValueError(
-                "Provide either stddev and corrcoef, "
-                "or y_preds and reference."
+                "Provide either stddev and corrcoef, " "or y_preds and reference."
             )
-        if not contains_nested_objects(y_preds, strict= True): 
-            y_preds =[y_preds]
-            
-        y_preds = [
-            validate_yy(reference, pred, flatten="auto")[1] 
-            for pred in y_preds
-        ]
-        
+        if not contains_nested_objects(y_preds, strict=True):
+            y_preds = [y_preds]
+
+        y_preds = [validate_yy(reference, pred, flatten="auto")[1] for pred in y_preds]
+
         stddev = [np.std(pred) for pred in y_preds]
-        corrcoef = [
-            np.corrcoef(pred, reference)[0, 1] 
-            for pred in y_preds
-        ]
+        corrcoef = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]
         ref_std = np.std(reference)
-    
+
     # Re-check consistency
     check_consistent_length(stddev, corrcoef)
-    
+
     # Ensure `names` matches number of models
     if names is not None:
-        names= columns_manager(names)
+        names = columns_manager(names)
         if len(names) < len(stddev):
-            additional = [
-                f"Model_{i + 1}" 
-                for i in range(len(stddev) - len(names))
-            ]
+            additional = [f"Model_{i + 1}" for i in range(len(stddev) - len(names))]
             names = names + additional
     else:
-        names = [
-            f"Model_{i + 1}" 
-            for i in range(len(stddev))
-        ]
+        names = [f"Model_{i + 1}" for i in range(len(stddev))]
 
     # Generate background if cmap is provided
     if cmap:
         theta_bg, r_bg = np.meshgrid(
-            np.linspace(0, np.pi / 2, 500),
-            np.linspace(0, max(stddev) + 0.5, 500)
+            np.linspace(0, np.pi / 2, 500), np.linspace(0, max(stddev) + 0.5, 500)
         )
 
         # Compute background based on strategy
@@ -290,18 +272,12 @@ def taylor_diagram(
         elif radial_strategy == "rwf":
             corr_bg = np.cos(theta_bg)
             std_diff = (r_bg - ref_std) ** 2
-            background = (
-                np.exp(-std_diff / 0.1) * 
-                corr_bg ** 2
-            )
+            background = np.exp(-std_diff / 0.1) * corr_bg**2
         elif radial_strategy == "center_focus":
             center_std = (max(stddev) + ref_std) / 2
             std_diff = (r_bg - center_std) ** 2
             theta_diff = (theta_bg - np.pi / 4) ** 2
-            background = (
-                np.exp(-std_diff / 0.1) *
-                np.exp(-theta_diff / 0.2)
-            )
+            background = np.exp(-std_diff / 0.1) * np.exp(-theta_diff / 0.2)
         elif radial_strategy == "performance":
             best_idx = np.argmax(corrcoef)
             std_best = stddev[best_idx]
@@ -309,92 +285,50 @@ def taylor_diagram(
             theta_best = np.arccos(corr_best)
             std_diff = (r_bg - std_best) ** 2
             theta_diff = (theta_bg - theta_best) ** 2
-            background = (
-                np.exp(-std_diff / 0.05) *
-                np.exp(-theta_diff / 0.05)
-            )
+            background = np.exp(-std_diff / 0.05) * np.exp(-theta_diff / 0.05)
 
         # Normalize background if requested
         if norm_c:
-            background = minmax_scaler(background )
+            background = minmax_scaler(background)
             # background = (
             #     (background - np.min(background)) /
             #     (np.max(background) - np.min(background))
             # )
-            background = background ** power_scaling
+            background = background**power_scaling
 
         # Plot the colored contour
-        ax.contourf(
-            theta_bg, 
-            r_bg, 
-            background,
-            levels=100,
-            cmap=cmap,
-            alpha=0.8
-        )
+        ax.contourf(theta_bg, r_bg, background, levels=100, cmap=cmap, alpha=0.8)
 
     # Draw reference point or arc
     if draw_ref_arc:
         t_arc = np.linspace(0, np.pi / 2, 500)
         ax.plot(
-            t_arc,
-            [ref_std] * len(t_arc),
-            ref_color,
-            linewidth=ref_lw,
-            label=ref_label
+            t_arc, [ref_std] * len(t_arc), ref_color, linewidth=ref_lw, label=ref_label
         )
     else:
-        ax.plot(
-            0,
-            ref_std,
-            ref_point,
-            markersize=12,
-            label=ref_label
-        )
+        ax.plot(0, ref_std, ref_point, markersize=12, label=ref_label)
 
     # Plot data points
-    for i, (std_val, corr_val) in enumerate(
-        zip(stddev, corrcoef)
-    ):
+    for i, (std_val, corr_val) in enumerate(zip(stddev, corrcoef)):
         theta_pt = np.arccos(corr_val)
-        ax.plot(
-            theta_pt,
-            std_val,
-            marker,
-            label=names[i],
-            markersize=10
-        )
+        ax.plot(theta_pt, std_val, marker, label=names[i], markersize=10)
 
     # Add correlation lines (dotted radial lines)
     t_corr = np.linspace(0, np.pi / 2, 100)
     for r_line in np.linspace(0, 1, 11):
-        ax.plot(
-            t_corr,
-            [r_line * ref_std] * len(t_corr),
-            'k--',
-            alpha=0.3
-        )
+        ax.plot(t_corr, [r_line * ref_std] * len(t_corr), "k--", alpha=0.3)
 
     # Add standard deviation circles
     for r_circ in np.linspace(0, max(stddev) + 0.5, 5):
-        ax.plot(
-            np.linspace(0, np.pi / 2, 100),
-            [r_circ] * 100,
-            'k--',
-            alpha=0.3
-        )
+        ax.plot(np.linspace(0, np.pi / 2, 100), [r_circ] * 100, "k--", alpha=0.3)
 
     # Set axis limits
     ax.set_xlim(0, np.pi / 2)
     ax.set_ylim(0, max(stddev) + 0.5)
 
     # Set x-ticks for correlation
-    ax.set_xticks(
-        np.arccos(np.linspace(0, 1, 6))
-    )
-    ax.set_xticklabels(
-        ['1.0', '0.8', '0.6', '0.4', '0.2', '0.0']
-    )
+    ax.set_xticks(np.arccos(np.linspace(0, 1, 6)))
+    ax.set_xticklabels(["1.0", "0.8", "0.6", "0.4", "0.2", "0.0"])
 
     # Axis labels
     ax.set_xlabel("Standard Deviation", labelpad=20)
@@ -404,60 +338,58 @@ def taylor_diagram(
         0.85,
         0.7,
         "Correlation",
-        ha='center',
+        ha="center",
         rotation_mode="anchor",
         rotation=-45,
-        transform=ax.transAxes
+        transform=ax.transAxes,
     )
 
     # Set size of ticks and labels if provided
     if size_props:
-        tick_size = size_props.get('ticks', 10)
-        label_size = size_props.get('label', 12)
-        ax.tick_params(
-            axis='both',
-            labelsize=tick_size
-        )
+        tick_size = size_props.get("ticks", 10)
+        label_size = size_props.get("label", 12)
+        ax.tick_params(axis="both", labelsize=tick_size)
         # X-label
         for label in ax.xaxis.get_label():
             label.set_size(label_size)
         # We might want to set radial labels if any,
-        # but let's keep it minimal. 
-        
+        # but let's keep it minimal.
+
     # Legend and title
-    ax.legend(loc='upper right')
-    plt.title(title or 'Taylor Diagram')
+    ax.legend(loc="upper right")
+    plt.title(title or "Taylor Diagram")
 
     # Save or show figure
     if savefig:
-        plt.savefig(savefig, bbox_inches='tight')
+        plt.savefig(savefig, bbox_inches="tight")
     else:
         plt.show()
 
 
-@validate_params({
-    'reference': ['array-like'],
-    'names': [str, 'array-like', None ],
-    'acov': [StrOptions({'default', 'half_circle'}), None],
-    'zero_location': [StrOptions(
-        {'N','NE','E','S','SW','W','NW', 'SE'})],
-    'direction': [Integral]
-    })
+@validate_params(
+    {
+        "reference": ["array-like"],
+        "names": [str, "array-like", None],
+        "acov": [StrOptions({"default", "half_circle"}), None],
+        "zero_location": [StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})],
+        "direction": [Integral],
+    }
+)
 def plot_taylor_diagram_in(
     *y_preds,
     reference,
     names=None,
     acov=None,
-    zero_location='E',
+    zero_location="E",
     direction=-1,
     only_points=False,
-    ref_color='red',
+    ref_color="red",
     draw_ref_arc=True,
     angle_to_corr=True,
-    marker='o',
+    marker="o",
     corr_steps=6,
     cmap="viridis",
-    shading='auto',
+    shading="auto",
     shading_res=300,
     radial_strategy=None,
     norm_c=False,
@@ -665,52 +597,51 @@ def plot_taylor_diagram_in(
     n = reference.size
     for p in y_preds:
         if p.size != n:
-            raise ValueError(
-                "All predictions and reference must be the same length."
-            )
+            raise ValueError("All predictions and reference must be the same length.")
 
     # correlation & stdev
-    corrs = [np.corrcoef(p, reference)[0,1] for p in y_preds]
-    stds  = [np.std(p) for p in y_preds]
+    corrs = [np.corrcoef(p, reference)[0, 1] for p in y_preds]
+    stds = [np.std(p) for p in y_preds]
     ref_std = np.std(reference)
 
     # Setup figure & polar axis
 
-    fig = plt.figure(figsize=fig_size or (10,8))
-    ax  = fig.add_subplot(111, polar=True)
+    fig = plt.figure(figsize=fig_size or (10, 8))
+    ax = fig.add_subplot(111, polar=True)
 
     # Decide coverage
     acov = acov or "half_circle"
     if acov == "half_circle":
-        angle_max = np.pi/2
+        angle_max = np.pi / 2
     else:
         angle_max = np.pi
 
     # radial limit
-    rad_limit = max(max(stds), ref_std)*1.2
+    rad_limit = max(max(stds), ref_std) * 1.2
 
     # Create a mesh for background
     theta_grid = np.linspace(0, angle_max, shading_res)
-    r_grid     = np.linspace(0, rad_limit, shading_res)
-    TH, RR     = np.meshgrid(theta_grid, r_grid)
+    r_grid = np.linspace(0, rad_limit, shading_res)
+    TH, RR = np.meshgrid(theta_grid, r_grid)
 
-    if radial_strategy=="convergence": 
+    if radial_strategy == "convergence":
         # correlation => cos(TH)
         # correlation = cos(TH) if half or full circle
         # (when angle=0 => correlation=1, angle= pi/2 => corr=0, angle= pi => corr=-1)
         CC = np.cos(TH)  # from 1..-1 or 1..0 depending on coverage
-    elif radial_strategy =="norm_r": 
+    elif radial_strategy == "norm_r":
         CC = RR / rad_limit  # Normalizes r to range [0, 1]
-    else: 
-        if radial_strategy in {'rwf', 'center_focus'}: 
+    else:
+        if radial_strategy in {"rwf", "center_focus"}:
             warnings.warn(
                 f"'{radial_strategy}' is not available in the current"
                 " plot. Consider using `gofast.plot.taylor_diagram`"
                 " for better support. Alternatively, choose from"
                 " 'convergence', 'norm_r', or 'performance'."
-                " Defaulting to 'performance' visualization."
+                " Defaulting to 'performance' visualization.",
+                stacklevel=2,
             )
-        # Fallback to performance 
+        # Fallback to performance
         best_idx = np.argmax(corrs)
         std_best = stds[best_idx]
         corr_best = corrs[best_idx]
@@ -718,19 +649,14 @@ def plot_taylor_diagram_in(
         std_diff = (RR - std_best) ** 2
         theta_diff = (TH - theta_best) ** 2
 
-        CC = (
-            np.exp(-std_diff / 0.05) *
-            np.exp(-theta_diff / 0.05)
-        )
-        
+        CC = np.exp(-std_diff / 0.05) * np.exp(-theta_diff / 0.05)
+
     # Define color values based on radial distance (normalized)
     if norm_c:
-        if norm_range is None: 
+        if norm_range is None:
             norm_range = (0, 1)
-        norm_range = validate_length_range(
-            norm_range, param_name="Normalized Range"
-            )
-        CC= minmax_scaler(CC, feature_range=norm_range)
+        norm_range = validate_length_range(norm_range, param_name="Normalized Range")
+        CC = minmax_scaler(CC, feature_range=norm_range)
 
     # plot background
     # Turn off grid to avoid the deprecation error
@@ -741,136 +667,131 @@ def plot_taylor_diagram_in(
         CC,
         cmap=cmap,
         shading=shading,
-        vmin=-1 if angle_max==np.pi else 0,
-        vmax=1
+        vmin=-1 if angle_max == np.pi else 0,
+        vmax=1,
     )
     ax.grid(True, which="both")
     # convert each correlation to an angle
     angles = np.arccos(corrs)
-    radii  = stds
+    radii = stds
 
     # pick distinct colors
-    colors = plt.cm.Set1(np.linspace(0,1,len(y_preds)))
-    names= columns_manager(names, empty_as_none=False)
+    colors = plt.cm.Set1(np.linspace(0, 1, len(y_preds)))
+    names = columns_manager(names, empty_as_none=False)
     # plot predictions
-    for i,(ang,rd) in enumerate(zip(angles,radii)):
-        label = (names[i] if (names and i<len(names))
-                 else f"Pred {i+1}")
+    for i, (ang, rd) in enumerate(zip(angles, radii)):
+        label = names[i] if (names and i < len(names)) else f"Pred {i+1}"
         if not only_points:
-            ax.plot([ang, ang],[0,rd],
-                    color=colors[i], lw=2, alpha=0.8)
-        ax.plot(ang, rd, marker=marker,
-                color=colors[i], label=label)
+            ax.plot([ang, ang], [0, rd], color=colors[i], lw=2, alpha=0.8)
+        ax.plot(ang, rd, marker=marker, color=colors[i], label=label)
 
     # reference arc
     if draw_ref_arc:
         arc_t = np.linspace(0, angle_max, 300)
-        ax.plot(arc_t, [ref_std]*300,
-                color=ref_color, lw=2, label="Reference")
+        ax.plot(arc_t, [ref_std] * 300, color=ref_color, lw=2, label="Reference")
     else:
-        ax.plot([0,0],[0, ref_std],
-                color=ref_color, lw=2, label="Reference")
-        ax.plot(0, ref_std, marker=marker,
-                color=ref_color)
+        ax.plot([0, 0], [0, ref_std], color=ref_color, lw=2, label="Reference")
+        ax.plot(0, ref_std, marker=marker, color=ref_color)
 
     # set coverage
     ax.set_thetamax(np.degrees(angle_max))
 
     # direction
-    if direction not in (-1,1):
-        warnings.warn(
-            "direction must be -1 or 1; using 1."
-        )
-        direction=1
+    if direction not in (-1, 1):
+        warnings.warn("direction must be -1 or 1; using 1.", stacklevel=2)
+        direction = 1
     ax.set_theta_direction(direction)
     ax.set_theta_zero_location(zero_location)
-    
-    # Use coordinates and positions to avoid overlapping 
-    CORR_POS =TDG_DIRECTIONS[str(direction)]["CORR_POS"]
-    STD_POS =TDG_DIRECTIONS[str(direction)]["STD_POS"]
-    
+
+    # Use coordinates and positions to avoid overlapping
+    CORR_POS = TDG_DIRECTIONS[str(direction)]["CORR_POS"]
+    STD_POS = TDG_DIRECTIONS[str(direction)]["STD_POS"]
+
     corr_pos = CORR_POS.get(zero_location)[0]
-    corr_kw= CORR_POS.get(zero_location)[1]
+    corr_kw = CORR_POS.get(zero_location)[1]
     std_pos = STD_POS.get(zero_location)[0]
     std_kw = STD_POS.get(zero_location)[1]
-    
+
     # angle => corr labels
     if angle_to_corr:
-        corr_ticks = np.linspace(0,1,corr_steps)
+        corr_ticks = np.linspace(0, 1, corr_steps)
         angles_deg = np.degrees(np.arccos(corr_ticks))
-        ax.set_thetagrids(
-            angles_deg,
-            labels=[f"{ct:.2f}" for ct in corr_ticks]
-        )
+        ax.set_thetagrids(angles_deg, labels=[f"{ct:.2f}" for ct in corr_ticks])
         ax.text(
-            *corr_pos, 
+            *corr_pos,
             "Correlation",
-            ha='center', va='bottom',
-            transform=ax.transAxes, 
-            **corr_kw 
+            ha="center",
+            va="bottom",
+            transform=ax.transAxes,
+            **corr_kw,
         )
         ax.text(
             *std_pos,
-            'Standard Deviation',
-            ha='center', va='bottom',
-            transform=ax.transAxes, 
-            **std_kw
+            "Standard Deviation",
+            ha="center",
+            va="bottom",
+            transform=ax.transAxes,
+            **std_kw,
         )
-        
-    else:
-        ax.text(*corr_pos, "Angle (degrees)",
-                ha='center', va='bottom',
-                transform=ax.transAxes,
-                **corr_kw 
-                )
-        
-        ax.text(
-            *std_pos,
-            'Standard Deviation',
-            ha='center', va='bottom',
-            transform=ax.transAxes, 
-            **std_kw
 
+    else:
+        ax.text(
+            *corr_pos,
+            "Angle (degrees)",
+            ha="center",
+            va="bottom",
+            transform=ax.transAxes,
+            **corr_kw,
         )
-        
+
+        ax.text(
+            *std_pos,
+            "Standard Deviation",
+            ha="center",
+            va="bottom",
+            transform=ax.transAxes,
+            **std_kw,
+        )
+
     ax.set_ylim(0, rad_limit)
     ax.set_rlabel_position(15)
     title = title or "Taylor Diagram"
     ax.set_title(title, pad=60)
- 
-    ax.legend(loc='upper right', bbox_to_anchor=(1.2,1.1))
+
+    ax.legend(loc="upper right", bbox_to_anchor=(1.2, 1.1))
 
     if cbar not in ["off", False]:
         fig.colorbar(c, ax=ax, pad=0.1, label="Correlation")
-        
+
     plt.tight_layout()
     plt.show()
 
 
-@validate_params({
-    'reference': ['array-like'],
-    'names': [str, 'array-like', None ],
-    'acov': [StrOptions({'default', 'half_circle'})],
-    'zero_location': [StrOptions(
-        {'N','NE','E','S','SW','W','NW', 'SE'})],
-    'direction': [Integral]
-    })
+@validate_params(
+    {
+        "reference": ["array-like"],
+        "names": [str, "array-like", None],
+        "acov": [StrOptions({"default", "half_circle"})],
+        "zero_location": [StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})],
+        "direction": [Integral],
+    }
+)
 def plot_taylor_diagram(
     *y_preds: np.ndarray,
     reference: np.ndarray,
-    names: Optional[List[str]] = None,
+    names: list[str] | None = None,
     acov: str = "half_circle",
-    zero_location: str = 'W',
+    zero_location: str = "W",
     direction: int = -1,
     only_points: bool = False,
-    ref_color: str = 'red',
-    draw_ref_arc: bool = True,  
-    angle_to_corr: bool = True,  
-    marker='o',
+    ref_color: str = "red",
+    draw_ref_arc: bool = True,
+    angle_to_corr: bool = True,
+    marker="o",
     corr_steps=6,
-    fig_size: Optional[Tuple[int, int]] = None,
-    title: Optional[str]=None,
-    savefig: Optional[str]=None,
+    fig_size: tuple[int, int] | None = None,
+    title: str | None = None,
+    savefig: str | None = None,
 ):
     r"""Plot a standard Taylor Diagram.
 
@@ -908,17 +829,17 @@ def plot_taylor_diagram(
         perfect correlation (:math:`\rho=1`, angle=0). For example,
         ``'N'`` (North) is top, ``'E'`` (East) is right, ``'W'``
         (West) is left.
-        
+
         **Effects:**
-        
-        - **Positioning:** Changes the orientation of the diagram by rotating 
+
+        - **Positioning:** Changes the orientation of the diagram by rotating
           the zero-degree line.
         - **Interpretation:** Influences how the angular coordinates
           correspond to correlation values.
-        
+
         **Example:**
-        
-        - Setting `zero_location='N'` places the zero-degree correlation 
+
+        - Setting `zero_location='N'` places the zero-degree correlation
           at the top of the plot.
         - Setting `zero_location='E'` places it on the right side.
 
@@ -927,17 +848,17 @@ def plot_taylor_diagram(
         ``1`` for counter-clockwise, ``-1`` for clockwise.
 
         **Effects:**
-        
+
         - **Angle Progression:** Dictates whether the angles move clockwise or
           counter-clockwise from the zero location.
-        - **Visual Interpretation:** Affects the layout of the correlations 
+        - **Visual Interpretation:** Affects the layout of the correlations
           on the diagram.
-        
+
         **Example:**
-        
-        - `direction=1`: Correlation angles increase counter-clockwise, which 
+
+        - `direction=1`: Correlation angles increase counter-clockwise, which
           might align with standard mathematical conventions.
-        - `direction=-1`: Correlation angles increase clockwise, which might 
+        - `direction=-1`: Correlation angles increase clockwise, which might
           be preferred for specific visualization standards.
 
     only_points : bool, default: False
@@ -1054,9 +975,9 @@ def plot_taylor_diagram(
     reference = np.asarray(reference).flatten()
 
     # Check consistency of lengths
-    assert all(pred.size == reference.size for pred in y_preds), (
-        "All predictions and the reference must be of the same length."
-    )
+    assert all(
+        pred.size == reference.size for pred in y_preds
+    ), "All predictions and the reference must be of the same length."
 
     # Compute correlation and std dev for each prediction
     correlations = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]
@@ -1083,7 +1004,7 @@ def plot_taylor_diagram(
     # Use a color cycle so lines/points are more distinguishable
     colors = plt.cm.Set1(np.linspace(0, 1, len(y_preds)))
     for i, (angle, radius) in enumerate(zip(angles, radii)):
-        label = names[i] if (names and i < len(names)) else f'Prediction {i+1}'
+        label = names[i] if (names and i < len(names)) else f"Prediction {i+1}"
         if not only_points:
             # Draw the radial line from origin to the point
             ax.plot([angle, angle], [0, radius], color=colors[i], lw=2, alpha=0.8)
@@ -1093,41 +1014,47 @@ def plot_taylor_diagram(
     # This arc will have radius = reference_std
     if draw_ref_arc:
         if acov == "half_circle":
-            theta_arc = np.linspace(0, np.pi/2, 300)
+            theta_arc = np.linspace(0, np.pi / 2, 300)
         else:
             theta_arc = np.linspace(0, np.pi, 300)
 
-        ax.plot(theta_arc, [reference_std]*len(theta_arc),
-                color=ref_color, lw=2, label='Reference')
+        ax.plot(
+            theta_arc,
+            [reference_std] * len(theta_arc),
+            color=ref_color,
+            lw=2,
+            label="Reference",
+        )
     else:
         # If not drawing the arc, revert to a radial line as fallback
-        ax.plot([0, 0], [0, reference_std], color=ref_color, lw=2, label='Reference')
+        ax.plot([0, 0], [0, reference_std], color=ref_color, lw=2, label="Reference")
         ax.plot(0, reference_std, marker, color=ref_color)
 
     # Set coverage (max angle)
     if acov == "half_circle":
         ax.set_thetamax(90)  # degrees
     else:
-        ax.set_thetamax(180) # degrees (default)
+        ax.set_thetamax(180)  # degrees (default)
 
     # Set direction (1=counterclockwise, -1=clockwise)
     if direction not in [-1, 1]:
         warnings.warn(
             "direction should be either 1 (CCW) or -1 (CW). "
-            f"Got {direction}. Resetting to 1 (CCW)."
+            f"Got {direction}. Resetting to 1 (CCW).",
+            stacklevel=2,
         )
         direction = 1
     ax.set_theta_direction(direction)
     ax.set_theta_zero_location(zero_location)
-    
-    CORR_POS =TDG_DIRECTIONS[str(direction)]["CORR_POS"]
-    STD_POS =TDG_DIRECTIONS[str(direction)]["STD_POS"]
-    
+
+    CORR_POS = TDG_DIRECTIONS[str(direction)]["CORR_POS"]
+    STD_POS = TDG_DIRECTIONS[str(direction)]["STD_POS"]
+
     corr_pos = CORR_POS.get(zero_location)[0]
-    corr_kw= CORR_POS.get(zero_location)[1]
+    corr_kw = CORR_POS.get(zero_location)[1]
     std_pos = STD_POS.get(zero_location)[0]
     std_kw = STD_POS.get(zero_location)[1]
- 
+
     # Replace angle ticks with correlation values if requested
     if angle_to_corr:
         # We'll map correlation ticks [0..1] -> angle via arccos
@@ -1139,25 +1066,42 @@ def plot_taylor_diagram(
         # in default mode, 0..1 fits in 0..pi. This still works generally.
         ax.set_thetagrids(angle_ticks, labels=[f"{ct:.2f}" for ct in corr_ticks])
         # We can label this dimension as 'Correlation'
-        ax.set_ylabel('')  # remove default 0.5, 1.06
-  
-        ax.text(*corr_pos,  'Correlation', ha='center', va='center', 
-                transform=ax.transAxes, **corr_kw)
-        ax.text(*std_pos,  'Standard Deviation', ha='center', va='center', 
-                transform=ax.transAxes, **std_kw)
+        ax.set_ylabel("")  # remove default 0.5, 1.06
+
+        ax.text(
+            *corr_pos,
+            "Correlation",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+            **corr_kw,
+        )
+        ax.text(
+            *std_pos,
+            "Standard Deviation",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+            **std_kw,
+        )
     else:
         # Keep angle as degrees
-        ax.set_ylabel('')  # remove default
-        ax.text(*corr_pos, 'Angle (degrees)', ha='center', va='center',
-                transform=ax.transAxes)
+        ax.set_ylabel("")  # remove default
+        ax.text(
+            *corr_pos,
+            "Angle (degrees)",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
 
     # Adjust radial label (std dev)
     # This tries to reduce label overlap
     ax.set_rlabel_position(22.5)
-    ax.set_title( title or 'Taylor Diagram', pad=60) #50
+    ax.set_title(title or "Taylor Diagram", pad=60)  # 50
     # ax.set_xlabel('Standard Deviation', labelpad=15)
 
-    plt.legend(loc='upper right', bbox_to_anchor=(1.25, 1.05))
+    plt.legend(loc="upper right", bbox_to_anchor=(1.25, 1.05))
     # plt.subplots_adjust(top=0.8)
 
     plt.tight_layout()

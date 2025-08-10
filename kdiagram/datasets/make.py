@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0 (see LICENSE file)
 
@@ -10,24 +9,23 @@ This module provides functions to create synthetic datasets tailored
 for demonstrating and testing the various plotting functions within
 the `k-diagram` package, particularly those focused on uncertainty.
 """
-from __future__ import annotations 
+from __future__ import annotations
 
 import textwrap
-import warnings 
+import warnings
 
 import numpy as np
 import pandas as pd
 
-from typing import Optional, List, Union, Tuple
-
 from ..api.bunch import Bunch
 
-__all__ = [ 
+__all__ = [
     "make_uncertainty_data",
     "make_taylor_data",
     "make_multi_model_quantile_data",
-    "make_cyclical_data" 
-    ]
+    "make_cyclical_data",
+]
+
 
 def make_cyclical_data(
     n_samples: int = 365,
@@ -36,15 +34,15 @@ def make_cyclical_data(
     noise_level: float = 0.5,
     amplitude_true: float = 10.0,
     offset_true: float = 20.0,
-    pred_bias: Union[float, List[float]] = [0, 1.5], 
-    pred_noise_factor: Union[float, List[float]] = [1.0, 1.5], 
-    pred_amplitude_factor: Union[float, List[float]] = [1.0, 0.8], 
-    pred_phase_shift: Union[float, List[float]] = [0, np.pi / 6], 
+    pred_bias: float | list[float] = None,
+    pred_noise_factor: float | list[float] = None,
+    pred_amplitude_factor: float | list[float] = None,
+    pred_phase_shift: float | list[float] = None,
     prefix: str = "model",
-    series_names: Optional[List[str]] = None,
-    seed: Optional[int] = 404,
+    series_names: list[str] | None = None,
+    seed: int | None = 404,
     as_frame: bool = False,
-) -> Union[Bunch, pd.DataFrame]:
+) -> Bunch | pd.DataFrame:
     r"""Generate synthetic data with cyclical patterns.
 
     Creates a dataset containing a 'true' cyclical signal (e.g.,
@@ -170,6 +168,14 @@ def make_cyclical_data(
     >>> print(cycle_df.columns)
     """
     # --- Input Validation & Setup ---
+    if pred_phase_shift is None:
+        pred_phase_shift = [0, np.pi / 6]
+    if pred_amplitude_factor is None:
+        pred_amplitude_factor = [1.0, 0.8]
+    if pred_noise_factor is None:
+        pred_noise_factor = [1.0, 1.5]
+    if pred_bias is None:
+        pred_bias = [0, 1.5]
     if seed is not None:
         rng = np.random.default_rng(seed)
     else:
@@ -203,13 +209,13 @@ def make_cyclical_data(
     theta = omega * time_step
 
     # True signal (e.g., sine wave + offset + noise)
-    y_true = offset_true + amplitude_true * np.sin(theta) + \
-             rng.normal(0, noise_level, n_samples)
+    y_true = (
+        offset_true
+        + amplitude_true * np.sin(theta)
+        + rng.normal(0, noise_level, n_samples)
+    )
 
-    data_dict = {
-        'time_step': time_step,
-        'y_true': y_true
-    }
+    data_dict = {"time_step": time_step, "y_true": y_true}
 
     # --- Generate Model Names & Prediction Columns ---
     if series_names is None:
@@ -225,7 +231,7 @@ def make_cyclical_data(
     prediction_cols_list = []
 
     for i, series_name in enumerate(series_names_list):
-        col_name = series_name # Use provided or generated name
+        col_name = series_name  # Use provided or generated name
         prediction_cols_list.append(col_name)
 
         # Get parameters for this series
@@ -235,8 +241,12 @@ def make_cyclical_data(
         phase = processed_params["pred_phase_shift"][i]
 
         # Generate prediction series
-        y_pred = offset_true + bias + amp * np.sin(theta + phase) + \
-                 rng.normal(0, noise, n_samples)
+        y_pred = (
+            offset_true
+            + bias
+            + amp * np.sin(theta + phase)
+            + rng.normal(0, noise, n_samples)
+        )
 
         data_dict[col_name] = y_pred
 
@@ -244,8 +254,8 @@ def make_cyclical_data(
     df = pd.DataFrame(data_dict)
 
     # Define column categories for Bunch
-    feature_names = ['time_step']
-    target_name = ['y_true']
+    feature_names = ["time_step"]
+    target_name = ["y_true"]
 
     # --- Return based on as_frame ---
     if as_frame:
@@ -254,7 +264,8 @@ def make_cyclical_data(
         return df[ordered_cols]
     else:
         # Create Bunch description
-        descr = textwrap.dedent(f"""\
+        descr = textwrap.dedent(
+            f"""\
         Synthetic Cyclical Pattern Data for k-diagram
 
         **Description:**
@@ -291,37 +302,38 @@ def make_cyclical_data(
         This dataset is suitable for visualizing relationships or temporal
         patterns in a polar context using functions like plot_relationship
         or plot_temporal_uncertainty.
-        """)
+        """
+        )
 
         # Build arrays with a uniform dtype to avoid pandas -> np.find_common_type
         num_cols = feature_names + prediction_cols_list
-    
+
         target_array = df[target_name[0]].to_numpy(dtype=np.float64, copy=True)
-        data_array   = df[num_cols].to_numpy(dtype=np.float64, copy=True)
+        data_array = df[num_cols].to_numpy(dtype=np.float64, copy=True)
 
         return Bunch(
-            frame=df[target_name + feature_names + prediction_cols_list], 
-            data=data_array, 
+            frame=df[target_name + feature_names + prediction_cols_list],
+            data=data_array,
             feature_names=feature_names,
             target_names=target_name,
             target=target_array,
             series_names=series_names_list,
             prediction_columns=prediction_cols_list,
-            DESCR=descr
+            DESCR=descr,
         )
-    
-    
+
+
 def make_fingerprint_data(
     n_layers: int = 3,
     n_features: int = 8,
-    layer_names: Optional[List[str]] = None,
-    feature_names: Optional[List[str]] = None,
-    value_range: Tuple[float, float] = (0.0, 1.0),
+    layer_names: list[str] | None = None,
+    feature_names: list[str] | None = None,
+    value_range: tuple[float, float] = (0.0, 1.0),
     sparsity: float = 0.1,
     add_structure: bool = True,
-    seed: Optional[int] = 303,
+    seed: int | None = 303,
     as_frame: bool = False,
-) -> Union[Bunch, pd.DataFrame]:
+) -> Bunch | pd.DataFrame:
     r"""Generate synthetic feature importance data for fingerprint plots.
 
     Creates a dataset representing feature importance scores across
@@ -430,10 +442,12 @@ def make_fingerprint_data(
     # --- Input Validation & Setup ---
     if not (0.0 <= sparsity <= 1.0):
         raise ValueError("sparsity must be between 0.0 and 1.0")
-    if not (isinstance(value_range, tuple) and len(value_range) == 2
-            and value_range[0] <= value_range[1]):
-        raise ValueError("value_range must be a tuple (min, max)"
-                         " with min <= max.")
+    if not (
+        isinstance(value_range, tuple)
+        and len(value_range) == 2
+        and value_range[0] <= value_range[1]
+    ):
+        raise ValueError("value_range must be a tuple (min, max)" " with min <= max.")
 
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -444,14 +458,18 @@ def make_fingerprint_data(
     if feature_names is None:
         feature_names = [f"Feature_{i+1}" for i in range(n_features)]
     elif len(feature_names) != n_features:
-        raise ValueError(f"Length of feature_names ({len(feature_names)}) "
-                         f"must match n_features ({n_features}).")
+        raise ValueError(
+            f"Length of feature_names ({len(feature_names)}) "
+            f"must match n_features ({n_features})."
+        )
 
     if layer_names is None:
         layer_names = [f"Layer_{chr(65+i)}" for i in range(n_layers)]
     elif len(layer_names) != n_layers:
-        raise ValueError(f"Length of layer_names ({len(layer_names)}) "
-                         f"must match n_layers ({n_layers}).")
+        raise ValueError(
+            f"Length of layer_names ({len(layer_names)}) "
+            f"must match n_layers ({n_layers})."
+        )
 
     # --- Generate Importance Matrix ---
     min_val, max_val = value_range
@@ -463,42 +481,34 @@ def make_fingerprint_data(
             # Example structure: layer 'i' emphasizes feature 'i' (cycling)
             emphasized_feature = i % n_features
             importances[i, emphasized_feature] = rng.uniform(
-                (min_val + max_val) / 1.5, # Emphasize higher values
-                max_val * 1.1 # Allow slightly exceeding max
-                )
+                (min_val + max_val) / 1.5,  # Emphasize higher values
+                max_val * 1.1,  # Allow slightly exceeding max
+            )
             # Maybe deemphasize another feature
             deemphasized_feature = (i + n_features // 2) % n_features
             if deemphasized_feature != emphasized_feature:
-                 importances[i, deemphasized_feature] = rng.uniform(
-                     min_val * 0.9, # Allow slightly below min
-                     (min_val + max_val) / 2.5 # Emphasize lower values
-                 )
+                importances[i, deemphasized_feature] = rng.uniform(
+                    min_val * 0.9,  # Allow slightly below min
+                    (min_val + max_val) / 2.5,  # Emphasize lower values
+                )
         # Ensure values stay within reasonable bounds if needed
-        importances = np.clip(importances, min_val * 0.8 , max_val * 1.2)
-
+        importances = np.clip(importances, min_val * 0.8, max_val * 1.2)
 
     # Introduce sparsity
     if sparsity > 0:
-        mask = rng.choice(
-            [0, 1],
-            size=importances.shape,
-            p=[sparsity, 1 - sparsity]
-            )
+        mask = rng.choice([0, 1], size=importances.shape, p=[sparsity, 1 - sparsity])
         importances *= mask
 
     # --- Assemble DataFrame ---
-    df = pd.DataFrame(
-        importances,
-        index=layer_names,
-        columns=feature_names
-    )
+    df = pd.DataFrame(importances, index=layer_names, columns=feature_names)
 
     # --- Return based on as_frame ---
     if as_frame:
         return df
     else:
         # Create Bunch description
-        descr = textwrap.dedent(f"""\
+        descr = textwrap.dedent(
+            f"""\
         Synthetic Feature Fingerprint Data
 
         **Description:**
@@ -523,16 +533,18 @@ def make_fingerprint_data(
         - layer_names    : List of {n_layers} layer names (index).
         - feature_names  : List of {n_features} feature names (columns).
         - DESCR          : This description.
-        """)
+        """
+        )
 
         return Bunch(
             importances=importances,
             frame=df,
             layer_names=list(layer_names),
             feature_names=list(feature_names),
-            DESCR=descr
+            DESCR=descr,
         )
-    
+
+
 def make_uncertainty_data(
     n_samples: int = 150,
     n_periods: int = 4,
@@ -545,9 +557,9 @@ def make_uncertainty_data(
     interval_width_base: float = 4.0,
     interval_width_noise: float = 1.5,
     interval_width_trend: float = 0.5,
-    seed: Optional[int] = 42,
-    as_frame: bool = False, 
-) -> Union[Bunch, pd.DataFrame]: # Updated return type
+    seed: int | None = 42,
+    as_frame: bool = False,
+) -> Bunch | pd.DataFrame:  # Updated return type
     r"""Generate synthetic dataset for uncertainty visualization.
 
     Creates a dataset with features commonly used for testing and
@@ -690,49 +702,47 @@ def make_uncertainty_data(
     longitude = rng.uniform(-120, -115, n_samples)
     latitude = rng.uniform(33, 36, n_samples)
     elevation = rng.uniform(50, 500, n_samples) + latitude * 5
-    base_signal = base_value + \
-                  np.sin(np.linspace(0, 3 * np.pi, n_samples)) * 5 + \
-                  rng.normal(0, noise_level / 2, n_samples)
-    actual_first_period = base_signal + rng.normal(
-        0, noise_level / 2, n_samples
-        )
+    base_signal = (
+        base_value
+        + np.sin(np.linspace(0, 3 * np.pi, n_samples)) * 5
+        + rng.normal(0, noise_level / 2, n_samples)
+    )
+    actual_first_period = base_signal + rng.normal(0, noise_level / 2, n_samples)
 
     data_dict = {
-        'location_id': location_id,
-        'longitude': longitude,
-        'latitude': latitude,
-        'elevation': elevation,
+        "location_id": location_id,
+        "longitude": longitude,
+        "latitude": latitude,
+        "elevation": elevation,
         # Store actual only once, representing T=0 or reference time
-        f'{prefix}_actual': actual_first_period.copy()
+        f"{prefix}_actual": actual_first_period.copy(),
     }
 
     all_q10_cols, all_q50_cols, all_q90_cols = [], [], []
-    quantile_cols_dict = {'q0.1': [], 'q0.5': [], 'q0.9': []}
+    quantile_cols_dict = {"q0.1": [], "q0.5": [], "q0.9": []}
 
     for i in range(n_periods):
         year = start_year + i
-        q10_col = f'{prefix}_{year}_q0.1'
-        q50_col = f'{prefix}_{year}_q0.5'
-        q90_col = f'{prefix}_{year}_q0.9'
+        q10_col = f"{prefix}_{year}_q0.1"
+        q50_col = f"{prefix}_{year}_q0.5"
+        q90_col = f"{prefix}_{year}_q0.9"
 
         all_q10_cols.append(q10_col)
         all_q50_cols.append(q50_col)
         all_q90_cols.append(q90_col)
-        quantile_cols_dict['q0.1'].append(q10_col)
-        quantile_cols_dict['q0.5'].append(q50_col)
-        quantile_cols_dict['q0.9'].append(q90_col)
+        quantile_cols_dict["q0.1"].append(q10_col)
+        quantile_cols_dict["q0.5"].append(q50_col)
+        quantile_cols_dict["q0.9"].append(q90_col)
 
         current_trend = trend_strength * i
-        q50 = base_signal + current_trend + rng.normal(
-            0, noise_level / 3, n_samples)
+        q50 = base_signal + current_trend + rng.normal(0, noise_level / 3, n_samples)
 
         current_interval_width = (
             interval_width_base
             + interval_width_trend * i
             + rng.uniform(
-                -interval_width_noise / 2,
-                 interval_width_noise / 2,
-                 n_samples)
+                -interval_width_noise / 2, interval_width_noise / 2, n_samples
+            )
         )
         current_interval_width = np.maximum(0.1, current_interval_width)
 
@@ -745,13 +755,11 @@ def make_uncertainty_data(
 
     df = pd.DataFrame(data_dict)
 
-    actual_col_name = f'{prefix}_actual'
+    actual_col_name = f"{prefix}_actual"
     if anomaly_frac > 0 and n_samples > 0:
         n_anomalies = int(anomaly_frac * n_samples)
         if n_anomalies > 0 and all_q10_cols and all_q90_cols:
-            anomaly_indices = rng.choice(
-                n_samples, size=n_anomalies, replace=False
-            )
+            anomaly_indices = rng.choice(n_samples, size=n_anomalies, replace=False)
             n_under = n_anomalies // 2
             under_indices = anomaly_indices[:n_under]
             over_indices = anomaly_indices[n_under:]
@@ -759,21 +767,20 @@ def make_uncertainty_data(
             q10_first = df[all_q10_cols[0]].iloc[under_indices]
             q90_first = df[all_q90_cols[0]].iloc[over_indices]
 
-            df.loc[under_indices, actual_col_name] = q10_first - \
-                rng.uniform(0.5, 3.0, size=len(under_indices)) * \
-                (interval_width_base / 2 + 1)
+            df.loc[under_indices, actual_col_name] = q10_first - rng.uniform(
+                0.5, 3.0, size=len(under_indices)
+            ) * (interval_width_base / 2 + 1)
 
-            df.loc[over_indices, actual_col_name] = q90_first + \
-                rng.uniform(0.5, 3.0, size=len(over_indices)) * \
-                (interval_width_base / 2 + 1)
+            df.loc[over_indices, actual_col_name] = q90_first + rng.uniform(
+                0.5, 3.0, size=len(over_indices)
+            ) * (interval_width_base / 2 + 1)
 
     # Define final column order
-    feature_names = ['location_id', 'longitude', 'latitude', 'elevation']
+    feature_names = ["location_id", "longitude", "latitude", "elevation"]
     target_names = [actual_col_name]
     pred_cols_sorted = [
-        col for pair in zip(all_q10_cols, all_q50_cols, all_q90_cols)
-        for col in pair
-        ]
+        col for pair in zip(all_q10_cols, all_q50_cols, all_q90_cols) for col in pair
+    ]
     ordered_cols = feature_names + target_names + pred_cols_sorted
     df = df[ordered_cols]
 
@@ -786,11 +793,11 @@ def make_uncertainty_data(
         # data_array = df[numeric_cols].values # Data array (optional)
         # target_array = df[target_names[0]].values
         target_array = df[target_names[0]].to_numpy(dtype=np.float64, copy=True)
-        data_array   = df[numeric_cols].to_numpy(dtype=np.float64, copy=True)
-        
+        data_array = df[numeric_cols].to_numpy(dtype=np.float64, copy=True)
 
         # Create detailed description string
-        descr = textwrap.dedent(f"""\
+        descr = textwrap.dedent(
+            f"""\
         Synthetic Multi-Period Uncertainty Dataset for k-diagram
 
         **Description:**
@@ -840,35 +847,37 @@ def make_uncertainty_data(
         This dataset is ideal for testing functions like plot_model_drift,
         plot_uncertainty_drift, plot_interval_consistency,
         plot_anomaly_magnitude, plot_coverage_diagnostic, etc.
-        """)
+        """
+        )
 
         # Create and return Bunch object
         return Bunch(
             frame=df,
-            data=data_array, 
+            data=data_array,
             feature_names=feature_names,
             target_names=target_names,
             target=target_array,
             quantile_cols=quantile_cols_dict,
-            q10_cols=all_q10_cols, 
+            q10_cols=all_q10_cols,
             q50_cols=all_q50_cols,
             q90_cols=all_q90_cols,
             n_periods=n_periods,
             prefix=prefix,
-            DESCR=descr
+            DESCR=descr,
         )
+
 
 def make_taylor_data(
     n_samples: int = 100,
     n_models: int = 3,
     ref_std: float = 1.0,
-    corr_range: Tuple[float, float] = (0.5, 0.99),
-    std_range: Tuple[float, float] = (0.7, 1.3),
+    corr_range: tuple[float, float] = (0.5, 0.99),
+    std_range: tuple[float, float] = (0.7, 1.3),
     noise_level: float = 0.3,
     bias_level: float = 0.1,
-    seed: Optional[int] = 101,
-    as_frame: bool = False, # Added parameter
-) -> Union[Bunch, pd.DataFrame]: # Updated return type
+    seed: int | None = 101,
+    as_frame: bool = False,  # Added parameter
+) -> Bunch | pd.DataFrame:  # Updated return type
     r"""Generate synthetic data suitable for Taylor Diagrams.
 
     Creates a reference dataset and multiple simulated "prediction"
@@ -1000,29 +1009,32 @@ def make_taylor_data(
 
     # Basic validation for ranges
     if not (0 <= corr_range[0] <= corr_range[1] <= 1.0):
-         warnings.warn(
-             "corr_range limits should ideally be between 0 and 1 for "
-             "standard Taylor Diagrams. Adjusting..."
-         )
-         corr_range = (max(0, corr_range[0]), min(1.0, corr_range[1]))
-         if corr_range[0] > corr_range[1]: corr_range = (0.5, 0.99)
+        warnings.warn(
+            "corr_range limits should ideally be between 0 and 1 for "
+            "standard Taylor Diagrams. Adjusting...",
+            stacklevel=2,
+        )
+        corr_range = (max(0, corr_range[0]), min(1.0, corr_range[1]))
+        if corr_range[0] > corr_range[1]:
+            corr_range = (0.5, 0.99)
 
     if not (0 <= std_range[0] <= std_range[1]):
-         warnings.warn(
-             "std_range factors should be non-negative and min <= max."
-             " Using defaults."
-         )
-         std_range = (0.7, 1.3)
+        warnings.warn(
+            "std_range factors should be non-negative and min <= max."
+            " Using defaults.",
+            stacklevel=2,
+        )
+        std_range = (0.7, 1.3)
 
     if noise_level <= 1e-9 and corr_range[1] < 1.0 - 1e-9:
-         raise ValueError(
-             "noise_level cannot be zero if target correlation < 1 is possible."
-         )
+        raise ValueError(
+            "noise_level cannot be zero if target correlation < 1 is possible."
+        )
 
     # --- Generate Reference Data ---
     reference_raw = rng.normal(0, ref_std, n_samples)
     # Center mean at 0
-    reference = (reference_raw - np.mean(reference_raw))
+    reference = reference_raw - np.mean(reference_raw)
     # Scale to desired std dev
     current_std = np.std(reference)
     if current_std > 1e-9:
@@ -1037,7 +1049,7 @@ def make_taylor_data(
     calculated_corrs = []
 
     for i in range(n_models):
-        model_name = f"Model_{chr(65+i)}" # Model A, B, C...
+        model_name = f"Model_{chr(65+i)}"  # Model A, B, C...
         model_names.append(model_name)
 
         # Sample target stats for this model
@@ -1047,22 +1059,24 @@ def make_taylor_data(
 
         # Calculate coefficients a and b for p = a*r + b*noise + bias
         a = target_rho * target_std_factor
-        b_squared_term = target_std**2 - (a * actual_ref_std)**2
+        b_squared_term = target_std**2 - (a * actual_ref_std) ** 2
 
         if b_squared_term < -1e-9:
             warnings.warn(
                 f"Model {model_name}: Cannot achieve target std "
                 f"({target_std:.2f}) with target correlation "
                 f"({target_rho:.2f}) and noise "
-                f"({noise_level:.2f}). Setting b=0.", UserWarning
+                f"({noise_level:.2f}). Setting b=0.",
+                UserWarning,
+                stacklevel=2,
             )
             b = 0
         else:
             # Ensure noise_level isn't zero if b_squared_term > 0
             if noise_level <= 1e-9 and b_squared_term > 1e-9:
-                 raise ValueError(
-                     "noise_level cannot be zero if needed to reach target std"
-                 )
+                raise ValueError(
+                    "noise_level cannot be zero if needed to reach target std"
+                )
             b = np.sqrt(max(0, b_squared_term)) / max(noise_level, 1e-9)
 
         # Generate noise and bias
@@ -1080,7 +1094,7 @@ def make_taylor_data(
         calculated_corrs.append(np.clip(corr_val, -1.0, 1.0))
 
     # --- Assemble DataFrame (used for both frame and Bunch) ---
-    df_dict = {'reference': reference}
+    df_dict = {"reference": reference}
     for name, pred_array in zip(model_names, predictions):
         df_dict[name] = pred_array
     df = pd.DataFrame(df_dict)
@@ -1090,13 +1104,13 @@ def make_taylor_data(
         return df
     else:
         # Assemble stats DataFrame
-        stats_df = pd.DataFrame({
-            'stddev': calculated_stds,
-            'corrcoef': calculated_corrs
-        }, index=model_names)
+        stats_df = pd.DataFrame(
+            {"stddev": calculated_stds, "corrcoef": calculated_corrs}, index=model_names
+        )
 
         # Assemble description
-        descr = textwrap.dedent(f"""\
+        descr = textwrap.dedent(
+            f"""\
         Synthetic Taylor Diagram Data
 
         **Generated Parameters:**
@@ -1118,33 +1132,35 @@ def make_taylor_data(
                          'corrcoef' for each model vs reference.
         - ref_std      : Actual standard deviation of the reference data.
         - DESCR        : This description.
-        """)
+        """
+        )
 
         # Create and return Bunch object
         return Bunch(
-            frame=df, 
+            frame=df,
             reference=reference,
             predictions=predictions,
             model_names=model_names,
             stats=stats_df,
             ref_std=actual_ref_std,
-            DESCR=descr
+            DESCR=descr,
         )
-    
+
+
 def make_multi_model_quantile_data(
     n_samples: int = 100,
     n_models: int = 3,
-    quantiles: List[float] = [0.1, 0.5, 0.9],
+    quantiles: list[float] = None,
     prefix: str = "pred",
-    model_names: Optional[List[str]] = None,
+    model_names: list[str] | None = None,
     true_mean: float = 50.0,
     true_std: float = 10.0,
-    bias_range: Tuple[float, float] = (-2.0, 2.0),
-    width_range: Tuple[float, float] = (5.0, 15.0),
+    bias_range: tuple[float, float] = (-2.0, 2.0),
+    width_range: tuple[float, float] = (5.0, 15.0),
     noise_level: float = 1.0,
-    seed: Optional[int] = 202,
-    as_frame: bool = False, 
-) -> Union[Bunch, pd.DataFrame]: 
+    seed: int | None = 202,
+    as_frame: bool = False,
+) -> Bunch | pd.DataFrame:
     r"""Generate synthetic data with multiple models' quantile predictions.
 
     Creates a dataset simulating a scenario where multiple models
@@ -1311,6 +1327,8 @@ def make_multi_model_quantile_data(
     """
 
     # --- Input Validation ---
+    if quantiles is None:
+        quantiles = [0.1, 0.5, 0.9]
     if 0.5 not in quantiles:
         # Current logic relies on 0.5 being present for centering
         raise ValueError("The `quantiles` list must contain 0.5 (median).")
@@ -1321,13 +1339,9 @@ def make_multi_model_quantile_data(
         rng = np.random.default_rng()
 
     if not width_range[0] <= width_range[1] or width_range[0] < 0:
-        raise ValueError(
-            "width_range must be (min, max) with min >= 0 and min <= max."
-        )
+        raise ValueError("width_range must be (min, max) with min >= 0 and min <= max.")
     if not bias_range[0] <= bias_range[1]:
-        raise ValueError(
-            "bias_range must be (min, max) with min <= max."
-        )
+        raise ValueError("bias_range must be (min, max) with min <= max.")
 
     # --- Setup ---
     # Ensure unique and sorted quantiles
@@ -1341,22 +1355,22 @@ def make_multi_model_quantile_data(
 
     # Factor to scale half-width based on min/max quantile range vs Q10-Q90
     # Avoid division by zero if only one quantile provided
-    width_denominator = (0.9 - 0.1)
-    width_numerator = (q_max - q_min)
+    width_denominator = 0.9 - 0.1
+    width_numerator = q_max - q_min
     if len(quantiles_sorted) > 1 and abs(width_numerator) > 1e-9:
         width_scale_factor = width_numerator / width_denominator
     else:
-        width_scale_factor = 1.0 # No scaling needed if range is zero/single q
+        width_scale_factor = 1.0  # No scaling needed if range is zero/single q
 
     # --- Data Generation ---
     y_true = rng.normal(true_mean, true_std, n_samples)
     feature_1 = rng.uniform(0, 1, n_samples)
     feature_2 = rng.normal(5, 2, n_samples)
 
-    data_dict = { # Use dict to build data before DataFrame
-        'y_true': y_true,
-        'feature_1': feature_1,
-        'feature_2': feature_2,
+    data_dict = {  # Use dict to build data before DataFrame
+        "y_true": y_true,
+        "feature_1": feature_1,
+        "feature_2": feature_2,
     }
 
     # Generate Model Names
@@ -1373,7 +1387,7 @@ def make_multi_model_quantile_data(
     prediction_columns_dict = {name: [] for name in model_names_list}
 
     # --- Generate predictions for each model ---
-    for i, model_name in enumerate(model_names_list):
+    for _i, model_name in enumerate(model_names_list):
         # Sample model-specific parameters
         model_bias = rng.uniform(bias_range[0], bias_range[1])
         model_width = rng.uniform(width_range[0], width_range[1])
@@ -1382,17 +1396,16 @@ def make_multi_model_quantile_data(
         temp_model_quantiles = {}
 
         # Generate Q50 (median) prediction first
-        q50_pred = y_true + model_bias + rng.normal(
-            0, noise_level, n_samples
-        )
-        q50_col_name = f'{prefix}_{model_name}_q0.5'
+        q50_pred = y_true + model_bias + rng.normal(0, noise_level, n_samples)
+        q50_col_name = f"{prefix}_{model_name}_q0.5"
         temp_model_quantiles[0.5] = q50_pred
         # Add name to tracking dict immediately
         prediction_columns_dict[model_name].append(q50_col_name)
 
         # Generate other quantiles based on Q50 and target width
         for q in quantiles_sorted:
-            if q == q_median: continue # Skip if median
+            if q == q_median:
+                continue  # Skip if median
 
             # Calculate offset using proportional distance from median
             # Avoid division by zero if q_max == q_min
@@ -1402,17 +1415,20 @@ def make_multi_model_quantile_data(
             # Use standard deviation implied by width (e.g. q90-q10 ~ 2.56*std)
             # implied_std = model_width / (norm.ppf(q_max) - norm.ppf(q_min)) if (q_max != q_min) else 1.0
             # quantile_offset = z_score * implied_std
-            
+
             if abs(q_range) > 1e-9 and abs(width_scale_factor) > 1e-9:
                 quantile_offset = (
-                    (model_width / width_scale_factor) *
-                    (q - q_median) / q_range * 2
+                    (model_width / width_scale_factor) * (q - q_median) / q_range * 2
                 )
-            else: # Handle single quantile or zero range
+            else:  # Handle single quantile or zero range
                 quantile_offset = 0
 
-            q_pred = q50_pred + quantile_offset + rng.normal(
-                0, noise_level / 2, n_samples # Slightly less noise for bounds
+            q_pred = (
+                q50_pred
+                + quantile_offset
+                + rng.normal(
+                    0, noise_level / 2, n_samples  # Slightly less noise for bounds
+                )
             )
             temp_model_quantiles[q] = q_pred
 
@@ -1423,7 +1439,7 @@ def make_multi_model_quantile_data(
         sorted_data = np.sort(model_data_temp.values, axis=1)
         # Assign sorted values back, creating final column names
         for k, q in enumerate(quantiles_sorted):
-            col_name = f'{prefix}_{model_name}_q{q:.2f}'.rstrip('0').rstrip('.')
+            col_name = f"{prefix}_{model_name}_q{q:.2f}".rstrip("0").rstrip(".")
             data_dict[col_name] = sorted_data[:, k]
             # Add to tracking dict if not already added (handles Q50 case)
             if col_name not in prediction_columns_dict[model_name]:
@@ -1433,11 +1449,9 @@ def make_multi_model_quantile_data(
     df = pd.DataFrame(data_dict)
 
     # Order columns somewhat logically
-    feature_names = ['feature_1', 'feature_2']
-    target_name = ['y_true']
-    pred_cols_sorted = sorted([
-        col for col in df.columns if col.startswith(prefix)
-        ])
+    feature_names = ["feature_1", "feature_2"]
+    target_name = ["y_true"]
+    pred_cols_sorted = sorted([col for col in df.columns if col.startswith(prefix)])
     ordered_cols = target_name + feature_names + pred_cols_sorted
     df = df[ordered_cols]
 
@@ -1450,7 +1464,8 @@ def make_multi_model_quantile_data(
         data_array = df[data_numeric_cols].values
         target_array = df[target_name[0]].values
 
-        descr = textwrap.dedent(f"""\
+        descr = textwrap.dedent(
+            f"""\
         Synthetic Multi-Model Quantile Dataset for k-diagram
 
         **Generated Parameters:**
@@ -1480,7 +1495,8 @@ def make_multi_model_quantile_data(
         This dataset simulates quantile predictions from {n_models} models
         for a single time point, allowing comparison of their
         uncertainty characteristics.
-        """)
+        """
+        )
 
         return Bunch(
             frame=df,
@@ -1492,6 +1508,5 @@ def make_multi_model_quantile_data(
             quantile_levels=quantiles_sorted,
             prediction_columns=prediction_columns_dict,
             prefix=prefix,
-            DESCR=descr
+            DESCR=descr,
         )
-    

@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 import re
+
 import pytest
 
-from kdiagram.api.summary import ResultSummary
 import kdiagram.api.summary as summary_mod
+from kdiagram.api.summary import ResultSummary
 
 
 def test_resultsummary_add_results_creates_snake_case_attrs_and_stores_copy():
@@ -71,7 +71,9 @@ def test_resultsummary_flatten_nested_false_uses_beautify(monkeypatch):
     # Monkeypatch beautify_dict inside module to make assertion easy
     monkeypatch.setattr(summary_mod, "beautify_dict", lambda d, **k: "<<pretty>>")
 
-    rs = ResultSummary(name="X", pad_keys="auto", max_char=200, flatten_nested_dicts=False)
+    rs = ResultSummary(
+        name="X", pad_keys="auto", max_char=200, flatten_nested_dicts=False
+    )
     rs.add_results({"nested": {"k": "v"}, "other": 1})
 
     s = str(rs)
@@ -86,5 +88,6 @@ def test_resultsummary_add_results_type_error():
     with pytest.raises(TypeError):
         rs.add_results(["not", "a", "dict"])  # type: ignore[arg-type]
 
-if __name__=="__main__": # pragma: no-cover
-    pytest.main( [__file__])
+
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

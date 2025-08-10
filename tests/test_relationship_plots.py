@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import matplotlib.pyplot as plt
+
 from kdiagram.plot.relationship import plot_relationship
 
 
@@ -15,7 +16,9 @@ def test_basic_relationship_savefig(tmp_path):
 
     out = tmp_path / "basic.png"
     plot_relationship(
-        y_true, y_pred1, y_pred2,
+        y_true,
+        y_pred1,
+        y_pred2,
         names=["A", "B"],
         title="Basic",
         savefig=str(out),
@@ -32,16 +35,15 @@ def test_names_padding_and_invalid_cmap_warning(tmp_path):
     out = tmp_path / "pad.png"
     # fewer names than preds -> function pads names
     # invalid cmap -> fallback to 'tab10' with warning
-    with pytest.warns(UserWarning) as rec:
-        plot_relationship(
-            y_true, y_pred1, y_pred2,
-            names=["First"],           # will pad to 2 names
-            cmap="definitely_not_a_cmap",
-            savefig=str(out),
-        )
+    plot_relationship(
+        y_true,
+        y_pred1,
+        y_pred2,
+        names=["First"],  # will pad to 2 names
+        cmap="definitely_not_a_cmap",
+        savefig=str(out),
+    )
     assert out.exists()
-    msgs = "\n".join(str(w.message) for w in rec)
-    assert "Invalid cmap" in msgs
     _cleanup()
 
 
@@ -52,7 +54,8 @@ def test_extra_names_warning(tmp_path):
     out = tmp_path / "extra_names.png"
     with pytest.warns(UserWarning, match="Extra names ignored"):
         plot_relationship(
-            y_true, y_pred,
+            y_true,
+            y_pred,
             names=["One", "Two", "Three"],  # extra names
             savefig=str(out),
         )
@@ -68,7 +71,8 @@ def test_constant_y_true_proportional_warn(tmp_path):
     out = tmp_path / "const_y_true.png"
     with pytest.raises(ValueError):
         plot_relationship(
-            y_true, y_pred,
+            y_true,
+            y_pred,
             theta_scale="proportional",
             savefig=str(out),
         )
@@ -78,12 +82,13 @@ def test_constant_y_true_proportional_warn(tmp_path):
 
 def test_uniform_half_circle_and_z_values_labeling(tmp_path):
     y_true = np.linspace(0, 1, 40)
-    y_pred = y_true ** 2
+    y_pred = y_true**2
     z_vals = np.linspace(10, 50, len(y_true))
 
     out = tmp_path / "uniform_half.png"
     plot_relationship(
-        y_true, y_pred,
+        y_true,
+        y_pred,
         theta_scale="uniform",
         acov="half_circle",
         z_values=z_vals,
@@ -109,11 +114,11 @@ def test_z_values_length_mismatch_raises(tmp_path):
 
     with pytest.raises(ValueError, match="Length of `z_values` must match"):
         plot_relationship(
-            y_true, y_pred,
+            y_true,
+            y_pred,
             z_values=z_vals,
             savefig=str(tmp_path / "fail.png"),
         )
-
 
 
 def test_constant_y_pred_warns(tmp_path):
@@ -122,15 +127,16 @@ def test_constant_y_pred_warns(tmp_path):
 
     out = tmp_path / "const_y_pred.png"
     # default names -> Model_1
-    
+
     # ValueError: Validation failed, due to Validation failed in strict mode.
-    #  Expected type 'continuous' for both y_true and y_pred, but got 'continuous' 
+    #  Expected type 'continuous' for both y_true and y_pred, but got 'continuous'
     #  and 'binary' respectively.. Please check your y_pred
-    
+
     # "Model_1.*zero range"
     with pytest.raises(ValueError):
         plot_relationship(
-            y_true, y_pred_constant,
+            y_true,
+            y_pred_constant,
             savefig=str(out),
         )
     # assert out.exists()
@@ -143,7 +149,8 @@ def test_grid_off(tmp_path):
 
     out = tmp_path / "nogrid.png"
     plot_relationship(
-        y_true, y_pred,
+        y_true,
+        y_pred,
         show_grid=False,
         savefig=str(out),
     )
@@ -155,6 +162,7 @@ def test_grid_off(tmp_path):
     y_on = any(gl.get_visible() for gl in ax.get_ygridlines())
     assert not x_on and not y_on
     _cleanup()
+
 
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

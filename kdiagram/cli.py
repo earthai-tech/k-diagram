@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0 Licence
 # Author: L. Kouadio <etanoyau@gmail.com>
 
@@ -10,12 +9,15 @@ by providing data via CSV files.
 """
 
 
-from __future__ import annotations 
+from __future__ import annotations
+
 import argparse
 import sys
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 # Import package itself for version (if available)
 try:
     import kdiagram
@@ -24,35 +26,30 @@ except ImportError:
     class kdiagram:
         __version__ = "unknown"
 
-else: 
+else:
     # --- Import plotting functions ---
     # Assuming the structure kdiagram -> plot -> uncertainty.py
     # Import ALL uncertainty plot functions intended for CLI
+    from kdiagram.plot.evaluation import (
+        plot_taylor_diagram,
+        plot_taylor_diagram_in,
+        taylor_diagram,
+    )
+    from kdiagram.plot.feature_based import plot_feature_fingerprint
+    from kdiagram.plot.relationship import plot_relationship
     from kdiagram.plot.uncertainty import (
-        plot_actual_vs_predicted, # Added
+        plot_actual_vs_predicted,  # Added
         plot_anomaly_magnitude,
-        plot_coverage_diagnostic, # Added
+        plot_coverage,
+        plot_coverage_diagnostic,  # Added
         plot_interval_consistency,
-        plot_interval_width,      # Added
+        plot_interval_width,  # Added
         plot_model_drift,
-        plot_temporal_uncertainty,# Added
+        plot_temporal_uncertainty,  # Added
         plot_uncertainty_drift,
         plot_velocity,
-        plot_coverage,
     )
-    
-    
-    from kdiagram.plot.evaluation import (
-        taylor_diagram,
-        plot_taylor_diagram_in,
-        plot_taylor_diagram
-    )
-    from kdiagram.plot.feature_based import (
-        plot_feature_fingerprint
-    )
-    from kdiagram.plot.relationship import (
-        plot_relationship
-    )
+
 
 # ... (rest of imports like kdiagram package for version) ...
 def read_csv_to_df(filepath: str) -> pd.DataFrame | None:
@@ -80,7 +77,8 @@ def read_csv_to_df(filepath: str) -> pd.DataFrame | None:
         print(f"Error loading data from {filepath}: {e}", file=sys.stderr)
         return None
 
-def read_csv_to_numpy(filepath: str, delimiter=',') -> np.ndarray | None:
+
+def read_csv_to_numpy(filepath: str, delimiter=",") -> np.ndarray | None:
     """
     Reads data from a CSV file into a NumPy array.
 
@@ -100,7 +98,7 @@ def read_csv_to_numpy(filepath: str, delimiter=',') -> np.ndarray | None:
         arr = np.genfromtxt(filepath, delimiter=delimiter)
         # Handle case where genfromtxt returns a scalar for single-value files
         if arr.ndim == 0:
-             arr = arr.reshape(-1)
+            arr = arr.reshape(-1)
         print(f"Successfully loaded data from: {filepath}")
         return arr
     except FileNotFoundError:
@@ -110,19 +108,21 @@ def read_csv_to_numpy(filepath: str, delimiter=',') -> np.ndarray | None:
         print(f"Error loading data from {filepath}: {e}", file=sys.stderr)
         return None
 
+
 # --- CLI Command Functions ---
+
 
 def _cli_plot_coverage(args):
     """Handler for the 'plot_coverage' command."""
     y_true = read_csv_to_numpy(args.y_true)
     if y_true is None:
-        return # Error already printed by read_csv_to_numpy
+        return  # Error already printed by read_csv_to_numpy
 
     y_preds_list = []
     for pred_file in args.y_preds_files:
         y_pred = read_csv_to_numpy(pred_file)
         if y_pred is None:
-            return # Error reading one of the prediction files
+            return  # Error reading one of the prediction files
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
@@ -134,13 +134,14 @@ def _cli_plot_coverage(args):
         y_true,
         *y_preds_list,  # Unpack the list of prediction arrays
         names=args.names,
-        q=args.q
+        q=args.q,
     )
     if args.savefig:
         plt.savefig(args.savefig)
         print(f"Plot saved to {args.savefig}")
     else:
         plt.show()
+
 
 def _cli_plot_model_drift(args):
     """Handler for the 'plot_model_drift' command."""
@@ -153,7 +154,7 @@ def _cli_plot_model_drift(args):
         df=df,
         q10_cols=args.q10_cols,
         q90_cols=args.q90_cols,
-        horizons=args.horizons
+        horizons=args.horizons,
         # Add other relevant args from your function signature if needed
     )
     if args.savefig:
@@ -161,6 +162,7 @@ def _cli_plot_model_drift(args):
         print(f"Plot saved to {args.savefig}")
     else:
         plt.show()
+
 
 def _cli_plot_velocity(args):
     """Handler for the 'plot_velocity' command."""
@@ -172,7 +174,7 @@ def _cli_plot_velocity(args):
     plot_velocity(
         df=df,
         q50_cols=args.q50_cols,
-        theta_col=args.theta_col
+        theta_col=args.theta_col,
         # Add other relevant args from your function signature if needed
     )
     if args.savefig:
@@ -180,6 +182,7 @@ def _cli_plot_velocity(args):
         print(f"Plot saved to {args.savefig}")
     else:
         plt.show()
+
 
 def _cli_plot_interval_consistency(args):
     """Handler for the 'plot_interval_consistency' command."""
@@ -189,9 +192,12 @@ def _cli_plot_interval_consistency(args):
 
     # Convert figsize from string "width,height" to tuple (width, height)
     try:
-        figsize = tuple(map(float, args.figsize.split(','))) if args.figsize else (9, 9)
+        figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (9, 9)
     except ValueError:
-        print("Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8'). Using default (9,9).", file=sys.stderr)
+        print(
+            "Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8'). Using default (9,9).",
+            file=sys.stderr,
+        )
         figsize = (9, 9)
 
     print("Generating Interval Consistency Plot...")
@@ -205,11 +211,11 @@ def _cli_plot_interval_consistency(args):
         cmap=args.cmap,
         acov=args.acov,
         title=args.title,
-        figsize=figsize, # Use converted tuple
+        figsize=figsize,  # Use converted tuple
         s=args.s,
         alpha=args.alpha,
         show_grid=args.show_grid,
-        mask_angle=args.mask_angle
+        mask_angle=args.mask_angle,
         # savefig handled outside
     )
     if args.savefig:
@@ -217,6 +223,7 @@ def _cli_plot_interval_consistency(args):
         print(f"Plot saved to {args.savefig}")
     else:
         plt.show()
+
 
 def _cli_plot_anomaly_magnitude(args):
     """Handler for the 'plot_anomaly_magnitude' command."""
@@ -226,21 +233,24 @@ def _cli_plot_anomaly_magnitude(args):
 
     # Convert figsize from string "width,height" to tuple (width, height)
     try:
-        figsize = tuple(map(float, args.figsize.split(','))) if args.figsize else (8, 8)
+        figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (8, 8)
     except ValueError:
-        print("Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8')."
-              " Using default (8,8).", file=sys.stderr)
+        print(
+            "Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8')."
+            " Using default (8,8).",
+            file=sys.stderr,
+        )
         figsize = (8, 8)
 
     print("Generating Anomaly Magnitude Plot...")
     plot_anomaly_magnitude(
         df=df,
         actual_col=args.actual_col,
-        q_cols=args.q_cols, # Should be exactly two: [lower_q_col, upper_q_col]
+        q_cols=args.q_cols,  # Should be exactly two: [lower_q_col, upper_q_col]
         theta_col=args.theta_col,
         acov=args.acov,
         title=args.title,
-        figsize=figsize, # Use converted tuple
+        figsize=figsize,  # Use converted tuple
         cmap_under=args.cmap_under,
         cmap_over=args.cmap_over,
         s=args.s,
@@ -248,14 +258,15 @@ def _cli_plot_anomaly_magnitude(args):
         show_grid=args.show_grid,
         verbose=args.verbose,
         cbar=args.cbar,
-        mask_angle=args.mask_angle
-         # savefig handled outside
+        mask_angle=args.mask_angle,
+        # savefig handled outside
     )
     if args.savefig:
         plt.savefig(args.savefig)
         print(f"Plot saved to {args.savefig}")
     else:
         plt.show()
+
 
 def _cli_plot_uncertainty_drift(args):
     """Handler for the 'plot_uncertainty_drift' command."""
@@ -265,10 +276,13 @@ def _cli_plot_uncertainty_drift(args):
 
     # Convert figsize from string "width,height" to tuple (width, height)
     try:
-        figsize = tuple(map(float, args.figsize.split(','))) if args.figsize else (9, 9)
+        figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (9, 9)
     except ValueError:
-        print("Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8')."
-              " Using default (9,9).", file=sys.stderr)
+        print(
+            "Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8')."
+            " Using default (9,9).",
+            file=sys.stderr,
+        )
         figsize = (9, 9)
 
     print("Generating Uncertainty Drift Plot...")
@@ -284,12 +298,12 @@ def _cli_plot_uncertainty_drift(args):
         cmap=args.cmap,
         label=args.label,
         alpha=args.alpha,
-        figsize=figsize, # Use converted tuple
+        figsize=figsize,  # Use converted tuple
         title=args.title,
         show_grid=args.show_grid,
         show_legend=args.show_legend,
-        mask_angle=args.mask_angle
-         # savefig handled outside
+        mask_angle=args.mask_angle,
+        # savefig handled outside
     )
     if args.savefig:
         plt.savefig(args.savefig)
@@ -297,43 +311,52 @@ def _cli_plot_uncertainty_drift(args):
     else:
         plt.show()
 
+
 def _handle_figsize(figsize_str: str, default_size: tuple) -> tuple:
     """Helper to parse figsize string 'w,h'."""
     if not figsize_str:
         return default_size
     try:
-        size = tuple(map(float, figsize_str.split(',')))
+        size = tuple(map(float, figsize_str.split(",")))
         if len(size) != 2:
             raise ValueError("Figsize must have two values.")
         return size
     except ValueError as e:
-        print(f"Error: Invalid format for figsize '{figsize_str}'. "
-              f"Expected 'width,height' (e.g., '8,8'). Using default "
-              f"{default_size}. Original error: {e}", file=sys.stderr)
+        print(
+            f"Error: Invalid format for figsize '{figsize_str}'. "
+            f"Expected 'width,height' (e.g., '8,8'). Using default "
+            f"{default_size}. Original error: {e}",
+            file=sys.stderr,
+        )
         return default_size
+
 
 def _handle_savefig_show(savefig_path: str | None):
     """Helper to save or show plot."""
     if savefig_path:
         try:
-            plt.savefig(savefig_path, bbox_inches='tight', dpi=300)
+            plt.savefig(savefig_path, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig_path}")
         except Exception as e:
-            print(f"Error saving plot to {savefig_path}: {e}",
-                  file=sys.stderr)
+            print(f"Error saving plot to {savefig_path}: {e}", file=sys.stderr)
     else:
         try:
             plt.show()
         except Exception as e:
             # Handle cases where plt.show might fail (e.g., no backend)
             # but don't crash the CLI.
-             print(f"Note: Could not display plot interactively ({e})."
-                   f" Use --savefig to save to file.", file=sys.stderr)
+            print(
+                f"Note: Could not display plot interactively ({e})."
+                f" Use --savefig to save to file.",
+                file=sys.stderr,
+            )
+
 
 def _cli_plot_actual_vs_predicted(args):
     """Handler for the 'plot_actual_vs_predicted' command."""
     df = read_csv_to_df(args.filepath)
-    if df is None: return
+    if df is None:
+        return
     figsize = _handle_figsize(args.figsize, (8, 8))
 
     print("Generating Actual vs Predicted Plot...")
@@ -356,10 +379,12 @@ def _cli_plot_actual_vs_predicted(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 def _cli_plot_coverage_diagnostic(args):
     """Handler for the 'plot_coverage_diagnostic' command."""
     df = read_csv_to_df(args.filepath)
-    if df is None: return
+    if df is None:
+        return
     figsize = _handle_figsize(args.figsize, (8, 8))
 
     print("Generating Coverage Diagnostic Plot...")
@@ -386,10 +411,12 @@ def _cli_plot_coverage_diagnostic(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 def _cli_plot_interval_width(args):
     """Handler for the 'plot_interval_width' command."""
     df = read_csv_to_df(args.filepath)
-    if df is None: return
+    if df is None:
+        return
     figsize = _handle_figsize(args.figsize, (8, 8))
 
     print("Generating Interval Width Plot...")
@@ -411,10 +438,12 @@ def _cli_plot_interval_width(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 def _cli_plot_temporal_uncertainty(args):
     """Handler for the 'plot_temporal_uncertainty' command."""
     df = read_csv_to_df(args.filepath)
-    if df is None: return
+    if df is None:
+        return
     figsize = _handle_figsize(args.figsize, (8, 8))
 
     # Handle 'auto' q_cols case - requires detect_quantiles_in logic
@@ -453,22 +482,29 @@ def _cli_plot_temporal_uncertainty(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 # --- Add NEW Handler Functions ---
+
 
 def _cli_taylor_diagram(args):
     """Handler for the 'taylor_diagram' command."""
     # Determine input mode: stats or arrays
     use_stats_mode = args.stddev is not None and args.corrcoef is not None
-    use_array_mode = args.y_preds_files is not None \
-                     and args.reference_file is not None
+    use_array_mode = args.y_preds_files is not None and args.reference_file is not None
 
     if use_stats_mode and use_array_mode:
-        print("Error: Provide EITHER --stddev/--corrcoef/--ref-std OR "
-              "--y-preds-files/--reference-file, not both.", file=sys.stderr)
+        print(
+            "Error: Provide EITHER --stddev/--corrcoef/--ref-std OR "
+            "--y-preds-files/--reference-file, not both.",
+            file=sys.stderr,
+        )
         return
     if not use_stats_mode and not use_array_mode:
-        print("Error: Must provide either --stddev/--corrcoef/--ref-std OR "
-              "--y-preds-files/--reference-file.", file=sys.stderr)
+        print(
+            "Error: Must provide either --stddev/--corrcoef/--ref-std OR "
+            "--y-preds-files/--reference-file.",
+            file=sys.stderr,
+        )
         return
 
     figsize = _handle_figsize(args.fig_size, (8, 6))
@@ -476,10 +512,12 @@ def _cli_taylor_diagram(args):
 
     if use_stats_mode:
         if args.ref_std is None:
-             # ref_std defaults to 1 if not given with stats,
-             # per function signature
-             print("Warning: --ref-std not provided with stats,"
-                   " using default=1.", file=sys.stderr)
+            # ref_std defaults to 1 if not given with stats,
+            # per function signature
+            print(
+                "Warning: --ref-std not provided with stats," " using default=1.",
+                file=sys.stderr,
+            )
         taylor_diagram(
             stddev=args.stddev,
             corrcoef=args.corrcoef,
@@ -496,19 +534,20 @@ def _cli_taylor_diagram(args):
             # size_props omitted for CLI simplicity
             title=args.title,
         )
-    else: # use_array_mode
+    else:  # use_array_mode
         reference = read_csv_to_numpy(args.reference_file)
-        if reference is None: return
+        if reference is None:
+            return
 
         y_preds_list = []
         for pred_file in args.y_preds_files:
             y_pred = read_csv_to_numpy(pred_file)
-            if y_pred is None: return
+            if y_pred is None:
+                return
             y_preds_list.append(y_pred)
 
         if not y_preds_list:
-            print("Error: No prediction files loaded successfully.",
-                  file=sys.stderr)
+            print("Error: No prediction files loaded successfully.", file=sys.stderr)
             return
 
         # ref_std will be calculated internally from reference array
@@ -527,17 +566,20 @@ def _cli_taylor_diagram(args):
             title=args.title,
         )
 
-    _handle_savefig_show(args.savefig) # Handles show/save
+    _handle_savefig_show(args.savefig)  # Handles show/save
+
 
 def _cli_plot_taylor_diagram_in(args):
     """Handler for the 'plot_taylor_diagram_in' command."""
     reference = read_csv_to_numpy(args.reference_file)
-    if reference is None: return
+    if reference is None:
+        return
 
     y_preds_list = []
     for pred_file in args.y_preds_files:
         y_pred = read_csv_to_numpy(pred_file)
-        if y_pred is None: return
+        if y_pred is None:
+            return
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
@@ -549,12 +591,14 @@ def _cli_plot_taylor_diagram_in(args):
     if args.norm_range:
         try:
             norm_range_tuple = tuple(map(float, args.norm_range))
-            if len(norm_range_tuple) != 2: raise ValueError()
+            if len(norm_range_tuple) != 2:
+                raise ValueError()
         except ValueError:
-            print("Error: Invalid format for --norm-range. Expected "
-                  "'min,max'.", file=sys.stderr)
+            print(
+                "Error: Invalid format for --norm-range. Expected " "'min,max'.",
+                file=sys.stderr,
+            )
             return
-
 
     print("Generating Taylor Diagram with Background...")
     plot_taylor_diagram_in(
@@ -576,7 +620,7 @@ def _cli_plot_taylor_diagram_in(args):
         radial_strategy=args.radial_strategy,
         norm_c=args.norm_c,
         norm_range=norm_range_tuple,
-        cbar=(args.cbar == 'True'), # Convert string 'True'/'False'/'off'
+        cbar=(args.cbar == "True"),  # Convert string 'True'/'False'/'off'
         fig_size=figsize,
         title=args.title,
     )
@@ -586,12 +630,14 @@ def _cli_plot_taylor_diagram_in(args):
 def _cli_plot_taylor_diagram(args):
     """Handler for the 'plot_taylor_diagram' command."""
     reference = read_csv_to_numpy(args.reference_file)
-    if reference is None: return
+    if reference is None:
+        return
 
     y_preds_list = []
     for pred_file in args.y_preds_files:
         y_pred = read_csv_to_numpy(pred_file)
-        if y_pred is None: return
+        if y_pred is None:
+            return
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
@@ -620,17 +666,22 @@ def _cli_plot_taylor_diagram(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 def _cli_plot_feature_fingerprint(args):
     """Handler for the 'plot_feature_fingerprint' command."""
     # Assume CSV contains only the numerical importance matrix
     importances_arr = read_csv_to_numpy(args.importances_file)
-    if importances_arr is None: return
+    if importances_arr is None:
+        return
     # Ensure it's 2D
     if importances_arr.ndim == 1:
-        importances_arr = importances_arr.reshape(1, -1) # Reshape 1D to 2D
+        importances_arr = importances_arr.reshape(1, -1)  # Reshape 1D to 2D
     elif importances_arr.ndim > 2:
-        print(f"Error: Input file '{args.importances_file}' should contain"
-              " a 2D matrix of importances.", file=sys.stderr)
+        print(
+            f"Error: Input file '{args.importances_file}' should contain"
+            " a 2D matrix of importances.",
+            file=sys.stderr,
+        )
         return
 
     figsize = _handle_figsize(args.figsize, (8, 8))
@@ -648,15 +699,18 @@ def _cli_plot_feature_fingerprint(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 def _cli_plot_relationship(args):
     """Handler for the 'plot_relationship' command."""
     y_true = read_csv_to_numpy(args.y_true_file)
-    if y_true is None: return
+    if y_true is None:
+        return
 
     y_preds_list = []
     for pred_file in args.y_preds_files:
         y_pred = read_csv_to_numpy(pred_file)
-        if y_pred is None: return
+        if y_pred is None:
+            return
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
@@ -666,7 +720,8 @@ def _cli_plot_relationship(args):
     z_values_arr = None
     if args.z_values_file:
         z_values_arr = read_csv_to_numpy(args.z_values_file)
-        if z_values_arr is None: return # Error reading z_values
+        if z_values_arr is None:
+            return  # Error reading z_values
 
     figsize = _handle_figsize(args.figsize, (8, 8))
     print("Generating Relationship Plot...")
@@ -694,22 +749,23 @@ def _cli_plot_relationship(args):
     )
     _handle_savefig_show(args.savefig)
 
+
 # --- Main CLI Parser Setup ---
+
 
 def main():
     # Main parser
     parser = argparse.ArgumentParser(
-        description="K-Diagram: CLI for Forecasting Uncertainty "
-                    "Visualization.",
+        description="K-Diagram: CLI for Forecasting Uncertainty " "Visualization.",
         epilog=(
             "Example: k-diagram plot_coverage true_vals.csv "
             "preds1.csv preds2.csv --names ModelA ModelB --q 0.1 0.9"
-        )
+        ),
     )
     parser.add_argument(
-        '--version',
-        action='version',
-        version=f'%(prog)s {kdiagram.__version__}'
+        "--version",
+        action="version",
+        version=f"%(prog)s {kdiagram.__version__}",
         # Assuming __version__ is in kdiagram/__init__.py
     )
 
@@ -721,7 +777,7 @@ def main():
         required=True,
         title="Available commands",
         metavar="<command>",
-        help="Use '<command> --help' for specific command options."
+        help="Use '<command> --help' for specific command options.",
     )
 
     # --- Subparser: plot_coverage ---
@@ -730,28 +786,28 @@ def main():
         help="Plot coverage score (requires NumPy arrays from CSVs).",
         description=(
             "Generates bar/line/pie/radar plot showing the empirical "
-            "coverage rate(s)." # Adjusted description slightly
-        )
+            "coverage rate(s)."  # Adjusted description slightly
+        ),
     )
     parser_coverage.add_argument(
         "y_true",
         type=str,
-        help="Path to CSV file with true target values (single column)."
+        help="Path to CSV file with true target values (single column).",
     )
     parser_coverage.add_argument(
         "y_preds_files",
         type=str,
-        nargs='+', # One or more prediction files
+        nargs="+",  # One or more prediction files
         help=(
             "Paths to CSV files with predicted values/bounds. Each file "
             "represents a model or set of quantiles."
-        )
+        ),
     )
     parser_coverage.add_argument(
         "--names",
         type=str,
         nargs="*",
-        help="Optional names for the models corresponding to y_preds_files."
+        help="Optional names for the models corresponding to y_preds_files.",
     )
     parser_coverage.add_argument(
         "--q",
@@ -761,47 +817,47 @@ def main():
         help=(
             "Quantile levels used for the prediction intervals "
             "(e.g., 0.1 0.9 for 80%% interval)."
-        )
+        ),
     )
     # --- Add arguments for plot_coverage specific options ---
     parser_coverage.add_argument(
         "--kind",
         type=str,
-        default='line',
-        choices=['line', 'bar', 'pie', 'radar'],
-        help="Type of plot to generate (default: 'line')."
+        default="line",
+        choices=["line", "bar", "pie", "radar"],
+        help="Type of plot to generate (default: 'line').",
     )
     parser_coverage.add_argument(
         "--cmap",
         type=str,
-        default='viridis',
-        help="Colormap for 'pie' or 'radar' gradient (default: 'viridis')."
+        default="viridis",
+        help="Colormap for 'pie' or 'radar' gradient (default: 'viridis').",
     )
     parser_coverage.add_argument(
         "--cov-fill",
         action="store_true",
         default=False,
-        help="Fill area in radar plot (default: False)."
+        help="Fill area in radar plot (default: False).",
     )
     parser_coverage.add_argument(
         "--figsize",
         type=str,
-        default=None, # Use function default
-        help="Figure size 'width,height' (e.g., '8,6')."
+        default=None,  # Use function default
+        help="Figure size 'width,height' (e.g., '8,6').",
     )
     parser_coverage.add_argument(
         "--title",
         type=str,
-        default=None, # Use function default
-        help="Optional plot title."
+        default=None,  # Use function default
+        help="Optional plot title.",
     )
     parser_coverage.add_argument(
         "--savefig",
         type=str,
         metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        help="Save plot to file instead of displaying.",
     )
-    parser_coverage.set_defaults(func=_cli_plot_coverage) # Link handler
+    parser_coverage.set_defaults(func=_cli_plot_coverage)  # Link handler
 
     # --- Subparser: plot_model_drift ---
     parser_drift = subparsers.add_parser(
@@ -810,20 +866,20 @@ def main():
         description=(
             "Visualizes how prediction interval widths change across "
             "different time horizons using a polar bar chart."
-        )
+        ),
     )
     parser_drift.add_argument(
         "filepath",
         type=str,
-        help="Path to CSV with model predictions incl. quantile columns."
+        help="Path to CSV with model predictions incl. quantile columns.",
     )
     parser_drift.add_argument(
-        "--q10-cols", # Use hyphenated names
-        dest="q10_cols", # Map to variable name
+        "--q10-cols",  # Use hyphenated names
+        dest="q10_cols",  # Map to variable name
         type=str,
         nargs="+",
         required=True,
-        help="Column names for lower quantile predictions (e.g., Q10)."
+        help="Column names for lower quantile predictions (e.g., Q10).",
     )
     parser_drift.add_argument(
         "--q90-cols",
@@ -831,14 +887,14 @@ def main():
         type=str,
         nargs="+",
         required=True,
-        help="Column names for upper quantile predictions (e.g., Q90)."
+        help="Column names for upper quantile predictions (e.g., Q90).",
     )
     parser_drift.add_argument(
         "--horizons",
         type=str,
         nargs="+",
         required=True,
-        help="Labels for time horizons corresponding to quantile columns."
+        help="Labels for time horizons corresponding to quantile columns.",
     )
     # --- Add arguments for plot_model_drift specific options ---
     parser_drift.add_argument(
@@ -847,71 +903,71 @@ def main():
         type=str,
         nargs="+",
         default=None,
-        help="Optional columns to use for coloring bars."
+        help="Optional columns to use for coloring bars.",
     )
     parser_drift.add_argument(
         "--acov",
         type=str,
-        default='quarter_circle', # Function default
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'quarter_circle')."
+        default="quarter_circle",  # Function default
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'quarter_circle').",
     )
     parser_drift.add_argument(
         "--value-label",
         dest="value_label",
         type=str,
-        default="Uncertainty Width (Q90 - Q10)", # Function default
-        help="Label for the radial axis."
+        default="Uncertainty Width (Q90 - Q10)",  # Function default
+        help="Label for the radial axis.",
     )
     parser_drift.add_argument(
         "--cmap",
         type=str,
-        default='coolwarm', # Function default
-        help="Colormap for bars (default: 'coolwarm')."
+        default="coolwarm",  # Function default
+        help="Colormap for bars (default: 'coolwarm').",
     )
     parser_drift.add_argument(
         "--figsize",
         type=str,
         default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        help="Figure size 'width,height' (e.g., '8,8').",
     )
     parser_drift.add_argument(
         "--title",
         type=str,
-        default="Model Forecast Drift Over Time", # Function default
-        help="Plot title."
+        default="Model Forecast Drift Over Time",  # Function default
+        help="Plot title.",
     )
     parser_drift.add_argument(
         "--show-grid",
         action="store_true",
         dest="show_grid",
         default=True,
-        help="Show grid lines (default)."
+        help="Show grid lines (default).",
     )
     parser_drift.add_argument(
         "--no-show-grid",
         action="store_false",
         dest="show_grid",
-        help="Hide grid lines."
+        help="Hide grid lines.",
     )
     parser_drift.add_argument(
         "--annotate",
         action="store_true",
         dest="annotate",
         default=True,
-        help="Annotate bars with values (default)."
+        help="Annotate bars with values (default).",
     )
     parser_drift.add_argument(
         "--no-annotate",
         action="store_false",
         dest="annotate",
-        help="Do not annotate bars."
+        help="Do not annotate bars.",
     )
     parser_drift.add_argument(
         "--savefig",
         type=str,
         metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        help="Save plot to file instead of displaying.",
     )
     parser_drift.set_defaults(func=_cli_plot_model_drift)
 
@@ -920,12 +976,12 @@ def main():
         "plot_velocity",
         help="Plot velocity diagnostic (DataFrame input).",
         description="Visualizes the rate of change (velocity) of median "
-                    "predictions."
+        "predictions.",
     )
     parser_velocity.add_argument(
         "filepath",
         type=str,
-        help="Path to CSV with predictions incl. median (Q50) columns."
+        help="Path to CSV with predictions incl. median (Q50) columns.",
     )
     parser_velocity.add_argument(
         "--q50-cols",
@@ -933,116 +989,113 @@ def main():
         type=str,
         nargs="+",
         required=True,
-        help="Column names for the median (Q50) predictions."
+        help="Column names for the median (Q50) predictions.",
     )
     parser_velocity.add_argument(
         "--theta-col",
         dest="theta_col",
         type=str,
         default=None,
-        help="Optional column name for angular position (ignored)."
+        help="Optional column name for angular position (ignored).",
     )
     # --- Add arguments for plot_velocity specific options ---
     parser_velocity.add_argument(
         "--cmap",
         type=str,
-        default='viridis', # Function default
-        help="Colormap for points (default: 'viridis')."
+        default="viridis",  # Function default
+        help="Colormap for points (default: 'viridis').",
     )
     parser_velocity.add_argument(
         "--acov",
         type=str,
-        default='default', # Function default
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        default="default",  # Function default
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     parser_velocity.add_argument(
         "--normalize",
         action="store_true",
         dest="normalize",
         default=True,
-        help="Normalize radius (velocity) to [0, 1] (default)."
+        help="Normalize radius (velocity) to [0, 1] (default).",
     )
     parser_velocity.add_argument(
         "--no-normalize",
         action="store_false",
         dest="normalize",
-        help="Plot raw velocity values."
+        help="Plot raw velocity values.",
     )
     parser_velocity.add_argument(
         "--use-abs-color",
         dest="use_abs_color",
         action="store_true",
         default=True,
-        help="Color points by avg Q50 magnitude (default)."
+        help="Color points by avg Q50 magnitude (default).",
     )
     parser_velocity.add_argument(
-        "--use-velocity-color", # More intuitive flag name
+        "--use-velocity-color",  # More intuitive flag name
         dest="use_abs_color",
         action="store_false",
-        help="Color points by velocity instead of Q50 magnitude."
+        help="Color points by velocity instead of Q50 magnitude.",
     )
     parser_velocity.add_argument(
         "--figsize",
         type=str,
         default="9,9",
-        help="Figure size 'width,height' (e.g., '9,9')."
+        help="Figure size 'width,height' (e.g., '9,9').",
     )
     parser_velocity.add_argument(
         "--title",
         type=str,
-        default=None, # Function default
-        help="Optional plot title."
+        default=None,  # Function default
+        help="Optional plot title.",
     )
     parser_velocity.add_argument(
         "--s",
-        type=float, # Allow float size
-        default=30, # Function default
-        help="Marker size (default: 30)."
+        type=float,  # Allow float size
+        default=30,  # Function default
+        help="Marker size (default: 30).",
     )
     parser_velocity.add_argument(
         "--alpha",
         type=float,
-        default=0.85, # Function default
-        help="Transparency for points (default: 0.85)."
+        default=0.85,  # Function default
+        help="Transparency for points (default: 0.85).",
     )
     parser_velocity.add_argument(
         "--show-grid",
         action="store_true",
         dest="show_grid",
         default=True,
-        help="Show grid lines (default)."
+        help="Show grid lines (default).",
     )
     parser_velocity.add_argument(
         "--no-show-grid",
         action="store_false",
         dest="show_grid",
-        help="Hide grid lines."
+        help="Hide grid lines.",
     )
     parser_velocity.add_argument(
         "--cbar",
         action="store_true",
         dest="cbar",
         default=True,
-        help="Show color bar (default)."
+        help="Show color bar (default).",
     )
     parser_velocity.add_argument(
-        "--no-cbar",
-        action="store_false",
-        dest="cbar",
-        help="Hide color bar."
+        "--no-cbar", action="store_false", dest="cbar", help="Hide color bar."
     )
     parser_velocity.add_argument(
         "--mask-angle",
         action="store_true",
         default=False,
-        help="Hide angular tick labels (default: False)."
+        help="Hide angular tick labels (default: False).",
     )
     parser_velocity.add_argument(
         "--savefig",
         type=str,
         metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        help="Save plot to file instead of displaying.",
     )
     parser_velocity.set_defaults(func=_cli_plot_velocity)
 
@@ -1051,78 +1104,108 @@ def main():
         "plot_interval_consistency",
         help="Plot interval consistency (DataFrame input).",
         description="Visualizes consistency of prediction interval width "
-                    "over time using Std Dev or CV."
+        "over time using Std Dev or CV.",
+    )
+    p_ic.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_ic.add_argument(
+        "--qlow-cols",
+        dest="qlow_cols",
+        nargs="+",
+        required=True,
+        help="List of columns for lower quantiles (e.g., Q10).",
     )
     p_ic.add_argument(
-        "filepath", type=str, help="Path to the CSV data file."
+        "--qup-cols",
+        dest="qup_cols",
+        nargs="+",
+        required=True,
+        help="List of columns for upper quantiles (e.g., Q90).",
     )
     p_ic.add_argument(
-        "--qlow-cols", dest="qlow_cols", nargs='+', required=True,
-        help="List of columns for lower quantiles (e.g., Q10)."
+        "--q50-cols",
+        dest="q50_cols",
+        nargs="+",
+        default=None,
+        help="List of columns for median quantiles (optional, for color).",
     )
     p_ic.add_argument(
-        "--qup-cols", dest="qup_cols", nargs='+', required=True,
-        help="List of columns for upper quantiles (e.g., Q90)."
+        "--theta-col",
+        dest="theta_col",
+        type=str,
+        default=None,
+        help="Column name for angular position (optional, ignored).",
     )
     p_ic.add_argument(
-        "--q50-cols", dest="q50_cols", nargs='+', default=None,
-        help="List of columns for median quantiles (optional, for color)."
+        "--use-cv",
+        dest="use_cv",
+        action="store_true",
+        default=True,  # Func default
+        help=("Use Coefficient of Variation (CV) for radial axis " "(default: True)."),
     )
     p_ic.add_argument(
-        "--theta-col", dest="theta_col", type=str, default=None,
-        help="Column name for angular position (optional, ignored)."
-    )
-    p_ic.add_argument(
-        "--use-cv", dest="use_cv", action="store_true", default=True, # Func default
-        help=("Use Coefficient of Variation (CV) for radial axis "
-              "(default: True).")
-    )
-    p_ic.add_argument(
-        "--use-stddev", # More intuitive flag name
+        "--use-stddev",  # More intuitive flag name
         action="store_false",
         dest="use_cv",
-        help="Use Standard Deviation for radial axis instead of CV."
+        help="Use Standard Deviation for radial axis instead of CV.",
     )
     p_ic.add_argument(
-        "--cmap", type=str, default='coolwarm', # Func default
-        help="Colormap for points (default: 'coolwarm')."
+        "--cmap",
+        type=str,
+        default="coolwarm",  # Func default
+        help="Colormap for points (default: 'coolwarm').",
     )
     p_ic.add_argument(
-        "--acov", type=str, default='default', # Func default
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--acov",
+        type=str,
+        default="default",  # Func default
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_ic.add_argument(
-        "--title", type=str, default=None, # Func default uses "Prediction..."
-        help="Plot title."
+        "--title",
+        type=str,
+        default=None,  # Func default uses "Prediction..."
+        help="Plot title.",
     )
     p_ic.add_argument(
-        "--figsize", type=str, default="9,9",
-        help="Figure size 'width,height' (e.g., '9,9')."
+        "--figsize",
+        type=str,
+        default="9,9",
+        help="Figure size 'width,height' (e.g., '9,9').",
     )
     p_ic.add_argument(
-        "--s", type=int, default=30, # Func default
-        help="Marker size (default: 30)."
+        "--s", type=int, default=30, help="Marker size (default: 30)."  # Func default
     )
     p_ic.add_argument(
-        "--alpha", type=float, default=0.85, # Func default
-        help="Transparency level (default: 0.85)."
+        "--alpha",
+        type=float,
+        default=0.85,  # Func default
+        help="Transparency level (default: 0.85).",
     )
     p_ic.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_ic.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_ic.add_argument(
-        "--mask-angle", action="store_true", default=False,
-        help="Hide angular tick labels (default: False)."
+        "--mask-angle",
+        action="store_true",
+        default=False,
+        help="Hide angular tick labels (default: False).",
     )
     p_ic.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_ic.set_defaults(func=_cli_plot_interval_consistency)
 
@@ -1131,76 +1214,110 @@ def main():
         "plot_anomaly_magnitude",
         help="Plot anomaly magnitude (DataFrame input).",
         description="Visualizes magnitude/type of prediction anomalies "
-                    "(where actual is outside interval)."
+        "(where actual is outside interval).",
+    )
+    p_am.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_am.add_argument(
+        "--actual-col",
+        dest="actual_col",
+        required=True,
+        type=str,
+        help="Column name containing actual values.",
     )
     p_am.add_argument(
-        "filepath", type=str, help="Path to the CSV data file."
+        "--q-cols",
+        dest="q_cols",
+        required=True,
+        nargs=2,
+        metavar=("LOW_Q", "UP_Q"),
+        help="Two column names: lower and upper quantile bounds.",
     )
     p_am.add_argument(
-        "--actual-col", dest="actual_col", required=True, type=str,
-        help="Column name containing actual values."
+        "--theta-col",
+        dest="theta_col",
+        type=str,
+        default=None,
+        help="Optional column for angular position.",
     )
     p_am.add_argument(
-        "--q-cols", dest="q_cols", required=True, nargs=2,
-        metavar=('LOW_Q', 'UP_Q'),
-        help="Two column names: lower and upper quantile bounds."
+        "--acov",
+        type=str,
+        default="default",  # Func default
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_am.add_argument(
-        "--theta-col", dest="theta_col", type=str, default=None,
-        help="Optional column for angular position."
+        "--title",
+        type=str,
+        default="Anomaly Magnitude Polar Plot",  # Func default
+        help="Plot title.",
     )
     p_am.add_argument(
-        "--acov", type=str, default='default', # Func default
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
     )
     p_am.add_argument(
-        "--title", type=str, default="Anomaly Magnitude Polar Plot", # Func default
-        help="Plot title."
+        "--cmap-under",
+        dest="cmap_under",
+        type=str,
+        default="Blues",  # Func default
+        help="Colormap for under-predictions (default: 'Blues').",
     )
     p_am.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--cmap-over",
+        dest="cmap_over",
+        type=str,
+        default="Reds",  # Func default
+        help="Colormap for over-predictions (default: 'Reds').",
     )
     p_am.add_argument(
-        "--cmap-under", dest="cmap_under", type=str, default='Blues', # Func default
-        help="Colormap for under-predictions (default: 'Blues')."
+        "--s", type=int, default=30, help="Marker size (default: 30)."  # Func default
     )
     p_am.add_argument(
-        "--cmap-over", dest="cmap_over", type=str, default='Reds', # Func default
-        help="Colormap for over-predictions (default: 'Reds')."
+        "--alpha",
+        type=float,
+        default=0.8,  # Func default
+        help="Transparency level (default: 0.8).",
     )
     p_am.add_argument(
-        "--s", type=int, default=30, # Func default
-        help="Marker size (default: 30)."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_am.add_argument(
-        "--alpha", type=float, default=0.8, # Func default
-        help="Transparency level (default: 0.8)."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_am.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
+        "--verbose",
+        type=int,
+        default=1,
+        choices=[0, 1],  # Func default is 1
+        help="Verbosity level (0: silent, 1: print counts) (default: 1).",
     )
     p_am.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
+        "--cbar",
+        action="store_true",
+        default=False,
+        help="Show color bar (default: False).",
     )
     p_am.add_argument(
-        "--verbose", type=int, default=1, choices=[0, 1], # Func default is 1
-        help="Verbosity level (0: silent, 1: print counts) (default: 1)."
+        "--mask-angle",
+        action="store_true",
+        default=False,
+        help="Hide angular tick labels (default: False).",
     )
     p_am.add_argument(
-        "--cbar", action="store_true", default=False,
-        help="Show color bar (default: False)."
-    )
-    p_am.add_argument(
-        "--mask-angle", action="store_true", default=False,
-        help="Hide angular tick labels (default: False)."
-    )
-    p_am.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_am.set_defaults(func=_cli_plot_anomaly_magnitude)
 
@@ -1208,92 +1325,130 @@ def main():
     p_ud = subparsers.add_parser(
         "plot_uncertainty_drift",
         help="Plot uncertainty drift using rings (DataFrame input).",
-        description=("Visualizes how prediction interval width patterns "
-                     "evolve over time steps using concentric rings.")
+        description=(
+            "Visualizes how prediction interval width patterns "
+            "evolve over time steps using concentric rings."
+        ),
+    )
+    p_ud.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_ud.add_argument(
+        "--qlow-cols",
+        dest="qlow_cols",
+        required=True,
+        nargs="+",
+        help="List of lower quantile columns, one per time step.",
     )
     p_ud.add_argument(
-        "filepath", type=str, help="Path to the CSV data file."
+        "--qup-cols",
+        dest="qup_cols",
+        required=True,
+        nargs="+",
+        help="List of upper quantile columns, one per time step.",
     )
     p_ud.add_argument(
-        "--qlow-cols", dest="qlow_cols", required=True, nargs='+',
-        help="List of lower quantile columns, one per time step."
+        "--dt-labels",
+        dest="dt_labels",
+        nargs="+",
+        default=None,
+        help="Optional labels for time steps (must match number of cols).",
     )
     p_ud.add_argument(
-        "--qup-cols", dest="qup_cols", required=True, nargs='+',
-        help="List of upper quantile columns, one per time step."
+        "--theta-col",
+        dest="theta_col",
+        type=str,
+        default=None,
+        help="Optional column for angular position (ignored).",
     )
     p_ud.add_argument(
-        "--dt-labels", dest="dt_labels", nargs='+', default=None,
-        help="Optional labels for time steps (must match number of cols)."
+        "--acov",
+        type=str,
+        default="default",  # Func default
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_ud.add_argument(
-        "--theta-col", dest="theta_col", type=str, default=None,
-        help="Optional column for angular position (ignored)."
+        "--base-radius",
+        dest="base_radius",
+        type=float,
+        default=0.15,  # Func default
+        help="Base radius for innermost ring (default: 0.15).",
     )
     p_ud.add_argument(
-        "--acov", type=str, default='default', # Func default
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--band-height",
+        dest="band_height",
+        type=float,
+        default=0.15,  # Func default
+        help="Scaling factor for width effect on radius (default: 0.15).",
     )
     p_ud.add_argument(
-        "--base-radius", dest="base_radius", type=float, default=0.15, # Func default
-        help="Base radius for innermost ring (default: 0.15)."
+        "--cmap",
+        type=str,
+        default="tab10",  # Func default
+        help="Colormap for rings (default: 'tab10').",
     )
     p_ud.add_argument(
-        "--band-height", dest="band_height", type=float, default=0.15, # Func default
-        help="Scaling factor for width effect on radius (default: 0.15)."
+        "--label",
+        type=str,
+        default="Time Step",  # Func default
+        help="Label prefix for legend entries (default: 'Time Step').",
     )
     p_ud.add_argument(
-        "--cmap", type=str, default='tab10', # Func default
-        help="Colormap for rings (default: 'tab10')."
+        "--alpha",
+        type=float,
+        default=0.85,  # Func default
+        help="Transparency for lines (default: 0.85).",
     )
     p_ud.add_argument(
-        "--label", type=str, default="Time Step", # Func default
-        help="Label prefix for legend entries (default: 'Time Step')."
+        "--figsize",
+        type=str,
+        default="9,9",
+        help="Figure size 'width,height' (e.g., '9,9').",
+    )
+    p_ud.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_ud.add_argument(
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_ud.add_argument(
-        "--alpha", type=float, default=0.85, # Func default
-        help="Transparency for lines (default: 0.85)."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_ud.add_argument(
-        "--figsize", type=str, default="9,9",
-        help="Figure size 'width,height' (e.g., '9,9')."
+        "--show-legend",
+        action="store_true",
+        dest="show_legend",
+        default=True,
+        help="Show legend (default).",
     )
     p_ud.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
+        "--no-show-legend",
+        action="store_false",
+        dest="show_legend",
+        help="Hide legend.",
     )
     p_ud.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
-    )
-    p_ud.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
-    )
-    p_ud.add_argument(
-        "--show-legend", action="store_true", dest="show_legend", default=True,
-        help="Show legend (default)."
-    )
-    p_ud.add_argument(
-        "--no-show-legend", action="store_false", dest="show_legend",
-        help="Hide legend."
-    )
-    p_ud.add_argument(
-        "--mask-angle", # Renamed from mute_degree in func
+        "--mask-angle",  # Renamed from mute_degree in func
         dest="mask_angle",
         action="store_true",
-        default=True, # Func default was mute_degree=True
-        help="Hide angular tick labels (default)."
+        default=True,  # Func default was mute_degree=True
+        help="Hide angular tick labels (default).",
     )
     p_ud.add_argument(
-        "--show-angle-labels", # More intuitive opposite flag
+        "--show-angle-labels",  # More intuitive opposite flag
         action="store_false",
         dest="mask_angle",
-        help="Show angular tick labels."
+        help="Show angular tick labels.",
     )
     p_ud.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_ud.set_defaults(func=_cli_plot_uncertainty_drift)
 
@@ -1310,28 +1465,28 @@ def main():
     # (Keep existing logic)
     # ...
 
-# --- Entry Point Guard ---
-# (Keep existing logic)
-# ...
-# def main():
-#     # Main parser
-#     parser = argparse.ArgumentParser(
-#         description="K-Diagram: CLI for Forecasting Uncertainty Visualization.",
-#         epilog=("Example: k-diagram plot_anomaly_magnitude data.csv "
-#                 "--actual-col=obs --q-cols=p10 p90 --savefig=plot.png")
-#     )
-#     parser.add_argument(
-#         '--version', action='version',
-#         version=f'%(prog)s {kdiagram.__version__}'
-#     )
+    # --- Entry Point Guard ---
+    # (Keep existing logic)
+    # ...
+    # def main():
+    #     # Main parser
+    #     parser = argparse.ArgumentParser(
+    #         description="K-Diagram: CLI for Forecasting Uncertainty Visualization.",
+    #         epilog=("Example: k-diagram plot_anomaly_magnitude data.csv "
+    #                 "--actual-col=obs --q-cols=p10 p90 --savefig=plot.png")
+    #     )
+    #     parser.add_argument(
+    #         '--version', action='version',
+    #         version=f'%(prog)s {kdiagram.__version__}'
+    #     )
 
-#     # Create subparsers for commands (plot types)
-#     subparsers = parser.add_subparsers(
-#         dest="command",
-#         required=True,
-#         title="Available commands (use <command> --help for details)",
-#         metavar="<command>",
-#     )
+    #     # Create subparsers for commands (plot types)
+    #     subparsers = parser.add_subparsers(
+    #         dest="command",
+    #         required=True,
+    #         title="Available commands (use <command> --help for details)",
+    #         metavar="<command>",
+    #     )
 
     # --- Add Subparsers for ALL Uncertainty Plots ---
 
@@ -1344,73 +1499,99 @@ def main():
         "plot_actual_vs_predicted",
         help="Compare actual vs predicted values point-by-point.",
         description="Generates a polar plot comparing actual observations "
-                    "against point predictions (e.g., Q50)."
+        "against point predictions (e.g., Q50).",
+    )
+    p_avp.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_avp.add_argument(
+        "--actual-col",
+        required=True,
+        type=str,
+        help="Column name containing the actual observed values.",
     )
     p_avp.add_argument(
-        "filepath", type=str, help="Path to the CSV data file.")
-    p_avp.add_argument(
-        "--actual-col", required=True, type=str,
-        help="Column name containing the actual observed values."
+        "--pred-col",
+        required=True,
+        type=str,
+        help="Column name containing the predicted values (e.g., Q50).",
     )
     p_avp.add_argument(
-        "--pred-col", required=True, type=str,
-        help="Column name containing the predicted values (e.g., Q50)."
+        "--theta-col",
+        type=str,
+        default=None,
+        help="Optional column for angular position (currently ignored).",
     )
     p_avp.add_argument(
-        "--theta-col", type=str, default=None,
-        help="Optional column for angular position (currently ignored)."
+        "--acov",
+        type=str,
+        default="default",
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_avp.add_argument(
-        "--acov", type=str, default='default',
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
+    )
+    p_avp.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_avp.add_argument(
+        "--line",
+        action="store_true",
+        default=True,  # Plot lines by default
+        help="Plot data as lines (default).",
     )
     p_avp.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--no-line",
+        action="store_false",
+        dest="line",
+        help="Plot data as scatter points instead of lines.",
     )
     p_avp.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
+        "--r-label", type=str, default=None, help="Label for the radial axis."
     )
     p_avp.add_argument(
-        "--line", action="store_true", default=True, # Plot lines by default
-        help="Plot data as lines (default)."
+        "--alpha",
+        type=float,
+        default=0.3,
+        help="Transparency for difference lines (default: 0.3).",
     )
     p_avp.add_argument(
-        "--no-line", action="store_false", dest="line",
-        help="Plot data as scatter points instead of lines."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_avp.add_argument(
-        "--r-label", type=str, default=None,
-        help="Label for the radial axis."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_avp.add_argument(
-        "--alpha", type=float, default=0.3,
-        help="Transparency for difference lines (default: 0.3)."
+        "--show-legend",
+        action="store_true",
+        dest="show_legend",
+        default=True,
+        help="Show legend (default).",
     )
     p_avp.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
+        "--no-show-legend",
+        action="store_false",
+        dest="show_legend",
+        help="Hide legend.",
     )
     p_avp.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
+        "--mask-angle",
+        action="store_true",
+        default=False,
+        help="Hide angular tick labels.",
     )
     p_avp.add_argument(
-        "--show-legend", action="store_true", dest="show_legend", default=True,
-        help="Show legend (default)."
-    )
-    p_avp.add_argument(
-        "--no-show-legend", action="store_false", dest="show_legend",
-        help="Hide legend."
-    )
-    p_avp.add_argument(
-        "--mask-angle", action="store_true", default=False,
-        help="Hide angular tick labels."
-    )
-    p_avp.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_avp.set_defaults(func=_cli_plot_actual_vs_predicted)
 
@@ -1419,89 +1600,128 @@ def main():
         "plot_coverage_diagnostic",
         help="Diagnose interval coverage point-by-point.",
         description="Generates a polar plot showing whether each actual "
-                    "value falls within its prediction interval."
+        "value falls within its prediction interval.",
+    )
+    p_cd.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_cd.add_argument(
+        "--actual-col",
+        required=True,
+        type=str,
+        help="Column name containing the actual observed values.",
     )
     p_cd.add_argument(
-        "filepath", type=str, help="Path to the CSV data file.")
-    p_cd.add_argument(
-        "--actual-col", required=True, type=str,
-        help="Column name containing the actual observed values."
+        "--q-cols",
+        required=True,
+        nargs=2,
+        metavar=("LOW_Q", "UP_Q"),
+        help="Two column names: lower and upper quantile bounds.",
     )
     p_cd.add_argument(
-        "--q-cols", required=True, nargs=2, metavar=('LOW_Q', 'UP_Q'),
-        help="Two column names: lower and upper quantile bounds."
+        "--theta-col",
+        type=str,
+        default=None,
+        help="Optional column for angular position (currently ignored).",
     )
     p_cd.add_argument(
-        "--theta-col", type=str, default=None,
-        help="Optional column for angular position (currently ignored)."
+        "--acov",
+        type=str,
+        default="default",
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_cd.add_argument(
-        "--acov", type=str, default='default',
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
+    )
+    p_cd.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_cd.add_argument(
+        "--cmap",
+        type=str,
+        default="RdYlGn",
+        help="Colormap for coverage points/bars (default: 'RdYlGn').",
     )
     p_cd.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--alpha",
+        type=float,
+        default=0.85,
+        help="Transparency for points/bars (default: 0.85).",
     )
     p_cd.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
+        "--s",
+        type=int,
+        default=35,
+        help="Marker size if using scatter points (default: 35).",
     )
     p_cd.add_argument(
-        "--cmap", type=str, default='RdYlGn',
-        help="Colormap for coverage points/bars (default: 'RdYlGn')."
+        "--as-bars",
+        action="store_true",
+        default=False,
+        help="Display coverage as bars instead of scatter points.",
     )
     p_cd.add_argument(
-        "--alpha", type=float, default=0.85,
-        help="Transparency for points/bars (default: 0.85)."
+        "--coverage-line-color",
+        type=str,
+        default="r",
+        help="Color for the average coverage line (default: 'r').",
     )
     p_cd.add_argument(
-        "--s", type=int, default=35,
-        help="Marker size if using scatter points (default: 35)."
+        "--fill-gradient",
+        action="store_true",
+        dest="fill_gradient",
+        default=True,
+        help="Fill background with gradient up to avg coverage (default).",
     )
     p_cd.add_argument(
-        "--as-bars", action="store_true", default=False,
-        help="Display coverage as bars instead of scatter points."
+        "--no-fill-gradient",
+        action="store_false",
+        dest="fill_gradient",
+        help="Do not fill background with gradient.",
     )
     p_cd.add_argument(
-        "--coverage-line-color", type=str, default='r',
-        help="Color for the average coverage line (default: 'r')."
+        "--gradient-cmap",
+        type=str,
+        default="Greens",
+        help="Colormap for background gradient (default: 'Greens').",
     )
     p_cd.add_argument(
-        "--fill-gradient", action="store_true", dest="fill_gradient", default=True,
-        help="Fill background with gradient up to avg coverage (default)."
+        "--mask-angle",
+        action="store_true",
+        default=True,  # Default True here
+        help="Hide angular tick labels (default).",
     )
     p_cd.add_argument(
-        "--no-fill-gradient", action="store_false", dest="fill_gradient",
-        help="Do not fill background with gradient."
+        "--no-mask-angle",
+        action="store_false",
+        dest="mask_angle",
+        help="Show angular tick labels.",
     )
     p_cd.add_argument(
-        "--gradient-cmap", type=str, default='Greens',
-        help="Colormap for background gradient (default: 'Greens')."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_cd.add_argument(
-        "--mask-angle", action="store_true", default=True, # Default True here
-        help="Hide angular tick labels (default)."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_cd.add_argument(
-        "--no-mask-angle", action="store_false", dest="mask_angle",
-        help="Show angular tick labels."
+        "--verbose",
+        type=int,
+        default=0,
+        choices=[0, 1],
+        help="Verbosity level (0: silent, 1: print coverage) (default: 0).",
     )
     p_cd.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
-    )
-    p_cd.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
-    )
-    p_cd.add_argument(
-        "--verbose", type=int, default=0, choices=[0, 1],
-        help="Verbosity level (0: silent, 1: print coverage) (default: 0)."
-    )
-    p_cd.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_cd.set_defaults(func=_cli_plot_coverage_diagnostic)
 
@@ -1510,74 +1730,95 @@ def main():
         "plot_interval_width",
         help="Visualize prediction interval width across samples.",
         description="Generates a polar scatter plot where radius is the "
-                    "interval width (Qup-Qlow)."
+        "interval width (Qup-Qlow).",
+    )
+    p_iw.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_iw.add_argument(
+        "--q-cols",
+        required=True,
+        nargs=2,
+        metavar=("LOW_Q", "UP_Q"),
+        help="Two column names: lower and upper quantile bounds.",
     )
     p_iw.add_argument(
-        "filepath", type=str, help="Path to the CSV data file.")
-    p_iw.add_argument(
-        "--q-cols", required=True, nargs=2, metavar=('LOW_Q', 'UP_Q'),
-        help="Two column names: lower and upper quantile bounds."
+        "--theta-col",
+        type=str,
+        default=None,
+        help="Optional column for angular position (currently ignored).",
     )
     p_iw.add_argument(
-        "--theta-col", type=str, default=None,
-        help="Optional column for angular position (currently ignored)."
+        "--z-col",
+        type=str,
+        default=None,
+        help="Optional column name for color mapping (e.g., Q50).",
     )
     p_iw.add_argument(
-        "--z-col", type=str, default=None,
-        help="Optional column name for color mapping (e.g., Q50)."
+        "--acov",
+        type=str,
+        default="default",
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_iw.add_argument(
-        "--acov", type=str, default='default',
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
+    )
+    p_iw.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_iw.add_argument(
+        "--cmap",
+        type=str,
+        default="viridis",
+        help="Colormap for points (used for z-col or radius) " "(default: 'viridis').",
+    )
+    p_iw.add_argument("--s", type=int, default=30, help="Marker size (default: 30).")
+    p_iw.add_argument(
+        "--alpha",
+        type=float,
+        default=0.8,
+        help="Transparency for points (default: 0.8).",
     )
     p_iw.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_iw.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_iw.add_argument(
-        "--cmap", type=str, default='viridis',
-        help="Colormap for points (used for z-col or radius) "
-             "(default: 'viridis')."
+        "--cbar",
+        action="store_true",
+        dest="cbar",
+        default=True,
+        help="Show color bar (default, relevant if z-col used).",
     )
     p_iw.add_argument(
-        "--s", type=int, default=30,
-        help="Marker size (default: 30)."
+        "--no-cbar", action="store_false", dest="cbar", help="Hide color bar."
     )
     p_iw.add_argument(
-        "--alpha", type=float, default=0.8,
-        help="Transparency for points (default: 0.8)."
+        "--mask-angle",
+        action="store_true",
+        default=True,  # Default True
+        help="Hide angular tick labels (default).",
     )
     p_iw.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
+        "--no-mask-angle",
+        action="store_false",
+        dest="mask_angle",
+        help="Show angular tick labels.",
     )
     p_iw.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
-    )
-    p_iw.add_argument(
-        "--cbar", action="store_true", dest="cbar", default=True,
-        help="Show color bar (default, relevant if z-col used)."
-    )
-    p_iw.add_argument(
-        "--no-cbar", action="store_false", dest="cbar",
-        help="Hide color bar."
-    )
-    p_iw.add_argument(
-        "--mask-angle", action="store_true", default=True, # Default True
-        help="Hide angular tick labels (default)."
-    )
-    p_iw.add_argument(
-        "--no-mask-angle", action="store_false", dest="mask_angle",
-        help="Show angular tick labels."
-    )
-    p_iw.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_iw.set_defaults(func=_cli_plot_interval_width)
 
@@ -1586,85 +1827,116 @@ def main():
         "plot_temporal_uncertainty",
         help="General polar scatter plot for multiple data series.",
         description="Visualizes multiple data columns (e.g., different "
-                    "quantiles for one time step) on a polar plot."
+        "quantiles for one time step) on a polar plot.",
+    )
+    p_tu.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_tu.add_argument(
+        "--q-cols",
+        required=True,
+        nargs="+",
+        help="List of column names to plot as different series.",
     )
     p_tu.add_argument(
-        "filepath", type=str, help="Path to the CSV data file.")
-    p_tu.add_argument(
-        "--q-cols", required=True, nargs='+',
-        help="List of column names to plot as different series."
+        "--theta-col",
+        type=str,
+        default=None,
+        help="Optional column (used for NaN alignment, ignored for pos).",
     )
     p_tu.add_argument(
-        "--theta-col", type=str, default=None,
-        help="Optional column (used for NaN alignment, ignored for pos)."
+        "--names",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Optional names for each series in q-cols (for legend).",
     )
     p_tu.add_argument(
-        "--names", type=str, nargs="*", default=None,
-        help="Optional names for each series in q-cols (for legend)."
+        "--acov",
+        type=str,
+        default="default",
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_tu.add_argument(
-        "--acov", type=str, default='default',
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
+    )
+    p_tu.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_tu.add_argument(
+        "--cmap",
+        type=str,
+        default="tab10",
+        help="Colormap used to color different series (default: 'tab10').",
     )
     p_tu.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--normalize",
+        action="store_true",
+        dest="normalize",
+        default=True,
+        help="Normalize each series to [0, 1] radially (default).",
     )
     p_tu.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
+        "--no-normalize",
+        action="store_false",
+        dest="normalize",
+        help="Plot raw values instead of normalizing radially.",
     )
     p_tu.add_argument(
-        "--cmap", type=str, default='tab10',
-        help="Colormap used to color different series (default: 'tab10')."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_tu.add_argument(
-        "--normalize", action="store_true", dest="normalize", default=True,
-        help="Normalize each series to [0, 1] radially (default)."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_tu.add_argument(
-        "--no-normalize", action="store_false", dest="normalize",
-        help="Plot raw values instead of normalizing radially."
+        "--alpha",
+        type=float,
+        default=0.7,
+        help="Transparency for points (default: 0.7).",
+    )
+    p_tu.add_argument("--s", type=int, default=25, help="Marker size (default: 25).")
+    p_tu.add_argument(
+        "--dot-style",
+        type=str,
+        default="o",
+        help="Marker style for points (e.g., 'o', 'x', '^') (default: 'o').",
     )
     p_tu.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
+        "--legend-loc",
+        type=str,
+        default="upper right",
+        help="Location for the legend (default: 'upper right').",
     )
     p_tu.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
+        "--mask-label",
+        action="store_true",
+        default=False,
+        help="Hide radial tick labels.",
     )
     p_tu.add_argument(
-        "--alpha", type=float, default=0.7,
-        help="Transparency for points (default: 0.7)."
+        "--mask-angle",
+        action="store_true",
+        default=True,  # Default True
+        help="Hide angular tick labels (default).",
     )
     p_tu.add_argument(
-        "--s", type=int, default=25,
-        help="Marker size (default: 25)."
+        "--no-mask-angle",
+        action="store_false",
+        dest="mask_angle",
+        help="Show angular tick labels.",
     )
     p_tu.add_argument(
-        "--dot-style", type=str, default='o',
-        help="Marker style for points (e.g., 'o', 'x', '^') (default: 'o')."
-    )
-    p_tu.add_argument(
-        "--legend-loc", type=str, default='upper right',
-        help="Location for the legend (default: 'upper right')."
-    )
-    p_tu.add_argument(
-        "--mask-label", action="store_true", default=False,
-        help="Hide radial tick labels."
-    )
-    p_tu.add_argument(
-        "--mask-angle", action="store_true", default=True, # Default True
-        help="Hide angular tick labels (default)."
-    )
-    p_tu.add_argument(
-        "--no-mask-angle", action="store_false", dest="mask_angle",
-        help="Show angular tick labels."
-    )
-    p_tu.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_tu.set_defaults(func=_cli_plot_temporal_uncertainty)
 
@@ -1690,75 +1962,109 @@ def main():
         "taylor_diagram",
         help="Flexible Taylor Diagram (stats or arrays input).",
         description="Generates a Taylor Diagram comparing predictions to a "
-                    "reference using standard deviation and correlation. "
-                    "Accepts pre-calculated stats or raw data arrays."
+        "reference using standard deviation and correlation. "
+        "Accepts pre-calculated stats or raw data arrays.",
     )
     # --- Input Group (Mutually Exclusive Logic handled in handler) ---
     p_td.add_argument(
-        "--stddev", type=float, nargs='+', default=None,
-        help="List of standard deviations (use with --corrcoef, --ref-std)."
+        "--stddev",
+        type=float,
+        nargs="+",
+        default=None,
+        help="List of standard deviations (use with --corrcoef, --ref-std).",
     )
     p_td.add_argument(
-        "--corrcoef", type=float, nargs='+', default=None,
-        help="List of correlation coefficients (use with --stddev, --ref-std)."
+        "--corrcoef",
+        type=float,
+        nargs="+",
+        default=None,
+        help="List of correlation coefficients (use with --stddev, --ref-std).",
     )
     p_td.add_argument(
-        "--ref-std", type=float, default=None,
+        "--ref-std",
+        type=float,
+        default=None,
         help="Standard deviation of the reference (use with --stddev/corrcoef "
-             "or calculated automatically if using arrays)."
+        "or calculated automatically if using arrays).",
     )
     p_td.add_argument(
-        "--reference-file", type=str, default=None, metavar="FILEPATH",
-        help="Path to CSV file with reference values (use with --y-preds-files)."
+        "--reference-file",
+        type=str,
+        default=None,
+        metavar="FILEPATH",
+        help="Path to CSV file with reference values (use with --y-preds-files).",
     )
     p_td.add_argument(
-        "--y-preds-files", type=str, nargs='+', default=None, metavar="FILEPATH",
-        help="Paths to CSV files with prediction values (use with --reference-file)."
+        "--y-preds-files",
+        type=str,
+        nargs="+",
+        default=None,
+        metavar="FILEPATH",
+        help="Paths to CSV files with prediction values (use with --reference-file).",
     )
     # --- END Input Group ---
     p_td.add_argument(
-        "--names", type=str, nargs="*", default=None,
-        help="Optional names for the models/predictions."
+        "--names",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Optional names for the models/predictions.",
     )
     p_td.add_argument(
-        "--cmap", type=str, default=None,
-        help="Optional colormap name for background shading."
+        "--cmap",
+        type=str,
+        default=None,
+        help="Optional colormap name for background shading.",
     )
     p_td.add_argument(
-        "--draw-ref-arc", action="store_true", default=False,
-        help="Draw reference std dev as an arc instead of a point."
+        "--draw-ref-arc",
+        action="store_true",
+        default=False,
+        help="Draw reference std dev as an arc instead of a point.",
     )
     p_td.add_argument(
-        "--no-draw-ref-arc", action="store_false", dest="draw_ref_arc",
-        help="Draw reference std dev as a point (default)."
+        "--no-draw-ref-arc",
+        action="store_false",
+        dest="draw_ref_arc",
+        help="Draw reference std dev as a point (default).",
     )
     p_td.add_argument(
-        "--radial-strategy", type=str, default='rwf',
-        choices=['rwf', 'convergence', 'center_focus', 'performance'],
-        help="Strategy for background mesh generation (default: 'rwf')."
+        "--radial-strategy",
+        type=str,
+        default="rwf",
+        choices=["rwf", "convergence", "center_focus", "performance"],
+        help="Strategy for background mesh generation (default: 'rwf').",
     )
     p_td.add_argument(
-        "--norm-c", action="store_true", default=False,
-        help="Normalize background mesh colors."
+        "--norm-c",
+        action="store_true",
+        default=False,
+        help="Normalize background mesh colors.",
     )
     p_td.add_argument(
-        "--power-scaling", type=float, default=1.0,
-        help="Exponent for background normalization (default: 1.0)."
+        "--power-scaling",
+        type=float,
+        default=1.0,
+        help="Exponent for background normalization (default: 1.0).",
     )
     p_td.add_argument(
-        "--marker", type=str, default='o',
-        help="Marker style for prediction points (default: 'o')."
+        "--marker",
+        type=str,
+        default="o",
+        help="Marker style for prediction points (default: 'o').",
     )
     p_td.add_argument(
-        "--fig-size", type=str, default="8,6",
-        help="Figure size 'width,height' (e.g., '8,6')."
+        "--fig-size",
+        type=str,
+        default="8,6",
+        help="Figure size 'width,height' (e.g., '8,6').",
     )
+    p_td.add_argument("--title", type=str, default=None, help="Optional plot title.")
     p_td.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
-    )
-    p_td.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_td.set_defaults(func=_cli_taylor_diagram)
 
@@ -1767,104 +2073,157 @@ def main():
         "plot_taylor_diagram_in",
         help="Taylor Diagram with background shading.",
         description="Generates a Taylor Diagram with a background colormap "
-                    "based on correlation or performance. Requires raw data arrays."
+        "based on correlation or performance. Requires raw data arrays.",
     )
     p_tdi.add_argument(
-        "reference_file", type=str, metavar="REFERENCE_CSV",
-        help="Path to CSV file with reference values."
+        "reference_file",
+        type=str,
+        metavar="REFERENCE_CSV",
+        help="Path to CSV file with reference values.",
     )
     p_tdi.add_argument(
-        "y_preds_files", type=str, nargs='+', metavar="PREDICTION_CSV",
-        help="Paths to CSV files with prediction values."
+        "y_preds_files",
+        type=str,
+        nargs="+",
+        metavar="PREDICTION_CSV",
+        help="Paths to CSV files with prediction values.",
     )
     p_tdi.add_argument(
-        "--names", type=str, nargs="*", default=None,
-        help="Optional names for the predictions."
+        "--names",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Optional names for the predictions.",
     )
     p_tdi.add_argument(
-        "--acov", type=str, default='half_circle', choices=['default', 'half_circle'],
-        help="Angular coverage ('default': pi, 'half_circle': pi/2) (default: 'half_circle')."
+        "--acov",
+        type=str,
+        default="half_circle",
+        choices=["default", "half_circle"],
+        help="Angular coverage ('default': pi, 'half_circle': pi/2) (default: 'half_circle').",
     )
     p_tdi.add_argument(
-        "--zero-location", type=str, default='E',
-        choices=['N','NE','E','SE','S','SW','W','NW'],
-        help="Position of correlation=1 (default: 'E')."
+        "--zero-location",
+        type=str,
+        default="E",
+        choices=["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+        help="Position of correlation=1 (default: 'E').",
     )
     p_tdi.add_argument(
-        "--direction", type=int, default=-1, choices=[-1, 1],
-        help="Angle direction (-1: clockwise, 1: counter-clockwise) (default: -1)."
+        "--direction",
+        type=int,
+        default=-1,
+        choices=[-1, 1],
+        help="Angle direction (-1: clockwise, 1: counter-clockwise) (default: -1).",
     )
     p_tdi.add_argument(
-        "--only-points", action="store_true", default=False,
-        help="Plot only markers, no radial lines to origin."
+        "--only-points",
+        action="store_true",
+        default=False,
+        help="Plot only markers, no radial lines to origin.",
     )
     p_tdi.add_argument(
-        "--ref-color", type=str, default='red',
-        help="Color for the reference arc/line (default: 'red')."
+        "--ref-color",
+        type=str,
+        default="red",
+        help="Color for the reference arc/line (default: 'red').",
     )
     p_tdi.add_argument(
-        "--draw-ref-arc", action="store_true", dest="draw_ref_arc", default=True,
-        help="Draw reference std dev as an arc (default)."
+        "--draw-ref-arc",
+        action="store_true",
+        dest="draw_ref_arc",
+        default=True,
+        help="Draw reference std dev as an arc (default).",
     )
     p_tdi.add_argument(
-        "--no-draw-ref-arc", action="store_false", dest="draw_ref_arc",
-        help="Draw reference std dev as a point/line instead of arc."
+        "--no-draw-ref-arc",
+        action="store_false",
+        dest="draw_ref_arc",
+        help="Draw reference std dev as a point/line instead of arc.",
     )
     p_tdi.add_argument(
-        "--angle-to-corr", action="store_true", dest="angle_to_corr", default=True,
-        help="Label angular axis with correlation values (default)."
+        "--angle-to-corr",
+        action="store_true",
+        dest="angle_to_corr",
+        default=True,
+        help="Label angular axis with correlation values (default).",
     )
     p_tdi.add_argument(
-        "--no-angle-to-corr", action="store_false", dest="angle_to_corr",
-        help="Label angular axis with degrees."
+        "--no-angle-to-corr",
+        action="store_false",
+        dest="angle_to_corr",
+        help="Label angular axis with degrees.",
     )
     p_tdi.add_argument(
-        "--marker", type=str, default='o',
-        help="Marker style for prediction points (default: 'o')."
+        "--marker",
+        type=str,
+        default="o",
+        help="Marker style for prediction points (default: 'o').",
     )
     p_tdi.add_argument(
-        "--corr-steps", type=int, default=6,
-        help="Number of correlation ticks if angle_to_corr=True (default: 6)."
+        "--corr-steps",
+        type=int,
+        default=6,
+        help="Number of correlation ticks if angle_to_corr=True (default: 6).",
     )
     p_tdi.add_argument(
-        "--cmap", type=str, default='viridis',
-        help="Colormap for background shading (default: 'viridis')."
+        "--cmap",
+        type=str,
+        default="viridis",
+        help="Colormap for background shading (default: 'viridis').",
     )
     p_tdi.add_argument(
-        "--shading", type=str, default='auto', choices=['auto', 'gouraud', 'nearest'],
-        help="Background shading method (default: 'auto')."
+        "--shading",
+        type=str,
+        default="auto",
+        choices=["auto", "gouraud", "nearest"],
+        help="Background shading method (default: 'auto').",
     )
     p_tdi.add_argument(
-        "--shading-res", type=int, default=300,
-        help="Resolution for background mesh (default: 300)."
+        "--shading-res",
+        type=int,
+        default=300,
+        help="Resolution for background mesh (default: 300).",
     )
     p_tdi.add_argument(
-        "--radial-strategy", type=str, default='performance',
-        choices=['convergence', 'norm_r', 'performance'],
-        help="Strategy for background calculation (default: 'performance')."
+        "--radial-strategy",
+        type=str,
+        default="performance",
+        choices=["convergence", "norm_r", "performance"],
+        help="Strategy for background calculation (default: 'performance').",
     )
     p_tdi.add_argument(
-        "--norm-c", action="store_true", default=False,
-        help="Normalize background colors."
+        "--norm-c",
+        action="store_true",
+        default=False,
+        help="Normalize background colors.",
     )
     p_tdi.add_argument(
-        "--norm-range", type=float, nargs=2, metavar=('MIN', 'MAX'),
-        help="Range [min, max] for background normalization if norm_c is True."
+        "--norm-range",
+        type=float,
+        nargs=2,
+        metavar=("MIN", "MAX"),
+        help="Range [min, max] for background normalization if norm_c is True.",
     )
     p_tdi.add_argument(
-        "--cbar", type=str, default='off', choices=['True', 'False', 'off'],
-        help="Show colorbar ('True', 'False', 'off') (default: 'off')."
+        "--cbar",
+        type=str,
+        default="off",
+        choices=["True", "False", "off"],
+        help="Show colorbar ('True', 'False', 'off') (default: 'off').",
     )
     p_tdi.add_argument(
-        "--fig-size", type=str, default="10,8",
-        help="Figure size 'width,height' (e.g., '10,8')."
+        "--fig-size",
+        type=str,
+        default="10,8",
+        help="Figure size 'width,height' (e.g., '10,8').",
     )
+    p_tdi.add_argument("--title", type=str, default=None, help="Optional plot title.")
     p_tdi.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
-    )
-    p_tdi.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_tdi.set_defaults(func=_cli_plot_taylor_diagram_in)
 
@@ -1873,59 +2232,82 @@ def main():
         "plot_taylor_diagram",
         help="Basic Taylor Diagram from arrays.",
         description="Generates a standard Taylor Diagram comparing predictions "
-                    "to a reference. Requires raw data arrays."
+        "to a reference. Requires raw data arrays.",
     )
     p_tdb.add_argument(
-        "reference_file", type=str, metavar="REFERENCE_CSV",
-        help="Path to CSV file with reference values."
+        "reference_file",
+        type=str,
+        metavar="REFERENCE_CSV",
+        help="Path to CSV file with reference values.",
     )
     p_tdb.add_argument(
-        "y_preds_files", type=str, nargs='+', metavar="PREDICTION_CSV",
-        help="Paths to CSV files with prediction values."
+        "y_preds_files",
+        type=str,
+        nargs="+",
+        metavar="PREDICTION_CSV",
+        help="Paths to CSV files with prediction values.",
     )
     p_tdb.add_argument(
-        "--names", type=str, nargs="*", default=None,
-        help="Optional names for the predictions."
+        "--names",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Optional names for the predictions.",
     )
     p_tdb.add_argument(
-        "--acov", type=str, default='half_circle', choices=['default', 'half_circle'],
-        help="Angular coverage (default: 'half_circle')."
+        "--acov",
+        type=str,
+        default="half_circle",
+        choices=["default", "half_circle"],
+        help="Angular coverage (default: 'half_circle').",
     )
     p_tdb.add_argument(
-        "--zero-location", type=str, default='W',
-        choices=['N','NE','E','SE','S','SW','W','NW'],
-        help="Position of correlation=1 (default: 'W')."
+        "--zero-location",
+        type=str,
+        default="W",
+        choices=["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+        help="Position of correlation=1 (default: 'W').",
     )
     p_tdb.add_argument(
-        "--direction", type=int, default=-1, choices=[-1, 1],
-        help="Angle direction (default: -1)."
+        "--direction",
+        type=int,
+        default=-1,
+        choices=[-1, 1],
+        help="Angle direction (default: -1).",
     )
     p_tdb.add_argument(
-        "--only-points", action="store_true", default=False,
-        help="Plot only markers, no radial lines."
+        "--only-points",
+        action="store_true",
+        default=False,
+        help="Plot only markers, no radial lines.",
     )
     p_tdb.add_argument(
-        "--ref-color", type=str, default='red',
-        help="Color for reference arc/line (default: 'red')."
+        "--ref-color",
+        type=str,
+        default="red",
+        help="Color for reference arc/line (default: 'red').",
     )
     p_tdb.add_argument(
-        "--marker", type=str, default='o',
-        help="Marker style (default: 'o')."
+        "--marker", type=str, default="o", help="Marker style (default: 'o')."
     )
     p_tdb.add_argument(
-        "--corr-steps", type=int, default=6,
-        help="Number of correlation ticks (default: 6)."
+        "--corr-steps",
+        type=int,
+        default=6,
+        help="Number of correlation ticks (default: 6).",
     )
     p_tdb.add_argument(
-        "--fig-size", type=str, default="10,8",
-        help="Figure size 'width,height' (e.g., '10,8')."
+        "--fig-size",
+        type=str,
+        default="10,8",
+        help="Figure size 'width,height' (e.g., '10,8').",
     )
+    p_tdb.add_argument("--title", type=str, default=None, help="Optional plot title.")
     p_tdb.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
-    )
-    p_tdb.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     # Add draw_ref_arc, angle_to_corr if they become explicit args
     p_tdb.set_defaults(func=_cli_plot_taylor_diagram)
@@ -1935,60 +2317,91 @@ def main():
         "plot_feature_fingerprint",
         help="Visualize feature importance profiles (radar chart).",
         description="Generates a radar chart comparing feature importance "
-                    "across different layers (e.g., models, years)."
+        "across different layers (e.g., models, years).",
     )
     p_ff.add_argument(
-        "importances_file", type=str, metavar="IMPORTANCES_CSV",
+        "importances_file",
+        type=str,
+        metavar="IMPORTANCES_CSV",
         help="Path to CSV file containing the importance matrix "
-             "(rows=layers, columns=features)."
+        "(rows=layers, columns=features).",
     )
     p_ff.add_argument(
-        "--features", type=str, nargs='+', default=None,
-        help="List of feature names (corresponding to columns)."
+        "--features",
+        type=str,
+        nargs="+",
+        default=None,
+        help="List of feature names (corresponding to columns).",
     )
     p_ff.add_argument(
-        "--labels", type=str, nargs='+', default=None,
-        help="List of layer names (corresponding to rows)."
+        "--labels",
+        type=str,
+        nargs="+",
+        default=None,
+        help="List of layer names (corresponding to rows).",
     )
     p_ff.add_argument(
-        "--normalize", action="store_true", dest="normalize", default=True,
-        help="Normalize importances within each layer to [0, 1] (default)."
+        "--normalize",
+        action="store_true",
+        dest="normalize",
+        default=True,
+        help="Normalize importances within each layer to [0, 1] (default).",
     )
     p_ff.add_argument(
-        "--no-normalize", action="store_false", dest="normalize",
-        help="Plot raw importance values."
+        "--no-normalize",
+        action="store_false",
+        dest="normalize",
+        help="Plot raw importance values.",
     )
     p_ff.add_argument(
-        "--fill", action="store_true", dest="fill", default=True,
-        help="Fill the area under the radar lines (default)."
+        "--fill",
+        action="store_true",
+        dest="fill",
+        default=True,
+        help="Fill the area under the radar lines (default).",
     )
     p_ff.add_argument(
-        "--no-fill", action="store_false", dest="fill",
-        help="Do not fill the area under the radar lines."
+        "--no-fill",
+        action="store_false",
+        dest="fill",
+        help="Do not fill the area under the radar lines.",
     )
     p_ff.add_argument(
-        "--cmap", type=str, default='tab10',
-        help="Colormap for coloring different layers (default: 'tab10')."
+        "--cmap",
+        type=str,
+        default="tab10",
+        help="Colormap for coloring different layers (default: 'tab10').",
     )
     p_ff.add_argument(
-        "--title", type=str, default="Feature Impact Fingerprint",
-        help="Plot title (default: 'Feature Impact Fingerprint')."
+        "--title",
+        type=str,
+        default="Feature Impact Fingerprint",
+        help="Plot title (default: 'Feature Impact Fingerprint').",
     )
     p_ff.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
     )
     p_ff.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_ff.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_ff.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_ff.set_defaults(func=_cli_plot_feature_fingerprint)
 
@@ -1997,68 +2410,95 @@ def main():
         "plot_relationship",
         help="Visualize relationship between true and predicted values.",
         description="Generates a polar scatter plot mapping true values "
-                    "to angle and normalized predictions to radius."
+        "to angle and normalized predictions to radius.",
     )
     p_rel.add_argument(
-        "y_true_file", type=str, metavar="TRUE_CSV",
-        help="Path to CSV file with true values."
+        "y_true_file",
+        type=str,
+        metavar="TRUE_CSV",
+        help="Path to CSV file with true values.",
     )
     p_rel.add_argument(
-        "y_preds_files", type=str, nargs='+', metavar="PRED_CSV",
-        help="Paths to CSV files with prediction values (one per model)."
+        "y_preds_files",
+        type=str,
+        nargs="+",
+        metavar="PRED_CSV",
+        help="Paths to CSV files with prediction values (one per model).",
     )
     p_rel.add_argument(
-        "--names", type=str, nargs="*", default=None,
-        help="Optional names for the prediction series."
+        "--names",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Optional names for the prediction series.",
+    )
+    p_rel.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_rel.add_argument(
+        "--theta-offset",
+        type=float,
+        default=0,
+        help="Angular offset in radians (default: 0).",
     )
     p_rel.add_argument(
-        "--title", type=str, default=None, help="Optional plot title."
+        "--theta-scale",
+        type=str,
+        default="proportional",
+        choices=["proportional", "uniform"],
+        help="How y_true maps to angle (default: 'proportional').",
     )
     p_rel.add_argument(
-        "--theta-offset", type=float, default=0,
-        help="Angular offset in radians (default: 0)."
+        "--acov",
+        type=str,
+        default="default",
+        choices=["default", "half_circle", "quarter_circle", "eighth_circle"],
+        help="Angular coverage (default: 'default').",
     )
     p_rel.add_argument(
-        "--theta-scale", type=str, default='proportional',
-        choices=['proportional', 'uniform'],
-        help="How y_true maps to angle (default: 'proportional')."
+        "--figsize",
+        type=str,
+        default="8,8",
+        help="Figure size 'width,height' (e.g., '8,8').",
     )
     p_rel.add_argument(
-        "--acov", type=str, default='default',
-        choices=['default', 'half_circle', 'quarter_circle', 'eighth_circle'],
-        help="Angular coverage (default: 'default')."
+        "--cmap",
+        type=str,
+        default="tab10",
+        help="Colormap used to generate default colors (default: 'tab10').",
     )
     p_rel.add_argument(
-        "--figsize", type=str, default="8,8",
-        help="Figure size 'width,height' (e.g., '8,8')."
+        "--s",
+        type=float,
+        default=50,  # Allow float size
+        help="Marker size (default: 50).",
     )
     p_rel.add_argument(
-        "--cmap", type=str, default='tab10',
-        help="Colormap used to generate default colors (default: 'tab10')."
+        "--alpha",
+        type=float,
+        default=0.7,
+        help="Transparency for points (default: 0.7).",
     )
     p_rel.add_argument(
-        "--s", type=float, default=50, # Allow float size
-        help="Marker size (default: 50)."
+        "--legend",
+        action="store_true",
+        dest="legend",
+        default=True,
+        help="Show legend (default).",
     )
     p_rel.add_argument(
-        "--alpha", type=float, default=0.7,
-        help="Transparency for points (default: 0.7)."
+        "--no-legend", action="store_false", dest="legend", help="Hide legend."
     )
     p_rel.add_argument(
-        "--legend", action="store_true", dest="legend", default=True,
-        help="Show legend (default)."
+        "--show-grid",
+        action="store_true",
+        dest="show_grid",
+        default=True,
+        help="Show grid lines (default).",
     )
     p_rel.add_argument(
-        "--no-legend", action="store_false", dest="legend",
-        help="Hide legend."
-    )
-    p_rel.add_argument(
-        "--show-grid", action="store_true", dest="show_grid", default=True,
-        help="Show grid lines (default)."
-    )
-    p_rel.add_argument(
-        "--no-show-grid", action="store_false", dest="show_grid",
-        help="Hide grid lines."
+        "--no-show-grid",
+        action="store_false",
+        dest="show_grid",
+        help="Hide grid lines.",
     )
     p_rel.add_argument(
         "--xlabel", type=str, default=None, help="Label for radial axis."
@@ -2067,24 +2507,27 @@ def main():
         "--ylabel", type=str, default=None, help="Label for angular axis."
     )
     p_rel.add_argument(
-        "--z-values-file", type=str, default=None, metavar="Z_CSV",
-        help="Optional path to CSV file with values for angular labels."
+        "--z-values-file",
+        type=str,
+        default=None,
+        metavar="Z_CSV",
+        help="Optional path to CSV file with values for angular labels.",
     )
     p_rel.add_argument(
-        "--z-label", type=str, default=None,
-        help="Label for z-values if provided."
+        "--z-label", type=str, default=None, help="Label for z-values if provided."
     )
     p_rel.add_argument(
-        "--savefig", type=str, metavar="FILEPATH",
-        help="Save plot to file instead of displaying."
+        "--savefig",
+        type=str,
+        metavar="FILEPATH",
+        help="Save plot to file instead of displaying.",
     )
     p_rel.set_defaults(func=_cli_plot_relationship)
-
 
     # --- Parse Arguments and Execute ---
     # (Keep existing logic)
     args = parser.parse_args()
-    if hasattr(args, 'func'):
+    if hasattr(args, "func"):
         args.func(args)
     else:
         parser.print_help()

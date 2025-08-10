@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
 #   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
-""" k-diagram configs."""
+"""k-diagram configs."""
 
 import warnings
+from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Iterable, Optional, Union, Pattern
+from re import Pattern
+from typing import Optional, Union
 
 # Map string names to warning classes for convenience
 _WARNING_NAME_MAP = {
@@ -21,6 +22,7 @@ _WARNING_NAME_MAP = {
     "ResourceWarning": ResourceWarning,
 }
 
+
 def _resolve_category(cat: Union[str, type]) -> type:
     if isinstance(cat, str):
         try:
@@ -30,6 +32,7 @@ def _resolve_category(cat: Union[str, type]) -> type:
     if isinstance(cat, type) and issubclass(cat, Warning):
         return cat
     raise TypeError(f"Category must be a Warning subclass or name, got {cat!r}")
+
 
 def configure_warnings(
     action: str = "default",
@@ -82,6 +85,7 @@ def configure_warnings(
             else:
                 warnings.filterwarnings(action, category=resolved, module=mod)
 
+
 @contextmanager
 def warnings_config(*args, **kwargs):
     """
@@ -98,6 +102,7 @@ def warnings_config(*args, **kwargs):
         warnings.simplefilter("default")  # start from a known state
         configure_warnings(*args, **kwargs)
         yield
+
 
 # Backward-compatible shim for the old API (now opt-in & deprecated)
 def suppress_warnings(suppress: bool = True) -> None:

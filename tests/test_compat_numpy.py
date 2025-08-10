@@ -1,5 +1,6 @@
 # tests/test_compat_numpy.py
 import warnings
+
 import numpy as np
 import pytest
 
@@ -81,5 +82,6 @@ def test_set_promotion_warn_no_error():
     # No-op on 1.x; available on 2.x. Should not raise.
     knp.set_promotion_warn("weak_and_warn")
 
-if __name__ =="__main__": 
+
+if __name__ == "__main__":
     pytest.main([__file__])

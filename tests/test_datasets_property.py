@@ -1,28 +1,29 @@
-# -*- coding: utf-8 -*-
 import os
-import io
-import shutil
 from contextlib import contextmanager
 from pathlib import Path
+
 import pytest
 
+import kdiagram.datasets._property as prop_mod
 from kdiagram.datasets._property import (
+    RemoteMetadata,
+    download_file_if,
     get_data,
     remove_data,
-    download_file_if,
-    RemoteMetadata,
 )
-import kdiagram.datasets._property as prop_mod
+
 
 # --- helper: fake downloader that "creates" the file in cache
 def fake_dl(url, filename, dstpath, **kwargs):
-    dstpath = Path(dstpath)          # <- IMPORTANT: your code passes str
+    dstpath = Path(dstpath)  # <- IMPORTANT: your code passes str
     dstpath.mkdir(parents=True, exist_ok=True)
     (dstpath / filename).write_bytes(b"ok")
+
 
 # ---------------------------
 # get_data / remove_data
 # ---------------------------
+
 
 def test_get_data_respects_env_and_creates(monkeypatch, tmp_path):
     target = tmp_path / "kd_data_env"
@@ -32,11 +33,13 @@ def test_get_data_respects_env_and_creates(monkeypatch, tmp_path):
     assert path == str(target)
     assert target.exists() and target.is_dir()
 
+
 def test_get_data_custom_path(tmp_path):
     custom = tmp_path / "my_custom_cache"
     path = get_data(str(custom))
     assert path == str(custom)
     assert custom.exists() and custom.is_dir()
+
 
 def test_remove_data_deletes(tmp_path, capsys):
     d = tmp_path / "to_delete"
@@ -44,6 +47,7 @@ def test_remove_data_deletes(tmp_path, capsys):
     (d / "touch.txt").write_text("x")
     remove_data(str(d))
     assert not d.exists()
+
 
 def test_download_file_if_creates_file_in_cache(monkeypatch, tmp_path):
     # point data cache to our temp dir
@@ -66,19 +70,23 @@ def test_download_file_if_creates_file_in_cache(monkeypatch, tmp_path):
     assert out == str(cache_file)
     assert cache_file.exists() and cache_file.read_bytes() == b"ok"
 
+
 # ---------------------------
 # download_file_if
 # ---------------------------
+
 
 def _write_temp_file(dirpath, name, content=b"OK"):
     p = dirpath / name
     p.write_bytes(content)
     return p
 
+
 @contextmanager
 def _fake_resources_path(_package, name, file_path):
     # Mimic importlib.resources.path(...)
     yield file_path
+
 
 def test_download_from_package_resources_copies_to_cache(monkeypatch, tmp_path):
     """
@@ -94,22 +102,28 @@ def test_download_from_package_resources_copies_to_cache(monkeypatch, tmp_path):
     pkg_file = _write_temp_file(pkg_dir, "data.txt", b"FROM_PKG")
 
     # Monkeypatch importlib.resources API used by the module
-    monkeypatch.setattr(prop_mod.resources, "is_resource", lambda pkg, nm: nm == "data.txt")
-    monkeypatch.setattr(prop_mod.resources, "path",
-                        lambda pkg, nm: _fake_resources_path(pkg, nm, pkg_file))
+    monkeypatch.setattr(
+        prop_mod.resources, "is_resource", lambda pkg, nm: nm == "data.txt"
+    )
+    monkeypatch.setattr(
+        prop_mod.resources,
+        "path",
+        lambda pkg, nm: _fake_resources_path(pkg, nm, pkg_file),
+    )
 
     # Ensure module constants are reasonable
     monkeypatch.setattr(prop_mod, "KD_DMODULE", "kdiagram.datasets.data")
-    monkeypatch.setattr(prop_mod, "KD_REMOTE_DATA_URL",
-                        "https://example.com/datasets/")
+    monkeypatch.setattr(prop_mod, "KD_REMOTE_DATA_URL", "https://example.com/datasets/")
 
-    out = download_file_if("data.txt", data_home=str(cache_dir),
-                           download_if_missing=True, verbose=False)
+    out = download_file_if(
+        "data.txt", data_home=str(cache_dir), download_if_missing=True, verbose=False
+    )
     assert out is not None
     assert os.path.isfile(out)
     # copied into cache
     assert os.path.dirname(out) == str(cache_dir)
     assert open(out, "rb").read() == b"FROM_PKG"
+
 
 def test_download_when_missing_calls_downloader(monkeypatch, tmp_path):
     """
@@ -124,6 +138,7 @@ def test_download_when_missing_calls_downloader(monkeypatch, tmp_path):
     monkeypatch.setattr(prop_mod.resources, "is_resource", lambda *a, **k: False)
 
     created = {}
+
     def fake_downloader(url, filename, dstpath, **kwargs):
         # Create the file in dstpath with the given filename
         p = os.path.join(dstpath, filename)
@@ -135,11 +150,13 @@ def test_download_when_missing_calls_downloader(monkeypatch, tmp_path):
     monkeypatch.setattr(prop_mod, "KD_DMODULE", "kdiagram.datasets.data")
     monkeypatch.setattr(prop_mod, "KD_REMOTE_DATA_URL", "https://example.com/base/")
 
-    out = download_file_if(fname, data_home=str(cache_dir),
-                           download_if_missing=True, verbose=False)
+    out = download_file_if(
+        fname, data_home=str(cache_dir), download_if_missing=True, verbose=False
+    )
     assert out == created["p"]
     assert os.path.isfile(out)
     assert open(out, "rb").read() == b"DOWNLOADED"
+
 
 def test_force_download_overrides(monkeypatch, tmp_path):
     """
@@ -151,10 +168,14 @@ def test_force_download_overrides(monkeypatch, tmp_path):
 
     # Pretend resource exists, but we still want forced download
     monkeypatch.setattr(prop_mod.resources, "is_resource", lambda *a, **k: True)
-    monkeypatch.setattr(prop_mod.resources, "path",
-                        lambda pkg, nm: _fake_resources_path(pkg, nm, tmp_path / "ignored"))
+    monkeypatch.setattr(
+        prop_mod.resources,
+        "path",
+        lambda pkg, nm: _fake_resources_path(pkg, nm, tmp_path / "ignored"),
+    )
 
     wrote = {}
+
     def fake_downloader(url, filename, dstpath, **kwargs):
         p = os.path.join(dstpath, filename)
         with open(p, "wb") as f:
@@ -165,11 +186,16 @@ def test_force_download_overrides(monkeypatch, tmp_path):
     monkeypatch.setattr(prop_mod, "KD_DMODULE", "kdiagram.datasets.data")
     monkeypatch.setattr(prop_mod, "KD_REMOTE_DATA_URL", "https://example.com/base/")
 
-    out = download_file_if(fname, data_home=str(cache_dir),
-                           download_if_missing=True, force_download=True,
-                           verbose=False)
+    out = download_file_if(
+        fname,
+        data_home=str(cache_dir),
+        download_if_missing=True,
+        force_download=True,
+        verbose=False,
+    )
     assert out == wrote["p"]
     assert open(out, "rb").read() == b"FORCED"
+
 
 def test_download_file_if_type_errors_and_value_errors(monkeypatch, tmp_path):
     cache_dir = tmp_path / "cache4"
@@ -184,10 +210,12 @@ def test_download_file_if_type_errors_and_value_errors(monkeypatch, tmp_path):
         download_file_if(12345, data_home=str(cache_dir))  # not str / RemoteMetadata
 
     # Missing fields in RemoteMetadata
-    bad_meta = RemoteMetadata(file="x.bin", url="", checksum=None,
-                              descr_module=None, data_module="")
+    bad_meta = RemoteMetadata(
+        file="x.bin", url="", checksum=None, descr_module=None, data_module=""
+    )
     with pytest.raises(ValueError):
         download_file_if(bad_meta, data_home=str(cache_dir))
+
 
 def test_download_file_if_not_found_and_not_allowed(monkeypatch, tmp_path):
     """
@@ -200,9 +228,11 @@ def test_download_file_if_not_found_and_not_allowed(monkeypatch, tmp_path):
     monkeypatch.setattr(prop_mod, "KD_DMODULE", "kdiagram.datasets.data")
     monkeypatch.setattr(prop_mod, "KD_REMOTE_DATA_URL", "https://example.com/base/")
 
-    out = download_file_if("nope.txt", data_home=str(cache_dir),
-                           download_if_missing=False, verbose=False)
+    out = download_file_if(
+        "nope.txt", data_home=str(cache_dir), download_if_missing=False, verbose=False
+    )
     assert out is None
+
 
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

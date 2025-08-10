@@ -1,39 +1,45 @@
-# -*- coding: utf-8 -*-
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
 import warnings
-import matplotlib.pyplot as plt 
-import numpy as np 
 
-from ..compat.sklearn import validate_params, StrOptions
-from ..utils.generic_utils import drop_nan_in 
-from ..utils.plot import set_axis_grid  
+import matplotlib.pyplot as plt
+import numpy as np
+
+from ..compat.sklearn import StrOptions, validate_params
+from ..compat.matplotlib import get_cmap, is_valid_cmap 
+from ..utils.generic_utils import drop_nan_in
+from ..utils.plot import set_axis_grid
 from ..utils.validator import validate_yy
 
-__all__=['plot_relationship']
+__all__ = ["plot_relationship"]
 
-@validate_params({
-    "y_true": ['array-like'],
-    "y_pred": ['array-like'],
-    "theta_scale": [StrOptions({ 'proportional', 'uniform' })],
-    'acov': [StrOptions({
-        'default', 'half_circle', 'quarter_circle', 'eighth_circle'})],
-    })
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "theta_scale": [StrOptions({"proportional", "uniform"})],
+        "acov": [
+            StrOptions({"default", "half_circle", "quarter_circle", "eighth_circle"})
+        ],
+    }
+)
 def plot_relationship(
-    y_true, *y_preds,
+    y_true,
+    *y_preds,
     names=None,
     title=None,
     theta_offset=0,
-    theta_scale='proportional',
-    acov='default',
+    theta_scale="proportional",
+    acov="default",
     figsize=None,
-    cmap='tab10', 
+    cmap="tab10",
     s=50,
     alpha=0.7,
     legend=True,
     show_grid=True,
-    grid_props=None, 
+    grid_props=None,
     color_palette=None,
     xlabel=None,
     ylabel=None,
@@ -201,16 +207,16 @@ def plot_relationship(
     """
 
     # Remove NaN values from y_true and all y_pred arrays
-    y_true, *y_preds = drop_nan_in(y_true, *y_preds, error='raise')
+    y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
 
     # Validate y_true and each y_pred to ensure consistency and continuity
-    try: 
+    try:
         y_preds = [
             validate_yy(y_true, pred, expected_type="continuous", flatten=True)[1]
             for pred in y_preds
         ]
-    except Exception as e: 
-        raise ValueError (f"Validation failed, due to {e}. Please check your y_pred")
+    except Exception as e:
+        raise ValueError(f"Validation failed, due to {e}. Please check your y_pred")
 
     # Generate default model names if none are provided
     num_preds = len(y_preds)
@@ -223,47 +229,62 @@ def plot_relationship(
         if len(names) < num_preds:
             names += [f"Model_{i+1}" for i in range(len(names), num_preds)]
         elif len(names) > num_preds:
-            warnings.warn(f"Received {len(names)} names for {num_preds}"
-                          f" predictions. Extra names ignored.", UserWarning)
+            warnings.warn(
+                f"Received {len(names)} names for {num_preds}"
+                f" predictions. Extra names ignored.",
+                UserWarning,
+                stacklevel=2,
+            )
             names = names[:num_preds]
 
     # --- Color Handling ---
     if color_palette is None:
         # Generate colors from cmap if palette not given
+        cmap = is_valid_cmap(cmap, default='tab10', error ="warn")
         try:
-            cmap_obj = plt.get_cmap(cmap)
+            cmap_obj = get_cmap(cmap)
             # Sample enough distinct colors
-            if hasattr(cmap_obj, 'colors') and len(cmap_obj.colors) >= num_preds:
-                 # Use colors directly from discrete map if enough
-                 color_palette = cmap_obj.colors[:num_preds]
-            else: # Sample from continuous map or discrete map with fewer colors
-                 color_palette = [cmap_obj(i / max(1, num_preds-1)) if num_preds > 1
-                                  else cmap_obj(0.5) for i in range(num_preds)]
+            if hasattr(cmap_obj, "colors") and len(cmap_obj.colors) >= num_preds:
+                # Use colors directly from discrete map if enough
+                color_palette = cmap_obj.colors[:num_preds]
+            else:  # Sample from continuous map or discrete map with fewer colors
+                color_palette = [
+                    (
+                        cmap_obj(i / max(1, num_preds - 1))
+                        if num_preds > 1
+                        else cmap_obj(0.5)
+                    )
+                    for i in range(num_preds)
+                ]
         except ValueError:
-            warnings.warn(f"Invalid cmap '{cmap}'. Falling back to 'tab10'.")
-            color_palette = plt.cm.tab10.colors # Default palette
+            warnings.warn(
+                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.", stacklevel=2
+            )
+            color_palette = plt.cm.tab10.colors  # Default palette
     # Ensure palette has enough colors, repeat if necessary
     final_colors = [color_palette[i % len(color_palette)] for i in range(num_preds)]
 
-
     # Determine the angular range based on `acov`
-    if acov == 'default':
+    if acov == "default":
         angular_range = 2 * np.pi
-    elif acov == 'half_circle':
+    elif acov == "half_circle":
         angular_range = np.pi
-    elif acov == 'quarter_circle':
+    elif acov == "quarter_circle":
         angular_range = np.pi / 2
-    elif acov == 'eighth_circle':
+    elif acov == "eighth_circle":
         angular_range = np.pi / 4
     else:
         # This case should be caught by @validate_params, but keep as safeguard
         raise ValueError(
             "Invalid value for `acov`. Choose from 'default',"
-            " 'half_circle', 'quarter_circle', or 'eighth_circle'.")
+            " 'half_circle', 'quarter_circle', or 'eighth_circle'."
+        )
 
     # Create the polar plot
-    fig, ax = plt.subplots(figsize=figsize or (8, 8), # Provide default here
-                           subplot_kw={'projection': 'polar'})
+    fig, ax = plt.subplots(
+        figsize=figsize or (8, 8),  # Provide default here
+        subplot_kw={"projection": "polar"},
+    )
 
     # Limit the visible angular range
     ax.set_thetamin(0)  # Start angle (in degrees)
@@ -271,21 +292,24 @@ def plot_relationship(
 
     # Map `y_true` to angular coordinates (theta)
     # Handle potential division by zero if y_true is constant
-    y_true_range = np.ptp(y_true) # Peak-to-peak range
-    if theta_scale == 'proportional':
-        if y_true_range > 1e-9: # Avoid division by zero
-             theta = angular_range * (y_true - np.min(y_true)) / y_true_range
-        else: # Handle constant y_true case - map all to start angle?
-             theta = np.zeros_like(y_true)
-             warnings.warn("y_true has zero range. Mapping all points to angle 0"
-                           " with 'proportional' scaling.", UserWarning)
-    elif theta_scale == 'uniform':
+    y_true_range = np.ptp(y_true)  # Peak-to-peak range
+    if theta_scale == "proportional":
+        if y_true_range > 1e-9:  # Avoid division by zero
+            theta = angular_range * (y_true - np.min(y_true)) / y_true_range
+        else:  # Handle constant y_true case - map all to start angle?
+            theta = np.zeros_like(y_true)
+            warnings.warn(
+                "y_true has zero range. Mapping all points to angle 0"
+                " with 'proportional' scaling.",
+                UserWarning,
+                stacklevel=2,
+            )
+    elif theta_scale == "uniform":
         # linspace handles len=1 case correctly
-        theta = np.linspace(0, angular_range, len(y_true), endpoint=False) 
+        theta = np.linspace(0, angular_range, len(y_true), endpoint=False)
     else:
         # This case should be caught by @validate_params
-        raise ValueError(
-            "`theta_scale` must be either 'proportional' or 'uniform'.")
+        raise ValueError("`theta_scale` must be either 'proportional' or 'uniform'.")
 
     # Apply theta offset
     theta += theta_offset
@@ -293,7 +317,7 @@ def plot_relationship(
     # Plot each model's predictions
     for i, y_pred in enumerate(y_preds):
         # Ensure `y_pred` is a numpy array
-        y_pred = np.asarray(y_pred, dtype=float) # Convert early
+        y_pred = np.asarray(y_pred, dtype=float)  # Convert early
 
         # Normalize `y_pred` for radial coordinates
         # Handle potential division by zero if y_pred is constant
@@ -303,69 +327,83 @@ def plot_relationship(
         else:
             # If constant, map all to 0.5 radius (midpoint)? Or 0? Let's use 0.5
             r = np.full_like(y_pred, 0.5)
-            warnings.warn(f"Prediction series '{names[i]}' has zero range."
-                          f" Plotting all its points at normalized radius 0.5.",
-                          UserWarning)
+            warnings.warn(
+                f"Prediction series '{names[i]}' has zero range."
+                f" Plotting all its points at normalized radius 0.5.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Plot on the polar axis
         ax.scatter(
-            theta, r,
+            theta,
+            r,
             label=names[i],
-            color=final_colors[i], # FIX: Use 'color' instead of 'c'
-            s=s, alpha=alpha, edgecolor='black'
+            color=final_colors[i],  # FIX: Use 'color' instead of 'c'
+            s=s,
+            alpha=alpha,
+            edgecolor="black",
         )
 
     # If z_values are provided, replace angle labels with z_values
     if z_values is not None:
-        z_values = np.asarray(z_values) # Ensure numpy array
+        z_values = np.asarray(z_values)  # Ensure numpy array
         if len(z_values) != len(y_true):
             raise ValueError("Length of `z_values` must match the length of `y_true`.")
 
         # Decide number of ticks, e.g., 5-10 depending on range/preference
-        num_z_ticks = min(len(z_values), 8) # Example: max 8 ticks
-        tick_indices = np.linspace(0, len(z_values) - 1, num_z_ticks,
-                                   dtype=int, endpoint=True)
+        num_z_ticks = min(len(z_values), 8)  # Example: max 8 ticks
+        tick_indices = np.linspace(
+            0, len(z_values) - 1, num_z_ticks, dtype=int, endpoint=True
+        )
 
         # Get theta values corresponding to these indices
-        theta_ticks = theta[tick_indices] # Use theta calculated earlier
-        z_tick_labels = [f"{z_values[ix]:.2g}" for ix in tick_indices] # Format labels
+        theta_ticks = theta[tick_indices]  # Use theta calculated earlier
+        z_tick_labels = [f"{z_values[ix]:.2g}" for ix in tick_indices]  # Format labels
 
         ax.set_xticks(theta_ticks)
         ax.set_xticklabels(z_tick_labels)
         # Optional: Set label for z-axis if z_label is provided
         if z_label:
-             ax.text(1.1, 0.5, z_label, transform=ax.transAxes, rotation=90,
-                     va='center', ha='left') # Adjust position as needed
-
+            ax.text(
+                1.1,
+                0.5,
+                z_label,
+                transform=ax.transAxes,
+                rotation=90,
+                va="center",
+                ha="left",
+            )  # Adjust position as needed
 
     # Add labels for radial and angular axes (only if z_values are not used for angles)
     if z_values is None:
-        ax.set_ylabel(ylabel or "Angular Mapping (θ)", labelpad=15) # Use labelpad
+        ax.set_ylabel(ylabel or "Angular Mapping (θ)", labelpad=15)  # Use labelpad
     # Radial label
     ax.set_xlabel(xlabel or "Normalized Predictions (r)", labelpad=15)
     # Position radial labels better
-    ax.set_rlabel_position(22.5) # Adjust angle for radial labels
+    ax.set_rlabel_position(22.5)  # Adjust angle for radial labels
 
     # Add title
-    ax.set_title(title or "Relationship Visualization", va='bottom', pad=20) # Add padding
+    ax.set_title(
+        title or "Relationship Visualization", va="bottom", pad=20
+    )  # Add padding
 
     # Add grid using helper or directly
     set_axis_grid(ax, show_grid, grid_props=grid_props)
 
     # Add legend
     if legend:
-        ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1.1)) # Adjust position
+        ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.1))  # Adjust position
 
-    plt.tight_layout() # Adjust layout to prevent overlap
+    plt.tight_layout()  # Adjust layout to prevent overlap
 
     # --- Save or Show ---
     if savefig:
         try:
-            plt.savefig(savefig, bbox_inches='tight', dpi=300)
+            plt.savefig(savefig, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig}")
         except Exception as e:
             print(f"Error saving plot to {savefig}: {e}")
     else:
         # Warning for non-GUI backend is expected here in test envs
         plt.show()
-

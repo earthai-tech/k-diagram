@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # File: kdiagram/compat/sklearn.py
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
@@ -18,17 +17,22 @@ Provides helper utilities and compatibility shims for interacting with
 different versions of scikit-learn, ensuring smoother integration
 within the k-diagram package.
 """
-from packaging.version import Version, parse
 import inspect
+
 import numpy as np
 import sklearn
-from sklearn.utils._param_validation import validate_params as sklearn_validate_params
-from sklearn.utils._param_validation import Interval as sklearn_Interval 
-from sklearn.utils._param_validation import StrOptions, HasMethods, Hidden
-from sklearn.utils._param_validation import InvalidParameterError 
+from packaging.version import Version, parse
+from sklearn.metrics import get_scorer, mean_squared_error as sklearn_mse
 from sklearn.utils import resample
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    InvalidParameterError,
+    StrOptions,
+)
+from sklearn.utils._param_validation import Interval as sklearn_Interval
+from sklearn.utils._param_validation import validate_params as sklearn_validate_params
 from sklearn.utils.validation import check_is_fitted as sklearn_check_is_fitted
-from sklearn.metrics import get_scorer
 
 # Determine the installed scikit-learn version
 SKLEARN_VERSION = parse(sklearn.__version__)
@@ -39,138 +43,145 @@ SKLEARN_LT_0_23 = SKLEARN_VERSION < Version("0.23.0")
 SKLEARN_LT_0_24 = SKLEARN_VERSION < Version("0.24.0")
 SKLEARN_LT_1_3 = SKLEARN_VERSION < parse("1.3.0")
 
+_SQUARED_ARG_REMOVED_VERSION = parse("1.4")
+
+
+
 __all__ = [
-    "Interval", 
+    "Interval",
     "resample",
     "train_test_split",
     "get_scorer",
-    "type_of_target", 
+    "mean_squared_error", 
+    "root_mean_squared_error", 
+    "type_of_target",
     "get_feature_names",
-    "get_feature_names_out", 
+    "get_feature_names_out",
     "get_transformers_from_column_transformer",
     "check_is_fitted",
-    "adjusted_mutual_info_score", 
-    "validate_params", 
-    "InvalidParameterError", 
-    "StrOptions", 
-    "HasMethods", 
-    "Hidden", 
-    "SKLEARN_LT_0_22", 
-    "SKLEARN_LT_0_23", 
-    "SKLEARN_LT_0_24"
+    "adjusted_mutual_info_score",
+    "validate_params",
+    "InvalidParameterError",
+    "StrOptions",
+    "HasMethods",
+    "Hidden",
+    "SKLEARN_LT_0_22",
+    "SKLEARN_LT_0_23",
+    "SKLEARN_LT_0_24",
 ]
+
 
 
 class Interval:
     """
-    Compatibility wrapper for scikit-learn's `Interval` class to handle 
+    Compatibility wrapper for scikit-learn's `Interval` class to handle
     versions that do not include the `inclusive` argument.
-    
+
     Parameters
     ----------
     *args : tuple
-        Positional arguments passed to the `Interval` class, typically 
-        the expected data types and the range boundaries for the validation 
+        Positional arguments passed to the `Interval` class, typically
+        the expected data types and the range boundaries for the validation
         interval.
-    
+
     inclusive : bool, optional
-        Specifies whether the interval includes its bounds. Only supported 
-        in scikit-learn versions that accept the `inclusive` parameter. If 
-        `True`, the interval includes the bounds. Default is `None` for 
+        Specifies whether the interval includes its bounds. Only supported
+        in scikit-learn versions that accept the `inclusive` parameter. If
+        `True`, the interval includes the bounds. Default is `None` for
         older versions where this argument is not available.
-    
+
     closed : str, optional
-        Defines how the interval is closed. Can be "left", "right", "both", 
-        or "neither". This argument is accepted by both older and newer 
-        scikit-learn versions. Default is "left" (includes the left bound, 
+        Defines how the interval is closed. Can be "left", "right", "both",
+        or "neither". This argument is accepted by both older and newer
+        scikit-learn versions. Default is "left" (includes the left bound,
         but excludes the right bound).
-    
+
     kwargs : dict
-        Additional keyword arguments passed to the `Interval` class for 
-        compatibility, including any additional arguments required by the 
+        Additional keyword arguments passed to the `Interval` class for
+        compatibility, including any additional arguments required by the
         current scikit-learn version.
 
     Returns
     -------
     Interval
-        A compatible `Interval` object based on the scikit-learn version, 
+        A compatible `Interval` object based on the scikit-learn version,
         with or without the `inclusive` argument.
-    
+
     Raises
     ------
     ValueError
-        If an unsupported version of scikit-learn is used or the parameters 
+        If an unsupported version of scikit-learn is used or the parameters
         are not valid for the given version.
-    
+
     Notes
     -----
-    This class provides a compatibility layer for creating `Interval` 
-    objects in different versions of scikit-learn. The `inclusive` argument 
-    was introduced in newer versions, so this class removes it if not 
-    supported in older versions. 
-    
-    If you are using scikit-learn versions that support the `inclusive` 
-    argument (e.g., version 1.2 or later), it will be included in the call 
+    This class provides a compatibility layer for creating `Interval`
+    objects in different versions of scikit-learn. The `inclusive` argument
+    was introduced in newer versions, so this class removes it if not
+    supported in older versions.
+
+    If you are using scikit-learn versions that support the `inclusive`
+    argument (e.g., version 1.2 or later), it will be included in the call
     to `Interval`. Otherwise, the argument will be excluded.
-    
+
     Examples
     --------
-    In newer scikit-learn versions (e.g., >=1.2), you can include the 
+    In newer scikit-learn versions (e.g., >=1.2), you can include the
     `inclusive` parameter:
-    
+
     >>> from numbers import Integral
     >>> from kdiagram.compat.sklearn import Interval
     >>> interval = Interval(Integral, 1, 10, closed="left", inclusive=True)
     >>> interval
-    
-    In older versions of scikit-learn that don't support `inclusive`, it 
+
+    In older versions of scikit-learn that don't support `inclusive`, it
     will automatically be removed:
-    
+
     >>> interval = Interval(Integral, 1, 10, closed="left")
     >>> interval
-    
+
     See Also
     --------
-    sklearn.utils._param_validation.Interval : Original scikit-learn `Interval` 
+    sklearn.utils._param_validation.Interval : Original scikit-learn `Interval`
         class used for parameter validation.
-    
+
     References
     ----------
-    .. [1] Pedregosa, F. et al. (2011). "Scikit-learn: Machine Learning in 
+    .. [1] Pedregosa, F. et al. (2011). "Scikit-learn: Machine Learning in
        Python." *Journal of Machine Learning Research*, 12, 2825-2830.
-    
-    .. [2] Buitinck, L., Louppe, G., Blondel, M., et al. (2013). "API design 
-       for machine learning software: experiences from the scikit-learn 
+
+    .. [2] Buitinck, L., Louppe, G., Blondel, M., et al. (2013). "API design
+       for machine learning software: experiences from the scikit-learn
        project." *arXiv preprint arXiv:1309.0238*.
     """
-    
+
     def __new__(cls, *args, **kwargs):
         """
-        Creates a compatible `Interval` object based on the scikit-learn 
+        Creates a compatible `Interval` object based on the scikit-learn
         version.
-        
+
         Parameters
         ----------
         *args : tuple
             Positional arguments for the `Interval` class.
         kwargs : dict
-            Keyword arguments, including `inclusive` if supported by the 
+            Keyword arguments, including `inclusive` if supported by the
             scikit-learn version.
-        
+
         Returns
         -------
         sklearn.utils._param_validation.Interval
             A compatible `Interval` object.
         """
-        # Check if 'inclusive' is a parameter in the __init__ method of 
+        # Check if 'inclusive' is a parameter in the __init__ method of
         # sklearn_Interval
         signature = inspect.signature(sklearn_Interval.__init__)
-        if 'inclusive' in signature.parameters:
+        if "inclusive" in signature.parameters:
             # 'inclusive' is supported, use kwargs as is
             return sklearn_Interval(*args, **kwargs)
         else:
             # 'inclusive' not supported, remove it from kwargs if present
-            kwargs.pop('inclusive', None)
+            kwargs.pop("inclusive", None)
             return sklearn_Interval(*args, **kwargs)
 
 
@@ -301,6 +312,7 @@ def type_of_target(y):
     # Attempt to import type_of_target from scikit-learn
     try:
         from sklearn.utils.multiclass import type_of_target as skl_type_of_target
+
         return skl_type_of_target(y)
     except ImportError:
         # Fallback _type_of_target if scikit-learn is not available
@@ -314,6 +326,7 @@ def type_of_target(y):
                 " and contains 'type_of_target'."
             )
 
+
 def _type_of_target(y):
     """
     Determine the type of data indicated by the target variable.
@@ -321,7 +334,7 @@ def _type_of_target(y):
     Parameters
     ----------
     y : array-like
-        Target values. 
+        Target values.
 
     Returns
     -------
@@ -338,39 +351,43 @@ def _type_of_target(y):
     'multilabel-indicator'
     """
     from collections.abc import Sequence
-    import pandas as pd 
-    
+
+    import pandas as pd
+
     # Check if y is an array-like
     if not isinstance(y, (np.ndarray, list, pd.Series, Sequence, pd.DataFrame)):
-        raise ValueError("Expected array-like (array or list), got %s" % type(y))
-    
+        raise ValueError(f"Expected array-like (array or list), got {type(y)}")
+
     # check whether it is a series of pandas dataframe with single column.
-    if isinstance (y, pd.Series) or ( 
-            isinstance (y, pd.DataFrame) and len(y.columns) ==1): 
-        y= np.array(y).ravel() # ravel it for 
-        
-    y= np.asarray(y)
+    if isinstance(y, pd.Series) or (
+        isinstance(y, pd.DataFrame) and len(y.columns) == 1
+    ):
+        y = np.array(y).ravel()  # ravel it for
+
+    y = np.asarray(y)
     # Check for valid number type
-    if not all(isinstance(i, (int, float, np.integer, np.floating)) 
-               for i in np.array(y).flatten()):
+    if not all(
+        isinstance(i, (int, float, np.integer, np.floating))
+        for i in np.array(y).flatten()
+    ):
         raise ValueError("Input must be a numeric array-like")
 
     # Continuous data
     if any(isinstance(i, float) for i in np.array(y).flatten()):
-        return 'continuous'
+        return "continuous"
 
     # Binary or multiclass
     unique_values = np.unique(y)
     if len(unique_values) == 2:
-        return 'binary'
+        return "binary"
     elif len(unique_values) > 2 and np.ndim(y) == 1:
-        return 'multiclass'
+        return "multiclass"
 
     # Multilabel indicator
     if isinstance(y[0], (np.ndarray, list, Sequence)) and len(y[0]) > 1:
-        return 'multilabel-indicator'
+        return "multilabel-indicator"
 
-    return 'unknown'
+    return "unknown"
 
 
 def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs):
@@ -493,10 +510,10 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
     """
     # Check if `prefer_skip_nested_validation` is required by inspecting the signature
     sig = inspect.signature(sklearn_validate_params)
-    if 'prefer_skip_nested_validation' in sig.parameters:
+    if "prefer_skip_nested_validation" in sig.parameters:
         # Pass the user's choice or default for `prefer_skip_nested_validation`
-        kwargs['prefer_skip_nested_validation'] = prefer_skip_nested_validation
-    
+        kwargs["prefer_skip_nested_validation"] = prefer_skip_nested_validation
+
     # Call the actual validate_params with appropriate arguments
     return sklearn_validate_params(params, *args, **kwargs)
 
@@ -504,13 +521,13 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
 def get_column_transformer_feature_names(column_transformer, input_features=None):
     """
     Get feature names from a ColumnTransformer.
-    
+
     Parameters:
     - column_transformer : ColumnTransformer
         The ColumnTransformer object.
     - input_features : list of str, optional
         List of input feature names.
-    
+
     Returns:
     - feature_names : list of str
         List of feature names generated by the transformers in the ColumnTransformer.
@@ -520,43 +537,50 @@ def get_column_transformer_feature_names(column_transformer, input_features=None
     # Ensure input_features is a list; if not provided, assume numerical column indices
     if input_features is None:
         input_features = list(range(column_transformer._n_features))
-    
+
     for transformer_name, transformer, column in column_transformer.transformers_:
-        if transformer == 'drop' or (
-                hasattr(transformer, 'remainder') and transformer.remainder == 'drop'):
+        if transformer == "drop" or (
+            hasattr(transformer, "remainder") and transformer.remainder == "drop"
+        ):
             continue
 
         # Resolve actual column names/indices
-        actual_columns = [input_features[c] for c in column] if isinstance(
-            column, (list, slice)) else [input_features[column]]
+        actual_columns = (
+            [input_features[c] for c in column]
+            if isinstance(column, (list, slice))
+            else [input_features[column]]
+        )
 
-        if hasattr(transformer, 'get_feature_names_out'):
+        if hasattr(transformer, "get_feature_names_out"):
             # For transformers that support get_feature_names_out
-            if hasattr(transformer, 'feature_names_in_'):
+            if hasattr(transformer, "feature_names_in_"):
                 transformer.feature_names_in_ = actual_columns
             transformer_features = transformer.get_feature_names_out()
-        elif hasattr(transformer, 'get_feature_names'):
+        elif hasattr(transformer, "get_feature_names"):
             # For transformers that support get_feature_names
             transformer_features = transformer.get_feature_names()
         else:
             # Default behavior for transformers without get_feature_names methods
-            transformer_features = [f"{transformer_name}__{i}" for i in range(
-                transformer.transform(column).shape[1])]
-        
+            transformer_features = [
+                f"{transformer_name}__{i}"
+                for i in range(transformer.transform(column).shape[1])
+            ]
+
         output_features.extend(transformer_features)
 
     return output_features
 
+
 def get_column_transformer_feature_names2(column_transformer, input_features=None):
     """
     Get feature names from a ColumnTransformer.
-    
+
     Parameters:
     - column_transformer : ColumnTransformer
         The ColumnTransformer object.
     - input_features : list of str, optional
         List of input feature names.
-    
+
     Returns:
     - feature_names : list of str
         List of feature names generated by the transformers in the ColumnTransformer.
@@ -564,35 +588,48 @@ def get_column_transformer_feature_names2(column_transformer, input_features=Non
     output_features = []
 
     for transformer_name, transformer, column in column_transformer.transformers_:
-        if transformer == 'drop' or (
-                hasattr(transformer, 'remainder') and transformer.remainder == 'drop'):
+        if transformer == "drop" or (
+            hasattr(transformer, "remainder") and transformer.remainder == "drop"
+        ):
             continue
 
-        if hasattr(transformer, 'get_feature_names_out'):
+        if hasattr(transformer, "get_feature_names_out"):
             # For transformers that support get_feature_names_out
-            if input_features is not None and hasattr(transformer, 'feature_names_in_'):
+            if input_features is not None and hasattr(transformer, "feature_names_in_"):
                 # Adjust for the case where column is a list of column names or indices
-                transformer_feature_names_in = [input_features[col] if isinstance(
-                    column, list) else input_features[column] for col in column] if isinstance(
-                        column, list) else [input_features[column]]
+                transformer_feature_names_in = (
+                    [
+                        (
+                            input_features[col]
+                            if isinstance(column, list)
+                            else input_features[column]
+                        )
+                        for col in column
+                    ]
+                    if isinstance(column, list)
+                    else [input_features[column]]
+                )
                 transformer.feature_names_in_ = transformer_feature_names_in
             transformer_features = transformer.get_feature_names_out()
-        elif hasattr(transformer, 'get_feature_names'):
+        elif hasattr(transformer, "get_feature_names"):
             # For transformers that support get_feature_names
             transformer_features = transformer.get_feature_names()
         else:
             # Default behavior for transformers without get_feature_names methods
-            transformer_features = [f"{transformer_name}__{i}" for i in range(
-                transformer.transform(column).shape[1])]
-        
+            transformer_features = [
+                f"{transformer_name}__{i}"
+                for i in range(transformer.transform(column).shape[1])
+            ]
+
         output_features.extend(transformer_features)
 
     return output_features
 
+
 def get_feature_names(estimator, *args, **kwargs):
     """
     Compatibility function for fetching feature names from an estimator.
-    
+
     Parameters:
     - estimator : estimator object
         Scikit-learn estimator from which to get feature names.
@@ -603,21 +640,23 @@ def get_feature_names(estimator, *args, **kwargs):
     - feature_names : list
         List of feature names.
     """
-    if hasattr(estimator, 'get_feature_names_out'):
+    if hasattr(estimator, "get_feature_names_out"):
         # For versions of scikit-learn that support get_feature_names_out
         return estimator.get_feature_names_out(*args, **kwargs)
-    elif hasattr(estimator, 'get_feature_names'):
+    elif hasattr(estimator, "get_feature_names"):
         # For older versions of scikit-learn
         return estimator.get_feature_names(*args, **kwargs)
     else:
         raise AttributeError(
-            "The estimator does not have a method to get feature names.")
+            "The estimator does not have a method to get feature names."
+        )
+
 
 def get_feature_names_out(estimator, *args, **kwargs):
     """
     Compatibility function for fetching feature names from an estimator, using
     get_feature_names_out for scikit-learn versions that support it.
-    
+
     Parameters:
     - estimator : estimator object
         Scikit-learn estimator from which to get feature names.
@@ -630,10 +669,11 @@ def get_feature_names_out(estimator, *args, **kwargs):
     """
     return get_feature_names(estimator, *args, **kwargs)
 
+
 def get_transformers_from_column_transformer(ct):
     """
     Compatibility function to get transformers from a ColumnTransformer object.
-    
+
     Parameters:
     - ct : ColumnTransformer
         A fitted ColumnTransformer instance.
@@ -642,16 +682,18 @@ def get_transformers_from_column_transformer(ct):
     - transformers : list of tuples
         List of (name, transformer, column(s)) tuples.
     """
-    if hasattr(ct, 'transformers_'):
+    if hasattr(ct, "transformers_"):
         return ct.transformers_
     else:
         raise AttributeError(
-            "The ColumnTransformer instance does not have a 'transformers_' attribute.")
+            "The ColumnTransformer instance does not have a 'transformers_' attribute."
+        )
+
 
 def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     """
     Compatibility wrapper for scikit-learn's check_is_fitted function.
-    
+
     Parameters:
     - estimator : estimator instance
         The estimator to check.
@@ -667,10 +709,10 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     """
     return sklearn_check_is_fitted(estimator, attributes, msg, all_or_any)
 
-def adjusted_mutual_info_score(
-        labels_true, labels_pred, average_method='arithmetic'):
+
+def adjusted_mutual_info_score(labels_true, labels_pred, average_method="arithmetic"):
     """
-    Compatibility function for adjusted_mutual_info_score with the 
+    Compatibility function for adjusted_mutual_info_score with the
     average_method parameter.
 
     Parameters:
@@ -688,17 +730,19 @@ def adjusted_mutual_info_score(
        Adjusted Mutual Information Score.
     """
     from sklearn.metrics import adjusted_mutual_info_score as ami_score
+
     if SKLEARN_LT_0_22:
         return ami_score(labels_true, labels_pred)
     else:
         return ami_score(labels_true, labels_pred, average_method=average_method)
-    
+
+
 def fetch_openml(*args, **kwargs):
     """
     Compatibility function for fetch_openml to ensure consistent return type.
 
     Parameters:
-    - args, kwargs: Arguments and keyword arguments for 
+    - args, kwargs: Arguments and keyword arguments for
     sklearn.datasets.fetch_openml.
 
     Returns:
@@ -706,9 +750,11 @@ def fetch_openml(*args, **kwargs):
         Dictionary-like object with all the data and metadata.
     """
     from sklearn.datasets import fetch_openml
-    if 'as_frame' not in kwargs and not SKLEARN_LT_0_24:
-        kwargs['as_frame'] = True
+
+    if "as_frame" not in kwargs and not SKLEARN_LT_0_24:
+        kwargs["as_frame"] = True
     return fetch_openml(*args, **kwargs)
+
 
 def plot_confusion_matrix(estimator, X, y_true, *args, **kwargs):
     """
@@ -732,20 +778,23 @@ def plot_confusion_matrix(estimator, X, y_true, *args, **kwargs):
         # Assume older version without plot_confusion_matrix
         # Implement fallback or raise informative error
         raise NotImplementedError(
-            "plot_confusion_matrix not available in your sklearn version.")
+            "plot_confusion_matrix not available in your sklearn version."
+        )
     return plot_confusion_matrix(estimator, X, y_true, *args, **kwargs)
+
 
 def train_test_split(*args, **kwargs):
     """
     Compatibility wrapper for train_test_split to ensure consistent behavior.
 
     Parameters:
-    - args, kwargs: Arguments and keyword arguments for 
+    - args, kwargs: Arguments and keyword arguments for
     sklearn.model_selection.train_test_split.
     """
     from sklearn.model_selection import train_test_split
-    if 'shuffle' not in kwargs:
-        kwargs['shuffle'] = True
+
+    if "shuffle" not in kwargs:
+        kwargs["shuffle"] = True
     return train_test_split(*args, **kwargs)
 
 
@@ -765,10 +814,10 @@ def get_transformer_feature_names(transformer, input_features=None):
     - feature_names : list of str
         List of feature names generated by the transformer.
     """
-    if hasattr(transformer, 'get_feature_names_out'):
+    if hasattr(transformer, "get_feature_names_out"):
         # Use get_feature_names_out if available (preferable in newer versions)
         return transformer.get_feature_names_out(input_features)
-    elif hasattr(transformer, 'get_feature_names'):
+    elif hasattr(transformer, "get_feature_names"):
         # Fallback to get_feature_names for compatibility with older versions
         if input_features is not None:
             return transformer.get_feature_names(input_features)
@@ -777,7 +826,9 @@ def get_transformer_feature_names(transformer, input_features=None):
     else:
         # Raise error if neither method is available
         raise AttributeError(
-            f"{transformer.__class__.__name__} does not support feature name extraction.")
+            f"{transformer.__class__.__name__} does not support feature name extraction."
+        )
+
 
 def get_pipeline_feature_names(pipeline, input_features=None):
     """
@@ -797,38 +848,77 @@ def get_pipeline_feature_names(pipeline, input_features=None):
     - feature_names : list of str
         List of feature names generated by the pipeline.
     """
-    import numpy as np 
+    import numpy as np
+
     if input_features is None:
         input_features = []
 
     # Initialize with input features
     current_features = np.array(input_features)
-    
+
     # Iterate through transformers in the pipeline
-    for name, transformer in pipeline.steps:
-        if hasattr(transformer, 'get_feature_names_out'):
+    for _name, transformer in pipeline.steps:
+        if hasattr(transformer, "get_feature_names_out"):
             # Transformer supports get_feature_names_out
             current_features = transformer.get_feature_names_out(current_features)
-        elif hasattr(transformer, 'get_feature_names'):
+        elif hasattr(transformer, "get_feature_names"):
             # Transformer supports get_feature_names and requires current feature names
             current_features = transformer.get_feature_names(current_features)
-        elif hasattr(transformer, 'categories_'):
+        elif hasattr(transformer, "categories_"):
             # Handle OneHotEncoder separately
             current_features = np.concatenate(transformer.categories_)
         else:
-            # For transformers that do not modify feature names 
+            # For transformers that do not modify feature names
             # or do not provide a method to get feature names
             continue
-    
+
     # Ensure output is a list of strings
     feature_names = list(map(str, current_features))
     return feature_names
 
+def mean_squared_error(y_true, y_pred, squared=True, **kwargs):
+    """
+    Compatibility wrapper for sklearn.metrics.mean_squared_error.
 
-__all__.extend([
-    "fetch_openml",
-    "plot_confusion_matrix",
-    "get_transformer_feature_names", 
-    "get_pipeline_feature_names"
-])
+    This function behaves like the older version of the function, accepting
+    a 'squared' argument to toggle between MSE and RMSE.
 
+    Args:
+        y_true: Ground truth (correct) target values.
+        y_pred: Estimated target values.
+        squared (bool): If True, returns MSE. If False, returns RMSE.
+        **kwargs: Other arguments passed to the underlying function.
+
+    Returns:
+        float: The calculated metric score.
+    """
+    if sklearn_mse is None:
+        raise ImportError("scikit-learn is required for metric utilities.")
+
+    if SKLEARN_VERSION >= _SQUARED_ARG_REMOVED_VERSION:
+        # For new versions (>=1.4), 'squared' is gone. We replicate its behavior.
+        mse = sklearn_mse(y_true, y_pred, **kwargs)
+        if squared:
+            return mse  # Return Mean Squared Error
+        else:
+            return np.sqrt(mse)  # Return Root Mean Squared Error
+    else:
+        # For old versions (<1.4), the 'squared' argument exists.
+        # We can pass it through directly.
+        return sklearn_mse(y_true, y_pred, squared=squared, **kwargs)
+
+def root_mean_squared_error(y_true, y_pred, **kwargs):
+    """
+    A stable helper function that always calculates RMSE.
+    """
+    return mean_squared_error(y_true, y_pred, squared=False, **kwargs)
+
+
+__all__.extend(
+    [
+        "fetch_openml",
+        "plot_confusion_matrix",
+        "get_transformer_feature_names",
+        "get_pipeline_feature_names",
+    ]
+)
