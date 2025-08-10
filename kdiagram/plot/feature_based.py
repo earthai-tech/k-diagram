@@ -2,31 +2,32 @@
 # Author: LKouadio <etanoyau@gmail.com>
 
 import warnings
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from ..compat.matplotlib import get_cmap, is_valid_cmap 
 from ..decorators import check_non_emptiness
 from ..utils.handlers import columns_manager
 from ..utils.validator import ensure_2d
 
-__all__=['plot_feature_fingerprint']
+__all__ = ["plot_feature_fingerprint"]
 
-@check_non_emptiness (params =["importances"])
+
+@check_non_emptiness(params=["importances"])
 def plot_feature_fingerprint(
     importances,
-    features: Optional[List[str]] = None,
-    labels: Optional[List[str]] = None,
+    features: Optional[list[str]] = None,
+    labels: Optional[list[str]] = None,
     normalize: bool = True,
     fill: bool = True,
-    cmap: Union[str, List[Any]] = 'tab10', 
+    cmap: Union[str, list[Any]] = "tab10",
     title: str = "Feature Impact Fingerprint",
-    figsize: Optional[Tuple[float, float]] = None, 
+    figsize: Optional[tuple[float, float]] = None,
     show_grid: bool = True,
-    savefig: Optional[str] = None
+    savefig: Optional[str] = None,
 ):
     r"""Create a radar chart visualizing feature importance profiles.
 
@@ -138,7 +139,7 @@ def plot_feature_fingerprint(
 
     1. **Angle Calculation**: Angles for each feature axis are
        calculated as:
-           
+
        .. math::
            \theta_j = \frac{2 \pi j}{N}, \quad j = 0, 1, \dots, N-1
 
@@ -209,8 +210,7 @@ def plot_feature_fingerprint(
     # Manage feature names
     if features is None:
         # Generate default feature names if none provided
-        features_list = [f'feature {i+1}'
-                         for i in range(n_features_data)]
+        features_list = [f"feature {i+1}" for i in range(n_features_data)]
     else:
         # Ensure features is a list and handle potential discrepancies
         features_list = columns_manager(features, empty_as_none=False)
@@ -219,52 +219,58 @@ def plot_feature_fingerprint(
     # generic names
     if len(features_list) < n_features_data:
         features_list.extend(
-            [f'feature {ix + 1}'
-             for ix in range(len(features_list), n_features_data)]
+            [f"feature {ix + 1}" for ix in range(len(features_list), n_features_data)]
         )
     # Truncate if user provided more names than needed (optional,
     # could also raise error)
     elif len(features_list) > n_features_data:
-         warnings.warn(
+        warnings.warn(
             f"More feature names ({len(features_list)}) provided "
             f"than data columns ({n_features_data}). "
-            "Extra names ignored."
-            )
-         features_list = features_list[:n_features_data]
+            "Extra names ignored.",
+            UserWarning,
+            stacklevel=2,
+        )
+        features_list = features_list[:n_features_data]
 
-    n_features = len(features_list) # Final number of features used
+    n_features = len(features_list)  # Final number of features used
 
     # Manage labels
     if labels is None:
         # Generate default layer labels if none provided
         labels_list = [f"Layer {idx+1}" for idx in range(n_layers)]
     else:
-        labels_list = list(labels) # Ensure it's a list
+        labels_list = list(labels)  # Ensure it's a list
         # Check label count consistency
         if len(labels_list) < n_layers:
             warnings.warn(
                 f"Fewer labels ({len(labels_list)}) provided than "
-                f"layers ({n_layers}). Using generic names for the rest."
-                )
+                f"layers ({n_layers}). Using generic names for the rest.",
+                UserWarning,
+                stacklevel=2,
+            )
             labels_list.extend(
-                [f'Layer {ix + 1}'
-                 for ix in range(len(labels_list), n_layers)]
+                [f"Layer {ix + 1}" for ix in range(len(labels_list), n_layers)]
             )
         elif len(labels_list) > n_layers:
             warnings.warn(
                 f"More labels ({len(labels_list)}) provided than "
-                f"layers ({n_layers}). Extra labels ignored."
-                )
+                f"layers ({n_layers}). Extra labels ignored.",
+                UserWarning,
+                stacklevel=2,
+            )
             labels_list = labels_list[:n_layers]
-
 
     # --- Normalization (if requested) ---
     if normalize:
         # Calculate max per row (layer), keep dimensions for broadcasting
         # max_per_row shape: (n_layers, 1), e.g., (3, 1)
-        importance_matrix = importance_matrix.values if isinstance (
-            importance_matrix, pd.DataFrame) else importance_matrix 
-        
+        importance_matrix = (
+            importance_matrix.values
+            if isinstance(importance_matrix, pd.DataFrame)
+            else importance_matrix
+        )
+
         max_per_row = importance_matrix.max(axis=1, keepdims=True)
 
         # Create a mask for rows with max_val > 0 (where normalization is safe)
@@ -302,33 +308,35 @@ def plot_feature_fingerprint(
 
     # --- Angle Calculation for Radar Axes ---
     # Calculate evenly spaced angles for each feature axis
-    angles = np.linspace(0, 2 * np.pi, n_features,
-                         endpoint=False).tolist()
+    angles = np.linspace(0, 2 * np.pi, n_features, endpoint=False).tolist()
     # Add the first angle to the end to close the loop for plotting
     angles_closed = angles + angles[:1]
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(figsize=figsize,
-                           subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
 
     # Get colors from specified colormap or list
+    cmap = is_valid_cmap(cmap, default="tab10", error ="warn")
     try:
-        cmap_obj = cm.get_cmap(cmap)
+        cmap_obj = get_cmap(cmap)
         # Sample colors if it's a standard Matplotlib cmap
         colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
-    except ValueError: # Handle case where cmap might be a list of colors
+    except ValueError:  # Handle case where cmap might be a list of colors
         if isinstance(cmap, list):
             colors = cmap
             if len(colors) < n_layers:
-                 warnings.warn(
+                warnings.warn(
                     f"Provided color list has fewer colors "
                     f"({len(colors)}) than layers ({n_layers}). "
-                    f"Colors will repeat."
+                    f"Colors will repeat.",
+                    UserWarning,
+                    stacklevel=2,
                 )
-        else: # Fallback if cmap is invalid string or list
+        else:  # Fallback if cmap is invalid string or list
             warnings.warn(
-                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.")
-            cmap_obj = cm.get_cmap('tab10')
+                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.", stacklevel=2
+            )
+            cmap_obj = get_cmap("tab10")
             colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
 
     # --- Plot Each Layer ---
@@ -344,16 +352,14 @@ def plot_feature_fingerprint(
         color = colors[idx % len(colors)]
 
         # Plot the outline
-        ax.plot(angles_closed, values_closed, label=label,
-                color=color, linewidth=2)
+        ax.plot(angles_closed, values_closed, label=label, color=color, linewidth=2)
 
         # Fill the area if requested
         if fill:
-            ax.fill(angles_closed, values_closed, color=color,
-                    alpha=0.25)
+            ax.fill(angles_closed, values_closed, color=color, alpha=0.25)
 
     # --- Customize Plot Appearance ---
-    ax.set_title(title, size=16, y=1.1) # Adjust title position
+    ax.set_title(title, size=16, y=1.1)  # Adjust title position
 
     # Set feature labels on the angular axes
     ax.set_xticks(angles)
@@ -366,18 +372,16 @@ def plot_feature_fingerprint(
     if normalize:
         # Optionally add a single radial label for the max value (1.0)
         ax.set_yticks([0.25, 0.5, 0.75, 1.0])
-        ax.set_yticklabels(["0.25", "0.50", "0.75", "1.00"],
-                           fontsize=9, color='gray')
+        ax.set_yticklabels(["0.25", "0.50", "0.75", "1.00"], fontsize=9, color="gray")
 
     # Show grid lines if requested
     if show_grid:
-        ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.6)
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
     else:
         ax.grid(False)
 
     # Add legend, positioned outside the plot area
-    ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1),
-              fontsize=10)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1), fontsize=10)
 
     # Adjust layout to prevent labels/title overlapping
     plt.tight_layout(pad=2.0)
@@ -385,7 +389,7 @@ def plot_feature_fingerprint(
     # --- Save or Show ---
     if savefig:
         try:
-            plt.savefig(savefig, bbox_inches='tight', dpi=300)
+            plt.savefig(savefig, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig}")
         except Exception as e:
             print(f"Error saving plot to {savefig}: {e}")

@@ -6,6 +6,7 @@ from kdiagram.api.bunch import Bunch, FlexDict
 
 # ---------- Bunch ----------
 
+
 def test_bunch_attribute_get_set_delete_roundtrip():
     b = Bunch(a=1)
     # get existing via attr and key
@@ -70,6 +71,7 @@ def test_bunch_repr():
 
 # ---------- FlexDict ----------
 
+
 def test_flexdict_attribute_access_and_repr_and_dir():
     fd = FlexDict(pkg="kdiagram", version="1.0")
     # attr + item access
@@ -82,7 +84,7 @@ def test_flexdict_attribute_access_and_repr_and_dir():
 
     # __dir__ returns only keys
     d = fd.__dir__()
-    assert set(d) == {'__dict__', 'goal', 'pkg', 'version'}
+    assert set(d) == {"__dict__", "goal", "pkg", "version"}
 
     # repr contains keys
     r = repr(fd)
@@ -96,13 +98,16 @@ def test_flexdict_getattr_missing_raises_attributeerror():
         _ = fd.nope
 
 
-@pytest.mark.parametrize("key_in, key_expected", [
-    ("column%%stat", "column"),
-    ("name**meta", "name"),
-    ("a&&b", "a"),
-    ("pipe||seg", "pipe"),
-    ("money$$val", "money"),
-])
+@pytest.mark.parametrize(
+    "key_in, key_expected",
+    [
+        ("column%%stat", "column"),
+        ("name**meta", "name"),
+        ("a&&b", "a"),
+        ("pipe||seg", "pipe"),
+        ("money$$val", "money"),
+    ],
+)
 def test_flexdict_setattr_special_symbol_truncates_key(key_in, key_expected):
     fd = FlexDict()
     setattr(fd, key_in, 42)
@@ -120,5 +125,6 @@ def test_flexdict_setstate_restores_and_binds_dict():
     fd.new_key = 3
     assert fd["new_key"] == 3
 
-if __name__=="__main__": # pragma: no-cover
-    pytest.main( [__file__])
+
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

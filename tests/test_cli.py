@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import os
@@ -19,31 +18,49 @@ import kdiagram.cli as cli
 def _mpl_agg(monkeypatch):
     monkeypatch.setenv("MPLBACKEND", "Agg")
 
+
 @pytest.fixture
 def stub_plots(monkeypatch):
     # stub every imported plot function to a sentinel
     called = {}
+
     def make_stub(name):
         def f(*a, **k):
             called[name] = (a, k)
+
         return f
+
     for fn in [
-        'plot_coverage','plot_model_drift','plot_velocity',
-        'plot_interval_consistency','plot_anomaly_magnitude',
-        'plot_uncertainty_drift','plot_actual_vs_predicted',
-        'plot_coverage_diagnostic','plot_interval_width','plot_temporal_uncertainty',
-        'taylor_diagram','plot_taylor_diagram_in','plot_taylor_diagram',
-        'plot_feature_fingerprint','plot_relationship'
+        "plot_coverage",
+        "plot_model_drift",
+        "plot_velocity",
+        "plot_interval_consistency",
+        "plot_anomaly_magnitude",
+        "plot_uncertainty_drift",
+        "plot_actual_vs_predicted",
+        "plot_coverage_diagnostic",
+        "plot_interval_width",
+        "plot_temporal_uncertainty",
+        "taylor_diagram",
+        "plot_taylor_diagram_in",
+        "plot_taylor_diagram",
+        "plot_feature_fingerprint",
+        "plot_relationship",
     ]:
         if hasattr(cli, fn):
             monkeypatch.setattr(cli, fn, make_stub(fn), raising=False)
     # stub IO helpers
-    monkeypatch.setattr(cli, "read_csv_to_df", lambda p: pd.DataFrame({"a":[1,2], "b":[3,4]}))
-    monkeypatch.setattr(cli, "read_csv_to_numpy", lambda p, delimiter=',': np.array([1,2,3]))
+    monkeypatch.setattr(
+        cli, "read_csv_to_df", lambda p: pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    )
+    monkeypatch.setattr(
+        cli, "read_csv_to_numpy", lambda p, delimiter=",": np.array([1, 2, 3])
+    )
     # stub show/savefig
     monkeypatch.setattr(cli.plt, "show", lambda: None)
     monkeypatch.setattr(cli.plt, "savefig", lambda *a, **k: None)
     return called
+
 
 def run_cli(argv):
     # emulate command-line
@@ -54,38 +71,121 @@ def run_cli(argv):
     finally:
         sys.argv = old
 
+
 def test_cli_version(capsys):
     with pytest.raises(SystemExit):
         run_cli(["--version"])
     out = capsys.readouterr()
     assert "kdiagram" in out.err or out.out  # depending on argparse version
 
-@pytest.mark.parametrize("argv,called_fn", [
-    (["plot_coverage","true.csv","pred1.csv","--q","0.1","0.9"], "plot_coverage"),
-    (["plot_model_drift","data.csv","--q10-cols","q10","--q90-cols","q90","--horizons","h1"], "plot_model_drift"),
-    (["plot_velocity","data.csv","--q50-cols","q50"], "plot_velocity"),
-    (["plot_interval_consistency","data.csv","--qlow-cols","q10","--qup-cols","q90"], "plot_interval_consistency"),
-    (["plot_anomaly_magnitude","data.csv","--actual-col","obs","--q-cols","q10","q90"], "plot_anomaly_magnitude"),
-    (["plot_uncertainty_drift","data.csv","--qlow-cols","q10a","q10b","--qup-cols","q90a","q90b"], "plot_uncertainty_drift"),
-    (["plot_actual_vs_predicted","data.csv","--actual-col","obs","--pred-col","q50"], "plot_actual_vs_predicted"),
-    (["plot_coverage_diagnostic","data.csv","--actual-col","obs","--q-cols","q10","q90"], "plot_coverage_diagnostic"),
-    (["plot_interval_width","data.csv","--q-cols","q10","q90"], "plot_interval_width"),
-    (["plot_temporal_uncertainty","data.csv","--q-cols","q10","q50","q90"], "plot_temporal_uncertainty"),
-])
 
+@pytest.mark.parametrize(
+    "argv,called_fn",
+    [
+        (
+            ["plot_coverage", "true.csv", "pred1.csv", "--q", "0.1", "0.9"],
+            "plot_coverage",
+        ),
+        (
+            [
+                "plot_model_drift",
+                "data.csv",
+                "--q10-cols",
+                "q10",
+                "--q90-cols",
+                "q90",
+                "--horizons",
+                "h1",
+            ],
+            "plot_model_drift",
+        ),
+        (["plot_velocity", "data.csv", "--q50-cols", "q50"], "plot_velocity"),
+        (
+            [
+                "plot_interval_consistency",
+                "data.csv",
+                "--qlow-cols",
+                "q10",
+                "--qup-cols",
+                "q90",
+            ],
+            "plot_interval_consistency",
+        ),
+        (
+            [
+                "plot_anomaly_magnitude",
+                "data.csv",
+                "--actual-col",
+                "obs",
+                "--q-cols",
+                "q10",
+                "q90",
+            ],
+            "plot_anomaly_magnitude",
+        ),
+        (
+            [
+                "plot_uncertainty_drift",
+                "data.csv",
+                "--qlow-cols",
+                "q10a",
+                "q10b",
+                "--qup-cols",
+                "q90a",
+                "q90b",
+            ],
+            "plot_uncertainty_drift",
+        ),
+        (
+            [
+                "plot_actual_vs_predicted",
+                "data.csv",
+                "--actual-col",
+                "obs",
+                "--pred-col",
+                "q50",
+            ],
+            "plot_actual_vs_predicted",
+        ),
+        (
+            [
+                "plot_coverage_diagnostic",
+                "data.csv",
+                "--actual-col",
+                "obs",
+                "--q-cols",
+                "q10",
+                "q90",
+            ],
+            "plot_coverage_diagnostic",
+        ),
+        (
+            ["plot_interval_width", "data.csv", "--q-cols", "q10", "q90"],
+            "plot_interval_width",
+        ),
+        (
+            ["plot_temporal_uncertainty", "data.csv", "--q-cols", "q10", "q50", "q90"],
+            "plot_temporal_uncertainty",
+        ),
+    ],
+)
 def test_cli_commands_smoke(stub_plots, argv, called_fn):
     run_cli(argv)
     assert called_fn in stub_plots
 
+
 def test_handle_figsize_good_and_bad(capsys, monkeypatch):
-    assert cli._handle_figsize("8,8", (1,1)) == (8.0, 8.0)
+    assert cli._handle_figsize("8,8", (1, 1)) == (8.0, 8.0)
     # bad string → fallback with error printed
-    r = cli._handle_figsize("oops", (9,9))
-    assert r == (9,9)
+    r = cli._handle_figsize("oops", (9, 9))
+    assert r == (9, 9)
+
 
 def test_handle_savefig_show_save_error(monkeypatch, capsys):
     # simulate savefig failure
-    def boom(*a, **k): raise RuntimeError("nope")
+    def boom(*a, **k):
+        raise RuntimeError("nope")
+
     monkeypatch.setattr(cli.plt, "savefig", boom)
     cli._handle_savefig_show("out.png")
     out = capsys.readouterr()
@@ -305,12 +405,17 @@ def test_taylor_diagram_arrays_mode(monkeypatch, small_arrays):
     assert len(used["y_preds"]) == 2
     assert used["marker"] == "x"
 
+
 @pytest.mark.skip("SystemExit: 2")
-def test_plot_taylor_diagram_in_rejects_bad_norm_range(monkeypatch, small_arrays, capsys):
+def test_plot_taylor_diagram_in_rejects_bad_norm_range(
+    monkeypatch, small_arrays, capsys
+):
     t, p1, p2 = small_arrays
 
     def should_not_call(*a, **k):
-        raise AssertionError("plot_taylor_diagram_in should not be called on bad --norm-range")
+        raise AssertionError(
+            "plot_taylor_diagram_in should not be called on bad --norm-range"
+        )
 
     monkeypatch.setattr(cli, "plot_taylor_diagram_in", should_not_call, raising=True)
 
@@ -335,7 +440,9 @@ def test_plot_feature_fingerprint_matrix_and_flags(monkeypatch, tmp_path):
     def fake_plot_feature_fingerprint(**kwargs):
         used.update(kwargs)
 
-    monkeypatch.setattr(cli, "plot_feature_fingerprint", fake_plot_feature_fingerprint, raising=True)
+    monkeypatch.setattr(
+        cli, "plot_feature_fingerprint", fake_plot_feature_fingerprint, raising=True
+    )
 
     # 2x3 "matrix" CSV
     mat = tmp_path / "M.csv"
@@ -423,5 +530,6 @@ def test_version_flag(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "9.9.9" in out
 
-if __name__ =="__main__": 
+
+if __name__ == "__main__":
     pytest.main([__file__])

@@ -21,10 +21,13 @@ try:
 
     # If it depends on get_scorer, ensure it's importable
     from kdiagram.utils.metric_utils import get_scorer
+
     _SKIP_TESTS = False
 except ImportError as e:
-    print(f"Could not import plot_model_comparison or dependencies: {e}."
-          f" Skipping tests.")
+    print(
+        f"Could not import plot_model_comparison or dependencies: {e}."
+        f" Skipping tests."
+    )
     _SKIP_TESTS = True
 
 # Skip all tests in this file if function cannot be imported
@@ -33,15 +36,17 @@ pytestmark = pytest.mark.skipif(
 )
 
 # --- Pytest Configuration ---
-matplotlib.use('Agg') # Use Agg backend for non-interactive plotting
+matplotlib.use("Agg")  # Use Agg backend for non-interactive plotting
 
 # --- Fixtures ---
+
 
 @pytest.fixture(autouse=True)
 def close_plots():
     """Fixture to close all matplotlib plots after each test."""
     yield
-    plt.close('all')
+    plt.close("all")
+
 
 @pytest.fixture(scope="module")
 def comparison_data():
@@ -51,9 +56,9 @@ def comparison_data():
     n_samples = 50
     # Regression Data
     y_true_reg = np.random.rand(n_samples) * 10
-    y_pred_r1 = y_true_reg + rng.normal(0, 1, n_samples) # Model 1 (Good)
-    y_pred_r2 = y_true_reg * 0.5 + rng.normal(0, 3, n_samples) # Model 2 (Worse)
-    y_pred_r3 = y_true_reg + 2 # Model 3 (Biased)
+    y_pred_r1 = y_true_reg + rng.normal(0, 1, n_samples)  # Model 1 (Good)
+    y_pred_r2 = y_true_reg * 0.5 + rng.normal(0, 3, n_samples)  # Model 2 (Worse)
+    y_pred_r3 = y_true_reg + 2  # Model 3 (Biased)
 
     # Classification Data (Binary)
     y_true_clf = rng.integers(0, 2, n_samples)
@@ -70,10 +75,12 @@ def comparison_data():
         "y_true_clf": y_true_clf,
         "y_preds_clf": [y_pred_c1, y_pred_c2],
         "names": ["M1", "M2", "M3"],
-        "times": [0.5, 1.2, 0.1] # Example times for 3 models
+        "times": [0.5, 1.2, 0.1],  # Example times for 3 models
     }
 
+
 # --- Test Functions ---
+
 
 def test_plot_model_comparison_regression_defaults(comparison_data):
     """Test basic run with regression data and default metrics."""
@@ -81,9 +88,9 @@ def test_plot_model_comparison_regression_defaults(comparison_data):
     try:
         ax = plot_model_comparison(
             data["y_true_reg"],
-            *data["y_preds_reg"], # Pass multiple predictions
+            *data["y_preds_reg"],  # Pass multiple predictions
             names=data["names"],
-            title="Test Regression Defaults"
+            title="Test Regression Defaults",
         )
         assert isinstance(ax, Axes), "Should return Axes object"
         assert len(plt.get_fignums()) > 0, "Figure should be created"
@@ -96,26 +103,28 @@ def test_plot_model_comparison_regression_defaults(comparison_data):
     except Exception as e:
         pytest.fail(f"plot_model_comparison (regression) raised error: {e}")
 
+
 def test_plot_model_comparison_classification_defaults(comparison_data):
     """Test basic run with classification data and default metrics."""
     data = comparison_data
     try:
         ax = plot_model_comparison(
             data["y_true_clf"],
-            *data["y_preds_clf"], # Pass two predictions
-            names=data["names"][:2], # Match number of preds
-            title="Test Classification Defaults"
+            *data["y_preds_clf"],  # Pass two predictions
+            names=data["names"][:2],  # Match number of preds
+            title="Test Classification Defaults",
         )
         assert isinstance(ax, Axes)
         assert len(plt.get_fignums()) > 0
         # Check if default classification metric labels are present (fragile)
         tick_labels = [label.get_text() for label in ax.get_xticklabels()]
         assert "accuracy" in tick_labels
-        assert "precision" in tick_labels # Assumes default wrapper name
+        assert "precision" in tick_labels  # Assumes default wrapper name
         assert "recall" in tick_labels
         assert "f1" in tick_labels
     except Exception as e:
         pytest.fail(f"plot_model_comparison (classification) failed: {e}")
+
 
 def test_plot_model_comparison_with_train_times(comparison_data):
     """Test including train_times as a metric."""
@@ -125,8 +134,8 @@ def test_plot_model_comparison_with_train_times(comparison_data):
             data["y_true_reg"],
             *data["y_preds_reg"],
             names=data["names"],
-            train_times=data["times"], # Provide training times
-            title="Test With Train Times"
+            train_times=data["times"],  # Provide training times
+            title="Test With Train Times",
         )
         assert isinstance(ax, Axes)
         assert len(plt.get_fignums()) > 0
@@ -136,14 +145,19 @@ def test_plot_model_comparison_with_train_times(comparison_data):
     except Exception as e:
         pytest.fail(f"plot_model_comparison with train_times failed: {e}")
 
+
 # Define a simple custom metric function for testing
 def _custom_metric(y_true, y_pred):
-    return np.mean(np.abs(y_true - y_pred) ** 0.5) # Example: root absolute error avg
+    return np.mean(np.abs(y_true - y_pred) ** 0.5)  # Example: root absolute error avg
 
-@pytest.mark.parametrize("custom_metrics", [
-    ['r2', 'rmse'], # List of strings
-    [_custom_metric, 'mae'] # Mix of callable and string
-])
+
+@pytest.mark.parametrize(
+    "custom_metrics",
+    [
+        ["r2", "rmse"],  # List of strings
+        [_custom_metric, "mae"],  # Mix of callable and string
+    ],
+)
 def test_plot_model_comparison_custom_metrics(comparison_data, custom_metrics):
     """Test using custom lists of metrics, including callables."""
     data = comparison_data
@@ -156,8 +170,8 @@ def test_plot_model_comparison_custom_metrics(comparison_data, custom_metrics):
             data["y_true_reg"],
             *data["y_preds_reg"],
             names=data["names"],
-            metrics=custom_metrics, # Use custom metrics
-            title="Test Custom Metrics"
+            metrics=custom_metrics,  # Use custom metrics
+            title="Test Custom Metrics",
         )
         assert isinstance(ax, Axes)
         assert len(plt.get_fignums()) > 0
@@ -167,7 +181,8 @@ def test_plot_model_comparison_custom_metrics(comparison_data, custom_metrics):
     except Exception as e:
         pytest.fail(f"plot_model_comparison with custom metrics failed: {e}")
 
-@pytest.mark.parametrize("scale_option", [None, 'std', 'min-max', 'norm'])
+
+@pytest.mark.parametrize("scale_option", [None, "std", "min-max", "norm"])
 def test_plot_model_comparison_scaling(comparison_data, scale_option):
     """Test different scaling options."""
     data = comparison_data
@@ -176,30 +191,31 @@ def test_plot_model_comparison_scaling(comparison_data, scale_option):
             data["y_true_reg"],
             *data["y_preds_reg"],
             names=data["names"],
-            scale=scale_option, # Test different scales
-            title=f"Test Scale: {scale_option}"
+            scale=scale_option,  # Test different scales
+            title=f"Test Scale: {scale_option}",
         )
         assert isinstance(ax, Axes)
         assert len(plt.get_fignums()) > 0
     except Exception as e:
         pytest.fail(f"plot_model_comparison with scale={scale_option} failed: {e}")
 
+
 def test_plot_model_comparison_plot_options(comparison_data):
     """Test passing common plotting options."""
     data = comparison_data
-    custom_colors = ['#1f77b4', '#ff7f0e', '#2ca02c'] # Example colors
+    custom_colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]  # Example colors
     try:
         ax = plot_model_comparison(
             data["y_true_reg"],
             *data["y_preds_reg"],
             names=data["names"],
             title="Custom Title Test",
-            figsize=(7, 7), # Custom size
-            colors=custom_colors, # Custom colors
+            figsize=(7, 7),  # Custom size
+            colors=custom_colors,  # Custom colors
             alpha=0.5,
-            legend=False, # Turn off legend
-            show_grid=False, # Turn off grid
-            lower_bound=-1 # Example lower bound
+            legend=False,  # Turn off legend
+            show_grid=False,  # Turn off grid
+            lower_bound=-1,  # Example lower bound
         )
         assert isinstance(ax, Axes)
         assert len(plt.get_fignums()) > 0
@@ -210,9 +226,11 @@ def test_plot_model_comparison_plot_options(comparison_data):
     except Exception as e:
         pytest.fail(f"plot_model_comparison with plot options failed: {e}")
 
+
 @pytest.mark.skip(
     "Sucessfully passed locally with scikit.utils._paramerter_validation.InvalidParameterError"
-    " and regex error parsing...")
+    " and regex error parsing..."
+)
 def test_plot_model_comparison_errors(comparison_data):
     """Test expected errors for invalid inputs."""
     data = comparison_data
@@ -226,20 +244,21 @@ def test_plot_model_comparison_errors(comparison_data):
     # Mismatched train_times length
     with pytest.raises(ValueError, match="train_times must be.*length n_models"):
         plot_model_comparison(
-           data["y_true_reg"], *data["y_preds_reg"], train_times=[0.1, 0.2] # Needs 3
+            data["y_true_reg"], *data["y_preds_reg"], train_times=[0.1, 0.2]  # Needs 3
         )
 
     # Invalid metric name string
     with pytest.raises(ValueError, match="Unknown scoring metric 'invalid_metric'"):
-         plot_model_comparison(
-            data["y_true_reg"], data["y_preds_reg"][0], metrics=['invalid_metric']
-         )
+        plot_model_comparison(
+            data["y_true_reg"], data["y_preds_reg"][0], metrics=["invalid_metric"]
+        )
 
     # Invalid scale value (should be caught by decorator if @validate_params used)
-    with pytest.raises(ValueError): # InvalidParameterError depending on decorator
-         plot_model_comparison(
-             data["y_true_reg"], data["y_preds_reg"][0], scale='bad_scale_option'
-         )
-         
-if __name__=='__main__': 
+    with pytest.raises(ValueError):  # InvalidParameterError depending on decorator
+        plot_model_comparison(
+            data["y_true_reg"], data["y_preds_reg"][0], scale="bad_scale_option"
+        )
+
+
+if __name__ == "__main__":
     pytest.main([__file__])

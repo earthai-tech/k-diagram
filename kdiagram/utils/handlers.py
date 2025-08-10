@@ -1,4 +1,4 @@
-#   License: Apache 2.0 
+#   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 import inspect
@@ -11,52 +11,53 @@ from .generic_utils import str2columns
 
 
 def columns_manager(
-    columns: Optional[Union[str, list, tuple]],  
-    default: Optional[list] = None, 
-    regex: Optional[re.Pattern] = None, 
-    pattern: Optional [str]= r'[@&,;#]', 
-    separator: Optional[str] = None, 
-    to_upper: bool = False, 
-    empty_as_none: bool = ...,  
-    to_string: bool = False,  
-    error: str = 'raise',  
+    columns: Optional[Union[str, list, tuple]],
+    default: Optional[list] = None,
+    regex: Optional[re.Pattern] = None,
+    pattern: Optional[str] = r"[@&,;#]",
+    separator: Optional[str] = None,
+    to_upper: bool = False,
+    empty_as_none: bool = ...,
+    to_string: bool = False,
+    wrap_dict: bool=False, 
+    error: str = "raise",
 ) -> list:
     """
-    A function to handle various types of column inputs, convert them 
-    into a list, and optionally process them based on additional parameters 
-    like converting to uppercase, handling empty values, or ensuring all items 
+    A function to handle various types of column inputs, convert them
+    into a list, and optionally process them based on additional parameters
+    like converting to uppercase, handling empty values, or ensuring all items
     are strings.
 
     Parameters
     ----------
     columns : str, list, tuple, or None
         The input column names, which can be:
-        - A string: treated as a list of column names split by a separator 
+        - A string: treated as a list of column names split by a separator
           or regex.
         - A list or tuple: directly converted to a list if not already.
-        - None: returns the default list or an empty list 
+        - None: returns the default list or an empty list
         (if `empty_as_none` is False).
-    
+
     default : list, optional
         Default list of columns to return if `columns` is None.
-    
+
     regex : re.Pattern, optional
-        A custom compiled regular expression to use for splitting string input. 
+        A custom compiled regular expression to use for splitting string input.
         If not provided, the `pattern` parameter will be used.
 
     pattern : str, optional, default=r'[@&,;#]'
-        The default regex pattern used to split the `columns` string if no `regex` 
+        The default regex pattern used to split the `columns` string if no `regex`
         is provided.
 
     separator : str, optional
-        If `columns` is a string, this defines the separator used to split the string 
+        If `columns` is a string, this defines the separator used to split the string
         into a list of column names.
 
     to_upper : bool, default=False
         If True, converts all column names to uppercase.
 
     empty_as_none : bool, default=True
-        If True, returns `None` when `columns` is empty or None. If False, an 
+        If True, returns `None` when `columns` is empty or None. If False, an
         empty list is returned.
 
     to_string : bool, default=False
@@ -82,43 +83,40 @@ def columns_manager(
     >>> columns_manager(['col1', 'col2', 'col3'], to_upper=True)
     ['COL1', 'COL2', 'COL3']
     """
-     # Handle None input
+    # Handle None input
     if columns is None:
         return default if default is not None else (None if empty_as_none else [])
-    
+
     # Handle case where a single numeric value is passed, convert it to list
     if isinstance(columns, (int, float)):
         columns = [columns]
-        
-    elif callable(columns): 
-        columns=[columns] 
-        
+    
+    elif callable(columns) or (
+            isinstance ( columns, dict) and wrap_dict):
+        columns = [columns]
+
     ## Use inspect to determine if it is a class.
     # Alternatively, if the object is not iterable (has no __iter__ attribute),
     # we assume it's a single model instance.
-    if inspect.isclass(columns) or not hasattr(columns, '__iter__'):
+    if inspect.isclass(columns) or not hasattr(columns, "__iter__"):
         columns = [columns]
-        
+
     # If columns is a string, split by separator or use regex
     elif isinstance(columns, str):
         if separator is not None:
             columns = columns.split(separator)
         else:
-            columns = str2columns(
-                columns, 
-                regex=regex, 
-                pattern=pattern
-        )
-    
+            columns = str2columns(columns, regex=regex, pattern=pattern)
+
     # If columns is any iterable object, convert it to a list
-    elif isinstance(columns, Iterable) : 
+    elif isinstance(columns, Iterable):
         try:
             columns = list(columns)
         except Exception as e:
-            if error == 'raise':
+            if error == "raise":
                 raise ValueError(f"Error converting columns to list: {e}")
-            elif error == 'warn':
-                warnings.warn(f"Could not convert columns to list: {e}")
+            elif error == "warn":
+                warnings.warn(f"Could not convert columns to list: {e}", stacklevel=2)
             else:
                 pass  # Ignore errors silently
 
@@ -128,29 +126,32 @@ def columns_manager(
             # Check whether all items are strings before calling 'upper'
             if all(isinstance(col, str) for col in columns):
                 columns = [col.upper() for col in columns]
-            elif error == 'raise':
+            elif error == "raise":
                 raise TypeError(
-                    "All column names must be strings to convert to uppercase.")
-            elif error == 'warn':
+                    "All column names must be strings to convert to uppercase."
+                )
+            elif error == "warn":
                 warnings.warn(
                     "Warning: Not all column names are strings,"
-                    " skipping 'upper' conversion.")
-        
+                    " skipping 'upper' conversion.",
+                    stacklevel=2,
+                )
+
         # Convert all items to string if requested
         if to_string:
             columns = [str(col) for col in columns]
-    else: 
-        # If 'columns' is not a string, list, or tuple, 
-        # then it might be a single object 
+    else:
+        # If 'columns' is not a string, list, or tuple,
+        # then it might be a single object
         # (for example, an instance of RandomForestRegressor).
-        # In such a case, we attempt to check if it is iterable. 
+        # In such a case, we attempt to check if it is iterable.
         # Since an instance of RandomForestRegressor
-        # is neither callable nor a class, nor is it iterable 
+        # is neither callable nor a class, nor is it iterable
         # (i.e., it has no __iter__ # attribute), we wrap it into a list.
         if not isinstance(columns, (str, list, tuple)):
             try:
                 iter(columns)
             except:
                 columns = [columns]
-        
+
     return columns

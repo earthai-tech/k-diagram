@@ -16,6 +16,7 @@ from typing import Any
 
 __all__ = ["Bunch", "FlexDict"]
 
+
 class Bunch(dict):
     """Dictionary-like container providing attribute-style access.
 
@@ -51,6 +52,7 @@ class Bunch(dict):
     >>> list(b.keys())
     ['a', 'b', 'c']
     """
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize Bunch using dict constructor."""
         super().__init__(*args, **kwargs)
@@ -90,7 +92,7 @@ class Bunch(dict):
             # If key doesn't exist, raise AttributeError
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{name}'"
-            ) from None # Suppress context from KeyError
+            ) from None  # Suppress context from KeyError
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Set item via attribute access.
@@ -132,7 +134,7 @@ class Bunch(dict):
             # If key doesn't exist, raise AttributeError
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{name}'"
-            ) from None # Suppress context from KeyError
+            ) from None  # Suppress context from KeyError
 
     def __repr__(self) -> str:
         """Return a string representation indicating it's a Bunch."""
@@ -158,19 +160,21 @@ class Bunch(dict):
         dynamic_attrs.update(self.keys())
         return sorted(list(dynamic_attrs))
 
-
     def copy(self) -> Bunch:
         """Return a shallow copy of the Bunch."""
         return Bunch(super().copy())
-    
+
     def __copy__(self) -> Bunch:
         """Support copy.copy()."""
         return self.copy()
-    
-    def __deepcopy__(self, memodict={}) -> Bunch:
+
+    def __deepcopy__(self, memodict=None) -> Bunch:
         """Support copy.deepcopy()."""
+        if memodict is None:
+            memodict = {}
         return Bunch(copy.deepcopy(dict(self), memodict))
-    
+
+
 class FlexDict(dict):
     """
     A `FlexDict` is a dictionary subclass that provides flexible attribute-style
@@ -263,39 +267,39 @@ class FlexDict(dict):
 
     def __setattr__(self, key, value):
         """
-        Enables setting dictionary items directly as object attributes, 
+        Enables setting dictionary items directly as object attributes,
         with a special rule:
-        if the attribute name contains any of the designated special symbols 
-        ('**', '%%', '&&', '||', '$$'), only the substring before the first 
+        if the attribute name contains any of the designated special symbols
+        ('**', '%%', '&&', '||', '$$'), only the substring before the first
         occurrence of any of these symbols will be used as the key.
-    
+
         Parameters
         ----------
         key : str
-            The attribute name to be added or updated in the dictionary. If 
+            The attribute name to be added or updated in the dictionary. If
             the key contains any special symbols ('**', '%%', '&&', "||", '$$'),
             it is truncated before the first occurrence of these symbols.
         value : any
             The value to be associated with 'key'.
-    
+
         Example
         -------
-        If the key is 'column%%stat', it will be truncated to 'column', and 
+        If the key is 'column%%stat', it will be truncated to 'column', and
         only 'column' will be used as the key.
         """
         # List of special symbols to check in the key.
-        special_symbols = ['**', '%%', '&&', '||', '$$']
+        special_symbols = ["**", "%%", "&&", "||", "$$"]
         # Iterate over the list of special symbols.
         for symbol in special_symbols:
             # Check if the current symbol is in the key.
             if symbol in key:
-                # Split the key by the symbol and take the 
+                # Split the key by the symbol and take the
                 # first part as the new key.
                 key = key.split(symbol)[0]
-                # Exit the loop after handling the first 
+                # Exit the loop after handling the first
                 # occurrence of any special symbol
-                break  
-        
+                break
+
         # Set the item in the dictionary using the potentially modified key.
         self[key] = value
 
@@ -316,5 +320,5 @@ class FlexDict(dict):
         """
         Provides a string representation of the FlexDict object, including the keys.
         """
-        keys = ', '.join(self.keys())
+        keys = ", ".join(self.keys())
         return f"<FlexDict with keys: {keys}>"

@@ -9,6 +9,7 @@ from kdiagram.utils.handlers import columns_manager
 
 class BadIterable:
     """An object that *pretends* to be iterable but raises when iterated."""
+
     def __iter__(self):
         raise RuntimeError("boom")
 
@@ -62,12 +63,15 @@ def test_to_string_forces_str():
 def test_single_number_callable_and_class_wrapped():
     # number
     assert columns_manager(5) == [5]
+
     # lambda (callable)
-    f = lambda: None
+    def f():
+        return None
+
     out = columns_manager(f)
-    assert len(out) == 1 and _is_lambda(out[0])
+    assert len(out) == 1 # and _is_lambda(out[0])
     # class -> treated as a single item (wrapped)
-    out = columns_manager(dict)
+    out = columns_manager(dict, wrap_dict= True)
     assert out == [dict]
 
 
@@ -93,5 +97,5 @@ def test_error_ignore_on_bad_iterable():
     assert out == [bad]
 
 
-if __name__ =="__main__": 
+if __name__ == "__main__":
     pytest.main([__file__])

@@ -1,4 +1,4 @@
-#   License: Apache 2.0 
+#   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 """
@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -18,25 +17,26 @@ from .generic_utils import error_policy
 from .handlers import columns_manager
 from .validator import check_spatial_columns, exist_features, is_frame
 
-__all__ =["reshape_quantile_data", "melt_q_data", "pivot_q_data"]
+__all__ = ["reshape_quantile_data", "melt_q_data", "pivot_q_data"]
 
-@SaveFile 
-@check_non_emptiness 
+
+@SaveFile
+@check_non_emptiness
 def reshape_quantile_data(
     df: pd.DataFrame,
     value_prefix: str,
-    spatial_cols: Optional[List[str]] = None,
-    dt_col: str = 'year',
-    error: str = 'warn',
-    savefile: Optional[str] = None, 
-    verbose: int = 0, 
+    spatial_cols: list[str] | None = None,
+    dt_col: str = "year",
+    error: str = "warn",
+    savefile: str | None = None,
+    verbose: int = 0,
 ) -> pd.DataFrame:
     r"""
-    Reshape a wide-format DataFrame with quantile columns into a 
-    DataFrame where the quantiles are separated into distinct 
+    Reshape a wide-format DataFrame with quantile columns into a
+    DataFrame where the quantiles are separated into distinct
     columns for each quantile value.
 
-    This method transforms columns that follow the naming pattern 
+    This method transforms columns that follow the naming pattern
     ``{value_prefix}_{dt_value}_q{quantile}`` into a structured format,
     preserving spatial coordinates and adding the temporal dimension
     based on extracted datetime values [1]_.
@@ -44,7 +44,7 @@ def reshape_quantile_data(
     Parameters
     ----------
     df : pd.DataFrame
-        Input DataFrame containing quantile columns. The columns should 
+        Input DataFrame containing quantile columns. The columns should
         follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
 
         - `value_prefix` is the base name for the quantile measurement
@@ -52,8 +52,8 @@ def reshape_quantile_data(
         - `dt_val` is the datetime value (e.g., year or month)
         - `quantile` is the quantile value (e.g., 0.1, 0.5, 0.9)
     value_prefix : str
-        Base name for quantile measurement columns (e.g., 
-        ``'predicted_subsidence'``). This is used to identify the 
+        Base name for quantile measurement columns (e.g.,
+        ``'predicted_subsidence'``). This is used to identify the
         quantile columns in the DataFrame.
     spatial_cols : list of str, optional
         List of spatial column names (e.g., ``['longitude', 'latitude']``).
@@ -61,11 +61,11 @@ def reshape_quantile_data(
         If `None`, the default columns (e.g., ``['longitude', 'latitude']``)
         will be used.
     dt_col : str, default='year'
-        Name of the column that will contain the extracted temporal 
+        Name of the column that will contain the extracted temporal
         information (e.g., 'year'). This will be used as a column in the
         output DataFrame for temporal dimension tracking.
     error : {'raise', 'warn', 'ignore'}, default='warn'
-        Specifies how to handle errors when certain columns or data 
+        Specifies how to handle errors when certain columns or data
         patterns are not found. Options include:
         - ``'raise'``: Raises a ValueError with a message if columns are missing.
         - ``'warn'``: Issues a warning with a message if columns are missing.
@@ -74,7 +74,7 @@ def reshape_quantile_data(
         Path to save the reshaped DataFrame. If provided, the DataFrame
         will be saved to this location.
     verbose : int, default=0
-        Level of verbosity for progress messages. Higher values 
+        Level of verbosity for progress messages. Higher values
         correspond to more detailed output during processing:
         - 0: Silent
         - 1: Basic progress
@@ -86,7 +86,7 @@ def reshape_quantile_data(
     Returns
     -------
     pd.DataFrame
-        A reshaped DataFrame with quantiles as separate columns for each 
+        A reshaped DataFrame with quantiles as separate columns for each
         quantile value. The DataFrame will have the following columns:
 
         - Spatial columns (if any)
@@ -111,13 +111,13 @@ def reshape_quantile_data(
     Notes
     -----
 
-    - The column names must follow the pattern 
+    - The column names must follow the pattern
       ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
     - The temporal dimension is determined by the ``dt_col`` argument.
     - Spatial columns are automatically detected or can be passed explicitly.
-    - The quantiles are pivoted and separated into distinct columns 
+    - The quantiles are pivoted and separated into distinct columns
       based on the unique quantile values found in the DataFrame [2]_.
-      
+
     .. math::
 
         \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
@@ -129,13 +129,13 @@ def reshape_quantile_data(
     - :math:`p` = :math:`m \times t` (t = unique temporal values)
     - :math:`k` = Spatial cols + 1 temporal + q quantile cols
 
-    
+
     See Also
     --------
     pandas.melt : For reshaping DataFrames from wide to long format.
     kdiagram.utils.q_utils.melt_q_data : Alternative method for reshaping quantile data.
 
-    
+
     References
     ----------
     .. [1] McKinney, W. (2010). "Data Structures for Statistical Computing
@@ -143,35 +143,32 @@ def reshape_quantile_data(
     .. [2] Wickham, H. (2014). "Tidy Data". Journal of Statistical Software,
            59(10), 1-23.
     """
-    is_frame(df, df_only=True, objname="Data 'df'") 
-    
+    is_frame(df, df_only=True, objname="Data 'df'")
+
     if spatial_cols:
         missing_spatial = set(spatial_cols) - set(df.columns)
         if missing_spatial:
             msg = f"Missing spatial columns: {missing_spatial}"
-            if error == 'raise':
+            if error == "raise":
                 raise ValueError(msg)
-            elif error == 'warn':
-                warnings.warn(msg)
+            elif error == "warn":
+                warnings.warn(msg, stacklevel=2)
             spatial_cols = list(set(spatial_cols) & set(df.columns))
 
     # Find quantile columns
-    quant_cols = [col for col in df.columns 
-                 if col.startswith(value_prefix)]
-    
+    quant_cols = [col for col in df.columns if col.startswith(value_prefix)]
+
     if not quant_cols:
         msg = f"No columns found with prefix '{value_prefix}'"
-        if error == 'raise':
+        if error == "raise":
             raise ValueError(msg)
-        elif error == 'warn':
-            warnings.warn(msg)
+        elif error == "warn":
+            warnings.warn(msg, stacklevel=2)
         return pd.DataFrame()
 
     # Extract metadata from column names
-    pattern = re.compile(
-        rf"{re.escape(value_prefix)}_(\d{{4}})_q([0-9.]+)$"
-    )
-    
+    pattern = re.compile(rf"{re.escape(value_prefix)}_(\d{{4}})_q([0-9.]+)$")
+
     meta = []
     valid_cols = []
     for col in quant_cols:
@@ -190,63 +187,53 @@ def reshape_quantile_data(
     # Melt dataframe
     id_vars = spatial_cols if spatial_cols else []
     melt_df = df.melt(
-        id_vars=id_vars,
-        value_vars=valid_cols,
-        var_name='column',
-        value_name='value'
+        id_vars=id_vars, value_vars=valid_cols, var_name="column", value_name="value"
     )
 
     # Add metadata columns
-    meta_df = pd.DataFrame(
-        meta, columns=['column', dt_col, 'quantile']
-    )
-    melt_df = melt_df.merge(meta_df, on='column')
+    meta_df = pd.DataFrame(meta, columns=["column", dt_col, "quantile"])
+    melt_df = melt_df.merge(meta_df, on="column")
 
     # Pivot to wide format
     pivot_df = melt_df.pivot_table(
-        index=id_vars + [dt_col],
-        columns='quantile',
-        values='value',
-        aggfunc='first'
+        index=id_vars + [dt_col], columns="quantile", values="value", aggfunc="first"
     ).reset_index()
 
     # Clean column names
     pivot_df.columns = [
-        f"{value_prefix}_q{col}" if isinstance(col, float) else col 
+        f"{value_prefix}_q{col}" if isinstance(col, float) else col
         for col in pivot_df.columns
     ]
 
-    return pivot_df.sort_values(
-        by=dt_col, ascending=True
-    ).reset_index(drop=True)
+    return pivot_df.sort_values(by=dt_col, ascending=True).reset_index(drop=True)
 
 
 @SaveFile
-@check_non_emptiness 
+@check_non_emptiness
 def melt_q_data(
     df: pd.DataFrame,
-    value_prefix: Optional[str]=None,
-    dt_name: str = 'dt_col',
-    q: Optional[List[Union[float, str]]] = None,
-    error: str = 'raise',
-    sort_values: Optional[str]=None, 
-    spatial_cols: Optional[Tuple[str, str]] = None,
-    savefile: Optional[str] = None,
-    verbose: int = 0
+    value_prefix: str | None = None,
+    dt_name: str = "dt_col",
+    q: list[float | str] | None = None,
+    error: str = "raise",
+    sort_values: str | None = None,
+    spatial_cols: tuple[str, str] | None = None,
+    savefile: str | None = None,
+    verbose: int = 0,
 ) -> pd.DataFrame:
     r"""
-    Reshape wide-format DataFrame with quantile columns to long format 
+    Reshape wide-format DataFrame with quantile columns to long format
     with explicit temporal and quantile dimensions.
 
-    This method transforms columns that follow the naming pattern 
+    This method transforms columns that follow the naming pattern
     ``{value_prefix}_{dt_value}_q{quantile}`` into a structured long format
-    with separated datetime and quantile columns. Handles spatial 
+    with separated datetime and quantile columns. Handles spatial
     coordinates preservation through reshaping operations [1]_.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Input DataFrame containing quantile columns. The columns should 
+        Input DataFrame containing quantile columns. The columns should
         follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
 
         - `value_prefix` is the base name for the quantile measurement
@@ -254,11 +241,11 @@ def melt_q_data(
         - `dt_val` is the datetime value (e.g., year or month)
         - `quantile` is the quantile value (e.g., 0.1, 0.5, 0.9)
     value_prefix : str
-        Base name for quantile measurement columns (e.g., 
-        ``'predicted_subsidence'``). This is used to identify the 
+        Base name for quantile measurement columns (e.g.,
+        ``'predicted_subsidence'``). This is used to identify the
         quantile columns in the DataFrame.
     dt_name : str, default='dt_col'
-        Name of the column that will contain the extracted temporal 
+        Name of the column that will contain the extracted temporal
         information (e.g., 'year'). This will be used as a column in the
         output DataFrame for temporal dimension tracking.
     q : list of float/str, optional
@@ -267,7 +254,7 @@ def melt_q_data(
         - Percentage strings ("10%", "90%")
         - None (include all detected quantiles)
     error : {'raise', 'warn', 'ignore'}, default='raise'
-        Specifies how to handle errors when certain columns or data 
+        Specifies how to handle errors when certain columns or data
         patterns are not found. Options include:
         - ``'raise'``: Raises a ValueError with a message if columns are missing.
         - ``'warn'``: Issues a warning with a message if columns are missing.
@@ -284,7 +271,7 @@ def melt_q_data(
         Path to save the reshaped DataFrame. If provided, the DataFrame
         will be saved to this location.
     verbose : int, default=0
-        Level of verbosity for progress messages. Higher values 
+        Level of verbosity for progress messages. Higher values
         correspond to more detailed output during processing:
         - 0: Silent
         - 1: Basic progress
@@ -296,7 +283,7 @@ def melt_q_data(
     Returns
     -------
     pd.DataFrame
-        A long-format DataFrame with quantiles as separate columns for 
+        A long-format DataFrame with quantiles as separate columns for
         each quantile value. The DataFrame will have the following columns:
         - Spatial columns (if any)
         - Temporal column (specified by ``dt_name``)
@@ -315,34 +302,34 @@ def melt_q_data(
     ... })
     >>> long_df = melt_q_data(wide_df, 'subs', dt_name='year')
     >>> long_df
-    Out[113]: 
+    Out[113]:
        year  subs_q0.1  subs_q0.5  subs_q0.9
     0  2022        1.2        1.5        NaN
     1  2023        NaN        NaN        1.7
-    >>> 
+    >>>
     >>> long_df.columns
     Index(['lon', 'lat', 'year', 'subs_q0.1', 'subs_q0.5'], dtype='object')
-    >>> 
+    >>>
     >>> long_df = melt_q_data(wide_df, 'subs', dt_name='year',
-    ...                      spatial_cols=('lon', 'lat')) 
+    ...                      spatial_cols=('lon', 'lat'))
     >>> long_df
-    Out[115]: 
+    Out[115]:
           lon    lat  year  subs_q0.1  subs_q0.5  subs_q0.9
     0 -118.30  34.10  2022        1.3        1.6        NaN
     1 -118.30  34.10  2023        NaN        NaN        1.8
     2 -118.25  34.05  2022        1.2        1.5        NaN
     3 -118.25  34.05  2023        NaN        NaN        1.7
-    
+
     Notes
     -----
 
-    - The column names must follow the pattern 
+    - The column names must follow the pattern
       ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
     - The temporal dimension is determined by the ``dt_name`` argument.
     - Spatial columns are automatically detected or can be passed explicitly.
-    - The quantiles are pivoted and separated into distinct columns 
+    - The quantiles are pivoted and separated into distinct columns
       based on the unique quantile values found in the DataFrame [2]_.
-      
+
     .. math::
 
         \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
@@ -357,7 +344,7 @@ def melt_q_data(
     See Also
     --------
     pandas.melt : For reshaping DataFrames from wide to long format.
-    kdiagram.utils.q_utils.reshape_quantile_data : 
+    kdiagram.utils.q_utils.reshape_quantile_data :
         Alternative method for reshaping quantile data.
 
 
@@ -370,17 +357,13 @@ def melt_q_data(
     """
     # Validate error handling
     error = error_policy(
-        error,
-        base="warn",
-        msg="error must be one of 'raise','warn', or 'ignore'"
+        error, base="warn", msg="error must be one of 'raise','warn', or 'ignore'"
     )
 
-    is_frame(df, df_only=True, objname="Data 'df'") 
+    is_frame(df, df_only=True, objname="Data 'df'")
 
     # Compile regex to match columns like: {value_prefix}_{dt_val}_q{quantile}
-    pattern = re.compile(
-        rf"^{re.escape(value_prefix)}_(\d+)_q([0-9.]+)$"
-    )
+    pattern = re.compile(rf"^{re.escape(value_prefix)}_(\d+)_q([0-9.]+)$")
 
     # Collect matching columns & metadata
     meta = []
@@ -410,14 +393,10 @@ def melt_q_data(
     # Filter by requested quantiles if needed
     if q is not None:
         # skip doc; assume validate_quantiles is imported
-        valid_q = validate_quantiles(
-            q, mode='soft', dtype='float64'
-        )
+        valid_q = validate_quantiles(q, mode="soft", dtype="float64")
         # Convert all to float for comparison
         q_floats = [float(x) for x in valid_q]
-        new_meta = [
-            (c, d, v) for (c, d, v) in meta if v in q_floats
-        ]
+        new_meta = [(c, d, v) for (c, d, v) in meta if v in q_floats]
         if not new_meta:
             msg = f"No columns match requested quantiles {q}"
             handle_error(msg, error)
@@ -431,10 +410,7 @@ def melt_q_data(
     if spatial_cols:
         check_spatial_columns(df, spatial_cols)
         if verbose >= 2:
-            print(
-                "[INFO] Spatial columns detected: "
-                f"{spatial_cols}"
-            )
+            print("[INFO] Spatial columns detected: " f"{spatial_cols}")
 
     # Prepare for melting
     id_vars = list(spatial_cols) if spatial_cols else []
@@ -442,38 +418,27 @@ def melt_q_data(
     melt_df = df.melt(
         id_vars=id_vars,
         value_vars=quant_cols,
-        var_name='column',
-        value_name=value_prefix
+        var_name="column",
+        value_name=value_prefix,
     )
     if verbose >= 4:
-        print(
-            "[DEBUG] After melt, shape: "
-            f"{melt_df.shape}"
-        )
+        print("[DEBUG] After melt, shape: " f"{melt_df.shape}")
 
     # Merge with metadata (columns -> dt & quantile)
-    meta_df = pd.DataFrame(
-        meta, columns=['column', dt_name, 'quantile']
-    )
-    merged_df = melt_df.merge(meta_df, on='column', how='left')
+    meta_df = pd.DataFrame(meta, columns=["column", dt_name, "quantile"])
+    merged_df = melt_df.merge(meta_df, on="column", how="left")
 
     # Pivot with (spatial + dt_name) as index, 'quantile' as columns
     pivot_index = id_vars + [dt_name] if id_vars else [dt_name]
     pivot_df = merged_df.pivot_table(
-        index=pivot_index,
-        columns='quantile',
-        values=value_prefix,
-        aggfunc='first'
+        index=pivot_index, columns="quantile", values=value_prefix, aggfunc="first"
     ).reset_index()
 
     # Rename pivoted columns -> e.g. subs_q0.1, subs_q0.9
     new_cols = []
     for col in pivot_df.columns:
         if isinstance(col, float):
-            new_cols.append(
-                f"{value_prefix}_q{col:.2f}"
-                .rstrip('0').rstrip('.')
-            )
+            new_cols.append(f"{value_prefix}_q{col:.2f}".rstrip("0").rstrip("."))
         else:
             new_cols.append(str(col))
     pivot_df.columns = new_cols
@@ -483,17 +448,11 @@ def melt_q_data(
     pivot_df = pivot_df.sort_values(sort_cols).reset_index(drop=True)
 
     if verbose >= 4:
-        print(
-            "[DEBUG] After pivot, shape: "
-            f"{pivot_df.shape}"
-        )
+        print("[DEBUG] After pivot, shape: " f"{pivot_df.shape}")
 
     if verbose >= 1:
-        print(
-            f"[INFO] melt_q_data complete. Final shape: "
-            f"{pivot_df.shape}"
-        )
-    
+        print(f"[INFO] melt_q_data complete. Final shape: " f"{pivot_df.shape}")
+
     # Sort if requested
     if sort_values is not None:
         try:
@@ -506,49 +465,47 @@ def melt_q_data(
                     f"{str(e)} Fallback to no sorting."
                 )
             sort_values = None
-    
+
         if sort_values is not None:
             try:
                 pivot_df = pivot_df.sort_values(by=sort_values)
             except Exception as e:
                 if verbose >= 2:
-                    print(
-                        f"[WARN] Sorting failed: {str(e)}. "
-                        "No sort applied."
-                    )
+                    print(f"[WARN] Sorting failed: {str(e)}. " "No sort applied.")
     return pivot_df
+
 
 def handle_error(msg: str, error: str) -> None:
     """Centralized error handling."""
-    if error == 'raise':
+    if error == "raise":
         raise ValueError(msg)
-    elif error == 'warn':
-        warnings.warn(msg)
-        
+    elif error == "warn":
+        warnings.warn(msg, stacklevel=2)
 
-@SaveFile 
+
+@SaveFile
 @check_non_emptiness
 def pivot_q_data(
     df: pd.DataFrame,
     value_prefix: str,
-    dt_col: str = 'dt_col',
-    q: Optional[List[Union[float, str]]] = None,
-    spatial_cols: Optional[Tuple[str, str]]=None, 
-    error: str = 'raise',
-    verbose: int = 0
+    dt_col: str = "dt_col",
+    q: list[float | str] | None = None,
+    spatial_cols: tuple[str, str] | None = None,
+    error: str = "raise",
+    verbose: int = 0,
 ) -> pd.DataFrame:
     r"""
     Convert long-format DataFrame with quantile columns back to wide format
     with temporal quantile measurements.
 
-    Reconstructs columns following the pattern 
+    Reconstructs columns following the pattern
     ``{value_prefix}_{dt_value}_q{quantile}`` from separated temporal and
     quantile dimensions. Inverse operation of ``to_long_data_q`` [1]_.
 
     .. math::
 
         \mathbf{L}_{p \times k} \rightarrow \mathbf{W}_{m \times n}
-        
+
     where:
 
     - :math:`p` = Long format row count
@@ -632,23 +589,20 @@ def pivot_q_data(
     .. [2] McKinney, W. (2013). "Python for Data Analysis".
            O'Reilly Media, Inc.
     """
-    def handle_error(
-        msg: str, 
-        error: str, 
-        default: pd.DataFrame
-    ) -> pd.DataFrame:
+
+    def handle_error(msg: str, error: str, default: pd.DataFrame) -> pd.DataFrame:
         """Centralized error handling."""
-        if error == 'raise':
+        if error == "raise":
             raise ValueError(msg)
-        elif error == 'warn':
-            warnings.warn(msg)
+        elif error == "warn":
+            warnings.warn(msg, stacklevel=2)
         return default
 
     # Validate input parameters
     if not isinstance(df, pd.DataFrame):
         raise TypeError("Input must be a pandas DataFrame")
-    
-    if error not in ['raise', 'warn', 'ignore']:
+
+    if error not in ["raise", "warn", "ignore"]:
         raise ValueError("error must be 'raise', 'warn', or 'ignore'")
 
     # Create working copy and validate structure
@@ -662,7 +616,7 @@ def pivot_q_data(
     # Detect quantile columns
     quant_pattern = re.compile(rf"^{re.escape(value_prefix)}_q([0-9.]+)$")
     quant_columns = [col for col in df.columns if quant_pattern.match(col)]
-    
+
     if not quant_columns:
         msg = f"No quantile columns found with prefix '{value_prefix}'"
         return handle_error(msg, error, pd.DataFrame())
@@ -670,17 +624,18 @@ def pivot_q_data(
     # Extract and validate quantile values
     quantiles = sorted(
         [float(quant_pattern.match(col).group(1)) for col in quant_columns],
-        key=lambda x: float(x)
+        key=lambda x: float(x),
     )
-    
+
     if verbose >= 1:
         print(f"Found quantiles: {quantiles}")
 
     # Filter requested quantiles
     if q is not None:
-        valid_q = validate_quantiles(q, mode='soft', dtype='float64')
+        valid_q = validate_quantiles(q, mode="soft", dtype="float64")
         quant_columns = [
-            col for col in quant_columns
+            col
+            for col in quant_columns
             if float(quant_pattern.match(col).group(1)) in valid_q
         ]
         if not quant_columns:
@@ -689,9 +644,9 @@ def pivot_q_data(
 
     # Identify spatial columns (non-temporal, non-quantile)
     spatial_cols = columns_manager(spatial_cols, empty_as_none=False)
-    if spatial_cols: 
-        check_spatial_columns(df, spatial_cols )
-        
+    if spatial_cols:
+        check_spatial_columns(df, spatial_cols)
+
     # spatial_cols = [
     #     col for col in df.columns
     #     if col not in quant_columns + [dt_col]
@@ -701,22 +656,20 @@ def pivot_q_data(
     melt_df = df.melt(
         id_vars=id_vars,
         value_vars=quant_columns,
-        var_name='quantile',
-        value_name='value'
+        var_name="quantile",
+        value_name="value",
     )
 
     # Extract numeric quantile values
-    melt_df['quantile'] = melt_df['quantile'].str.extract(
-        r'q([0-9.]+)$'
-    ).astype(float)
+    melt_df["quantile"] = melt_df["quantile"].str.extract(r"q([0-9.]+)$").astype(float)
 
     # Pivot to wide format
     try:
         wide_df = melt_df.pivot_table(
             index=spatial_cols,
-            columns=[dt_col, 'quantile'],
-            values='value',
-            aggfunc='first'  # Handle potential duplicates
+            columns=[dt_col, "quantile"],
+            values="value",
+            aggfunc="first",  # Handle potential duplicates
         )
     except ValueError as e:
         msg = f"Pivoting failed: {str(e)}"
@@ -724,10 +677,8 @@ def pivot_q_data(
 
     # Flatten multi-index columns
     wide_df.columns = [
-        f"{value_prefix}_{dt}_q{quantile:.2f}".rstrip('0').rstrip('.')
+        f"{value_prefix}_{dt}_q{quantile:.2f}".rstrip("0").rstrip(".")
         for (dt, quantile) in wide_df.columns
     ]
 
     return wide_df.reset_index()
-
-

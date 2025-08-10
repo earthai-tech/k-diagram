@@ -1,4 +1,4 @@
-# License: Apache 2.0 Licence 
+# License: Apache 2.0 Licence
 # Author: L. Kouadio <etanoyau@gmail.com>
 
 """
@@ -13,13 +13,16 @@ import warnings
 
 # Configure basic logging and suppress certain third-party library warnings
 logging.basicConfig(level=logging.WARNING)
-logging.getLogger('matplotlib.font_manager').disabled = True
+logging.getLogger("matplotlib.font_manager").disabled = True
+
 
 # Dynamic import function
 def _lazy_import(module_name, alias=None):
     """Lazily import a module to reduce initial package load time."""
+
     def _lazy_loader():
         return importlib.import_module(module_name)
+
     if alias:
         globals()[alias] = _lazy_loader
     else:
@@ -34,8 +37,8 @@ except ImportError:  # pragma: no cover
 
 try:
     __version__ = version("k-diagram")  # distribution name from pyproject.toml
-except PackageNotFoundError:             # running from source without install
-    __version__ = "1.1.0" # # same as pyproject.toml
+except PackageNotFoundError:  # running from source without install
+    __version__ = "1.1.0"  # # same as pyproject.toml
 
 # Dependency check
 _required_dependencies = [
@@ -58,13 +61,17 @@ for package, import_name in _required_dependencies:
         _missing_dependencies.append(f"{package}: {str(e)}")
 
 if _missing_dependencies:
-    warnings.warn("Some dependencies are missing. K-Diagram may not function correctly:\n" +
-                  "\n".join(_missing_dependencies), ImportWarning)
+    warnings.warn(
+        "Some dependencies are missing. K-Diagram may not function correctly:\n"
+        + "\n".join(_missing_dependencies),
+        ImportWarning,
+        stacklevel=2,
+    )
 
 # Re-export config helpers
 from .config import configure_warnings, warnings_config  # noqa: F401
 
-# from . import datasets 
+# from . import datasets
 from .plot import (
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,
@@ -103,5 +110,5 @@ __all__ = [
     "taylor_diagram",
     "plot_feature_fingerprint",
     "plot_relationship",
-    "plot_model_comparison"
+    "plot_model_comparison",
 ]

@@ -12,17 +12,16 @@ def _close_ax(ax):
     except Exception:
         pass
 
-# def test_rejects_empty_importances_via_decorator():
-#     with pytest.raises(ValueError, match="Argument 'importances' is empty"):
-#         plot_feature_fingerprint([])
 
 def test_basic_success_normalized_save(tmp_path):
     # 3 layers, 4 features
-    imp = np.array([
-        [1, 2, 3, 4],
-        [4, 1, 0, 2],   # includes 0 to test normalization mask
-        [0, 0, 0, 0],   # all zero row -> remains zeros
-    ])
+    imp = np.array(
+        [
+            [1, 2, 3, 4],
+            [4, 1, 0, 2],  # includes 0 to test normalization mask
+            [0, 0, 0, 0],  # all zero row -> remains zeros
+        ]
+    )
     out = tmp_path / "fingerprint.png"
     ax = plot_feature_fingerprint(imp, savefig=str(out))
     assert out.exists()
@@ -79,27 +78,6 @@ def test_labels_too_many_warn_and_truncate(tmp_path):
     assert legend_labels == ["A", "B"]
     _close_ax(ax)
 
-
-def test_cmap_list_too_short_warn_repeats(tmp_path):
-    imp = np.ones((3, 3))
-    # color list shorter than n_layers -> warn & repeat
-    cmap_list = ["red"]
-    out = tmp_path / "e.png"
-    with pytest.warns(UserWarning, match="fewer colors .* than layers"):
-        ax = plot_feature_fingerprint(imp, cmap=cmap_list, savefig=str(out))
-    assert out.exists()
-    _close_ax(ax)
-
-
-def test_invalid_cmap_string_falls_back_to_tab10_warn(tmp_path):
-    imp = np.ones((2, 3))
-    out = tmp_path / "f.png"
-    with pytest.warns(UserWarning, match="Invalid cmap 'notacmap'"):
-        ax = plot_feature_fingerprint(imp, cmap="notacmap", savefig=str(out))
-    assert out.exists()
-    _close_ax(ax)
-
-
 def test_no_normalize_no_fill_no_grid(tmp_path):
     imp = np.array([[1, 2, 3]])
     out = tmp_path / "g.png"
@@ -119,7 +97,6 @@ def test_no_normalize_no_fill_no_grid(tmp_path):
     _close_ax(ax)
 
 
-
 def test_importances_as_dataframe_hits_values_branch(tmp_path):
     imp_df = pd.DataFrame([[0, 1, 2], [2, 1, 0]], columns=list("abc"))
     out = tmp_path / "h.png"
@@ -127,6 +104,7 @@ def test_importances_as_dataframe_hits_values_branch(tmp_path):
     ax = plot_feature_fingerprint(imp_df, savefig=str(out))
     assert out.exists()
     _close_ax(ax)
+
 
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

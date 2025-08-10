@@ -1,17 +1,18 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
-""" Model comparison plots."""
+"""Model comparison plots."""
 from __future__ import annotations
 
 import warnings
 from numbers import Real
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Literal
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from ..compat.matplotlib import get_cmap 
 from ..compat.sklearn import StrOptions, type_of_target, validate_params
 from ..utils.generic_utils import drop_nan_in
 from ..utils.handlers import columns_manager
@@ -19,41 +20,44 @@ from ..utils.metric_utils import get_scorer
 from ..utils.plot import set_axis_grid
 from ..utils.validator import _assert_all_types, is_iterable, validate_yy
 
-__all__ = ["plot_reliability_diagram", 'plot_model_comparison']
+__all__ = ["plot_reliability_diagram", "plot_model_comparison"]
 
-@validate_params({
-    "y_true": ['array-like'],
-    "strategy": [StrOptions({'uniform', 'quantile'})],
-    "error_bars": [StrOptions({'wilson', 'normal', 'none'})],
-    "counts_panel": [StrOptions({'none', 'bottom'})],
-    "counts_norm": [StrOptions({'fraction', 'count'})]
-})
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "strategy": [StrOptions({"uniform", "quantile"})],
+        "error_bars": [StrOptions({"wilson", "normal", "none"})],
+        "counts_panel": [StrOptions({"none", "bottom"})],
+        "counts_norm": [StrOptions({"fraction", "count"})],
+    }
+)
 def plot_reliability_diagram(
     y_true,
     *y_preds,
-    names: Optional[List[str]] = None,
-    sample_weight: Optional[Union[List[float], np.ndarray]] = None,
+    names: list[str] | None = None,
+    sample_weight: list[float] | np.ndarray | None = None,
     n_bins: int = 10,
     strategy: str = "uniform",
-    positive_label: Union[int, float, str] = 1,
-    class_index: Optional[int] = None,
-    clip_probs: Tuple[float, float] = (0.0, 1.0),
+    positive_label: int | float | str = 1,
+    class_index: int | None = None,
+    clip_probs: tuple[float, float] = (0.0, 1.0),
     normalize_probs: bool = True,
     error_bars: str = "wilson",
     conf_level: float = 0.95,
     show_diagonal: bool = True,
-    diagonal_kwargs: Optional[Dict[str, Any]] = None,
+    diagonal_kwargs: dict[str, Any] | None = None,
     show_ece: bool = True,
     show_brier: bool = True,
     counts_panel: str = "bottom",
-    counts_norm: Literal['fraction', 'count'] = "fraction",
+    counts_norm: Literal["fraction", "count"] = "fraction",
     counts_alpha: float = 0.35,
-    figsize: Optional[Tuple[float, float]] = (9, 7),
-    title: Optional[str] = None,
-    xlabel: Optional[str] = "Predicted probability",
-    ylabel: Optional[str] = "Observed frequency",
+    figsize: tuple[float, float] | None = (9, 7),
+    title: str | None = None,
+    xlabel: str | None = "Predicted probability",
+    ylabel: str | None = "Observed frequency",
     cmap: str = "tab10",
-    color_palette: Optional[List[Any]] = None,
+    color_palette: list[Any] | None = None,
     marker: str = "o",
     s: int = 40,
     linewidth: float = 2.0,
@@ -62,24 +66,20 @@ def plot_reliability_diagram(
     legend: bool = True,
     legend_loc: str = "best",
     show_grid: bool = True,
-    grid_props: Optional[dict] = None,
-    xlim: Tuple[float, float] = (0.0, 1.0),
-    ylim: Tuple[float, float] = (0.0, 1.0),
-    savefig: Optional[str] = None,
+    grid_props: dict | None = None,
+    xlim: tuple[float, float] = (0.0, 1.0),
+    ylim: tuple[float, float] = (0.0, 1.0),
+    savefig: str | None = None,
     return_data: bool = False,
-    **kw, # for future extension
+    **kw,  # for future extension
 ):
     # -------------- input handling -------------- #
     if len(y_preds) == 0:
-        raise ValueError(
-            "Provide at least one prediction array via *y_preds."
-        )
+        raise ValueError("Provide at least one prediction array via *y_preds.")
 
     names = columns_manager(names, to_string=True) or []
     if len(names) < len(y_preds):
-        names.extend(
-            [f"Model_{i+1}" for i in range(len(names), len(y_preds))]
-        )
+        names.extend([f"Model_{i+1}" for i in range(len(names), len(y_preds))])
     if len(names) > len(y_preds):
         warnings.warn(
             (
@@ -87,41 +87,35 @@ def plot_reliability_diagram(
                 "Extra names ignored."
             ),
             UserWarning,
+            stacklevel=2,
         )
         names = names[: len(y_preds)]
 
     y_true = np.asarray(y_true)
     if type_of_target(y_true) not in ("binary", "multiclass"):
         raise ValueError(
-            "y_true must be a classification target. "
-            "Binary reliability is expected."
+            "y_true must be a classification target. " "Binary reliability is expected."
         )
     y_bin = (y_true == positive_label).astype(int)
 
-    prob_list: List[np.ndarray] = []
+    prob_list: list[np.ndarray] = []
     for arr in y_preds:
         arr = np.asarray(arr)
         prob_list.append(_to_prob_vector(arr, class_index))
 
     if sample_weight is None:
-        y_bin, *prob_list = drop_nan_in(
-            y_bin, *prob_list, error='raise'
-        )
+        y_bin, *prob_list = drop_nan_in(y_bin, *prob_list, error="raise")
         w = np.ones_like(y_bin, dtype=float)
     else:
         w = np.asarray(sample_weight, dtype=float)
-        y_bin, *prob_list, w = drop_nan_in(
-            y_bin, *prob_list, w, error='raise'
-        )
+        y_bin, *prob_list, w = drop_nan_in(y_bin, *prob_list, w, error="raise")
 
     clip_lo, clip_hi = clip_probs
     clipped_flag = False
     new_probs = []
     for p in prob_list:
         p0 = p.copy()
-        p1 = _prep_probs(
-            p0, clip_lo, clip_hi, normalize_probs
-        )
+        p1 = _prep_probs(p0, clip_lo, clip_hi, normalize_probs)
         if not np.allclose(p0, p1):
             clipped_flag = True
         new_probs.append(p1)
@@ -133,11 +127,10 @@ def plot_reliability_diagram(
                 f"to [{clip_lo}, {clip_hi}]."
             ),
             UserWarning,
+            stacklevel=2,
         )
 
-    edges, centers = _build_bins(
-        prob_list, n_bins, strategy, clip_lo, clip_hi
-    )
+    edges, centers = _build_bins(prob_list, n_bins, strategy, clip_lo, clip_hi)
     z = _z_from_conf(conf_level)
 
     # -------------- colors & layout -------------- #
@@ -145,9 +138,7 @@ def plot_reliability_diagram(
 
     if counts_panel == "bottom":
         fig = plt.figure(figsize=figsize)
-        gs = fig.add_gridspec(
-            2, 1, height_ratios=(3.0, 1.0), hspace=0.12
-        )
+        gs = fig.add_gridspec(2, 1, height_ratios=(3.0, 1.0), hspace=0.12)
         ax = fig.add_subplot(gs[0, 0])
         axb = fig.add_subplot(gs[1, 0], sharex=ax)
     else:
@@ -156,14 +147,10 @@ def plot_reliability_diagram(
 
     # -------------- compute & plot -------------- #
 
-    per_model: Dict[str, pd.DataFrame] = {}
+    per_model: dict[str, pd.DataFrame] = {}
 
-    for i, (name, p, col) in enumerate(
-        zip(names, prob_list, colors)
-    ):
-        stats = _bin_stats(
-            p, y_bin, w, edges, error_bars, z
-        )
+    for i, (name, p, col) in enumerate(zip(names, prob_list, colors)):
+        stats = _bin_stats(p, y_bin, w, edges, error_bars, z)
         ece = float(np.nansum(stats["ece"]))
         br = _brier(p, y_bin, w)
 
@@ -190,23 +177,21 @@ def plot_reliability_diagram(
         yhi = df.loc[valid, "y_high"].to_numpy()
 
         if error_bars.lower() != "none":
-            yerr = np.vstack(
-                [y - ylo, yhi - y]
-            )
+            yerr = np.vstack([y - ylo, yhi - y])
             ax.errorbar(
-                x, y, yerr=yerr, fmt='none',
-                ecolor=col, elinewidth=1.0,
-                capsize=2, alpha=alpha * 0.85,
+                x,
+                y,
+                yerr=yerr,
+                fmt="none",
+                ecolor=col,
+                elinewidth=1.0,
+                capsize=2,
+                alpha=alpha * 0.85,
             )
 
-        ax.scatter(
-            x, y, c=[col], s=s, marker=marker, alpha=alpha
-        )
+        ax.scatter(x, y, c=[col], s=s, marker=marker, alpha=alpha)
         if connect and len(x) > 1:
-            ax.plot(
-                x, y, color=col, linewidth=linewidth,
-                alpha=alpha
-            )
+            ax.plot(x, y, color=col, linewidth=linewidth, alpha=alpha)
 
         label = name
         pieces = []
@@ -218,15 +203,17 @@ def plot_reliability_diagram(
             label = f"{label} ({', '.join(pieces)})"
 
         ax.plot(
-            [], [], color=col,
+            [],
+            [],
+            color=col,
             marker=marker,
-            linestyle='-' if connect else 'None',
+            linestyle="-" if connect else "None",
             linewidth=linewidth,
             label=label,
         )
 
         if axb is not None:
-            bw = (edges[1:] - edges[:-1])
+            bw = edges[1:] - edges[:-1]
             slot = bw * 0.8 / max(1, len(prob_list))
             left = edges[:-1] + i * slot
             vals = df["w_sum"].to_numpy()
@@ -234,8 +221,12 @@ def plot_reliability_diagram(
                 denom = vals.sum() if vals.sum() > 0 else 1.0
                 vals = vals / denom
             axb.bar(
-                left, vals, width=slot, align='edge',
-                color=col, alpha=counts_alpha,
+                left,
+                vals,
+                width=slot,
+                align="edge",
+                color=col,
+                alpha=counts_alpha,
                 label=name,
             )
 
@@ -257,40 +248,30 @@ def plot_reliability_diagram(
             "alpha": 0.9,
         }
         if diagonal_kwargs:
-            _assert_all_types(
-                diagonal_kwargs, dict, objname="'diagonal_kwargs'"
-            )
+            _assert_all_types(diagonal_kwargs, dict, objname="'diagonal_kwargs'")
             diag_kw.update(diagonal_kwargs)
         ax.plot((0.0, 1.0), (0.0, 1.0), **diag_kw)
 
-    set_axis_grid(
-        ax, show_grid=show_grid, grid_props=grid_props
-    )
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
     if legend:
         ax.legend(loc=legend_loc)
 
     if axb is not None:
         axb.set_xlim(*xlim)
-        axb.axhline(0, color='gray', lw=0.8)
+        axb.axhline(0, color="gray", lw=0.8)
         axb.set_xlabel(xlabel or "Predicted probability")
-        axb.set_ylabel(
-            "Frac." if counts_norm == "fraction" else "Count"
-        )
-        set_axis_grid(
-            axb, show_grid=True, grid_props={"alpha": 0.25}
-        )
+        axb.set_ylabel("Frac." if counts_norm == "fraction" else "Count")
+        set_axis_grid(axb, show_grid=True, grid_props={"alpha": 0.25})
         h, l = axb.get_legend_handles_labels()
         if h and l:
-            axb.legend(loc='upper right', fontsize=8)
+            axb.legend(loc="upper right", fontsize=8)
 
     plt.tight_layout()
 
     if savefig:
         try:
-            fig.savefig(
-                savefig, bbox_inches='tight', dpi=300
-            )
+            fig.savefig(savefig, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig}")
         except Exception as e:
             print(f"Error saving plot to {savefig}: {e}")
@@ -300,6 +281,7 @@ def plot_reliability_diagram(
     if return_data:
         return ax, per_model
     return ax
+
 
 # ------------------ helpers ------------------ #
 def _z_from_conf(cf: float) -> float:
@@ -312,32 +294,25 @@ def _z_from_conf(cf: float) -> float:
     }
     return table.get(round(cf, 3), 1.9599639845)
 
-def _to_prob_vector(
-    arr: np.ndarray,
-    ci: Optional[int]
-) -> np.ndarray:
+
+def _to_prob_vector(arr: np.ndarray, ci: int | None) -> np.ndarray:
     if arr.ndim == 1:
         return arr.astype(float, copy=False)
     if arr.ndim == 2:
         idx = arr.shape[1] - 1 if ci is None else ci
         if idx < 0 or idx >= arr.shape[1]:
             raise ValueError(
-                
-                    "class_index out of bounds for 2D predictions: "
-                    f"{idx} not in [0, {arr.shape[1]-1}]"
-                
+                "class_index out of bounds for 2D predictions: "
+                f"{idx} not in [0, {arr.shape[1]-1}]"
             )
         return arr[:, idx].astype(float, copy=False)
     raise ValueError(
-        "Predictions must be 1D probabilities or "
-        "(n_samples, n_classes) arrays."
+        "Predictions must be 1D probabilities or " "(n_samples, n_classes) arrays."
     )
 
+
 def _prep_probs(
-    p: np.ndarray,
-    clip_lo: float,
-    clip_hi: float,
-    do_norm: bool
+    p: np.ndarray, clip_lo: float, clip_hi: float, do_norm: bool
 ) -> np.ndarray:
     p = np.asarray(p, dtype=float)
     if do_norm:
@@ -349,13 +324,10 @@ def _prep_probs(
     p = np.clip(p, clip_lo, clip_hi)
     return p
 
+
 def _build_bins(
-    probs_list: List[np.ndarray],
-    nb: int,
-    strat: str,
-    low: float,
-    high: float
-) -> Tuple[np.ndarray, np.ndarray]:
+    probs_list: list[np.ndarray], nb: int, strat: str, low: float, high: float
+) -> tuple[np.ndarray, np.ndarray]:
     if strat == "uniform":
         edges = np.linspace(low, high, nb + 1)
     else:
@@ -365,15 +337,14 @@ def _build_bins(
         edges = np.unique(edges)
         if len(edges) - 1 < nb:
             warnings.warn(
-                (
-                    "Not enough unique quantile edges; "
-                    "falling back to uniform bins."
-                ),
+                ("Not enough unique quantile edges; " "falling back to uniform bins."),
                 UserWarning,
+                stacklevel=2,
             )
             edges = np.linspace(low, high, nb + 1)
     centers = 0.5 * (edges[:-1] + edges[1:])
     return edges, centers
+
 
 def _bin_stats(
     p: np.ndarray,
@@ -381,8 +352,8 @@ def _bin_stats(
     w: np.ndarray,
     edges: np.ndarray,
     ebars: str,
-    zval: float
-) -> Dict[str, np.ndarray]:
+    zval: float,
+) -> dict[str, np.ndarray]:
     nb = len(edges) - 1
     eps = 1e-12
     idx = np.digitize(p, edges, right=False) - 1
@@ -395,7 +366,7 @@ def _bin_stats(
     yr = np.zeros(nb, dtype=float)
 
     for b in range(nb):
-        m = (idx == b)
+        m = idx == b
         if not np.any(m):
             continue
         ww = w[m]
@@ -429,10 +400,7 @@ def _bin_stats(
             denom = 1.0 + (zval**2) / n_
             center = (ph + (zval**2) / (2.0 * n_)) / denom
             rad = (
-                zval
-                * np.sqrt(
-                    (ph * (1.0 - ph) + (zval**2) / (4.0 * n_)) / n_
-                )
+                zval * np.sqrt((ph * (1.0 - ph) + (zval**2) / (4.0 * n_)) / n_)
             ) / denom
             ylo[i] = np.clip(center - rad, 0.0, 1.0)
             yhi[i] = np.clip(center + rad, 0.0, 1.0)
@@ -452,25 +420,24 @@ def _bin_stats(
         "ece": ece_contrib,
     }
 
+
 def _brier(p: np.ndarray, y: np.ndarray, w: np.ndarray) -> float:
     return float(np.average((p - y) ** 2, weights=w))
 
-def _colors(
-    cmap_name: str,
-    palette: Optional[List[Any]],
-    k: int
-) -> List[Any]:
+
+def _colors(cmap_name: str, palette: list[Any] | None, k: int) -> list[Any]:
     if palette is not None:
         return [palette[i % len(palette)] for i in range(k)]
     try:
-        cmo = cm.get_cmap(cmap_name)
+        cmo = get_cmap(cmap_name)
     except ValueError:
         warnings.warn(
             f"Invalid cmap '{cmap_name}'. Using 'tab10' instead.",
             UserWarning,
+            stacklevel=2,
         )
-        cmo = cm.get_cmap('tab10')
-    if hasattr(cmo, 'colors') and len(cmo.colors) >= k:
+        cmo = get_cmap("tab10")
+    if hasattr(cmo, "colors") and len(cmo.colors) >= k:
         return list(cmo.colors[:k])
     if k == 1:
         return [cmo(0.5)]
@@ -740,29 +707,42 @@ Binary example with quantile bins and Wilson intervals.
 ... )
 """
 
-@validate_params({
-    'train_times': ['array-like', None],
-    'metrics': [str, 'array-like', callable, None], 
-    'scale': [StrOptions({"norm", "min-max", 'std', 'standard',}), None], 
-    "lower_bound": [Real],
-    })
+
+@validate_params(
+    {
+        "train_times": ["array-like", None],
+        "metrics": [str, "array-like", callable, None],
+        "scale": [
+            StrOptions(
+                {
+                    "norm",
+                    "min-max",
+                    "std",
+                    "standard",
+                }
+            ),
+            None,
+        ],
+        "lower_bound": [Real],
+    }
+)
 def plot_model_comparison(
     y_true,
     *y_preds,
-    train_times: Optional[Union[float, List[float]]] = None, 
-    metrics: Optional[Union[str, Callable, List[Union[str, Callable]]]] = None, 
-    names: Optional[List[str]] = None,
-    title: Optional[str] = None,
-    figsize: Optional[Tuple[float, float]] = None, 
-    colors: Optional[List[Any]] = None, 
+    train_times: float | list[float] | None = None,
+    metrics: str | Callable | list[str | Callable] | None = None,
+    names: list[str] | None = None,
+    title: str | None = None,
+    figsize: tuple[float, float] | None = None,
+    colors: list[Any] | None = None,
     alpha: float = 0.7,
     legend: bool = True,
     show_grid: bool = True,
-    grid_props: dict =None, 
-    scale: Optional[str] = 'norm', 
-    lower_bound: float = 0, 
-    savefig: Optional[str] = None,
-    loc: str = 'upper right',
+    grid_props: dict = None,
+    scale: str | None = "norm",
+    lower_bound: float = 0,
+    savefig: str | None = None,
+    loc: str = "upper right",
     verbose: int = 0,
 ):
     r"""Plot multi-metric model performance comparison on a radar chart.
@@ -959,9 +939,9 @@ def plot_model_comparison(
 
     Examples
     --------
-    >>> from kdiagram.plot.comparison import plot_model_comparison 
+    >>> from kdiagram.plot.comparison import plot_model_comparison
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Example 1: Regression task
     >>> y_true_reg = np.array([3, -0.5, 2, 7, 5])
     >>> y_pred_r1 = np.array([2.5, 0.0, 2.1, 7.8, 5.2])
@@ -973,7 +953,7 @@ def plot_model_comparison(
     ...                        metrics=['r2', 'mae', 'rmse'], # Specify metrics
     ...                        title="Regression Model Comparison",
     ...                        scale='norm') # Normalize for comparison
-    >>> 
+    >>>
     >>> # Example 2: Classification task (requires appropriate y_true/y_pred)
     >>> y_true_clf = np.array([0, 1, 0, 1, 1, 0])
     >>> y_pred_c1 = np.array([0, 1, 0, 1, 0, 0]) # Model 1 preds
@@ -988,14 +968,14 @@ def plot_model_comparison(
     # --- Input Validation and Preparation ---
     try:
         # Remove NaN values and ensure consistency
-        y_true, *y_preds = drop_nan_in(y_true, *y_preds, error='raise')
+        y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
         # Validate y_true and each y_pred
         temp_preds = []
         for i, pred in enumerate(y_preds):
             # Validate returns tuple, we need the second element
             validated_pred = validate_yy(
                 y_true, pred, expected_type=None, flatten=True
-                )[1]
+            )[1]
             temp_preds.append(validated_pred)
         y_preds = temp_preds
     except Exception as e:
@@ -1004,61 +984,69 @@ def plot_model_comparison(
 
     n_models = len(y_preds)
     if n_models == 0:
-        warnings.warn("No prediction arrays (*y_preds) provided.")
-        return None # Cannot plot without predictions
+        warnings.warn("No prediction arrays (*y_preds) provided.", stacklevel=2)
+        return None  # Cannot plot without predictions
 
     # --- Handle Names ---
     if names is None:
         names = [f"Model_{i+1}" for i in range(n_models)]
     else:
-        names = columns_manager(list(names), empty_as_none=False) # Ensure list
+        names = columns_manager(list(names), empty_as_none=False)  # Ensure list
         if len(names) < n_models:
             names += [f"Model_{i+1}" for i in range(len(names), n_models)]
         elif len(names) > n_models:
-             warnings.warn(f"Received {len(names)} names for {n_models}"
-                           f" models. Extra names ignored.", UserWarning)
-             names = names[:n_models]
+            warnings.warn(
+                f"Received {len(names)} names for {n_models}"
+                f" models. Extra names ignored.",
+                UserWarning,
+                stacklevel=2,
+            )
+            names = names[:n_models]
 
     # --- Handle Metrics ---
     if metrics is None:
         target_type = type_of_target(y_true)
-        if target_type in ['continuous', 'continuous-multioutput']:
+        if target_type in ["continuous", "continuous-multioutput"]:
             # Default regression metrics
             metrics = ["r2", "mae", "mape", "rmse"]
         else:
             # Default classification metrics
             metrics = ["accuracy", "precision", "recall", "f1"]
         if verbose >= 1:
-            print(f"[INFO] Auto-selected metrics for target type "
-                  f"'{target_type}': {metrics}")
+            print(
+                f"[INFO] Auto-selected metrics for target type "
+                f"'{target_type}': {metrics}"
+            )
 
     metrics = is_iterable(metrics, exclude_string=True, transform=True)
 
     metric_funcs = []
     metric_names = []
-    error_metrics = [] # Track metrics needing sign inversion
+    error_metrics = []  # Track metrics needing sign inversion
 
     for metric in metrics:
         try:
             if isinstance(metric, str):
                 # get_scorer returns a callable scorer object
-                scorer_func = get_scorer(metric) 
+                scorer_func = get_scorer(metric)
                 metric_funcs.append(scorer_func)
                 metric_names.append(metric)
                 # Identify error metrics (lower is better) for potential scaling flip
-                if metric in ['mae', 'mape', 'rmse', 'mse']: # Add others if needed
-                     error_metrics.append(metric)
+                if metric in ["mae", "mape", "rmse", "mse"]:  # Add others if needed
+                    error_metrics.append(metric)
             elif callable(metric):
                 metric_funcs.append(metric)
-                m_name = getattr(metric, '__name__', f'func_{len(metric_names)}')
+                m_name = getattr(metric, "__name__", f"func_{len(metric_names)}")
                 metric_names.append(m_name)
                 # Cannot easily determine if callable is error/score metric
             else:
-                 warnings.warn(
-                     f"Ignoring invalid metric type: {type(metric)}")
+                warnings.warn(
+                    f"Ignoring invalid metric type: {type(metric)}", stacklevel=2
+                )
         except Exception as e:
-             warnings.warn(
-                 f"Could not retrieve scorer for metric '{metric}': {e}")
+            warnings.warn(
+                f"Could not retrieve scorer for metric '{metric}': {e}", stacklevel=2
+            )
 
     if not metric_funcs:
         raise ValueError("No valid metrics found or specified.")
@@ -1066,21 +1054,20 @@ def plot_model_comparison(
     # --- Handle Train Times ---
     train_time_vals = None
     if train_times is not None:
-        if isinstance(train_times, (int, float, np.number)): # Handle single value
-             train_time_vals = np.array([float(train_times)] * n_models)
+        if isinstance(train_times, (int, float, np.number)):  # Handle single value
+            train_time_vals = np.array([float(train_times)] * n_models)
         else:
-             train_times = np.asarray(train_times, dtype=float)
-             if train_times.ndim != 1 or len(train_times) != n_models:
-                 raise ValueError(
-                     f"train_times must be a single float or a list/array "
-                     f"of length n_models ({n_models}). "
-                     f"Got shape {train_times.shape}."
-                 )
-             train_time_vals = train_times
-        metric_names.append("Train Time (s)") # Use clearer name
+            train_times = np.asarray(train_times, dtype=float)
+            if train_times.ndim != 1 or len(train_times) != n_models:
+                raise ValueError(
+                    f"train_times must be a single float or a list/array "
+                    f"of length n_models ({n_models}). "
+                    f"Got shape {train_times.shape}."
+                )
+            train_time_vals = train_times
+        metric_names.append("Train Time (s)")  # Use clearer name
         # Add a placeholder for calculation loop, will substitute later
         metric_funcs.append("train_time_placeholder")
-
 
     # --- Calculate Metric Results ---
     results = np.zeros((n_models, len(metric_names)), dtype=float)
@@ -1093,12 +1080,15 @@ def plot_model_comparison(
                     score = metric_func(y_true, y_pred)
                     results[i, j] = score
                 except Exception as e:
-                    warnings.warn(f"Could not compute metric "
-                                  f"'{metric_names[j]}' for model "
-                                  f"'{names[i]}': {e}. Setting to NaN.")
+                    warnings.warn(
+                        f"Could not compute metric "
+                        f"'{metric_names[j]}' for model "
+                        f"'{names[i]}': {e}. Setting to NaN.",
+                        stacklevel=2,
+                    )
                     results[i, j] = np.nan
             else:
-                results[i, j] = np.nan # Should not happen if logic is correct
+                results[i, j] = np.nan  # Should not happen if logic is correct
 
     # --- Scale Results ---
     # Make copy for scaling to preserve original results if needed later
@@ -1106,8 +1096,11 @@ def plot_model_comparison(
 
     # Handle potential NaNs before scaling
     if np.isnan(results_scaled).any():
-        warnings.warn("NaN values found in metric results. Scaling might "
-                      "be affected or rows/cols dropped depending on method.")
+        warnings.warn(
+            "NaN values found in metric results. Scaling might "
+            "be affected or rows/cols dropped depending on method.",
+            stacklevel=2,
+        )
         # Option 1: Impute (e.g., with column mean) - complex
         # Option 2: Use nan-aware numpy functions
         # Let's use nan-aware functions
@@ -1115,8 +1108,8 @@ def plot_model_comparison(
     # Note: Some metrics are better when *lower* (MAE, RMSE, MAPE, train_time).
     # For visualization where larger radius is better, we might invert these
     # before scaling, or adjust the interpretation. Let's scale first.
-    if scale in ['norm', 'min-max']:
-        if verbose >= 1: 
+    if scale in ["norm", "min-max"]:
+        if verbose >= 1:
             print("[INFO] Scaling metrics using Min-Max.")
         min_vals = np.nanmin(results_scaled, axis=0)
         max_vals = np.nanmax(results_scaled, axis=0)
@@ -1131,8 +1124,8 @@ def plot_model_comparison(
                 results_scaled[:, j] = 1.0 - results_scaled[:, j]
         # Scaled results are now in [0, 1], higher is better.
 
-    elif scale in ['std', 'standard']:
-        if verbose >= 1: 
+    elif scale in ["std", "standard"]:
+        if verbose >= 1:
             print("[INFO] Scaling metrics using Standard Scaler.")
         mean_vals = np.nanmean(results_scaled, axis=0)
         std_vals = np.nanstd(results_scaled, axis=0)
@@ -1152,33 +1145,39 @@ def plot_model_comparison(
     results_scaled = np.nan_to_num(results_scaled, nan=lower_bound)
 
     # --- Plotting ---
-    fig = plt.figure(figsize=figsize or (8, 8)) # Default figsize here
+    fig = plt.figure(figsize=figsize or (8, 8))  # Default figsize here
     ax = fig.add_subplot(111, polar=True)
 
     # Angles for each metric axis
     num_metrics = len(metric_names)
     angles = np.linspace(0, 2 * np.pi, num_metrics, endpoint=False).tolist()
-    angles_closed = angles + angles[:1] # Repeat first angle to close plot
+    angles_closed = angles + angles[:1]  # Repeat first angle to close plot
 
     # Colors
     if colors is None:
         # Use a robust colormap like tab10 if available
         try:
-            cmap_obj = plt.get_cmap("tab10")
+            cmap_obj = get_cmap("tab10")
             plot_colors = [cmap_obj(i % 10) for i in range(n_models)]
-        except ValueError: # Fallback if tab10 not found (unlikely)
-            cmap_obj = plt.get_cmap("viridis")
+        except ValueError:  # Fallback if tab10 not found (unlikely)
+            cmap_obj = get_cmap("viridis")
             plot_colors = [cmap_obj(i / n_models) for i in range(n_models)]
     else:
-        plot_colors = colors # Use user-provided list
+        plot_colors = colors  # Use user-provided list
 
     # Plot each model
     for i, row in enumerate(results_scaled):
-        values = np.concatenate((row, [row[0]])) # Close the polygon
-        color = plot_colors[i % len(plot_colors)] # Cycle colors if needed
-        ax.plot(angles_closed, values, label=names[i], color=color,
-                linewidth=1.5, alpha=alpha)
-        ax.fill(angles_closed, values, color=color, alpha=0.1) # Lighter fill
+        values = np.concatenate((row, [row[0]]))  # Close the polygon
+        color = plot_colors[i % len(plot_colors)]  # Cycle colors if needed
+        ax.plot(
+            angles_closed,
+            values,
+            label=names[i],
+            color=color,
+            linewidth=1.5,
+            alpha=alpha,
+        )
+        ax.fill(angles_closed, values, color=color, alpha=0.1)  # Lighter fill
 
     # --- Configure Axes ---
     ax.set_xticks(angles)
@@ -1187,33 +1186,33 @@ def plot_model_comparison(
     # Adjust radial limits and labels
     # If scaled to [0, 1], set limit slightly above 1
     # If std scaled, auto-limit might be better, but respect lower_bound
-    if scale in ['norm', 'min-max']:
-         ax.set_ylim(bottom=lower_bound, top=1.05)
-         # Optional: Add radial ticks for [0, 1] scale
-         ax.set_yticks(np.linspace(lower_bound, 1, 5))
-    else: # Raw or std scaled
-         ax.set_ylim(bottom=lower_bound)
-         # Let matplotlib auto-determine upper limit and ticks
+    if scale in ["norm", "min-max"]:
+        ax.set_ylim(bottom=lower_bound, top=1.05)
+        # Optional: Add radial ticks for [0, 1] scale
+        ax.set_yticks(np.linspace(lower_bound, 1, 5))
+    else:  # Raw or std scaled
+        ax.set_ylim(bottom=lower_bound)
+        # Let matplotlib auto-determine upper limit and ticks
 
-    ax.tick_params(axis='y', labelsize=8) # Smaller radial labels
-    ax.tick_params(axis='x', pad=10) # Pad angular labels outwards
+    ax.tick_params(axis="y", labelsize=8)  # Smaller radial labels
+    ax.tick_params(axis="x", pad=10)  # Pad angular labels outwards
 
     # Grid
-    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props )
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
     # Legend
     if legend:
-        ax.legend(loc=loc, bbox_to_anchor=(1.25, 1.05)) # Adjust position
+        ax.legend(loc=loc, bbox_to_anchor=(1.25, 1.05))  # Adjust position
 
     # Title
     ax.set_title(title or "Model Performance Comparison", y=1.15, fontsize=14)
 
     # --- Output ---
-    plt.tight_layout(pad=2.0) # Adjust layout
+    plt.tight_layout(pad=2.0)  # Adjust layout
 
     if savefig:
         try:
-            plt.savefig(savefig, bbox_inches='tight', dpi=300)
+            plt.savefig(savefig, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig}")
         except Exception as e:
             print(f"Error saving plot to {savefig}: {e}")
@@ -1221,7 +1220,11 @@ def plot_model_comparison(
         try:
             plt.show()
         except Exception as e:
-             warnings.warn(f"Could not display plot interactively ({e})."
-                           f" Use savefig parameter.", UserWarning)
+            warnings.warn(
+                f"Could not display plot interactively ({e})."
+                f" Use savefig parameter.",
+                UserWarning,
+                stacklevel=2,
+            )
 
     return ax

@@ -1,4 +1,4 @@
-#   License: Apache 2.0 
+#   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 from __future__ import annotations
@@ -6,16 +6,14 @@ from __future__ import annotations
 import inspect
 import re
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
 
 def str2columns(
-    text: str,
-    regex: Optional[re.Pattern] = None,
-    pattern: Optional[str] = None
-) -> List[str]:
+    text: str, regex: re.Pattern | None = None, pattern: str | None = None
+) -> list[str]:
     """
     Split the input string `<text>` into words or
     column names using a regular expression.
@@ -68,10 +66,8 @@ def str2columns(
     parts = splitter.split(text)
     return list(filter(None, parts))
 
-def smart_format(
-    iter_obj,
-    choice: str = 'and'
-) -> str:
+
+def smart_format(iter_obj, choice: str = "and") -> str:
     """
     Smartly format an iterable object into a readable
     string with a specific connector (e.g. `'and'`).
@@ -104,7 +100,7 @@ def smart_format(
     # Attempt to ensure it's iterable
     try:
         _ = iter(iter_obj)
-    except: # TypeError >
+    except:  # TypeError >
         return f"{iter_obj}"
 
     # Convert each element to string
@@ -113,20 +109,21 @@ def smart_format(
         return ""
 
     if len(items) == 1:
-        return ','.join([f"{i!r}" for i in items])
+        return ",".join([f"{i!r}" for i in items])
 
     # Multiple items: join all but last with commas,
     # then add the connector word and final item
-    body = ','.join([f"{i!r}" for i in items[:-1]])
+    body = ",".join([f"{i!r}" for i in items[:-1]])
     return f"{body} {choice} {items[-1]!r}"
 
+
 def count_functions(
-    module_name, 
-    include_class=False, 
-    return_counts=True, 
-    include_private=False, 
-    include_local=False
-    ):
+    module_name,
+    include_class=False,
+    return_counts=True,
+    include_private=False,
+    include_local=False,
+):
     """
     Count and list the number of functions and classes in a specified module.
 
@@ -135,44 +132,44 @@ def count_functions(
     module_name : str
         The name of the module to inspect, in the format `package.module`.
     include_class : bool, optional
-        Whether to include classes in the count and listing. Default is 
+        Whether to include classes in the count and listing. Default is
         `False`.
     return_counts : bool, optional
-        Whether to return only the count of functions and classes (if 
-        ``include_class`` is `True`). If `False`, returns a list of functions 
+        Whether to return only the count of functions and classes (if
+        ``include_class`` is `True`). If `False`, returns a list of functions
         and classes in alphabetical order. Default is `True`.
     include_private : bool, optional
-        Whether to include private functions and classes (those starting with 
+        Whether to include private functions and classes (those starting with
         `_`). Default is `False`.
     include_local : bool, optional
-        Whether to include local (nested) functions in the count and listing. 
+        Whether to include local (nested) functions in the count and listing.
         Default is `False`.
 
     Returns
     -------
     int or list
-        If ``return_counts`` is `True`, returns the count of functions and 
-        classes (if ``include_class`` is `True`). If ``return_counts`` is 
-        `False`, returns a list of function and class names (if 
+        If ``return_counts`` is `True`, returns the count of functions and
+        classes (if ``include_class`` is `True`). If ``return_counts`` is
+        `False`, returns a list of function and class names (if
         ``include_class`` is `True`) in alphabetical order.
 
     Notes
     -----
-    This function dynamically imports the specified module and analyzes its 
-    Abstract Syntax Tree (AST) to count and list functions and classes. It 
-    provides flexibility to include or exclude private and local functions 
+    This function dynamically imports the specified module and analyzes its
+    Abstract Syntax Tree (AST) to count and list functions and classes. It
+    provides flexibility to include or exclude private and local functions
     based on the parameters provided.
 
     The process can be summarized as:
 
     .. math::
-        \text{total\_count} = 
+        \text{total\_count} =
         \text{len(functions)} + \text{len(classes)}
 
     where:
 
     - :math:`\text{functions}` is the list of functions found in the module.
-    - :math:`\text{classes}` is the list of classes found in the module 
+    - :math:`\text{classes}` is the list of classes found in the module
       (if ``include_class`` is `True`).
 
     Examples
@@ -186,11 +183,11 @@ def count_functions(
                                 return_counts=False)
     ['ClassA', 'ClassB', 'func1', 'func2', 'func3']
 
-    >>> count_functions('kdiagram.utils.generic_utils', include_class=False, 
+    >>> count_functions('kdiagram.utils.generic_utils', include_class=False,
                                 return_counts=True, include_private=True)
     15
 
-    >>> count_functions('kdiagram.utils.generic_utils', include_class=False, 
+    >>> count_functions('kdiagram.utils.generic_utils', include_class=False,
                                 return_counts=False, include_private=True)
     ['_private_func1', '_private_func2', 'func1', 'func2']
 
@@ -200,12 +197,12 @@ def count_functions(
 
     References
     ----------
-    .. [1] Python Software Foundation. Python Language Reference, version 3.9. 
+    .. [1] Python Software Foundation. Python Language Reference, version 3.9.
        Available at http://www.python.org
-    .. [2] Python `ast` module documentation. Available at 
+    .. [2] Python `ast` module documentation. Available at
        https://docs.python.org/3/library/ast.html
     """
- 
+
     try:
         import ast
     except ImportError as e:  # Catch the specific ImportError exception
@@ -215,8 +212,9 @@ def count_functions(
             " Ensure that you are using a standard Python distribution, which"
             " includes the 'ast' module by default."
         ) from e
-    
+
     import importlib
+
     # Import the module dynamically
     module = importlib.import_module(module_name)
 
@@ -235,7 +233,7 @@ def count_functions(
         while node:
             if isinstance(node, ast.FunctionDef):
                 return True
-            node = getattr(node, 'parent', None)
+            node = getattr(node, "parent", None)
         return False
 
     # Add parent references to each node
@@ -246,11 +244,12 @@ def count_functions(
     # Traverse the AST to find function and class definitions
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
-            if (include_private or not node.name.startswith('_')) and \
-               (include_local or not is_local_function(node.parent)):
+            if (include_private or not node.name.startswith("_")) and (
+                include_local or not is_local_function(node.parent)
+            ):
                 functions.append(node.name)
         elif isinstance(node, ast.ClassDef) and include_class:
-            if include_private or not node.name.startswith('_'):
+            if include_private or not node.name.startswith("_"):
                 classes.append(node.name)
 
     # Combine and sort the lists if needed
@@ -263,11 +262,12 @@ def count_functions(
         return len(result)
     else:
         return result
-    
+
+
 def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     """
     Drop NaN values from `y_true` and corresponding predictions in `y_preds`.
-    
+
     This function filters out the samples where `y_true` contains NaN values,
     and also removes the corresponding entries from each predicted value array
     provided in `y_preds`. The resulting arrays have the same length as the
@@ -276,12 +276,12 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     Parameters
     ----------
     y_true : array-like, shape (n_samples,)
-        The true values. Must be numeric, one-dimensional, and of the same length 
+        The true values. Must be numeric, one-dimensional, and of the same length
         as the arrays in `y_preds`.
 
     y_preds : array-like (one or more), shape (n_samples,)
         Predicted values from one or more models. Each `y_pred` must have the same
-        length as `y_true`. Multiple predicted arrays can be passed, and each 
+        length as `y_true`. Multiple predicted arrays can be passed, and each
         will be filtered based on the non-NaN values in `y_true`.
 
     error : {"raise", "warn", "ignore"}, default="raise"
@@ -289,13 +289,13 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
         - "raise" : Raises a ValueError (default behavior).
         - "warn" : Issues a warning but proceeds.
         - "ignore" : Silently ignores the NaN values.
-        
+
     nan_policy : {"raise", "propagate", "omit"}, default=None
         Defines the behavior for handling NaNs:
         - "raise" : Raises an error if NaN is encountered.
         - "propagate" : Propagates NaNs without raising an error (default).
         - "omit" : Omits NaN values (similar to removing them).
-        
+
     Returns
     -------
     y_true : array-like, shape (n_samples,)
@@ -304,15 +304,15 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     y_preds : tuple of array-like, shape (n_samples,)
         A tuple of the filtered predicted values, one for each model passed as `y_preds`.
         Each array has the same number of non-NaN entries as `y_true`.
-        
+
     Notes
     -----
-    The function ensures that NaN values in `y_true` are dropped, and corresponding 
+    The function ensures that NaN values in `y_true` are dropped, and corresponding
     entries in all predicted arrays are also removed, maintaining alignment.
-    
-    If `nan_policy` is set, the `error` parameter will not take effect. When `nan_policy` 
+
+    If `nan_policy` is set, the `error` parameter will not take effect. When `nan_policy`
     is None, the behavior is controlled by the `error` parameter.
-    
+
     Example
     -------
     >>> y_true = [1, 2, np.nan, 4]
@@ -323,54 +323,53 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     """
     # Check for NaNs in y_true
     not_nan_indices = ~np.isnan(y_true)
-    
+
     # Handle error or nan_policy logic
     if np.any(np.isnan(y_true)) and error == "raise":
         raise ValueError("NaN values found in y_true, cannot proceed with NaN values.")
     elif np.any(np.isnan(y_true)) and error == "warn":
 
-        warnings.warn("NaN values found in y_true, they will be ignored.")
+        warnings.warn("NaN values found in y_true, they will be ignored.", stacklevel=2)
     elif np.any(np.isnan(y_true)) and error == "ignore":
         pass  # Silently ignore NaNs in y_true
-    
+
     # Apply nan_policy if set
     if nan_policy == "raise" and np.any(np.isnan(y_true)):
         raise ValueError("NaN values found in y_true with nan_policy='raise'.")
     elif nan_policy == "omit":
         not_nan_indices = ~np.isnan(y_true)  # Continue to omit NaNs
-    
+
     # Filter y_true and all y_preds based on the non-NaN indices
     y_true = y_true[not_nan_indices]
     y_preds = tuple(y_pred[not_nan_indices] for y_pred in y_preds)
 
     return y_true, *y_preds
 
-def get_valid_kwargs(
-        callable_obj: Any, kwargs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+
+def get_valid_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
     """
-    Filter and return only the valid keyword arguments for a given 
+    Filter and return only the valid keyword arguments for a given
     callable object, while warning about any invalid kwargs.
-    
+
     Parameters
     ----------
     callable_obj : callable
-        The callable object (function, lambda function, method, or class) 
+        The callable object (function, lambda function, method, or class)
         for which the keyword arguments need to be validated.
-    
+
     kwargs : dict
         Dictionary of keyword arguments to be validated against the callable object.
-    
+
     Returns
     -------
     valid_kwargs : dict
-        Dictionary containing only the valid keyword arguments 
+        Dictionary containing only the valid keyword arguments
         for the callable object.
     """
     # If the callable_obj is an instance, get its class
     if not inspect.isclass(callable_obj) and not callable(callable_obj):
         callable_obj = callable_obj.__class__
-    
+
     try:
         # Retrieve the signature of the callable object
         signature = inspect.signature(callable_obj)
@@ -378,13 +377,14 @@ def get_valid_kwargs(
         # If signature cannot be obtained, return empty kwargs and warn
         warnings.warn(
             "Unable to retrieve signature of the callable object. "
-            "No keyword arguments will be passed."
+            "No keyword arguments will be passed.",
+            stacklevel=2,
         )
         return {}
-    
+
     # Extract parameter names from the function signature
     valid_params = set(signature.parameters.keys())
-    
+
     # Identify valid and invalid kwargs
     valid_kwargs = {}
     invalid_kwargs = {}
@@ -393,25 +393,27 @@ def get_valid_kwargs(
             valid_kwargs[k] = v
         else:
             invalid_kwargs[k] = v
-    
+
     # Warn the user about invalid kwargs
     if invalid_kwargs:
-        invalid_keys = ', '.join(invalid_kwargs.keys())
+        invalid_keys = ", ".join(invalid_kwargs.keys())
         warnings.warn(
             f"The following keyword arguments are invalid"
-            f" and will be ignored: {invalid_keys}"
+            f" and will be ignored: {invalid_keys}",
+            stacklevel=2,
         )
-    
+
     return valid_kwargs
+
 
 def error_policy(
     error: str | None,
     *,
-    policy: str = 'auto',
-    base: str = 'ignore',
+    policy: str = "auto",
+    base: str = "ignore",
     exception: type[Exception] = None,
-    msg: str | None = None, 
-    valid_policies: set =None 
+    msg: str | None = None,
+    valid_policies: set = None,
 ) -> str:
     """
     Manage error-handling policies like 'warn', 'raise', or 'ignore'.
@@ -510,12 +512,11 @@ def error_policy(
     """  # noqa: E501
 
     # Predefined valid policies.
-    valid_policies = valid_policies or {'warn', 'raise', 'ignore'}
+    valid_policies = valid_policies or {"warn", "raise", "ignore"}
 
     # Default message if none is provided.
     default_msg = (
-        "Invalid error policy: '{error}'. Valid options are "
-        f"{valid_policies}."
+        "Invalid error policy: '{error}'. Valid options are " f"{valid_policies}."
     )
     if exception is None:
         exception = ValueError
@@ -524,7 +525,7 @@ def error_policy(
     msg = msg or default_msg
 
     # Validate the `policy` argument.
-    if policy not in {'auto', 'strict', None}:
+    if policy not in {"auto", "strict", None}:
         raise ValueError(
             f"Invalid policy: '{policy}'. Valid options are "
             "'auto', 'strict', or None."
@@ -532,10 +533,10 @@ def error_policy(
 
     # Resolve None values for `error` according to `policy`.
     if error is None:
-        if policy == 'auto':
+        if policy == "auto":
             # If policy='auto', fallback to `base` if no override is set.
-            error = base or 'ignore'
-        elif policy == 'strict':
+            error = base or "ignore"
+        elif policy == "strict":
             # If policy='strict', disallow None for `error`.
             raise ValueError(
                 "In strict policy, `None` is not acceptable as an "

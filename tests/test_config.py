@@ -23,6 +23,7 @@ def reset_filters():
 
 # ---------- _resolve_category ----------
 
+
 def test_resolve_category_accepts_string_and_class():
     assert _resolve_category("UserWarning") is UserWarning
     assert _resolve_category(DeprecationWarning) is DeprecationWarning
@@ -37,15 +38,16 @@ def test_resolve_category_rejects_unknown_or_bad_type():
 
 # ---------- configure_warnings ----------
 
+
 def test_configure_warnings_basic_error_on_category():
     configure_warnings("error", categories=[UserWarning])
     with pytest.raises(UserWarning):
-        warnings.warn("boom", UserWarning)
+        warnings.warn("boom", UserWarning, stacklevel=2)
 
     # Other categories still default (not error)
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
-        warnings.warn("ok", RuntimeWarning)
+        warnings.warn("ok", RuntimeWarning, stacklevel=2)
         assert len(rec) == 1
 
 
@@ -61,9 +63,7 @@ def test_configure_warnings_module_regex_scoped():
     # Build a tiny module that emits a UserWarning
     m = types.ModuleType(mod_name)
     code = (
-        "import warnings\n"
-        "def ping():\n"
-        "    warnings.warn('scoped', UserWarning)\n"
+        "import warnings\n" "def ping():\n" "    warnings.warn('scoped', UserWarning)\n"
     )
     exec(code, m.__dict__)
 
@@ -74,21 +74,22 @@ def test_configure_warnings_module_regex_scoped():
     # But the same category from *this* test module should not error
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
-        warnings.warn("unscoped", UserWarning)
+        warnings.warn("unscoped", UserWarning, stacklevel=2)
         assert len(rec) == 1  # captured, not raised
 
 
 def test_configure_warnings_clear_resets_prior_filters():
- 
+
     # Now clear and set default -> warning shows up again
     configure_warnings("default", categories=[RuntimeWarning], clear=True)
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
-        warnings.warn("not silenced", RuntimeWarning)
+        warnings.warn("not silenced", RuntimeWarning, stacklevel=2)
         assert len(rec) == 1
 
 
 # ---------- warnings_config (context manager) ----------
+
 
 def test_warnings_config_temporarily_ignores_then_restores():
     # Outside: make UserWarning an error so we can see restoration clearly
@@ -103,10 +104,11 @@ def test_warnings_config_temporarily_ignores_then_restores():
 
     # After exiting, back to error
     with pytest.raises(UserWarning):
-        warnings.warn("outside", UserWarning)
+        warnings.warn("outside", UserWarning, stacklevel=2)
 
 
 # ---------- suppress_warnings (deprecated shim) ----------
+
 
 def test_suppress_warnings_emits_deprecation_and_ignores_syntaxwarning():
     # Call and ensure deprecation is emitted
@@ -130,9 +132,10 @@ def test_suppress_warnings_restore_default_for_syntaxwarning():
 
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
-        warnings.warn("syntax visible", SyntaxWarning)
+        warnings.warn("syntax visible", SyntaxWarning, stacklevel=2)
         # Should now be visible again (default, not ignored)
         assert len(rec) == 1
 
-if __name__=="__main__": # pragma: no-cover
-    pytest.main( [__file__])
+
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

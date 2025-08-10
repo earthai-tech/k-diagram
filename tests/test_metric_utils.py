@@ -6,14 +6,14 @@ from sklearn.metrics import (
     explained_variance_score,
     f1_score,
     mean_absolute_error,
-    mean_squared_error,
+    # mean_squared_error,
     precision_score,
     r2_score,
     recall_score,
 )
 
 from kdiagram.utils.metric_utils import available_scorers, get_scorer
-
+from kdiagram.compat.sklearn import mean_squared_error, root_mean_squared_error 
 
 def test_available_scorers_contains_core_aliases():
     names = set(available_scorers())
@@ -43,7 +43,7 @@ def test_regression_rmse_and_mse():
     mse_alias = get_scorer("mse")
 
     # Compare against sklearn implementations
-    exp_rmse = mean_squared_error(y_true, y_pred, squared=False)
+    exp_rmse = root_mean_squared_error(y_true, y_pred)
     exp_mse = mean_squared_error(y_true, y_pred, squared=True)
 
     assert rmse(y_true, y_pred) == pytest.approx(exp_rmse)
@@ -66,7 +66,9 @@ def test_classification_weighted_defaults_precision_recall_f1():
     y_true = np.array([0, 1, 1, 2, 2, 2])
     y_pred = np.array([0, 0, 0, 0, 0, 0])  # predicts only class 0
 
-    prec = get_scorer("precision")  # should default to average="weighted", zero_division=0
+    prec = get_scorer(
+        "precision"
+    )  # should default to average="weighted", zero_division=0
     rec = get_scorer("recall")
     f1w = get_scorer("f1")
 
@@ -99,6 +101,7 @@ def test_fallback_to_sklearn_metric_by_name():
     exp_val = explained_variance_score(y_true, y_pred)
 
     assert expl_var(y_true, y_pred) == pytest.approx(exp_val)
+
 
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

@@ -18,15 +18,16 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 # -- Path setup --------------------------------------------------------------
-import os, sys, datetime, warnings # noqa
+import os, sys, datetime, warnings  # noqa
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]  # repo root
-sys.path.insert(0, str(ROOT))               # only needed for source builds
+sys.path.insert(0, str(ROOT))  # only needed for source builds
 
 # Try to import package & version; otherwise read pyproject.toml
 try:
     import kdiagram as kd
+
     pkg_version = kd.__version__
 except Exception:
     # Read version from pyproject.toml so the docs still show the real version
@@ -41,23 +42,24 @@ else:
     kd.configure_warnings(
         "ignore",
         categories=["SyntaxWarning"],
-        modules=[r"^(numpy|matplotlib|pandas)\."]
+        modules=[r"^(numpy|matplotlib|pandas)\."],
     )
 
 # Fallback: if kd wasn't importable, apply an equivalent filter directly
 if "kd" not in globals():
-    warnings.filterwarnings("ignore", category=SyntaxWarning,
-                            module=r"^(numpy|matplotlib|pandas)\.")
+    warnings.filterwarnings(
+        "ignore", category=SyntaxWarning, module=r"^(numpy|matplotlib|pandas)\."
+    )
 
 # -- Project information -----------------------------------------------------
 
-project = 'k-diagram'
-author = 'Laurent Kouadio' # From your setup.py
+project = "k-diagram"
+author = "Laurent Kouadio"  # From your setup.py
 current_year = datetime.datetime.now().year
-copyright = f'{current_year}, {author}'
+copyright = f"{current_year}, {author}"
 
 # The short X.Y version
-version = '.'.join(pkg_version.split('.')[:2])
+version = ".".join(pkg_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
 release = pkg_version
 
@@ -66,60 +68,60 @@ release = pkg_version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'numpydoc', 
-    'sphinx.ext.autodoc',         # Include documentation from docstrings
-    'sphinx.ext.autosummary',     # Generate summary tables for API docs
-    'sphinx.ext.napoleon',        # Support NumPy and Google style docstrings
-    'sphinx.ext.intersphinx',     # Link to other projects' documentation
-    'sphinx.ext.viewcode',        # Add links to source code
-    'sphinx.ext.githubpages',     # Help create .nojekyll file for GitHub Pages
-    'sphinx.ext.mathjax',         # Render math equations (via MathJax)
-    'sphinx_copybutton',          # Add a "copy" button to code blocks
-    'myst_parser',                # Allow parsing Markdown files (like README.md)
-    'sphinx_design',              # Enable design elements like cards, buttons, grids
+    "numpydoc",
+    "sphinx.ext.autodoc",  # Include documentation from docstrings
+    "sphinx.ext.autosummary",  # Generate summary tables for API docs
+    "sphinx.ext.napoleon",  # Support NumPy and Google style docstrings
+    "sphinx.ext.intersphinx",  # Link to other projects' documentation
+    "sphinx.ext.viewcode",  # Add links to source code
+    "sphinx.ext.githubpages",  # Help create .nojekyll file for GitHub Pages
+    "sphinx.ext.mathjax",  # Render math equations (via MathJax)
+    "sphinx_copybutton",  # Add a "copy" button to code blocks
+    "myst_parser",  # Allow parsing Markdown files (like README.md)
+    "sphinx_design",  # Enable design elements like cards, buttons, grids
 ]
 
 # Configure Napoleon settings (for parsing NumPy/Google docstrings)
-napoleon_google_docstring = False # We are using NumPy style
+napoleon_google_docstring = False  # We are using NumPy style
 napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False # Doc __init__ under the class docstring
+napoleon_include_init_with_doc = False  # Doc __init__ under the class docstring
 napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = True # Include special methods like __len__
-napoleon_use_admonition_for_examples = True # Use .. admonition:: Example
-napoleon_use_admonition_for_notes = True    # Use .. admonition:: Note
-napoleon_use_admonition_for_references = True # Use .. admonition:: Reference
-napoleon_use_ivar = True          # Use :ivar: for instance variables
-napoleon_use_param = True         # Use :param: for parameters
-napoleon_use_rtype = True         # Use :rtype: for return types
-napoleon_preprocess_types = True    # Process type strings into links
+napoleon_include_special_with_doc = True  # Include special methods like __len__
+napoleon_use_admonition_for_examples = True  # Use .. admonition:: Example
+napoleon_use_admonition_for_notes = True  # Use .. admonition:: Note
+napoleon_use_admonition_for_references = True  # Use .. admonition:: Reference
+napoleon_use_ivar = True  # Use :ivar: for instance variables
+napoleon_use_param = True  # Use :param: for parameters
+napoleon_use_rtype = True  # Use :rtype: for return types
+napoleon_preprocess_types = True  # Process type strings into links
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
 
 # numpydoc configuration
-numpydoc_show_class_members   = False    # don't duplicate __init__ params under the class
-numpydoc_class_members_toctree = False   # keep methods out of the class TOC
-numpydoc_xref_param_type       = True    # auto-link types in parameter lists
+numpydoc_show_class_members = False  # don't duplicate __init__ params under the class
+numpydoc_class_members_toctree = False  # keep methods out of the class TOC
+numpydoc_xref_param_type = True  # auto-link types in parameter lists
 
 # Configure Autodoc settings
 autodoc_default_options = {
-    'members': True,              # Document members (methods, attributes)
-    'member-order': 'bysource',   # Order members by source order
-    'special-members': '__init__',# Include __init__ docstring if present
-    'undoc-members': False,       # DO NOT include members without docstrings
-    'show-inheritance': True,     # Show base classes
+    "members": True,  # Document members (methods, attributes)
+    "member-order": "bysource",  # Order members by source order
+    "special-members": "__init__",  # Include __init__ docstring if present
+    "undoc-members": False,  # DO NOT include members without docstrings
+    "show-inheritance": True,  # Show base classes
     # 'exclude-members': '__weakref__' # Exclude specific members
 }
-autodoc_typehints = "description" # Show typehints in description, not signature
-autoclass_content = 'class'       # Include docstrings from class and __init__
+autodoc_typehints = "description"  # Show typehints in description, not signature
+autoclass_content = "class"  # Include docstrings from class and __init__
 
 # Configure Autosummary settings
-autosummary_generate = True       # Enable automatic generation of stub files
-autosummary_imported_members = False # Don't list imported members in summary
+autosummary_generate = True  # Enable automatic generation of stub files
+autosummary_imported_members = False  # Don't list imported members in summary
 
 # MyST Parser Settings (if using Markdown includes)
 myst_enable_extensions = [
     "colon_fence",  # Allow ``` fenced code blocks
-    "deflist",      # Allow definition lists
+    "deflist",  # Allow definition lists
     # "smartquotes", # Use smart quotes (optional)
     # "replacements", # Apply replacements (optional)
 ]
@@ -128,23 +130,23 @@ myst_enable_extensions = [
 
 # Configure Intersphinx settings
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
-    'matplotlib': ('https://matplotlib.org/stable/', None),
-    'sklearn': ('https://scikit-learn.org/stable/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
 }
-intersphinx_cache_limit = 5 # Days to cache remote inventories
-intersphinx_timeout = 10    # Seconds to wait for network access
+intersphinx_cache_limit = 5  # Days to cache remote inventories
+intersphinx_timeout = 10  # Seconds to wait for network access
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -152,20 +154,20 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages. See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'furo' # Use the Furo theme
+html_theme = "furo"  # Use the Furo theme
 # extensions.append("sphinx_wagtail_theme")
 # html_theme = 'sphinx_wagtail_theme'
 # Theme options are theme-specific and customize the look and feel.
 # Consult the Furo documentation: https://pradyunsg.me/furo/customisation/
 html_theme_options = {
     # ── VCS “Edit this page” -----------------------------------------------
-    "source_repository":  "https://github.com/earthai-tech/k-diagram/",
-    "source_branch":      "main",
-    "source_directory":   "docs/source/",
+    "source_repository": "https://github.com/earthai-tech/k-diagram/",
+    "source_branch": "main",
+    "source_directory": "docs/source/",
     "footer_icons": [
         {
             "name": "GitHub",
-            "url":  "https://github.com/earthai-tech/k-diagram",
+            "url": "https://github.com/earthai-tech/k-diagram",
             "html": """
                 <svg viewBox="0 0 24 24" aria-hidden="true"
                      height="1.35em" width="1.35em">
@@ -183,23 +185,22 @@ html_theme_options = {
         },
         {
             "name": "PyPI",
-            "url":  "https://pypi.org/project/k-diagram/",
+            "url": "https://pypi.org/project/k-diagram/",
             "html": "<span class='fa fa-box-open'></span>",
             "class": "",
         },
     ],
-        
     # Example options:
     "light_css_variables": {
-        "color_brand_primary": "#007ACC", # Example blue
+        "color_brand_primary": "#007ACC",  # Example blue
         "color_brand_content": "#005FAB",
     },
     "dark_css_variables": {
-        "color_brand_primary": "#52C0FF", # Example light blue for dark mode
+        "color_brand_primary": "#52C0FF",  # Example light blue for dark mode
         "color_brand_content": "#7BCBFF",
     },
     # Add Furo specific options here, e.g., for sidebar, fonts, etc.
-    "sidebar_hide_name": False, # Show project name in sidebar
+    "sidebar_hide_name": False,  # Show project name in sidebar
     "navigation_with_keys": True,
 }
 
@@ -222,11 +223,11 @@ rst_epilog = """
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Optional: Add custom CSS files (relative to html_static_path)
 html_css_files = [
-    'css/custom.css',
+    "css/custom.css",
 ]
 
 # Optional: Add path to your logo file (relative to source directory)
@@ -239,7 +240,7 @@ html_favicon = "_static/logo.ico"
 html_title = f"{project} v{release}"
 
 # If true, links to the reST sources are added to the pages.
-html_show_sourcelink = True # Set to False if you don't want source links
+html_show_sourcelink = True  # Set to False if you don't want source links
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = True

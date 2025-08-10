@@ -1,9 +1,8 @@
-#   License: Apache 2.0 
+#   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
 from typing import (
     Optional,
-    Tuple,
     Union,
 )
 
@@ -12,14 +11,15 @@ import pandas as pd
 
 from .validator import validate_length_range
 
-__all__=["minmax_scaler"]
+__all__ = ["minmax_scaler"]
+
 
 def minmax_scaler(
     X: Union[np.ndarray, pd.DataFrame, pd.Series],
     y: Optional[Union[np.ndarray, pd.DataFrame, pd.Series]] = None,
-    feature_range: Tuple[float, float] = (0.0, 1.0),
-    eps: float = 1e-8
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    feature_range: tuple[float, float] = (0.0, 1.0),
+    eps: float = 1e-8,
+) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
     r"""
     Scale features (and optionally target) to a specified
     range (default [0, 1]) using a Min-Max approach.
@@ -72,6 +72,7 @@ def minmax_scaler(
     >>> X_scaled = minmax_scaler(X)
     >>> # X_scaled now lies in [0,1] per feature.
     """
+
     # Convert inputs to arrays
     def _to_array(obj):
         if isinstance(obj, (pd.DataFrame, pd.Series)):
@@ -83,8 +84,7 @@ def minmax_scaler(
     if X_arr.ndim == 1:
         X_arr = X_arr.reshape(-1, 1)
     # range min & max
-    feature_range = validate_length_range (
-        feature_range, param_name="Feature range")
+    feature_range = validate_length_range(feature_range, param_name="Feature range")
     min_val, max_val = feature_range
     if min_val >= max_val:
         raise ValueError("feature_range must be (min, max) with min < max.")
@@ -96,11 +96,10 @@ def minmax_scaler(
     # scaling
     num = X_arr - X_min
     denom = (X_max - X_min) + eps
-    X_scaled = min_val + (max_val - min_val)*(num/denom)
+    X_scaled = min_val + (max_val - min_val) * (num / denom)
 
     # reshape back if 1D
-    if (len(X_shape)==1) or (X_arr.ndim == 1) or (
-            X_arr.ndim > 1 and X_shape[1] == 1):
+    if (len(X_shape) == 1) or (X_arr.ndim == 1) or (X_arr.ndim > 1 and X_shape[1] == 1):
         X_scaled = X_scaled.ravel()
 
     # if y is provided
@@ -110,8 +109,6 @@ def minmax_scaler(
         y_max = y_arr.max()
         y_num = y_arr - y_min
         y_denom = (y_max - y_min) + eps
-        y_scaled = (min_val
-                    + (max_val - min_val)
-                    * (y_num / y_denom))
+        y_scaled = min_val + (max_val - min_val) * (y_num / y_denom)
         return X_scaled, y_scaled
     return X_scaled
