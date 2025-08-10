@@ -23,7 +23,7 @@ import pandas as pd
 from matplotlib.colors import Normalize
 
 from ..api.summary import ResultSummary
-from ..compat.matplotlib import get_cmap, is_valid_cmap  
+from ..compat.matplotlib import get_cmap, is_valid_cmap
 from ..decorators import check_non_emptiness, isdf
 from ..utils.diagnose_q import build_qcols_multiple, detect_quantiles_in, validate_qcols
 from ..utils.handlers import columns_manager
@@ -1199,10 +1199,10 @@ def plot_velocity(
     theta = theta_normalized * angle_span
 
     # --- Color Normalization for Plotting ---
-    cmap = is_valid_cmap(cmap, default="viridis", error = "warn")
+    cmap = is_valid_cmap(cmap, default="viridis", error="warn")
     try:
         cmap_used = get_cmap(cmap)
-    except ( TypeError, ValueError, KeyError):
+    except (TypeError, ValueError, KeyError):
         warnings.warn(
             f"Invalid `cmap` name '{cmap}'. Falling back to 'viridis'.",
             UserWarning,
@@ -1717,7 +1717,7 @@ def plot_interval_consistency(
     theta = theta_normalized * angle_span
 
     # --- Color Normalization ---
-    cmap = is_valid_cmap(cmap, default="coolwarm", error ="warn")
+    cmap = is_valid_cmap(cmap, default="coolwarm", error="warn")
     # Ensure cmap is valid for fallback
     cmap_used = get_cmap(cmap)
 

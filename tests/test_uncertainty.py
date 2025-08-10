@@ -7,9 +7,9 @@ Pytest suite for testing uncertainty visualization functions in
 kdiagram.plot.uncertainty.
 """
 
-from unittest.mock import patch
 import re
-import warnings
+from unittest.mock import patch
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +18,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from kdiagram.plot.uncertainty import (
-    PerformanceWarning,  # , InternalError
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,
     plot_coverage,
@@ -260,6 +259,7 @@ def test_plot_model_drift_missing_columns(sample_data_drift):
             horizons=data["horizons"],
         )
 
+
 def test_plot_model_drift_mismatched_lengths(sample_data_drift):
     """Test plot_model_drift error for mismatched input list lengths."""
     data = sample_data_drift
@@ -273,9 +273,9 @@ def test_plot_model_drift_mismatched_lengths(sample_data_drift):
         )
 
     # q10_cols list is shorter than q90_cols list
-    with pytest.raises(ValueError, match=( 
-            "`qlow_cols` and `qup_cols` must be the same length")
-            ):
+    with pytest.raises(
+        ValueError, match=("`qlow_cols` and `qup_cols` must be the same length")
+    ):
         plot_model_drift(
             df=data["df"],
             q10_cols=data["q10_cols"][:-1],  # Shorter list
@@ -630,6 +630,7 @@ def test_plot_anomaly_magnitude_missing_cols(sample_data_anomaly):
             df=df_missing_q10, actual_col=data["actual_col"], q_cols=data["q_cols"]
         )
 
+
 def test_plot_anomaly_magnitude_theta_col_warning(sample_data_anomaly):
     """Test warnings related to theta_col."""
     data = sample_data_anomaly
@@ -829,7 +830,9 @@ def test_plot_uncertainty_drift_mismatched_cols(sample_data_drift_uncertainty):
             qup_cols=data["qup_cols"],
             dt_labels=data["dt_labels"],
         )
-    with pytest.raises(ValueError,):
+    with pytest.raises(
+        ValueError,
+    ):
         plot_uncertainty_drift(
             df=data["df"],
             qlow_cols=data["qlow_cols"],
@@ -915,7 +918,9 @@ def sample_data_avp():
         "theta_col": "time",
     }
 
+
 # --- Corrected Tests ---
+
 
 @pytest.mark.parametrize("line", [True, False])
 @pytest.mark.parametrize("acov", ["default", "half_circle"])
@@ -939,10 +944,11 @@ def test_plot_actual_vs_predicted_runs_ok(sample_data_avp, line, acov, show_lege
         assert isinstance(ax, Axes)
         # Ensure a figure was created
         assert plt.gcf().number > 0
-    except ( Exception, OverflowError) as e:
+    except (Exception, OverflowError) as e:
         pytest.fail(f"plot_actual_vs_predicted raised an unexpected exception: {e}")
     finally:
-        plt.close('all') # Clean up figures after each test run
+        plt.close("all")  # Clean up figures after each test run
+
 
 def test_plot_actual_vs_predicted_missing_cols(sample_data_avp):
     """Test ValueError if actual or predicted columns are missing."""
@@ -1147,10 +1153,13 @@ def test_plot_temporal_uncertainty_errors(sample_data_temporal):
 
     # Missing columns
     df_missing = data["df"].drop(columns=[data["q_cols_list"][0]])
-    with pytest.raises(ValueError, match=re.escape( 
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
             "Specified plot columns (`q_cols`)s"
             " 'val_q10' not found in the dataframe."
-            )):
+        ),
+    ):
         plot_temporal_uncertainty(df=df_missing, q_cols=data["q_cols_list"])
 
     # Invalid acov

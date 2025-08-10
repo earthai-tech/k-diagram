@@ -19,7 +19,7 @@ def columns_manager(
     to_upper: bool = False,
     empty_as_none: bool = ...,
     to_string: bool = False,
-    wrap_dict: bool=False, 
+    wrap_dict: bool = False,
     error: str = "raise",
 ) -> list:
     """
@@ -90,9 +90,8 @@ def columns_manager(
     # Handle case where a single numeric value is passed, convert it to list
     if isinstance(columns, (int, float)):
         columns = [columns]
-    
-    elif callable(columns) or (
-            isinstance ( columns, dict) and wrap_dict):
+
+    elif callable(columns) or (isinstance(columns, dict) and wrap_dict):
         columns = [columns]
 
     ## Use inspect to determine if it is a class.

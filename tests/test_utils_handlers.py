@@ -69,9 +69,9 @@ def test_single_number_callable_and_class_wrapped():
         return None
 
     out = columns_manager(f)
-    assert len(out) == 1 # and _is_lambda(out[0])
+    assert len(out) == 1  # and _is_lambda(out[0])
     # class -> treated as a single item (wrapped)
-    out = columns_manager(dict, wrap_dict= True)
+    out = columns_manager(dict, wrap_dict=True)
     assert out == [dict]
 
 

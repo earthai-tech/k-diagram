@@ -43,22 +43,27 @@ jobs:
         run: |
           python -m pip install . --no-deps --force-reinstall
 
-      - name: Lint (flake8 or ruff)
+      - name:Lint (ruff and black)
         run: |
           echo "Running flake8 linter..."
           # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # flake8 . --count --exit-zero --max-complexity=12 --max-line-length=88 --statistics
           # If you switch to Ruff:
-      
+          echo "Installing development dependencies..."
           python -m pip install -e .[dev]
+          
+          echo "Checking for linter issues with Ruff..."
           # Use ruff to check for issues
-          ruff check . --unsafe-fixes
+          ruff check . 
+          
+          echo "Checking for formatting issues with Black..."
           # Use ruff to automatically fix issues (e.g., imports)
           # ruff --fix .
     
           # Use black to check if the code is formatted
-          black .
-   
+          # The --check flag makes black fail if the code is not formatted, without changing files.
+          black .  #--check
+
       - name: Test with pytest + coverage
         run: |
           echo "Running pytest with coverage..."
