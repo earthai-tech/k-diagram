@@ -12,8 +12,9 @@ from sklearn.metrics import (
     recall_score,
 )
 
+from kdiagram.compat.sklearn import mean_squared_error, root_mean_squared_error
 from kdiagram.utils.metric_utils import available_scorers, get_scorer
-from kdiagram.compat.sklearn import mean_squared_error, root_mean_squared_error 
+
 
 def test_available_scorers_contains_core_aliases():
     names = set(available_scorers())

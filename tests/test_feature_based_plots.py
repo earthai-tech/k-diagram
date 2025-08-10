@@ -78,6 +78,7 @@ def test_labels_too_many_warn_and_truncate(tmp_path):
     assert legend_labels == ["A", "B"]
     _close_ax(ax)
 
+
 def test_no_normalize_no_fill_no_grid(tmp_path):
     imp = np.array([[1, 2, 3]])
     out = tmp_path / "g.png"

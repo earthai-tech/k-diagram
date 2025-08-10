@@ -145,9 +145,9 @@ def test_2d_probabilities_with_and_without_class_index(rng):
         )
     # at least one warning about class_index or similar behavior
     assert any(
-        ( "matplotlib is" in str(w.message).lower()) or
-        ("figurecanvasagg" in str(w.message).lower()) 
-        for w in rec  
+        ("matplotlib is" in str(w.message).lower())
+        or ("figurecanvasagg" in str(w.message).lower())
+        for w in rec
     )
     _close(ax1)
 

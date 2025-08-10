@@ -5,8 +5,11 @@
 from __future__ import annotations
 
 from typing import Any, Callable
+
 from ..compat.sklearn import (
     mean_squared_error as compat_mse,
+)
+from ..compat.sklearn import (
     root_mean_squared_error as compat_rmse,
 )
 
@@ -35,12 +38,12 @@ def _build_registry() -> dict[str, Callable[..., float]]:
     with signature (y_true, y_pred, **kwargs) -> score.
     """
     sm = _load_sklearn_metrics()
-    
+
     # --- Wrappers to normalize behavior/aliases ---
     def _rmse(y_true, y_pred, **kw):
         # Use the compatibility function for RMSE
         return compat_rmse(y_true, y_pred, **kw)
-    
+
     def _mse(y_true, y_pred, **kw):
         # Use the compatibility function for MSE
         return compat_mse(y_true, y_pred, squared=True, **kw)

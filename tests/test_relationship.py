@@ -7,6 +7,7 @@ Pytest suite for testing relationship visualization functions in
 kdiagram.plot.relationship.
 """
 import re
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +22,7 @@ from kdiagram.plot.relationship import plot_relationship
 matplotlib.use("Agg")  # Use Agg backend for non-interactive plotting
 
 # --- Fixtures ---
+
 
 @pytest.fixture(autouse=True)
 def close_plots():
@@ -111,9 +113,10 @@ def test_plot_relationship_nan_handling(sample_data_relationship):
     data = sample_data_relationship
     len(data["y_true_nan"])
     # Expect no error, just fewer points plotted internally
-    with pytest.raises (ValueError, match = re.escape (
-            "NaN values found in y_true, cannot proceed with NaN values.")
-            ): 
+    with pytest.raises(
+        ValueError,
+        match=re.escape("NaN values found in y_true, cannot proceed with NaN values."),
+    ):
         plot_relationship(
             data["y_true_nan"],
             data["y_pred1_nan"],  # Also has NaNs
@@ -130,7 +133,9 @@ def test_plot_relationship_error_mismatched_lengths(sample_data_relationship):
     data = sample_data_relationship
     y_pred_short = data["y_preds"][0][:-10]
     # Error is raised by validate_yy called internally
-    with pytest.raises(IndexError,):
+    with pytest.raises(
+        IndexError,
+    ):
         plot_relationship(data["y_true"], y_pred_short)
 
 

@@ -262,10 +262,10 @@ def test_plot_anomaly_magnitude_under_over_and_cbar(tmp_path):
             "order": np.linspace(100, 200, n),
         }
     )
-    
+
     # force clear anomalies at both ends
     df.loc[:5, "actual"] = -5  # under
-    df.tail(6)["actual"] = 20  # over 
+    df.tail(6)["actual"] = 20  # over
 
     out = tmp_path / "anom.png"
     ax = plot_anomaly_magnitude(

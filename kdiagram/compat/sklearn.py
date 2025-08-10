@@ -22,7 +22,8 @@ import inspect
 import numpy as np
 import sklearn
 from packaging.version import Version, parse
-from sklearn.metrics import get_scorer, mean_squared_error as sklearn_mse
+from sklearn.metrics import get_scorer
+from sklearn.metrics import mean_squared_error as sklearn_mse
 from sklearn.utils import resample
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -46,14 +47,13 @@ SKLEARN_LT_1_3 = SKLEARN_VERSION < parse("1.3.0")
 _SQUARED_ARG_REMOVED_VERSION = parse("1.4")
 
 
-
 __all__ = [
     "Interval",
     "resample",
     "train_test_split",
     "get_scorer",
-    "mean_squared_error", 
-    "root_mean_squared_error", 
+    "mean_squared_error",
+    "root_mean_squared_error",
     "type_of_target",
     "get_feature_names",
     "get_feature_names_out",
@@ -69,7 +69,6 @@ __all__ = [
     "SKLEARN_LT_0_23",
     "SKLEARN_LT_0_24",
 ]
-
 
 
 class Interval:
@@ -876,6 +875,7 @@ def get_pipeline_feature_names(pipeline, input_features=None):
     feature_names = list(map(str, current_features))
     return feature_names
 
+
 def mean_squared_error(y_true, y_pred, squared=True, **kwargs):
     """
     Compatibility wrapper for sklearn.metrics.mean_squared_error.
@@ -906,6 +906,7 @@ def mean_squared_error(y_true, y_pred, squared=True, **kwargs):
         # For old versions (<1.4), the 'squared' argument exists.
         # We can pass it through directly.
         return sklearn_mse(y_true, y_pred, squared=squared, **kwargs)
+
 
 def root_mean_squared_error(y_true, y_pred, **kwargs):
     """

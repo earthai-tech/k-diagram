@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from ..compat.matplotlib import get_cmap, is_valid_cmap 
+from ..compat.matplotlib import get_cmap, is_valid_cmap
 from ..decorators import check_non_emptiness
 from ..utils.handlers import columns_manager
 from ..utils.validator import ensure_2d
@@ -316,7 +316,7 @@ def plot_feature_fingerprint(
     fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
 
     # Get colors from specified colormap or list
-    cmap = is_valid_cmap(cmap, default="tab10", error ="warn")
+    cmap = is_valid_cmap(cmap, default="tab10", error="warn")
     try:
         cmap_obj = get_cmap(cmap)
         # Sample colors if it's a standard Matplotlib cmap

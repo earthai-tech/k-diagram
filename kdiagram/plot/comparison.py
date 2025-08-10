@@ -7,12 +7,11 @@ import warnings
 from numbers import Real
 from typing import Any, Callable, Literal
 
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from ..compat.matplotlib import get_cmap 
+from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, type_of_target, validate_params
 from ..utils.generic_utils import drop_nan_in
 from ..utils.handlers import columns_manager

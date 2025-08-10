@@ -1,9 +1,10 @@
-
 """
 A compatibility module to handle API changes across different
 versions of Matplotlib.
 """
+
 import warnings
+
 import matplotlib
 from packaging.version import parse
 
@@ -11,7 +12,8 @@ from packaging.version import parse
 _MPL_VERSION = parse(matplotlib.__version__)
 
 
-__all__= ["get_cmap", "is_valid_cmap"] 
+__all__ = ["get_cmap", "is_valid_cmap"]
+
 
 def _get_cmap(name="viridis", lut=None):
     """
@@ -63,13 +65,12 @@ def get_cmap(name="viridis", lut=None):
         # continue to work as expected.
         try:
             return matplotlib.colormaps.get(name)
-        except ( TypeError, KeyError):
+        except (TypeError, KeyError):
             # Re-raise as ValueError for consistent exception handling.
             raise ValueError(f"'{name}' is not a valid colormap name or alias")
     else:
         # The old API raises ValueError directly, so no change is needed here.
         return matplotlib.cm.get_cmap(name, lut)
-
 
 
 def is_valid_cmap(cmap, default="viridis", error="raise"):
