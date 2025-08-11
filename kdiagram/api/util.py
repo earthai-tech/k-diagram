@@ -260,10 +260,10 @@ def get_table_size(width="auto", error="warn", return_height=False):
                         "This may cause display issues.",
                         stacklevel=2,
                     )
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 "Width must be 'auto' or an integer; got {type(width).__name__!r}"
-            )
+            ) from err
 
     if return_height:
         return (width, auto_height)

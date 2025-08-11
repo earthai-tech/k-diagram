@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 sklearn = pytest.importorskip("sklearn")
-from sklearn.metrics import (
+
+from sklearn.metrics import (  # noqa : E402
     explained_variance_score,
     f1_score,
     mean_absolute_error,
@@ -12,8 +13,11 @@ from sklearn.metrics import (
     recall_score,
 )
 
-from kdiagram.compat.sklearn import mean_squared_error, root_mean_squared_error
-from kdiagram.utils.metric_utils import available_scorers, get_scorer
+from kdiagram.compat.sklearn import (  # noqa : E402
+    mean_squared_error,
+    root_mean_squared_error,
+)
+from kdiagram.utils.metric_utils import available_scorers, get_scorer  # noqa : E402
 
 
 def test_available_scorers_contains_core_aliases():
@@ -63,7 +67,8 @@ def test_regression_mae_and_r2():
 
 
 def test_classification_weighted_defaults_precision_recall_f1():
-    # Imbalanced prediction that misses a class completely to test zero_division handling
+    # Imbalanced prediction that misses a class completely to
+    # test zero_division handling
     y_true = np.array([0, 1, 1, 2, 2, 2])
     y_pred = np.array([0, 0, 0, 0, 0, 0])  # predicts only class 0
 

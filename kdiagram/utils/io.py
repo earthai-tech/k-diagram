@@ -41,7 +41,7 @@ def fancier_downloader(
     error: str = "raise",
     verbose: bool = True,
 ) -> str | None:
-    """
+    r"""
     Download a remote file with a progress bar and optional size verification.
 
     This function downloads a file from the specified ``url`` and saves it locally

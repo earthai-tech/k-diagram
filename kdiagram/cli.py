@@ -195,7 +195,8 @@ def _cli_plot_interval_consistency(args):
         figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (9, 9)
     except ValueError:
         print(
-            "Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8'). Using default (9,9).",
+            "Error: Invalid format for figsize. Expected 'width,height'"
+            " (e.g., '8,8'). Using default (9,9).",
             file=sys.stderr,
         )
         figsize = (9, 9)
@@ -2100,7 +2101,10 @@ def main():
         type=str,
         default="half_circle",
         choices=["default", "half_circle"],
-        help="Angular coverage ('default': pi, 'half_circle': pi/2) (default: 'half_circle').",
+        help=(
+            "Angular coverage ('default': pi, 'half_circle': pi/2)"
+            "(default: 'half_circle')."
+        ),
     )
     p_tdi.add_argument(
         "--zero-location",

@@ -436,16 +436,16 @@ intervals [1]_.
 
 - For quantile intervals (2D `y_preds`), the interval for each
   sample :math:`i` is defined by the minimum and maximum
-  predicted values across the specified quantiles for that sample, 
+  predicted values across the specified quantiles for that sample,
 
   :math:`[\hat{y}_{i}^{(\ell)}, \hat{y}_{i}^{(u)}]`. Coverage is:
-      
+
   .. math::
      \text{Coverage} = \frac{1}{N}\sum_{i=1}^{N}
      \mathbf{1}\{\hat{y}_{i}^{(\ell)} \leq y_i
      \leq \hat{y}_{i}^{(u)}\}
   where :math:`\mathbf{1}\{\cdot\}` is 1 if true, 0 otherwise.
- 
+
 - For point forecasts (1D `y_preds`), coverage is the proportion
   of exact matches:
 
@@ -477,7 +477,7 @@ References
 Examples
 --------
 >>> import numpy as np
->>> from kdiagram.plot.uncertainty import plot_coverage 
+>>> from kdiagram.plot.uncertainty import plot_coverage
 >>> # True values
 >>> y_true = np.random.rand(100) * 10
 >>> # 3-quantile predictions (Q10, Q50, Q90) for two models
@@ -1638,9 +1638,8 @@ def plot_interval_consistency(
         )
     except Exception as e:
         raise TypeError(
-            f"Could not compute widths. Ensure quantile columns contain "
-            f"numeric data. Original error: {e}"
-        )
+            "Could not compute widths. Ensure quantile columns contain " "numeric data."
+        ) from e
 
     # Calculate radial value 'r' (std dev or CV of widths over time)
     # Result shape: (N,)
@@ -1807,7 +1806,7 @@ def plot_anomaly_magnitude(
 ):
     r"""
     Visualize magnitude and type of prediction anomalies polar plot.
-      
+
     This function generates a polar scatter plot designed to highlight
     prediction anomalies  instances where the actual ground truth value
     falls outside a specified prediction interval (defined by a lower
@@ -1944,7 +1943,7 @@ def plot_anomaly_magnitude(
 
     See Also
     --------
-    kdiagram.plot.uncertainty.plot_velocity : 
+    kdiagram.plot.uncertainty.plot_velocity :
         Visualize average velocity in polar coordinates.
     plot_interval_consistency : Visualize consistency of interval widths.
     validate_qcols : Helper function for validating quantile columns.
@@ -4550,7 +4549,7 @@ def plot_temporal_uncertainty(
 
        .. math::
 
-           \mathbf{v}'_i = \aleph ( \mathbf{V}_i) 
+           \mathbf{v}'_i = \aleph ( \mathbf{V}_i)
 
        where
 
@@ -4663,11 +4662,11 @@ def plot_temporal_uncertainty(
                 name="Auto-detected quantile columns",
             )
             q_cols_list = detected_cols
-        except NameError:  # If detect_quantiles_in is not defined/imported
+        except NameError as err:  # If detect_quantiles_in is not defined/imported
             raise ImportError(
                 "Helper function 'detect_quantiles_in' is needed for "
                 "`q_cols='auto'` but seems unavailable."
-            )
+            ) from err
         except Exception as e:
             # Catch errors from detect_quantiles_in or exist_features
             raise ValueError(

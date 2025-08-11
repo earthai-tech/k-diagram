@@ -317,13 +317,13 @@ def type_of_target(y):
         # Fallback _type_of_target if scikit-learn is not available
         try:
             return _type_of_target(y)
-        except ImportError:
+        except ImportError as err:
             # If both imports fail, raise an ImportError
             raise ImportError(
                 "Neither scikit-learn or default implementation of 'type_of_target'"
                 " work properly. Please ensure that scikit-learn is installed "
                 " and contains 'type_of_target'."
-            )
+            ) from err
 
 
 def _type_of_target(y):
@@ -400,13 +400,13 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
     params : dict
         A dictionary that defines the validation rules for the parameters.
         Each key in the dictionary should represent the name of a parameter
-        that requires validation, and its associated value should be a list 
-        of expected types (e.g., ``[int, str]``). 
-        The function will validate that the parameters passed to the 
+        that requires validation, and its associated value should be a list
+        of expected types (e.g., ``[int, str]``).
+        The function will validate that the parameters passed to the
         decorated function match the specified types.
-        
+
         For example, if `params` is:
-        
+
         .. code-block:: python
 
             params = {
@@ -414,63 +414,63 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
                 'n_trials': [int]
             }
 
-        Then, the `step_name` parameter must be of type `str`, and 
+        Then, the `step_name` parameter must be of type `str`, and
         `n_trials` must be of type `int`.
-    
+
     prefer_skip_nested_validation : bool, optional
-        If ``True`` (the default), the function will attempt to skip 
-        nested validation of complex objects (e.g., dictionaries or 
-        lists), focusing only on the top-level structure. This option 
-        can be useful for improving performance when validating large, 
+        If ``True`` (the default), the function will attempt to skip
+        nested validation of complex objects (e.g., dictionaries or
+        lists), focusing only on the top-level structure. This option
+        can be useful for improving performance when validating large,
         complex objects where deep validation is unnecessary.
-        
+
         Set to ``False`` to enable deep validation of nested objects.
 
     *args : list
         Additional positional arguments to pass to `validate_params`.
 
     **kwargs : dict
-        Additional keyword arguments to pass to `validate_params`. 
-        These can include options such as `prefer_skip_nested_validation` 
+        Additional keyword arguments to pass to `validate_params`.
+        These can include options such as `prefer_skip_nested_validation`
         and other custom behavior depending on the context of validation.
-    
+
     Returns
     -------
     function
-        Returns the `validate_params` function with appropriate argument 
-        handling for scikit-learn's internal parameter validation. This 
-        function can be used as a decorator to ensure type safety and 
+        Returns the `validate_params` function with appropriate argument
+        handling for scikit-learn's internal parameter validation. This
+        function can be used as a decorator to ensure type safety and
         parameter consistency in various machine learning pipelines.
 
     Notes
     -----
-    The `validate_params` function provides a robust way to enforce 
-    type and structure validation on function arguments, especially 
-    in the context of machine learning workflows. By ensuring that 
-    parameters adhere to a predefined structure, the function helps 
-    prevent runtime errors due to unexpected types or invalid argument 
+    The `validate_params` function provides a robust way to enforce
+    type and structure validation on function arguments, especially
+    in the context of machine learning workflows. By ensuring that
+    parameters adhere to a predefined structure, the function helps
+    prevent runtime errors due to unexpected types or invalid argument
     configurations.
-    
-    In the case where a user sets `prefer_skip_nested_validation` to 
-    ``True``, the function optimizes the validation process by skipping 
-    nested structures (e.g., dictionaries or lists), focusing only on 
-    validating the top-level parameters. When set to ``False``, a deeper 
-    validation process occurs, checking every element within nested 
+
+    In the case where a user sets `prefer_skip_nested_validation` to
+    ``True``, the function optimizes the validation process by skipping
+    nested structures (e.g., dictionaries or lists), focusing only on
+    validating the top-level parameters. When set to ``False``, a deeper
+    validation process occurs, checking every element within nested
     structures.
 
     The validation process can be represented mathematically as:
 
     .. math::
 
-        V(p_i) = 
+        V(p_i) =
         \begin{cases}
-        1, & \text{if} \, \text{type}(p_i) \in T(p_i) \\
+        1, & \text{if} \\, \text{type}(p_i) \\in T(p_i) \\
         0, & \text{otherwise}
-        \end{cases}
+        \\end{cases}
 
     where :math:`V(p_i)` is the validation function for parameter :math:`p_i`,
-    and :math:`T(p_i)` represents the set of expected types for :math:`p_i`. 
-    The function returns 1 if the parameter matches the expected type, 
+    and :math:`T(p_i)` represents the set of expected types for :math:`p_i`.
+    The function returns 1 if the parameter matches the expected type,
     otherwise 0.
 
     Examples
@@ -484,18 +484,18 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
     ... }, prefer_skip_nested_validation=False)
     ... def tune_hyperparameters(step_name, param_grid, n_trials, eval_metric):
     ...     print(f"Hyperparameters tuned for step: {step_name}")
-    ... 
+    ...
     >>> tune_hyperparameters(
-    ...     step_name='TrainModel', 
-    ...     param_grid={'learning_rate': [0.01, 0.1]}, 
-    ...     n_trials=5, 
+    ...     step_name='TrainModel',
+    ...     param_grid={'learning_rate': [0.01, 0.1]},
+    ...     n_trials=5,
     ...     eval_metric='accuracy'
     ... )
     Hyperparameters tuned for step: TrainModel
 
     See Also
     --------
-    sklearn.utils.validate_params : Original scikit-learn function for parameter 
+    sklearn.utils.validate_params : Original scikit-learn function for parameter
         validation. Refer to scikit-learn documentation for more detailed information.
 
     References
@@ -503,7 +503,7 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
     .. [1] Pedregosa, F. et al. (2011). "Scikit-learn: Machine Learning in Python."
        *Journal of Machine Learning Research*, 12, 2825-2830.
 
-    .. [2] Buitinck, L., Louppe, G., Blondel, M., et al. (2013). "API design for 
+    .. [2] Buitinck, L., Louppe, G., Blondel, M., et al. (2013). "API design for
        machine learning software: experiences from the scikit-learn project."
        *arXiv preprint arXiv:1309.0238*.
     """
@@ -773,12 +773,13 @@ def plot_confusion_matrix(estimator, X, y_true, *args, **kwargs):
     """
     try:
         from sklearn.metrics import plot_confusion_matrix
-    except ImportError:
+    except ImportError as err:
         # Assume older version without plot_confusion_matrix
         # Implement fallback or raise informative error
         raise NotImplementedError(
             "plot_confusion_matrix not available in your sklearn version."
-        )
+        ) from err
+
     return plot_confusion_matrix(estimator, X, y_true, *args, **kwargs)
 
 
@@ -825,7 +826,8 @@ def get_transformer_feature_names(transformer, input_features=None):
     else:
         # Raise error if neither method is available
         raise AttributeError(
-            f"{transformer.__class__.__name__} does not support feature name extraction."
+            f"{transformer.__class__.__name__} does not support"
+            " feature name extraction."
         )
 
 

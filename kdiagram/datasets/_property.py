@@ -301,7 +301,8 @@ def download_file_if(
                         raise RuntimeError(msg)
                     elif error == "warn":
                         warnings.warn(msg, stacklevel=2)
-                    # Continue to check package resource as fallback only if download failed
+                    # Continue to check package resource as
+                    # fallback only if download failed
 
             except Exception as e:
                 # Handle exceptions from fancier_downloader
@@ -310,7 +311,8 @@ def download_file_if(
                     raise RuntimeError(dl_error_msg) from e
                 elif error == "warn":
                     warnings.warn(dl_error_msg, stacklevel=2)
-                # Continue to check package resource as fallback only if download failed
+                # Continue to check package resource as fallback
+                # only if download failed
         else:
             # Cannot force download if download_if_missing is False
             warnings.warn(

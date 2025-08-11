@@ -84,7 +84,7 @@ def test_make_multi_model_quantile_data(n_samples, n_models, num_q):
     assert df.shape[1] == expected_cols
     try:
         assert f"pred_Model_A_q{quantiles[0]:.1f}" in df.columns
-    except:
+    except Exception:
         assert f"pred_Model_A_q{quantiles[0]:.2f}" in df.columns
 
 
@@ -348,8 +348,10 @@ def test_load_zhongshan_from_download(
     mock_download.return_value = expected_path
 
     # Simulate file exists *after* download mock returns path
-    # We need to make os.path.exists return True *after* download_file_if_missing ran
-    # Patching it again inside is tricky. Let's assume download returns path and read_csv uses it.
+    # We need to make os.path.exists return True *after*
+    #     download_file_if_missing ran
+    # Patching it again inside is tricky. Let's assume download returns
+    # path and read_csv uses it.
     # A better approach might be for the mock download to create the file.
     def download_effect(*args, **kwargs):
         # Simulate downloader creating the file in cache

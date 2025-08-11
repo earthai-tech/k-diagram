@@ -26,6 +26,9 @@ Summary of Comparison Functions
    * - :func:`~kdiagram.plot.comparison.plot_model_comparison`
      - Generates a radar chart comparing multiple models across
        various performance metrics (e.g., R2, MAE, Accuracy).
+   * - :func:`~kdiagram.plot.comparison.plot_reliability_diagram`
+     - Draws a reliability (calibration) diagram to assess how
+       well predicted probabilities match observed frequencies.
 
 
 Detailed Explanations
@@ -83,6 +86,7 @@ performance profile.
   as indicated by the legend.
 * **Radius:** The distance from the center along a metric's axis
   shows the model's (potentially scaled) score for that metric.
+  
     * **Important:** By default (`scale='norm'` with internal inversion
       for error metrics), a **larger radius generally indicates
       better performance** (higher score for accuracy/R2, lower score
@@ -214,6 +218,7 @@ Lower ECE/MCE/Brier indicate better calibration (and accuracy for Brier).
 **Interpretation:**
 
 * **Diagonal (:math:`y=x`):** Reference for perfect calibration.
+
   * Points **above** diagonal :math:`(\mathrm{acc}_i > \mathrm{conf}_i)`
     ⇒ model is **under-confident** in that bin.
   * Points **below** diagonal :math:`(\mathrm{acc}_i < \mathrm{conf}_i)`

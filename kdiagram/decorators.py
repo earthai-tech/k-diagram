@@ -335,8 +335,9 @@ def isdf(func):
                     data = pd.DataFrame(data, columns=columns)
             except Exception as e:
                 raise ValueError(
-                    f"Unable to convert {type(data).__name__!r} to DataFrame: {e}"
-                )
+                    f"Unable to convert {type(data).__name__!r} to DataFrame"
+                ) from e
+
             data.columns = data.columns.astype(str)
             # Update the bound arguments with the new data
             bound_args.arguments[data_param_name] = data

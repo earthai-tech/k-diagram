@@ -19,9 +19,6 @@ from matplotlib.axes import Axes
 try:
     from kdiagram.plot.comparison import plot_model_comparison
 
-    # If it depends on get_scorer, ensure it's importable
-    from kdiagram.utils.metric_utils import get_scorer
-
     _SKIP_TESTS = False
 except ImportError as e:
     print(
@@ -228,7 +225,8 @@ def test_plot_model_comparison_plot_options(comparison_data):
 
 
 @pytest.mark.skip(
-    "Sucessfully passed locally with scikit.utils._paramerter_validation.InvalidParameterError"
+    "Sucessfully passed locally with "
+    "scikit.utils._paramerter_validation.InvalidParameterError"
     " and regex error parsing..."
 )
 def test_plot_model_comparison_errors(comparison_data):

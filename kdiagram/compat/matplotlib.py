@@ -65,9 +65,9 @@ def get_cmap(name="viridis", lut=None):
         # continue to work as expected.
         try:
             return matplotlib.colormaps.get(name)
-        except (TypeError, KeyError):
+        except (TypeError, KeyError, ValueError) as err:
             # Re-raise as ValueError for consistent exception handling.
-            raise ValueError(f"'{name}' is not a valid colormap name or alias")
+            raise ValueError(f"'{name}' is not a valid colormap name or alias") from err
     else:
         # The old API raises ValueError directly, so no change is needed here.
         return matplotlib.cm.get_cmap(name, lut)

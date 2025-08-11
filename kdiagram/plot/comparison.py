@@ -262,8 +262,8 @@ def plot_reliability_diagram(
         axb.set_xlabel(xlabel or "Predicted probability")
         axb.set_ylabel("Frac." if counts_norm == "fraction" else "Count")
         set_axis_grid(axb, show_grid=True, grid_props={"alpha": 0.25})
-        h, l = axb.get_legend_handles_labels()
-        if h and l:
+        handles, labels = axb.get_legend_handles_labels()
+        if handles and labels:
             axb.legend(loc="upper right", fontsize=8)
 
     plt.tight_layout()
@@ -460,6 +460,7 @@ y_true : array-like of shape (n_samples,)
 
 *y_preds : array-like(s)
     One or more model predictions. Each item may be:
+    
     - 1D array of positive-class probabilities in ``[0, 1]``.
     - 2D array of shape ``(n_samples, n_classes)``; use
       ``class_index`` to select a column. If omitted, the
@@ -478,6 +479,7 @@ n_bins : int, default=10
 
 strategy : {'uniform', 'quantile'}, default='uniform'
     Binning strategy.
+    
     - ``'uniform'``: equally spaced edges in ``[0, 1]``.
     - ``'quantile'``: edges are empirical quantiles of the
       pooled predictions. If edges are not unique, the method
@@ -502,6 +504,7 @@ normalize_probs : bool, default=True
 
 error_bars : {'wilson', 'normal', 'none'}, default='wilson'
     Per-bin uncertainty for observed frequencies.
+    
     - ``'wilson'``: Wilson interval using ``conf_level``.
     - ``'normal'``: normal approximation.
     - ``'none'``: no error bars.
@@ -970,7 +973,7 @@ def plot_model_comparison(
         y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
         # Validate y_true and each y_pred
         temp_preds = []
-        for i, pred in enumerate(y_preds):
+        for _, pred in enumerate(y_preds):
             # Validate returns tuple, we need the second element
             validated_pred = validate_yy(
                 y_true, pred, expected_type=None, flatten=True

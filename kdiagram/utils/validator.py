@@ -236,7 +236,7 @@ def check_consistent_length(*arrays):
     if len(uniques) > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
-            % [int(l) for l in lengths]
+            % [int(le) for le in lengths]
         )
 
 
@@ -777,14 +777,15 @@ def build_data_if(
     # Attempt to ensure start_incr_at is an integer
     try:
         start_incr_at = int(start_incr_at)
-    except ValueError:
+    except (TypeError, ValueError) as err:
         # If the user provided a non-integer, handle it
         # based on the value of `error`
         if error == "raise":
+
             raise TypeError(
                 f"Expected integer for start_incr_at, got "
                 f"{type(start_incr_at)} instead."
-            )
+            ) from err
         elif error == "warn":
             warnings.warn(
                 f"Provided 'start_incr_at'={start_incr_at} is not "

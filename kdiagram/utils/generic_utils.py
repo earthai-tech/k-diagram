@@ -14,7 +14,7 @@ import numpy as np
 def str2columns(
     text: str, regex: re.Pattern | None = None, pattern: str | None = None
 ) -> list[str]:
-    """
+    r"""
     Split the input string `<text>` into words or
     column names using a regular expression.
 
@@ -100,7 +100,7 @@ def smart_format(iter_obj, choice: str = "and") -> str:
     # Attempt to ensure it's iterable
     try:
         _ = iter(iter_obj)
-    except:  # TypeError >
+    except Exception:  # TypeError >
         return f"{iter_obj}"
 
     # Convert each element to string
@@ -163,7 +163,7 @@ def count_functions(
     The process can be summarized as:
 
     .. math::
-        \text{total\_count} =
+        \text{total\\_count} =
         \text{len(functions)} + \text{len(classes)}
 
     where:
@@ -431,11 +431,11 @@ def error_policy(
         The user-provided error setting. Can be `'warn'`, `'raise'`,
         `'ignore'`, or `None`. If `None`, the behavior is resolved
         based on ``policy`` and ``base``.
-    
+
     policy : str, default='auto'
         Determines how to interpret a `None` error setting. Valid
         options:
-        
+
         - `'auto'`: Resolve `None` to the default `base` policy.
         - `'strict'`: Disallows `None` for `error`; raises an error
           if encountered.
@@ -476,8 +476,8 @@ def error_policy(
     - When `error=None`, the behavior depends on the `policy` and
       `base` parameters. Setting `policy='strict'` disallows `None`
       for `error`.
-      
-      
+
+
     .. math::
        \\text{error\\_policy}:
        \\begin{cases}
@@ -494,13 +494,13 @@ def error_policy(
     >>> resolved_error = error_policy('warn')
     >>> print(resolved_error)
     'warn'
-    
+
     >>> # Using 'auto' policy with a default base of 'ignore'
     >>> resolved_error = error_policy(None, policy='auto',
     ...                                base='warn')
     >>> print(resolved_error)
     'warn'
-    
+
     >>> # Strict policy disallows None
     >>> error_policy(None, policy='strict')
     ValueError: In strict policy, `None` is not acceptable as error.

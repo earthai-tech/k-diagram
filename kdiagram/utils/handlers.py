@@ -113,7 +113,7 @@ def columns_manager(
             columns = list(columns)
         except Exception as e:
             if error == "raise":
-                raise ValueError(f"Error converting columns to list: {e}")
+                raise ValueError("Error converting columns to list") from e
             elif error == "warn":
                 warnings.warn(f"Could not convert columns to list: {e}", stacklevel=2)
             else:
@@ -150,7 +150,7 @@ def columns_manager(
         if not isinstance(columns, (str, list, tuple)):
             try:
                 iter(columns)
-            except:
+            except Exception:
                 columns = [columns]
 
     return columns

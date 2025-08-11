@@ -403,7 +403,7 @@ def test_plot_actual_vs_predicted_line_and_dots(tmp_path):
 
 def test_plot_actual_vs_predicted_missing_cols_raises():
     df = pd.DataFrame({"a": [1, 2]})
-    with pytest.raises(Exception):
+    with pytest.raises((KeyError, ValueError)):
         plot_actual_vs_predicted(df=df, actual_col="a", pred_col="not_here")
 
 
