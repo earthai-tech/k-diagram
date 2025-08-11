@@ -7,13 +7,13 @@
   <h1>Polar Diagnostics for Forecast Uncertainty</h1>
 
   <!-- Centered Badges -->
-  <p>
-    <a href="https://github.com/user/repo/actions/workflows/python-package-conda.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/user/repo/python-package-conda.yml?branch=main&style=for-the-badge"></a>
-    <a href="https://user.github.io/repo/"><img alt="Docs Status" src="https://img.shields.io/github/deployments/user/repo/github-pages?style=for-the-badge"></a>
-    <a href="https://github.com/user/repo/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/user/repo?style=for-the-badge"></a>
-    <a href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"></a>
-    <a href="https://github.com/user/repo/graphs/contributors"><img alt="Contributions" src="https://img.shields.io/github/contributors/user/repo?style=for-the-badge"></a>
-    <a href="https://codecov.io/gh/user/repo"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/user/repo?style=for-the-badge"></a>
+<p>
+    <a href="https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=for-the-badge"></a>
+    <a href="https://k-diagram.readthedocs.io/en/latest/?badge=latest"><img alt="Docs Status" src="https://img.shields.io/readthedocs/k-diagram?style=for-the-badge"></a>
+    <a href="https://github.com/earthai-tech/k-diagram/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/earthai-tech/k-diagram?style=for-the-badge&logo=apache&color=purple"></a>
+    <a href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-Black-000000.svg?style=for-the-badge"></a>
+    <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md"><img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge"></a>
+    <a href="https://codecov.io/gh/earthai-tech/k-diagram"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/earthai-tech/k-diagram?style=for-the-badge"></a>
   </p>
 
   <!-- Centered Introduction -->
