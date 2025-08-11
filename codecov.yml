@@ -1,7 +1,5 @@
 ignore:
   - "kdiagram/tests/*"
-  # - "kdiagram/api/*"
-  - "kdiagram/datasets/_property.py",   
   - "kdiagram/datasets/data/*"
 coverage:
   status:
