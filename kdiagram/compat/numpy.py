@@ -23,8 +23,8 @@ str_ = str
 object_ = object
 
 # If you *need* NumPy scalar classes as well, expose them separately:
-NP_INT = np.int_  # exists in 1.x and 2.x
-NP_FLOAT = np.float_  # exists
+NP_INT = np.int32  # exists in 1.x and 2.x
+NP_FLOAT = np.float64  # exists
 NP_BOOL = np.bool_  # exists
 # try:
 #     NP_COMPLEX = np.complexfloating  # or np.complex128 if you need a concrete dtype
