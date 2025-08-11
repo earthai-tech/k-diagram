@@ -4,20 +4,21 @@ from __future__ import annotations
 import builtins
 import sys
 import types
-
 from pathlib import Path
 
 import pytest
 
 import kdiagram.utils.io as io_mod
 
-
 # ---- helpers ---------------------------------------------------------------
+
 
 class FakeResponse:
     """Context-manager mock for requests.get(..., stream=True)."""
-    def __init__(self, data: bytes, status: int = 200,
-                 content_length: int | None = None):
+
+    def __init__(
+        self, data: bytes, status: int = 200, content_length: int | None = None
+    ):
         self._data = data
         self.status_code = status
         clen = len(data) if content_length is None else content_length
@@ -41,6 +42,7 @@ class FakeResponse:
 
 
 # ---- fancier_downloader tests ---------------------------------------------
+
 
 def test_fancier_downloader_requires_requests(monkeypatch):
     monkeypatch.setattr(io_mod, "HAS_REQUESTS", False)
@@ -88,7 +90,9 @@ def test_fancier_downloader_success_with_progress(tmp_path, monkeypatch):
     if "tqdm" not in sys.modules:
         fake_tqdm_mod = types.SimpleNamespace(
             tqdm=lambda **kw: types.SimpleNamespace(
-                update=lambda *a, **k: None, close=lambda: None))
+                update=lambda *a, **k: None, close=lambda: None
+            )
+        )
         sys.modules["tqdm"] = types.SimpleNamespace(tqdm=fake_tqdm_mod.tqdm)
 
     out = io_mod.fancier_downloader("http://x", "ok.bin", verbose=False)
@@ -103,19 +107,24 @@ def test_fancier_downloader_check_size_mismatch(monkeypatch, tmp_path, mode):
     monkeypatch.chdir(tmp_path)
     data = b"x" * 50
     monkeypatch.setattr(
-        io_mod.requests, "get", lambda *a, **k: FakeResponse(
-            data, content_length=100)
+        io_mod.requests, "get", lambda *a, **k: FakeResponse(data, content_length=100)
     )
 
     # Provide minimal tqdm stub if missing
     if "tqdm" not in sys.modules:
         sys.modules["tqdm"] = types.SimpleNamespace(
             tqdm=lambda **kw: types.SimpleNamespace(
-                update=lambda *a, **k: None, close=lambda: None)
+                update=lambda *a, **k: None, close=lambda: None
+            )
         )
 
-    kwargs = dict(url="http://x", filename="mismatch.bin", 
-                  check_size=True, error=mode, verbose=False)
+    kwargs = dict(
+        url="http://x",
+        filename="mismatch.bin",
+        check_size=True,
+        error=mode,
+        verbose=False,
+    )
 
     if mode == "raise":
         with pytest.raises(RuntimeError, match="Downloaded file size"):
@@ -132,33 +141,33 @@ def test_fancier_downloader_check_size_mismatch(monkeypatch, tmp_path, mode):
 def test_fancier_downloader_moves_to_dst(monkeypatch, tmp_path):
     data = b"hello world"
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(io_mod.requests, "get", 
-                        lambda *a, **k: FakeResponse(data))
+    monkeypatch.setattr(io_mod.requests, "get", lambda *a, **k: FakeResponse(data))
     if "tqdm" not in sys.modules:
         sys.modules["tqdm"] = types.SimpleNamespace(
             tqdm=lambda **kw: types.SimpleNamespace(
-                update=lambda *a, **k: None, close=lambda: None)
+                update=lambda *a, **k: None, close=lambda: None
+            )
         )
 
     dest = tmp_path / "dest"
-    out = io_mod.fancier_downloader("http://x", "move.bin",
-                                    dstpath=str(dest), verbose=False)
+    out = io_mod.fancier_downloader(
+        "http://x", "move.bin", dstpath=str(dest), verbose=False
+    )
     # moved => returns None
     assert out is None
     assert not Path("move.bin").exists()
     assert (dest / "move.bin").is_file()
 
 
-def test_fancier_downloader_move_error_handling(
-        monkeypatch, tmp_path):
+def test_fancier_downloader_move_error_handling(monkeypatch, tmp_path):
     data = b"data"
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(io_mod.requests, "get", 
-                        lambda *a, **k: FakeResponse(data))
+    monkeypatch.setattr(io_mod.requests, "get", lambda *a, **k: FakeResponse(data))
     if "tqdm" not in sys.modules:
         sys.modules["tqdm"] = types.SimpleNamespace(
             tqdm=lambda **kw: types.SimpleNamespace(
-                update=lambda *a, **k: None, close=lambda: None)
+                update=lambda *a, **k: None, close=lambda: None
+            )
         )
 
     def boom(*a, **k):
@@ -170,15 +179,15 @@ def test_fancier_downloader_move_error_handling(
     # warn path
     with pytest.warns(UserWarning, match="Failed to move"):
         out = io_mod.fancier_downloader(
-            "http://x", "f.bin", dstpath=str(dest), error="warn", 
-            verbose=False)
+            "http://x", "f.bin", dstpath=str(dest), error="warn", verbose=False
+        )
         assert out is None  # function returns None after handling
 
     # raise path
     with pytest.raises(RuntimeError, match="Failed to move"):
         io_mod.fancier_downloader(
-            "http://x", "g.bin", dstpath=str(dest), error="raise",
-            verbose=False)
+            "http://x", "g.bin", dstpath=str(dest), error="raise", verbose=False
+        )
 
 
 def test_fancier_downloader_download_exception(monkeypatch, tmp_path):
@@ -191,30 +200,30 @@ def test_fancier_downloader_download_exception(monkeypatch, tmp_path):
 
     # warn
     with pytest.warns(UserWarning, match="Failed to download"):
-        out = io_mod.fancier_downloader("http://x", "bad.bin", error="warn", 
-                                        verbose=False)
+        out = io_mod.fancier_downloader(
+            "http://x", "bad.bin", error="warn", verbose=False
+        )
         assert out is None
 
     # ignore
-    out = io_mod.fancier_downloader("http://x", "bad2.bin", 
-                                    error="ignore", verbose=False)
+    out = io_mod.fancier_downloader(
+        "http://x", "bad2.bin", error="ignore", verbose=False
+    )
     assert out is None
 
     # raise
     with pytest.raises(RuntimeError, match="Failed to download"):
-        io_mod.fancier_downloader("http://x", "bad3.bin", error="raise",
-                                  verbose=False)
-
+        io_mod.fancier_downloader("http://x", "bad3.bin", error="raise", verbose=False)
 
 
 # ---- download_file tests ----------------------------------------------------
+
 
 def test_download_file_returns_filename(monkeypatch, tmp_path, capsys):
     monkeypatch.chdir(tmp_path)
     data = b"A" * 17
 
-    monkeypatch.setattr(
-        io_mod.requests, "get", lambda *a, **k: FakeResponse(data))
+    monkeypatch.setattr(io_mod.requests, "get", lambda *a, **k: FakeResponse(data))
 
     out = io_mod.download_file("http://x", "plain.bin")
     # returns absolute path to file in CWD
@@ -231,8 +240,7 @@ def test_download_file_returns_filename(monkeypatch, tmp_path, capsys):
 def test_download_file_with_dst_calls_move(monkeypatch, tmp_path):
     data = b"B" * 8
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(io_mod.requests, "get", 
-                        lambda *a, **k: FakeResponse(data))
+    monkeypatch.setattr(io_mod.requests, "get", lambda *a, **k: FakeResponse(data))
 
     called = {}
 
@@ -242,8 +250,7 @@ def test_download_file_with_dst_calls_move(monkeypatch, tmp_path):
 
     monkeypatch.setattr(io_mod, "move_file", fake_move)
 
-    out = io_mod.download_file("http://x", "to-move.bin",
-                               dstpath=str(tmp_path / "dst"))
+    out = io_mod.download_file("http://x", "to-move.bin", dstpath=str(tmp_path / "dst"))
     assert out is None
     assert "src" in called and "dst" in called
     assert Path(called["src"]).name == "to-move.bin"
@@ -251,6 +258,7 @@ def test_download_file_with_dst_calls_move(monkeypatch, tmp_path):
 
 
 # ---- check_file_exists tests -----------------------------------------------
+
 
 def test_check_file_exists_true_false(monkeypatch):
     import importlib.resources as pkg_resources
@@ -265,6 +273,7 @@ def test_check_file_exists_true_false(monkeypatch):
 
 # ---- move_file tests --------------------------------------------------------
 
+
 def test_move_file_creates_directory_and_moves(tmp_path):
     src_dir = tmp_path / "src"
     dst_dir = tmp_path / "dst"
@@ -277,5 +286,6 @@ def test_move_file_creates_directory_and_moves(tmp_path):
     assert (dst_dir / "x.txt").exists()
     assert (dst_dir / "x.txt").read_text() == "content"
 
-if __name__=="__main__": # pragma: no-cover 
-   pytest.main( [__file__])
+
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

@@ -1,9 +1,10 @@
 # tests/test_compat_sklearn.py
 from __future__ import annotations
 
+import inspect
 import sys
 import types
-import inspect
+from numbers import Integral
 from types import SimpleNamespace
 
 import numpy as np
@@ -28,30 +29,27 @@ def test_interval_inclusive_removed_branch(monkeypatch):
         if obj is skl_compat.sklearn_Interval.__init__:
             # build a signature that does NOT include 'inclusive'
             return inspect.Signature(
-            parameters=[
-                inspect.Parameter(
-                    "self", inspect.Parameter.POSITIONAL_ONLY),
-                inspect.Parameter(
-                    "types", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-                inspect.Parameter(
-                    "left", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-                inspect.Parameter(
-                    "right", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-                inspect.Parameter(
-                    "closed", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-            ]
-        )
+                parameters=[
+                    inspect.Parameter("self", inspect.Parameter.POSITIONAL_ONLY),
+                    inspect.Parameter("types", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+                    inspect.Parameter("left", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+                    inspect.Parameter("right", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+                    inspect.Parameter(
+                        "closed", inspect.Parameter.POSITIONAL_OR_KEYWORD
+                    ),
+                ]
+            )
         return real_sig
 
     monkeypatch.setattr(skl_compat.inspect, "signature", fake_signature)
     # Should NOT error even if we pass inclusive; shim must drop it.
-    obj = skl_compat.Interval(int, 0, 1, closed="left", inclusive=True)
+    obj = skl_compat.Interval(Integral, 0, 1, closed="left", inclusive=True)
     assert isinstance(obj, skl_compat.sklearn_Interval)
 
 
 def test_interval_inclusive_supported_branch():
     # On modern sklearn, passing inclusive should be accepted
-    obj = skl_compat.Interval(int, 0, 1, closed="left", inclusive=True)
+    obj = skl_compat.Interval(Integral, 0, 1, closed="left", inclusive=True)
     assert isinstance(obj, skl_compat.sklearn_Interval)
 
 
@@ -96,8 +94,7 @@ def test_validate_params_with_and_without_flag(monkeypatch):
     params = {"x": [int], "y": [str]}
 
     # Case 1: Signature contains prefer_skip_nested_validation (real modern sklearn)
-    dec = skl_compat.validate_params(
-        params, prefer_skip_nested_validation=False)
+    dec = skl_compat.validate_params(params, prefer_skip_nested_validation=False)
 
     @dec
     def fn(x, y):
@@ -112,8 +109,11 @@ def test_validate_params_with_and_without_flag(monkeypatch):
 
     def fake_sig(_):
         # Drop the flag from the signature
-        pars = [p for p in real_sig.parameters.values(
-            ) if p.name != "prefer_skip_nested_validation"]
+        pars = [
+            p
+            for p in real_sig.parameters.values()
+            if p.name != "prefer_skip_nested_validation"
+        ]
         return real_sig.replace(parameters=pars)
 
     monkeypatch.setattr(skl_compat.inspect, "signature", fake_sig)
@@ -164,9 +164,9 @@ def test_get_column_transformer_feature_names_all_paths():
         ],
     )
     out = skl_compat.get_column_transformer_feature_names(
-        ct, input_features=["f0", "f1", "f2", "f3", "f4"])
-    assert out == ["a", "b", "c1", "c2", "c3", "fallback__0",
-                   "fallback__1"]
+        ct, input_features=["f0", "f1", "f2", "f3", "f4"]
+    )
+    assert out == ["a", "b", "c1", "c2", "c3", "fallback__0", "fallback__1"]
 
 
 def test_get_column_transformer_feature_names2_all_paths():
@@ -178,7 +178,8 @@ def test_get_column_transformer_feature_names2_all_paths():
         ]
     )
     out = skl_compat.get_column_transformer_feature_names2(
-        ct, input_features=["A", "B", "C"])
+        ct, input_features=["A", "B", "C"]
+    )
     assert out == ["x", "y", "z", "t3__0", "t3__1"]
 
 
@@ -199,6 +200,7 @@ def test_get_feature_names_variants_and_error():
     assert skl_compat.get_feature_names(EstNames()) == ["n1"]
 
     class NoNames: ...
+
     with pytest.raises(AttributeError):
         skl_compat.get_feature_names(NoNames())
 
@@ -208,10 +210,7 @@ def test_get_feature_names_variants_and_error():
 # --------------------------
 def test_get_transformers_from_column_transformer_and_error():
     ct = SimpleNamespace(transformers_=[("n", object(), [0])])
-    assert ( 
-        skl_compat.get_transformers_from_column_transformer(
-            ct) == ct.transformers_
-        )
+    assert skl_compat.get_transformers_from_column_transformer(ct) == ct.transformers_
 
     with pytest.raises(AttributeError):
         skl_compat.get_transformers_from_column_transformer(object())
@@ -225,14 +224,16 @@ def test_check_is_fitted_success_and_failure():
     y = np.array([0.0, 1.0, 2.0, 3.0])
 
     model = LinearRegression().fit(X, y)
-    assert skl_compat.check_is_fitted(
-            model, attributes=None, msg=None, all_or_any=all
-        ) is None
-        
+    assert (
+        skl_compat.check_is_fitted(model, attributes=None, msg=None, all_or_any=all)
+        is None
+    )
+
     with pytest.raises(NotFittedError):
         skl_compat.check_is_fitted(
             LinearRegression(), attributes=None, msg=None, all_or_any=all
         )
+
 
 # --------------
 # fetch_openml()
@@ -259,10 +260,9 @@ def test_fetch_openml_injects_as_frame_by_default(monkeypatch):
     monkeypatch.setattr(skl_compat, "SKLEARN_LT_0_24", True)
     out2 = skl_compat.fetch_openml(name="iris")
     assert out2 == "SENTINEL"
-    assert "as_frame" not in ( 
+    assert "as_frame" not in (
         calls["kwargs"] or calls["kwargs"]["as_frame"] is True
-        )# previous call retained; not critical
-
+    )  # previous call retained; not critical
 
 
 def test_plot_confusion_matrix_not_available(monkeypatch):
@@ -283,12 +283,14 @@ def test_train_test_split_shuffle_default_and_override():
 
     # Default insert shuffle=True
     Xtr, Xte, ytr, yte = skl_compat.train_test_split(
-        X, y, test_size=0.2, random_state=0)
+        X, y, test_size=0.2, random_state=0
+    )
     assert len(Xte) == 2 and len(Xtr) == 8
 
     # Explicit shuffle=False preserves ordering of the tail split
     Xtr2, Xte2, ytr2, yte2 = skl_compat.train_test_split(
-        X, y, test_size=0.3, shuffle=False)
+        X, y, test_size=0.3, shuffle=False
+    )
     # Last 3 elements should be in test set in order
     assert np.all(yte2 == np.array([7, 8, 9]))
 
@@ -309,10 +311,11 @@ def test_get_transformer_feature_names_all_paths():
     class TxNone:
         pass
 
-    assert skl_compat.get_transformer_feature_names(
-        TxOut(), ["a", "b"]) == ["a_out", "b_out"]
-    assert skl_compat.get_transformer_feature_names(
-        TxNames(), ["a"]) == ["a_name"]
+    assert skl_compat.get_transformer_feature_names(TxOut(), ["a", "b"]) == [
+        "a_out",
+        "b_out",
+    ]
+    assert skl_compat.get_transformer_feature_names(TxNames(), ["a"]) == ["a_name"]
 
     with pytest.raises(AttributeError):
         skl_compat.get_transformer_feature_names(TxNone())
@@ -335,8 +338,7 @@ def test_get_pipeline_feature_names_paths():
         def __init__(self):
             self.categories_ = [np.array(["A", "B"]), np.array(["C"])]
 
-    pipe = SimpleNamespace(
-        steps=[("a", TxOut()), ("b", TxNames()), ("c", TxOHE())])
+    pipe = SimpleNamespace(steps=[("a", TxOut()), ("b", TxNames()), ("c", TxOHE())])
     feats = skl_compat.get_pipeline_feature_names(pipe, input_features=["f1", "f2"])
     # After TxOut -> ["f1_o","f2_o"]; after TxNames
     # -> ["f1_o_n","f2_o_n"]; after TxOHE -> categories concatenated
@@ -364,6 +366,5 @@ def test_mean_squared_error_new_path_and_rmse(monkeypatch):
     assert rmse2 == pytest.approx(rmse)
 
 
-
-if __name__=="__main__": # pragma: no-cover 
-   pytest.main( [__file__])
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

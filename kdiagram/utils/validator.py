@@ -17,11 +17,7 @@ import scipy.sparse as sp
 from .generic_utils import smart_format, str2columns
 
 
-def validate_length_range(
-    length_range, 
-    sorted_values=True, 
-    param_name=None
-    ):
+def validate_length_range(length_range, sorted_values=True, param_name=None):
     r"""
     Validates the review length range ensuring it's a tuple with two integers
     where the first value is less than the second.
@@ -82,10 +78,7 @@ def validate_length_range(
 
 
 def validate_yy(
-    y_true, y_pred, 
-    expected_type=None, *, 
-    validation_mode="strict", 
-    flatten=False
+    y_true, y_pred, expected_type=None, *, validation_mode="strict", flatten=False
 ):
     r"""
     Validates the shapes and types of actual and predicted target arrays,
@@ -147,8 +140,7 @@ def validate_yy(
         actual_type_y_true = type_of_target(y_true)
         actual_type_y_pred = type_of_target(y_pred)
         if validation_mode == "strict" and (
-            actual_type_y_true != expected_type 
-            or actual_type_y_pred != expected_type
+            actual_type_y_true != expected_type or actual_type_y_pred != expected_type
         ):
             msg = (
                 f"Validation failed in strict mode. Expected type '{expected_type}'"
@@ -400,10 +392,9 @@ def is_in_if(
            estimator: L2 theory. *Probability Theory and Related Fields*, 57(5), 
            453-476.
     """
-    
+
     if error not in {"raise", "warn", "ignore"}:
         raise ValueError("error must be 'raise', 'warn', or 'ignore'")
-
 
     if isinstance(items, str):
         items = [items]
@@ -1227,8 +1218,7 @@ def ensure_2d(X, output_format="auto"):
 
 
 def parameter_validator(
-    param_name, target_strs, match_method="contains",
-    raise_exception=True, **kws
+    param_name, target_strs, match_method="contains", raise_exception=True, **kws
 ):
     r"""
     Creates a validator function for ensuring a parameter's value matches one
@@ -1409,8 +1399,7 @@ def normalize_string(
     if matched_target is not None:
         if return_target_only:
             return matched_target
-        return (
-            normalized_str, matched_target) if return_target_str else normalized_str
+        return (normalized_str, matched_target) if return_target_str else normalized_str
 
     if raise_exception:
         error_msg = error_msg or (
@@ -1426,8 +1415,11 @@ def normalize_string(
 
 
 def is_iterable(
-    y, exclude_string: bool = False, transform: bool = False,
-    parse_string: bool = False, delimiter: str = r"[ ,;|\t\n]+", 
+    y,
+    exclude_string: bool = False,
+    transform: bool = False,
+    parse_string: bool = False,
+    delimiter: str = r"[ ,;|\t\n]+",
 ) -> Union[bool, list]:
     r"""
     Asserts whether `<y>` is iterable and optionally transforms
@@ -1494,8 +1486,7 @@ def is_iterable(
 
     # Check iterability, but optionally treat string
     # objects as non-iterable
-    is_iter = not (exclude_string and isinstance(
-        y, str)) and hasattr(y, "__iter__")
+    is_iter = not (exclude_string and isinstance(y, str)) and hasattr(y, "__iter__")
 
     # If transform is True, return y as-is if it is
     # iterable, otherwise wrap it in a list.

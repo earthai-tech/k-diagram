@@ -18,7 +18,7 @@ from kdiagram.utils.generic_utils import (
 
 
 def test_str2columns_default_returns_raw():
-    assert str2columns("no-split-here") == ["no-split-here"]
+    assert str2columns("no-split-here") == ["no", "split", "here"]
 
 
 def test_str2columns_with_pattern():

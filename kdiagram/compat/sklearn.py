@@ -508,13 +508,36 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
        *arXiv preprint arXiv:1309.0238*.
     """
     # Check if `prefer_skip_nested_validation` is required by inspecting the signature
-    sig = inspect.signature(sklearn_validate_params)
-    if "prefer_skip_nested_validation" in sig.parameters:
-        # Pass the user's choice or default for `prefer_skip_nested_validation`
-        kwargs["prefer_skip_nested_validation"] = prefer_skip_nested_validation
+    # sig = inspect.signature(sklearn_validate_params)
+    # if "prefer_skip_nested_validation" in sig.parameters:
+    #    # Pass the user's choice or default for `prefer_skip_nested_validation`
+    #    #kwargs["prefer_skip_nested_validation"] = prefer_skip_nested_validation
+    #    return sklearn_validate_params(params, *args,
+    #            prefer_skip_nested_validation=prefer_skip_nested_validation,
+    #            **kwargs
+    #            )
+    ## Call the actual validate_params with appropriate arguments
+    # return sklearn_validate_params(params, *args, **kwargs)
 
-    # Call the actual validate_params with appropriate arguments
-    return sklearn_validate_params(params, *args, **kwargs)
+    try:
+        # First, try calling the function the "new" way, with the argument.
+        # This will work on modern versions of scikit-learn.
+        return sklearn_validate_params(
+            params,
+            *args,
+            prefer_skip_nested_validation=prefer_skip_nested_validation,
+            **kwargs,
+        )
+    except TypeError as e:
+        # If the above call fails, check if it's because the argument
+        # was not recognized. This indicates an older scikit-learn version.
+        if "unexpected keyword argument 'prefer_skip_nested_validation'" in str(e):
+            # If so, call the function again the "old" way, without the argument.
+            return sklearn_validate_params(params, *args, **kwargs)
+        else:
+            # If it was a different kind of TypeError, it's an unexpected
+            # problem, so we should re-raise the error.
+            raise e
 
 
 def get_column_transformer_feature_names(column_transformer, input_features=None):
@@ -688,13 +711,15 @@ def get_transformers_from_column_transformer(ct):
             "The ColumnTransformer instance does not have a 'transformers_' attribute."
         )
 
+
 # near the top you already have: import inspect
 # ...
+
 
 def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     r"""
     Compatibility wrapper for scikit-learn's check_is_fitted function.
-    
+
     Parameters:
     - estimator : estimator instance
         The estimator to check.
@@ -704,8 +729,8 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         The message to display on failure.
     - all_or_any : callable, optional
         all or any; whether all or any of the given attributes must be present.
-        
-    
+
+
     """
     # Build kwargs only for parameters the installed sklearn actually supports
     sig = inspect.signature(sklearn_check_is_fitted)
@@ -717,7 +742,6 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     if "all_or_any" in sig.parameters:
         kw["all_or_any"] = all_or_any
     return sklearn_check_is_fitted(estimator, **kw)
-
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred, average_method="arithmetic"):

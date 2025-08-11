@@ -21,8 +21,7 @@ def test_validate_length_range_happy_and_sorting_and_errors():
     with pytest.raises(ValueError):
         V.validate_length_range(("a", 2))
     # sorted_values=False keeps order and allows first>second here (no extra checks)
-    assert V.validate_length_range((9, 1), 
-                                   sorted_values=False) == (9, 1)
+    assert V.validate_length_range((9, 1), sorted_values=False) == (9, 1)
 
 
 # ------------
@@ -49,12 +48,12 @@ def test_validate_yy_shapes_types_and_expected_type():
 
     # expected_type mismatch -> error
     with pytest.raises(ValueError):
-        V.validate_yy([0.1, 0.2], [0.1, 0.3], 
-                      expected_type="binary", flatten=True)
+        V.validate_yy([0.1, 0.2], [0.1, 0.3], expected_type="binary", flatten=True)
 
     # expected_type correct (continuous)
-    yt3, yp3 = V.validate_yy([0.1, 0.2], [0.1, 0.3], 
-                             expected_type="continuous", flatten=True)
+    yt3, yp3 = V.validate_yy(
+        [0.1, 0.2], [0.1, 0.3], expected_type="continuous", flatten=True
+    )
     assert yt3.shape == yp3.shape == (2,)
 
 
@@ -173,7 +172,7 @@ def test_is_frame_detects_df_or_series_and_modes_and_deprecation_bridge():
 
     assert V.is_frame(df) is True
     assert V.is_frame(s) is True
-    assert V.is_frame(s, df_only=True, error='ignore')  is False
+    assert V.is_frame(s, df_only=True, error="ignore") is False
 
     # error='raise'
     with pytest.raises(TypeError):
@@ -216,7 +215,7 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
     assert isinstance(out2, pd.DataFrame)
     # column names auto-generated with prefix
     assert list(out2.columns) == ["c_0", "c_1"]
-    # dtype coercion: first col numeric, second stays 
+    # dtype coercion: first col numeric, second stays
     # date/object depending on parse success
     assert np.issubdtype(out2.dtypes[0], np.number)
 
@@ -227,9 +226,13 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
 
     # to_frame True but columns missing and not forced -> raises
     with pytest.raises(TypeError):
-        V.build_data_if(np.array([[1, 2], [3, 4]]), 
-                        to_frame=True, columns=None, force=False, 
-                        error="raise")
+        V.build_data_if(
+            np.array([[1, 2], [3, 4]]),
+            to_frame=True,
+            columns=None,
+            force=False,
+            error="raise",
+        )
 
     # int columns converted to strings with prefix
     df_intcols = pd.DataFrame([[1, 2], [3, 4]])
@@ -244,20 +247,21 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
 # -------------------
 def test_recheck_data_types_df_and_non_df_and_numpy_return():
     df = pd.DataFrame(
-        {"a": ["1", "2", "3"], "b": 
-         ["2021-01-01", "nope", "2021-03-01"], 
-         "c": ["1.1", "2.2", "3.3"]}
+        {
+            "a": ["1", "2", "3"],
+            "b": ["2021-01-01", "nope", "2021-03-01"],
+            "c": ["1.1", "2.2", "3.3"],
+        }
     )
-    out = V.recheck_data_types(df, coerce_numeric=True, 
-                               coerce_datetime=True, 
-                               return_as_numpy=False)
+    out = V.recheck_data_types(
+        df, coerce_numeric=True, coerce_datetime=True, return_as_numpy=False
+    )
     # a -> numeric, c -> float, b stays object because of mixed validity
     assert np.issubdtype(out["a"].dtype, np.number)
     assert np.issubdtype(out["c"].dtype, np.floating)
 
     # non-DataFrame input -> converted and returned as numpy (auto)
-    out_np = V.recheck_data_types([["1", "2"], ["3", "4"]], 
-                                  return_as_numpy="auto")
+    out_np = V.recheck_data_types([["1", "2"], ["3", "4"]], return_as_numpy="auto")
     assert isinstance(out_np, np.ndarray)
 
 
@@ -268,36 +272,44 @@ def test_array_to_frame_paths_and_warnings_and_sparse_passthrough():
     X = np.array([[1, 2], [3, 4]])
 
     # generate columns with force
-    out = V.array_to_frame(X, to_frame=True, columns=None,
-                           input_name="X", force=True)
-    assert isinstance(out, pd.DataFrame
-                      ) and list(out.columns) == ["X_0", "X_1"]
+    out = V.array_to_frame(X, to_frame=True, columns=None, input_name="X", force=True)
+    assert isinstance(out, pd.DataFrame) and list(out.columns) == ["X_0", "X_1"]
 
     # raising when to_frame and columns None and not forced
     with pytest.raises(ValueError):
-        V.array_to_frame(X, to_frame=True, columns=None, input_name="X", 
-                         force=False, raise_exception=True)
+        V.array_to_frame(
+            X,
+            to_frame=True,
+            columns=None,
+            input_name="X",
+            force=False,
+            raise_exception=True,
+        )
 
     # warn (and return original X) when to_frame True, missing columns, not forced
     with pytest.warns(UserWarning):
-        out2 = V.array_to_frame(X, to_frame=True, columns=None,
-                                input_name="X", force=False,
-                                raise_warning=True)
+        out2 = V.array_to_frame(
+            X,
+            to_frame=True,
+            columns=None,
+            input_name="X",
+            force=False,
+            raise_warning=True,
+        )
     assert isinstance(out2, np.ndarray)
 
     # with explicit columns to DataFrame
-    out3 = V.array_to_frame(X, to_frame=True,
-                            columns=["a", "b"], input_name="X",
-                            force=False)
-    assert isinstance(out3, pd.DataFrame) and list(
-        out3.columns) == ["a", "b"]
+    out3 = V.array_to_frame(
+        X, to_frame=True, columns=["a", "b"], input_name="X", force=False
+    )
+    assert isinstance(out3, pd.DataFrame) and list(out3.columns) == ["a", "b"]
 
     # sparse matrix path: convert_array_to_pandas
     # should skip conversion (returns sparse)
     XS = sp.csr_matrix([[1, 0], [0, 1]])
-    out4 = V.array_to_frame(XS, to_frame=True, 
-                            columns=["s1", "s2"],
-                            input_name="S", force=False)
+    out4 = V.array_to_frame(
+        XS, to_frame=True, columns=["s1", "s2"], input_name="S", force=False
+    )
     assert sp.issparse(out4)
 
 
@@ -307,35 +319,35 @@ def test_array_to_frame_paths_and_warnings_and_sparse_passthrough():
 def test_convert_array_to_pandas_all_branches():
     # string X -> TypeError
     with pytest.raises(TypeError):
-        V.convert_array_to_pandas("oops", to_frame=True, 
-                                  columns=["a"])
+        V.convert_array_to_pandas("oops", to_frame=True, columns=["a"])
 
     # invalid array-like -> TypeError
     class NotArrayLike: ...
+
     with pytest.raises(TypeError):
-        V.convert_array_to_pandas(NotArrayLike(), 
-                                  to_frame=True, columns=["a"])
+        V.convert_array_to_pandas(NotArrayLike(), to_frame=True, columns=["a"])
 
     # to_frame True without columns -> ValueError
     with pytest.raises(ValueError):
-        V.convert_array_to_pandas(np.array([[1, 2]]), 
-                                  to_frame=True, columns=None)
+        V.convert_array_to_pandas(np.array([[1, 2]]), to_frame=True, columns=None)
 
     # 1D -> Series
     ser, cols = V.convert_array_to_pandas(
-        np.array([1, 2, 3]), to_frame=True, columns=["v"])
+        np.array([1, 2, 3]), to_frame=True, columns=["v"]
+    )
     assert isinstance(ser, pd.Series) and ser.name == "v"
 
     # 2D -> DataFrame with matching cols
-    df, cols2 = V.convert_array_to_pandas(np.array(
-        [[1, 2], [3, 4]]), to_frame=True, columns=["a", "b"])
-    assert isinstance(df, pd.DataFrame) and list(
-        df.columns) == ["a", "b"]
+    df, cols2 = V.convert_array_to_pandas(
+        np.array([[1, 2], [3, 4]]), to_frame=True, columns=["a", "b"]
+    )
+    assert isinstance(df, pd.DataFrame) and list(df.columns) == ["a", "b"]
 
     # mismatched shape/columns -> ValueError
     with pytest.raises(ValueError):
-        V.convert_array_to_pandas(np.array(
-            [[1, 2], [3, 4]]), to_frame=True, columns=["a"])
+        V.convert_array_to_pandas(
+            np.array([[1, 2], [3, 4]]), to_frame=True, columns=["a"]
+        )
 
 
 # -----------
@@ -369,23 +381,24 @@ def test_ensure_2d_array_frame_and_auto():
 # ---------------------
 def test_parameter_validator_contains_and_exact_and_no_raise():
     validate = V.parameter_validator(
-        "outlier_method", ["z_score", "iqr"], 
-        match_method="contains", 
-        raise_exception=True, 
-        deep =True, )
+        "outlier_method",
+        ["z_score", "iqr"],
+        match_method="contains",
+        raise_exception=True,
+        deep=True,
+    )
     assert validate("Z_sco") == "z_score"
 
     validate_exact = V.parameter_validator(
-        "mode", ["train", "test"], 
-            match_method="exact", 
-            raise_exception=True)
+        "mode", ["train", "test"], match_method="exact", raise_exception=True
+    )
     assert validate_exact("train") == "train"
     with pytest.raises(ValueError):
         validate_exact("tra")
 
     validate_no_raise = V.parameter_validator(
-        "fill", ["median", "mean"], match_method="contains", 
-        raise_exception=False)
+        "fill", ["median", "mean"], match_method="contains", raise_exception=False
+    )
     assert validate_no_raise("average") is None
 
 
@@ -397,29 +410,27 @@ def test_normalize_string_modes_and_targets_and_errors():
     assert V.normalize_string("Hello World") == "hello world"
 
     # exact match
-    assert V.normalize_string(
-        "train", ["train", "test"],
-        match_method="exact") == "train"
+    assert (
+        V.normalize_string("train", ["train", "test"], match_method="exact") == "train"
+    )
 
     # contains
-    assert V.normalize_string(
-        "this-is-iqr", ["z_score", "iqr"], 
-        match_method="contains") == "this-is-iqr"
+    assert (
+        V.normalize_string("this-is-iqr", ["z_score", "iqr"], match_method="contains")
+        == "this-is-iqr"
+    )
 
     # startswith
     norm, target = V.normalize_string(
-        "Goodbye World", ["hello", "goodbye"], num_chars_check=7, 
-        return_target_str=True
+        "Goodbye World", ["hello", "goodbye"], num_chars_check=7, return_target_str=True
     )
     assert norm.startswith("goodbye") and target == "goodbye"
 
     # deep
-    assert V.normalize_string(
-        "abc", ["xyzabc123"], deep=True) == "abc"
+    assert V.normalize_string("abc", ["xyzabc123"], deep=True) == "abc"
 
     # return_target_only matched
-    assert V.normalize_string(
-        "MODE", ["mode"], return_target_only=True) == "mode"
+    assert V.normalize_string("MODE", ["mode"], return_target_only=True) == "mode"
 
     # not found + raise
     with pytest.raises(ValueError):
@@ -471,5 +482,5 @@ def test_check_spatial_columns_paths():
         V.check_spatial_columns(df, spatial_cols=("lon", "lat"))
 
 
-if __name__=="__main__": # pragma: no-cover 
-   pytest.main( [__file__])
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

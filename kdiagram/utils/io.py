@@ -349,18 +349,18 @@ def check_file_exists(package, resource):
     r"""
     Check if a file exists in a package's directory with
     importlib.resources.
-    
-    Parameters 
+
+    Parameters
     ----------
 
     package: str
         The package containing the resource.
     resource:  str
         The resource (file) to check.
-    
-    Returns 
+
+    Returns
     --------
-    bool, 
+    bool,
       Boolean indicating if the resource exists.
 
     :example:

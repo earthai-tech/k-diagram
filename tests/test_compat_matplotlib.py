@@ -19,7 +19,6 @@ def test_get_cmap_valid_new_api(monkeypatch):
     assert getattr(cm, "name", "").lower() == "viridis"
 
 
-
 def test_get_cmap_old_api_calls_cm_get_cmap(monkeypatch):
     # Force old API path (<3.6) and stub cm.get_cmap
     monkeypatch.setattr(mpl_compat, "_MPL_VERSION", parse("3.5"))
@@ -47,7 +46,7 @@ def test__get_cmap_private_both_paths(monkeypatch):
     # Old path uses matplotlib.cm.get_cmap(name, lut)
     monkeypatch.setattr(mpl_compat, "_MPL_VERSION", parse("3.5"))
     sentinel = object()
-    monkeypatch.setattr(matplotlib.cm, "get_cmap", lambda n, l=None: sentinel)
+    monkeypatch.setattr(matplotlib.cm, "get_cmap", lambda n, lut=None: sentinel)
     cm_old = mpl_compat._get_cmap("any", lut=None)
     assert cm_old is sentinel
 
@@ -92,5 +91,5 @@ def test_is_valid_cmap_old_registry(monkeypatch):
     assert out == "oldMagma"
 
 
-if __name__=="__main__": # pragma: no-cover 
-   pytest.main( [__file__])
+if __name__ == "__main__":  # pragma: no-cover
+    pytest.main([__file__])

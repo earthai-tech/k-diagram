@@ -200,8 +200,9 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     return output
 
 
-def check_forecast_mode(mode, q=None, error="raise", ops="validate",
-                        q_mode= "strict", **kw):
+def check_forecast_mode(
+    mode, q=None, error="raise", ops="validate", q_mode="strict", **kw
+):
     r"""
     Check consistency between forecast mode and quantile values.
 
@@ -236,8 +237,8 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate",
         performs the checks without returning any value. If set to
         ``"validate"``, the function returns the validated
        (or updated) quantile values. Default is ``"validate"``.
-    q_mode: {'strict', 'soft'} 
-       Validation quantiles mode. See more in 
+    q_mode: {'strict', 'soft'}
+       Validation quantiles mode. See more in
        :func:`kdiagram.utils.diagnose_q.validate_quantiles`
     *kw: dict,
         Additional keywords argument of :func:`kdiagram.utils.diagnose_q`.
@@ -264,7 +265,7 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate",
     # Issues a warning and returns [0.1, 0.5, 0.9].
 
     """
-    
+
     # Ensure mode is valid.
     if mode not in ["point", "quantile"]:
         raise ValueError("mode must be either 'point' or 'quantile'.")
@@ -1558,9 +1559,7 @@ def validate_consistency_q(
         q_items = q_items.columns
 
     # Detect quantile values from q_items using detect_digits in quantile mode.
-    detected_q_values = detect_digits(
-        q_items, as_q=True, sort=True, 
-        return_unique=True)
+    detected_q_values = detect_digits(q_items, as_q=True, sort=True, return_unique=True)
     if verbose >= 5:
         print(f"[DEBUG] Detected quantile values: {detected_q_values}")
 

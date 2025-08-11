@@ -54,7 +54,7 @@ def str2columns(
     if regex is None and pattern is None:
         # default split: commas, whitespace, semicolons, pipes, etc.
         pattern = r"[#&.*@!_,;|\s-]+"
-        
+
         # return [text]
 
     # If the user provided a compiled regex,
