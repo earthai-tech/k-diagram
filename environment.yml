@@ -1,54 +1,68 @@
-# environment.yml (for FusionLab project)
+# environment.yml (for k-diagram)
 #
-# Create this environment with:
+# Create:
 #   conda env create -f environment.yml
-# Activate the environment with:
-#   conda activate fusionlab-dev
-# Update the environment with:
+# Activate:
+#   conda activate k-diagram-dev
+# Update:
 #   conda env update -f environment.yml --prune
 #
-name: fusionlab-dev  # Changed environment name
+name: k-diagram-dev
 
 channels:
-  - conda-forge   # Prioritize conda-forge
+  - conda-forge
   - defaults
 
 dependencies:
   # Core Python
-  - python>=3.9    # Specify minimum Python version (3.9 or higher)
+  - python>=3.9
 
-  # FusionLab core dependencies (match setup.py/install_requires)
-  - numpydoc
-  - numpy >=1.25 #Pin numpy < 2.0 for broader compatibility
-  - pandas >=1.0,<3.0  # Pin pandas < 3.0
-  - scipy >=1.5
-  - matplotlib >=3.3
-  - seaborn >=0.11
-  - scikit-learn >=1.0  # Use a more recent baseline if needed
-  # - torch              # For PyTorch support
-  - tensorflow          # For TensorFlow support
-  # - jax                 # For JAX support
+  # Runtime (from pyproject [project].dependencies)
+  - numpydoc>=1.6
+  - numpy>=1.22
+  - pandas
+  - scipy
+  - matplotlib
+  - seaborn
+  - scikit-learn
 
-  # Documentation dependencies (match docs/requirements.txt)
-  - sphinx >=4.0,<8.0
-  - furo              # Sphinx theme
+  # Docs toolchain (from docs requirements + pyproject dev)
+  - sphinx>=7.0,<8.0
+  - furo
   - sphinx-copybutton
   - myst-parser
   - sphinx-design
+  - sphinx-gallery
+  - sphinxcontrib-jsmath
+  - sphinx-mathjax-offline
+  - sphinx-issues
+  - sphinx-bootstrap-theme
+  - sphinx-prompt
 
-  # Testing dependencies
-  - pytest >=6.0
-  - pytest-xdist       # For parallel testing
-  - pytest-cov         # For coverage reporting
+  # Testing / coverage
+  - pytest>=8.0
+  - pytest-xdist
+  - pytest-cov
+  - coverage
 
-  # Development/Utility dependencies
-  - pip                # Ensure pip is available for installing the package itself
-  - setuptools         # Needed for setup.py/builds
-  - flake8             # Linter
-  - black              # Auto-formatter
-  - isort              # To sort imports automatically
+  # Dev utilities (match pyproject dev extras)
+  - ruff>=0.4
+  - black>=24.0
 
-  # Optional extras
-  - joblib             # For efficient job processing
-  - tqdm               # For progress bars
-  - pydantic           # For data validation
+  # Misc / build helpers
+  - pip
+  - setuptools
+  - wheel
+
+  # Optional extras (nice-to-haves)
+  - joblib
+  - tqdm
+  - pydantic
+
+  # If you need heavy ML backends, keep them optional/commented:
+  # - tensorflow
+  # - pytorch
+  # - jax
+
+# (Intentionally NOT installing the package here via `pip -e .`;
+# your workflow does `pip install . --no-deps` after the env is created.)

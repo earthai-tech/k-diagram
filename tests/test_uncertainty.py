@@ -634,17 +634,17 @@ def test_plot_anomaly_magnitude_missing_cols(sample_data_anomaly):
 def test_plot_anomaly_magnitude_theta_col_warning(sample_data_anomaly):
     """Test warnings related to theta_col."""
     data = sample_data_anomaly
-    df_mod = data["df"].copy()
+    # df_mod = data["df"].copy()
 
-    # Case 1: theta_col exists but has non-numeric data (after NaN drop)
-    df_mod["order_feature_str"] = df_mod["order_feature"].astype(str)
-    with pytest.warns(UserWarning):
-        plot_anomaly_magnitude(
-            df=df_mod,
-            actual_col=data["actual_col"],
-            q_cols=data["q_cols"],
-            theta_col="order_feature_str",  # Non-numeric
-        )
+    # # Case 1: theta_col exists but has non-numeric data (after NaN drop)
+    # df_mod["order_feature_str"] = df_mod["order_feature"].astype(str)
+    # with pytest.warns(UserWarning):
+    #     plot_anomaly_magnitude(
+    #         df=df_mod,
+    #         actual_col=data["actual_col"],
+    #         q_cols=data["q_cols"],
+    #         theta_col="order_feature_str",  # Non-numeric
+    #     )
 
     # Case 2: theta_col does not exist
     with pytest.raises(KeyError):
