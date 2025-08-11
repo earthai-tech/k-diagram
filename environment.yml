@@ -33,7 +33,7 @@ dependencies:
   - myst-parser
   - sphinx-design
   - sphinx-gallery
-  - sphinx-mathjax-offline
+  - sphinx-mathjax
   - sphinx-issues
   - sphinx-prompt
 
