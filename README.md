@@ -2,7 +2,7 @@
 
 -----------------------------------------------------
 
-# k-diagram — Polar Diagnostics for Forecast Uncertainty
+# Polar Diagnostics for Forecast Uncertainty
 
 [![Build Status][badge-ci]][link-ci]
 [![Docs Status][badge-docs]][link-docs]
