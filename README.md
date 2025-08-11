@@ -8,14 +8,14 @@
 
   <!-- Centered Badges -->
 <p>
-    <a href="https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=for-the-badge"></a>
-    <a href="https://k-diagram.readthedocs.io/en/latest/?badge=latest"><img alt="Docs Status" src="https://img.shields.io/readthedocs/k-diagram?style=for-the-badge"></a>
-    <a href="https://github.com/earthai-tech/k-diagram/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/earthai-tech/k-diagram?style=for-the-badge&logo=apache&color=purple"></a>
-    <a href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-Black-000000.svg?style=for-the-badge"></a>
-    <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md"><img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge"></a>
-    <a href="https://codecov.io/gh/earthai-tech/k-diagram"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/earthai-tech/k-diagram?style=for-the-badge"></a>
+    <a href="https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square"></a>
+    <a href="https://k-diagram.readthedocs.io/en/latest/?badge=latest"><img alt="Docs Status" src="https://readthedocs.org/projects/k-diagram/badge/?version=latest&style=flat-square"></a>
+    <a href="https://github.com/earthai-tech/k-diagram/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&color=purple"></a>
+    <a href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-Black-000000.svg?style=flat-square"></a>
+    <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md"><img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square"></a>
+    <a href="https://codecov.io/gh/earthai-tech/k-diagram"><img alt="Codecov" src="https://codecov.io/gh/earthai-tech/k-diagram/branch/main/graph/badge.svg"></a>
   </p>
-
+  
   <!-- Centered Introduction -->
   <p>
     <em>k-diagram</em> provides polar diagnostic plots to evaluate
