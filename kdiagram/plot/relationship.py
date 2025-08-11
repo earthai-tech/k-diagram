@@ -6,7 +6,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..compat.matplotlib import get_cmap, is_valid_cmap
+from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, validate_params
 from ..utils.generic_utils import drop_nan_in
 from ..utils.plot import set_axis_grid
@@ -240,9 +240,8 @@ def plot_relationship(
     # --- Color Handling ---
     if color_palette is None:
         # Generate colors from cmap if palette not given
-        cmap = is_valid_cmap(cmap, default="tab10", error="warn")
         try:
-            cmap_obj = get_cmap(cmap)
+            cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
             # Sample enough distinct colors
             if hasattr(cmap_obj, "colors") and len(cmap_obj.colors) >= num_preds:
                 # Use colors directly from discrete map if enough

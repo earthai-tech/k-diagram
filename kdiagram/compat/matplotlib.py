@@ -19,7 +19,7 @@ _MPL_VERSION = parse(matplotlib.__version__)
 __all__ = ["get_cmap", "is_valid_cmap"]
 
 
-def get_cmap(name="viridis", lut=None, allow_none=False):
+def _get_cmap(name="viridis", lut=None, allow_none=False):
     """Get a Matplotlib colormap with version compatibility.
 
     This function acts as a robust wrapper to retrieve a colormap
@@ -82,8 +82,8 @@ def get_cmap(name="viridis", lut=None, allow_none=False):
         
         return matplotlib.cm.get_cmap(name, lut)
 
-def is_valid_cmap(cmap, default="viridis", error="raise"):
-    """Check if a colormap name is valid by attempting to retrieve it.
+def _is_valid_cmap(cmap, default="viridis", error="raise"):
+    """Legacy check if a colormap name is valid by attempting to retrieve it.
 
     This utility leverages the robust `get_cmap` wrapper to handle
     different Matplotlib versions and input types seamlessly.
@@ -117,7 +117,7 @@ def is_valid_cmap(cmap, default="viridis", error="raise"):
         # We call get_cmap with its safe default (allow_none=False)
         # because this function's purpose is to validate names.
         # It will raise a ValueError for any invalid input.
-        get_cmap(cmap, allow_none=False)
+        _get_cmap(cmap, allow_none=False)
         return cmap
     except ValueError:
         # The name is invalid, so handle it based on the 'error' flag.
@@ -138,3 +138,142 @@ def is_valid_cmap(cmap, default="viridis", error="raise"):
                 "'warn', or 'ignore'."
             )
             
+def is_valid_cmap(
+    cmap,  allow_none=False, 
+    **kw
+    ): # **for future extension 
+    r"""Check if a colormap identifier is valid.
+
+    This function purely validates whether a given identifier can be
+    resolved to a Matplotlib colormap. It does not retrieve the
+    colormap object itself.
+
+    Parameters
+    ----------
+    cmap : any
+        The colormap identifier to validate, typically a string.
+    allow_none : bool, optional
+        If True, `None` is considered a valid input and the
+        function will return True. If False (default), `None` is
+        considered invalid.
+
+    Returns
+    -------
+    bool
+        True if the `cmap` is a valid, retrievable colormap name
+        or if `cmap` is None and `allow_none` is True. Otherwise,
+        returns False.
+    """
+    if cmap is None:
+        return allow_none
+
+    if not isinstance(cmap, str):
+        return False
+
+    try:
+        # The most reliable way to check for existence is to try
+        # getting it, using the modern API first.
+        if _MPL_VERSION >= parse("3.6"):
+            matplotlib.colormaps.get(cmap)
+        else:
+            matplotlib.cm.get_cmap(cmap)
+        return True
+    except (ValueError, KeyError):
+        # ValueError is for old MPL, KeyError for new MPL.
+        return False
+    
+
+def get_cmap(
+    name, default='viridis', allow_none=False, 
+    error=None,
+    failsafe='continuous',
+    **kw
+   ):
+    r"""Robustly retrieve a Matplotlib colormap with fallbacks.
+
+    This function ensures a valid colormap object is always returned,
+    preventing runtime errors from invalid names. It uses a
+    cascading fallback system.
+
+    Parameters
+    ----------
+    name : str or None
+        The desired colormap name.
+    default : str, optional
+        The fallback colormap if `name` is invalid.
+        Defaults to 'viridis'.
+    allow_none : bool, optional
+        If True, a `name` of `None` will return `None` without
+        any warnings or errors. Defaults to False.
+    failsafe : {'continuous', 'discrete'}, optional
+        Specifies the type of ultimate fallback colormap to use if
+        both `name` and `default` are invalid.
+        - 'continuous': Use 'viridis' (default).
+        - 'discrete': Use 'tab10'.
+        
+    Returns
+    -------
+    matplotlib.colors.Colormap or None
+        A valid colormap instance, or `None` if `allow_none` is
+        True and the input `name` is `None`.
+    """
+    # For API consistency, acknowledge the old 'error' parameter
+    # but inform the user that it's no longer used.
+    if error is not None:
+        warnings.warn(
+            "The 'error' parameter is deprecated for get_cmap and is ignored. "
+            "This function now always returns a valid colormap by using "
+            "fallbacks.",
+            FutureWarning,
+            stacklevel=2
+        )
+        # but does nothing 
+    # Private helper to prevent repeating the retrieval code
+    def _retrieve(cmap_name):
+        """Retrieves the colormap object using the correct API."""
+        if _MPL_VERSION >= parse("3.6"):
+            return matplotlib.colormaps.get(cmap_name)
+        else:
+            return matplotlib.cm.get_cmap(cmap_name)
+
+    # 1. Handle explicit `None` input first.
+    if name is None:
+        if allow_none:
+            return None
+        # If None is not allowed, treat it as an invalid name
+        # and proceed to the fallback logic below.
+    # 2. Try to validate and retrieve the primary name.
+    elif is_valid_cmap(name):
+        return _retrieve(name)
+
+    # 3. If we are here, 'name' was invalid. Warn and fall back to default.
+    warnings.warn(
+        f"Colormap '{name}' not found. Falling back to default '{default}'.",
+        UserWarning,
+        stacklevel=2
+    )
+    if is_valid_cmap(default):
+        return _retrieve(default)
+
+    # apply failure safe here 
+    # 4. If the default is also invalid, warn and use the ultimate failsafe.
+    # 4. If default is also invalid, determine and use the ultimate failsafe.
+    if failsafe == 'discrete':
+        failsafe_cmap = 'tab10'
+    else:
+        failsafe_cmap = 'viridis'
+        if failsafe != 'continuous':
+            warnings.warn(
+                f"Invalid `failsafe` value '{failsafe}'. Defaulting to "
+                f"'continuous' type ('{failsafe_cmap}').",
+                UserWarning,
+                stacklevel=2
+            )
+            
+    warnings.warn(
+        f"Default colormap '{default}' also not found. "
+        f"Falling back to failsafe '{failsafe_cmap}'.",
+        UserWarning,
+        stacklevel=2
+    )
+    return _retrieve('viridis')

@@ -428,14 +428,16 @@ def _colors(cmap_name: str, palette: list[Any] | None, k: int) -> list[Any]:
     if palette is not None:
         return [palette[i % len(palette)] for i in range(k)]
     try:
-        cmo = get_cmap(cmap_name)
+        cmo = get_cmap(cmap_name, default="tab10",
+                       failsafe="discrete")
     except ValueError:
         warnings.warn(
             f"Invalid cmap '{cmap_name}'. Using 'tab10' instead.",
             UserWarning,
             stacklevel=2,
         )
-        cmo = get_cmap("tab10")
+        cmo = get_cmap("tab10", default="tab10", 
+                       failsafe="discrete")
     if hasattr(cmo, "colors") and len(cmo.colors) >= k:
         return list(cmo.colors[:k])
     if k == 1:
@@ -1159,7 +1161,7 @@ def plot_model_comparison(
     if colors is None:
         # Use a robust colormap like tab10 if available
         try:
-            cmap_obj = get_cmap("tab10")
+            cmap_obj = get_cmap("tab10", default="tab10", failsafe="discrete")
             plot_colors = [cmap_obj(i % 10) for i in range(n_models)]
         except ValueError:  # Fallback if tab10 not found (unlikely)
             cmap_obj = get_cmap("viridis")

@@ -9,7 +9,7 @@ kdiagram.plot.uncertainty.
 
 import re
 from unittest.mock import patch
-
+import warnings
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,6 +35,9 @@ from kdiagram.plot.uncertainty import (
 # popping up during tests. 'Agg' is a good choice.
 matplotlib.use("Agg")
 
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive")
+    plt.show()
 
 @pytest.fixture(autouse=True)
 def close_plots():

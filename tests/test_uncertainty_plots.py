@@ -23,8 +23,6 @@ def _cleanup():
 
 
 # ---------- plot_coverage ----------
-
-
 def test_plot_coverage_line_bar_pie_radar(tmp_path):
     y_true = np.linspace(0, 1, 20)
     # one point forecast equals truth -> coverage 1

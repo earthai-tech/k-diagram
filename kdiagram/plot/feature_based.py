@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from ..compat.matplotlib import get_cmap, is_valid_cmap
+from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness
 from ..utils.handlers import columns_manager
 from ..utils.validator import ensure_2d
@@ -316,9 +316,8 @@ def plot_feature_fingerprint(
     fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
 
     # Get colors from specified colormap or list
-    cmap = is_valid_cmap(cmap, default="tab10", error="warn")
     try:
-        cmap_obj = get_cmap(cmap)
+        cmap_obj = get_cmap(cmap, default="tab10",failsafe="discrete")
         # Sample colors if it's a standard Matplotlib cmap
         colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
     except ValueError:  # Handle case where cmap might be a list of colors
@@ -334,9 +333,12 @@ def plot_feature_fingerprint(
                 )
         else:  # Fallback if cmap is invalid string or list
             warnings.warn(
-                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.", stacklevel=2
+                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.", 
+                UserWarning, 
+                stacklevel=2
             )
-            cmap_obj = get_cmap("tab10")
+            cmap_obj = get_cmap(
+                "tab10", default="tab10", failsafe="discrete")
             colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
 
     # --- Plot Each Layer ---
