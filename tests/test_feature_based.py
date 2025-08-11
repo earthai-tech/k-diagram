@@ -21,6 +21,7 @@ matplotlib.use("Agg")  # Use Agg backend for non-interactive plotting
 
 # --- Fixtures ---
 
+
 @pytest.fixture(autouse=True)
 def close_plots():
     """Fixture to close all matplotlib plots after each test."""

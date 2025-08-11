@@ -17,8 +17,10 @@ from kdiagram.plot.uncertainty import (
     plot_velocity,
 )
 
+
 def _cleanup():
     plt.close("all")
+
 
 # ---------- plot_coverage ----------
 def test_plot_coverage_line_bar_pie_radar(tmp_path):
@@ -64,8 +66,7 @@ def test_plot_coverage_line_bar_pie_radar(tmp_path):
     out3 = tmp_path / "cov_pie.png"
     preds_zero = np.ones_like(y_true) * 42
     plot_coverage(
-        y_true, preds_zero, names=["Zero"], kind="pie",
-        title="pie", savefig=str(out3)
+        y_true, preds_zero, names=["Zero"], kind="pie", title="pie", savefig=str(out3)
     )
     assert out3.exists()
 
@@ -130,6 +131,7 @@ def test_plot_model_drift_half_circle_and_colors(tmp_path):
     assert not gx and not gy
     _cleanup()
 
+
 # ---------- plot_velocity ----------
 def test_plot_velocity_paths_and_warnings(tmp_path):
     # Build df with 3 time steps; include theta_col to trigger warning
@@ -188,6 +190,7 @@ def test_plot_velocity_missing_cols_raises():
 
 # ---------- plot_interval_consistency ----------
 
+
 def test_plot_interval_consistency_cv_and_std(tmp_path):
     n = 35
     df = pd.DataFrame(
@@ -240,7 +243,7 @@ def test_plot_interval_consistency_length_mismatch_raises():
         plot_interval_consistency(df, ["a"], ["b", "b2"])
 
 
-# ---------- plot_anomaly_magnitude ---------- 
+# ---------- plot_anomaly_magnitude ----------
 def test_plot_anomaly_magnitude_under_over_and_cbar(tmp_path):
     n = 60
     df = pd.DataFrame(

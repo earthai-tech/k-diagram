@@ -125,7 +125,6 @@ def test_uniform_normal_single_model_no_counts_labels_legend(tmp_path, rng):
     _close(ax)
 
 
-
 def test_quantile_edge_collapse_fallback_uniform_emits_warning(rng):
     # constant predictions -> quantile edges collapse
     n = 200

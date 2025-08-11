@@ -29,8 +29,10 @@ def test_str2columns_defaults_and_custom_patterns():
 # smart_format
 # -----------------
 def test_smart_format_various_inputs():
-    assert gu.smart_format(["apple", "banana", "cherry"]
-                           ) == "'apple','banana' and 'cherry'"
+    assert (
+        gu.smart_format(["apple", "banana", "cherry"])
+        == "'apple','banana' and 'cherry'"
+    )
     assert gu.smart_format(["one"]) == "'one'"
     assert gu.smart_format([]) == ""
     # Non-iterable falls back to str()
@@ -56,8 +58,7 @@ def test_count_functions_lists_and_counts():
     assert names == sorted(names)
 
     # exclude classes flag shouldn't error (no classes in this module)
-    names_no_cls = gu.count_functions(mod, include_class=False,
-                                      return_counts=False)
+    names_no_cls = gu.count_functions(mod, include_class=False, return_counts=False)
     assert "str2columns" in names_no_cls
 
 
@@ -70,8 +71,7 @@ def test_drop_nan_in_filters_all_arrays_and_warns():
     y_pred2 = np.array([1.1, 2.2, 3.3, 4.4], dtype=float)
 
     with pytest.warns(UserWarning):
-        yt, yp1, yp2 = gu.drop_nan_in(y_true, y_pred1, y_pred2,
-                                      error="warn")
+        yt, yp1, yp2 = gu.drop_nan_in(y_true, y_pred1, y_pred2, error="warn")
 
     assert yt.tolist() == [1.0, 3.0, 4.0]
     assert yp1.tolist() == [10.0, 30.0, 40.0]
@@ -148,5 +148,6 @@ def test_error_policy_invalid_error_raises_custom_exception():
     with pytest.raises(KeyError):
         gu.error_policy("totally-wrong", exception=KeyError)
 
-if __name__ == "__main__": # pragma: no-cover
+
+if __name__ == "__main__":  # pragma: no-cover
     pytest.main([__file__])

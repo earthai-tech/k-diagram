@@ -8,8 +8,9 @@ kdiagram.plot.uncertainty.
 """
 
 import re
-from unittest.mock import patch
 import warnings
+from unittest.mock import patch
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,6 +39,7 @@ matplotlib.use("Agg")
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive")
     plt.show()
+
 
 @pytest.fixture(autouse=True)
 def close_plots():
@@ -1183,5 +1185,5 @@ def test_plot_temporal_uncertainty_theta_col_warning(sample_data_temporal):
         )
 
 
-if __name__ == "__main__": # pragma: no-cover
+if __name__ == "__main__":  # pragma: no-cover
     pytest.main([__file__])

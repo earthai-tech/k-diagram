@@ -317,7 +317,7 @@ def plot_feature_fingerprint(
 
     # Get colors from specified colormap or list
     try:
-        cmap_obj = get_cmap(cmap, default="tab10",failsafe="discrete")
+        cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
         # Sample colors if it's a standard Matplotlib cmap
         colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
     except ValueError:  # Handle case where cmap might be a list of colors
@@ -333,12 +333,11 @@ def plot_feature_fingerprint(
                 )
         else:  # Fallback if cmap is invalid string or list
             warnings.warn(
-                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.", 
-                UserWarning, 
-                stacklevel=2
+                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.",
+                UserWarning,
+                stacklevel=2,
             )
-            cmap_obj = get_cmap(
-                "tab10", default="tab10", failsafe="discrete")
+            cmap_obj = get_cmap("tab10", default="tab10", failsafe="discrete")
             colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
 
     # --- Plot Each Layer ---

@@ -428,16 +428,14 @@ def _colors(cmap_name: str, palette: list[Any] | None, k: int) -> list[Any]:
     if palette is not None:
         return [palette[i % len(palette)] for i in range(k)]
     try:
-        cmo = get_cmap(cmap_name, default="tab10",
-                       failsafe="discrete")
+        cmo = get_cmap(cmap_name, default="tab10", failsafe="discrete")
     except ValueError:
         warnings.warn(
             f"Invalid cmap '{cmap_name}'. Using 'tab10' instead.",
             UserWarning,
             stacklevel=2,
         )
-        cmo = get_cmap("tab10", default="tab10", 
-                       failsafe="discrete")
+        cmo = get_cmap("tab10", default="tab10", failsafe="discrete")
     if hasattr(cmo, "colors") and len(cmo.colors) >= k:
         return list(cmo.colors[:k])
     if k == 1:
