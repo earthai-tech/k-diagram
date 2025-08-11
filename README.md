@@ -1,23 +1,32 @@
-<img src="docs/source/_static/k_diagram.svg"><br>
+<div align="center">
+
+  <!-- Centered Logo -->
+  <img src="docs/source/_static/k_diagram.svg" alt="k-diagram logo" width="300"><br>
+
+  <!-- Centered Title -->
+  <h1>Polar Diagnostics for Forecast Uncertainty</h1>
+
+  <!-- Centered Badges -->
+  <p>
+    <a href="https://github.com/user/repo/actions/workflows/python-package-conda.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/user/repo/python-package-conda.yml?branch=main&style=for-the-badge"></a>
+    <a href="https://user.github.io/repo/"><img alt="Docs Status" src="https://img.shields.io/github/deployments/user/repo/github-pages?style=for-the-badge"></a>
+    <a href="https://github.com/user/repo/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/user/repo?style=for-the-badge"></a>
+    <a href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"></a>
+    <a href="https://github.com/user/repo/graphs/contributors"><img alt="Contributions" src="https://img.shields.io/github/contributors/user/repo?style=for-the-badge"></a>
+    <a href="https://codecov.io/gh/user/repo"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/user/repo?style=for-the-badge"></a>
+  </p>
+
+  <!-- Centered Introduction -->
+  <p>
+    <em>k-diagram</em> provides polar diagnostic plots to evaluate
+    forecast models with an emphasis on uncertainty. It helps you look
+    beyond single metrics and understand <strong>where</strong> and <strong>why</strong> models
+    behave as they do.
+  </p>
+
+</div>
 
 -----------------------------------------------------
-
-# Polar Diagnostics for Forecast Uncertainty
-
-[![Build Status][badge-ci]][link-ci]
-[![Docs Status][badge-docs]][link-docs]
-![License][badge-license]
-[![Black][badge-black]][link-black]
-[![Contributions][badge-contrib]][link-contrib]
-[![Codecov][badge-codecov]][link-codecov]
-
-
- *k-diagram* provides polar diagnostic plots to evaluate
-forecast models with an emphasis on uncertainty. It helps you look
-beyond single metrics and understand **where** and **why** models
-behave as they do.
-
----
 
 ## ✨ Why k-diagram?
 
