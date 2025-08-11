@@ -20,7 +20,7 @@ def check_non_emptiness(
     ellipsis_as_empty: bool = True,
     include: tuple = ("set", "dict"),
 ):
-    """
+    r"""
     Decorator to check for non-emptiness of specified
     parameters in a function. By default, it checks
     array-like structures (lists, tuples, Series,
@@ -196,7 +196,7 @@ def _check_and_handle_emptiness(
     include: tuple,
     param_name: str,
 ):
-    """
+    r"""
     Internal helper to detect emptiness of `value`
     and handle it according to <error inline>
     policy.
@@ -229,7 +229,7 @@ def _check_and_handle_emptiness(
 
 
 def _is_arraylike_empty(value):
-    """
+    r"""
     Heuristic check if `value` is an empty
     array-like structure (list, tuple, Series,
     DataFrame, numpy array).
@@ -253,7 +253,7 @@ def _is_arraylike_empty(value):
 
 
 def _handle_empty(error_policy, param_name):
-    """
+    r"""
     Handle an empty argument based on the
     <error_policy inline>.
     """
@@ -270,7 +270,7 @@ def _handle_empty(error_policy, param_name):
 
 
 def isdf(func):
-    """
+    r"""
     Decorator that ensures the first positional argument passed to the
     decorated callable is a pandas DataFrame. If it's not, attempts to convert
     it to a DataFrame using an optional `columns` keyword argument.
@@ -349,7 +349,7 @@ def isdf(func):
 
 
 class SaveFile:
-    """
+    r"""
     SaveFile Decorator for Smartly Saving DataFrames in Various Formats.
 
     The `SaveFile` decorator enables automatic saving of DataFrames returned
@@ -622,7 +622,7 @@ SaveFile = SaveFile.save_file
 
 
 def save_file(func=None, *, data_index=0, dout=".csv"):
-    """
+    r"""
     Both save_file (function-based) and SaveFile (class-based) decorators
     are designed to allow users to save the returned DataFrame(s) from a
     decorated function to a file, if needed. For more details and advanced

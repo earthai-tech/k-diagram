@@ -4,98 +4,103 @@
 Citing k-diagram
 ===================
 
-If you use `k-diagram` in your research or work, please consider
-citing it. Proper citation helps acknowledge the effort involved in
-developing and maintaining this software and allows others to find
-and verify the tools used.
+If you use ``k-diagram`` in your research or work, please consider
+citing it. Proper citation acknowledges the effort involved in
+developing and maintaining the software and helps others find and
+verify the tools you used.
 
-We recommend citing both the software package itself and any relevant
-publications describing the methods or applications.
+We recommend citing the software paper (JOSS) **and** the software
+package itself. You may also cite any related application or methods
+papers that informed your work.
 
-Citing the Software
----------------------
-
-For citing the `k-diagram` software package directly, please include
-the author, title, version used, and the software repository URL.
-
-**Recommended Format:**
-
-   Kouadio, K. L. (2024). *k-diagram: Rethinking Forecasting
-   Uncertainty via Polar-Based Visualization* (Version |release|).
-   GitHub Repository. https://github.com/earthai-tech/k-diagram
-
-*(Please replace |release| with the specific version of k-diagram you used
-in your work. You can check the installed version using
-``k-diagram --version`` or ``import kdiagram; print(kdiagram.__version__)``.)*
-
-.. note::
-   We plan to archive stable releases on platforms like Zenodo to provide
-   a persistent Digital Object Identifier (DOI) for easier citation in
-   the future. Please check the repository for updates on DOIs.
-
-Related Publications
------------------------
-
-If your work relates to the concepts or applications demonstrated using
-`k-diagram`, please also consider citing the relevant papers:
-
-.. note::
-
-   Please note that details for submitted or planned publications
-   (like DOI, volume, pages) are placeholders. This information will be
-   updated once the papers are formally published.
-   
-Land Subsidence Uncertainty Analysis (IJF Submission)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This paper delves into analyzing the structure and consistency of
-predictive uncertainty in land subsidence forecasting, applying methods
-related to `k-diagram`.
-
-.. code-block:: bibtex
-
-    @unpublished{kouadio_subsidence_ijf_2025,
-      author       = {Kouadio, Kouao Laurent and Liu, Rong and Loukou, Kouamé Gbèlè Hermann and Liu, Rong}, 
-      title        = {{Understanding Uncertainty in Land Subsidence Forecasting}},
-      journal      = {International Journal of Forecasting},
-      note         = {Submitted},
-      year         = {2025}, 
-    }
-    
-    
-Urban Land Subsidence Forecasting (Nature Sustainability Submission)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This paper introduces the XTFT deep learning framework and applies
-visualization techniques (related to those in `k-diagram`) to forecast
-land subsidence in Nansha and Zhongshan, China.
-
-.. code-block:: bibtex
-
-    @article{liu_subsidence_nat_sust_2025,
-      author       = {Liu, Rong and Kouadio, Kouao Laurent and Jiang, Shiyu and Liu, Jianxin and Kouamelan, Serge Kouamelan and Liu, Wenxiang and Qing, Zhanhui and Zheng, Zhiwen},
-      title        = {{Forecasting Urban Land Subsidence in the Era of Rapid Urbanization and Climate Stress}},
-      journal      = {Nature Sustainability},
-      year         = {2025}, 
-      note         = {Submitted},
-    }
-       
 Software Paper (Planned JOSS Submission)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------
 
-This upcoming paper will provide a focused description of the `k-diagram`
-software package itself, targeting the open-source software community.
+This paper focuses on the ``k-diagram`` software and is intended for
+the open-source and scientific software community.
 
 .. code-block:: bibtex
 
     @article{kouadio_kdiagram_joss_prep_2025,
       author       = {Kouadio, Kouao Laurent},
-      title        = {{k-diagram: Rethinking Forecasting Uncertainty via Polar-Based Visualization}},
-      note         = {In preparation for submission to Journal of Open Source Software},
+      title        = {k-diagram: Rethinking Forecasting Uncertainty via
+                      Polar-Based Visualization},
+      note         = {In preparation for submission to the Journal of
+                      Open Source Software (JOSS)},
       year         = {2025},
       howpublished = {\url{https://github.com/earthai-tech/k-diagram}},
-      release      = |release|
+      release      = {|release|}
     }
 
+Citing the Software Package
+---------------------------
 
-Thank you for citing `k-diagram`!
+If you wish to cite the software artifact directly, include the
+author, title, version used, and repository URL.
+
+**Recommended format:**
+
+   Kouadio, K. L. (2024). *k-diagram: Rethinking Forecasting
+   Uncertainty via Polar-Based Visualization* (Version |release|).
+   GitHub Repository. https://github.com/earthai-tech/k-diagram
+
+*(Replace ``|release|`` with the specific version you used. You can
+check the installed version with ``k-diagram --version`` or
+``import kdiagram; print(kdiagram.__version__)``.)*
+
+.. note::
+
+   We plan to archive stable releases on Zenodo to provide a persistent
+   DOI. Please check the repository for updates once DOIs are issued.
+
+Related Publications
+--------------------
+
+If your work uses concepts, diagnostics, or applications demonstrated
+with ``k-diagram``, consider citing the relevant papers below.
+
+.. note::
+
+   Some entries are submitted or in preparation. DOI, volume, and page
+   information will be added once available.
+
+Land Subsidence Uncertainty Analysis (IJF submission)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This paper analyzes the structure and consistency of predictive
+uncertainty in land-subsidence forecasting using diagnostic diagrams
+related to ``k-diagram``.
+
+.. code-block:: bibtex
+
+    @unpublished{kouadio_subsidence_ijf_2025,
+      author  = {Kouadio, Kouao Laurent and Liu, Rong and
+                 Loukou, Kouam{\\'e} Gb{\\`e}l{\\`e} Hermann},
+      title   = {Analytics Framework for Interpreting Spatiotemporal
+                 Probabilistic Forecasts},
+      journal = {International Journal of Forecasting},
+      note    = {Submitted},
+      year    = {2025}
+    }
+
+Urban Land Subsidence Forecasting (Nature Communications)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This paper introduces a physics-informed deep learning framework and
+applies visualization techniques related to ``k-diagram`` to forecast
+urban land subsidence.
+
+.. code-block:: bibtex
+
+    @article{liu_subsidence_nat_comm_2025,
+      author  = {Kouadio, Kouao Laurent and Liu, Rong and Jiang, Shiyu
+                 and Liu, Jianxin and Kouamelan, Serge and Liu, Wenxiang
+                 and Qing, Zhanhui and Zheng, Zhiwen},
+      title   = {Forecasting Urban Land Subsidence in the Era of Rapid
+                 Urbanization and Climate Stress},
+      journal = {Nature Communications},
+      year    = {2025},
+      note    = {Submitted}
+    }
+
+Thank you for citing ``k-diagram``!

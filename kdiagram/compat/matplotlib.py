@@ -1,3 +1,7 @@
+# File: kdiagram/compat/sklearn.py
+# Author: LKouadio <etanoyau@gmail.com>
+# License: Apache License 2.0
+
 """
 A compatibility module to handle API changes across different
 versions of Matplotlib.

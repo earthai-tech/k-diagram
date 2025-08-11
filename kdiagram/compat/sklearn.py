@@ -72,7 +72,7 @@ __all__ = [
 
 
 class Interval:
-    """
+    r"""
     Compatibility wrapper for scikit-learn's `Interval` class to handle
     versions that do not include the `inclusive` argument.
 
@@ -185,7 +185,7 @@ class Interval:
 
 
 def type_of_target(y):
-    """
+    r"""
     Determine the type of the target variable.
 
     This function identifies the nature of the target variable ``y`` and
@@ -327,7 +327,7 @@ def type_of_target(y):
 
 
 def _type_of_target(y):
-    """
+    r"""
     Determine the type of data indicated by the target variable.
 
     Parameters
@@ -390,7 +390,7 @@ def _type_of_target(y):
 
 
 def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs):
-    """
+    r"""
     Compatibility wrapper for scikit-learn's `validate_params` function
     to handle versions that require the `prefer_skip_nested_validation` argument,
     with a default value that can be overridden by the user.
@@ -518,7 +518,7 @@ def validate_params(params, *args, prefer_skip_nested_validation=True, **kwargs)
 
 
 def get_column_transformer_feature_names(column_transformer, input_features=None):
-    """
+    r"""
     Get feature names from a ColumnTransformer.
 
     Parameters:
@@ -571,7 +571,7 @@ def get_column_transformer_feature_names(column_transformer, input_features=None
 
 
 def get_column_transformer_feature_names2(column_transformer, input_features=None):
-    """
+    r"""
     Get feature names from a ColumnTransformer.
 
     Parameters:
@@ -626,7 +626,7 @@ def get_column_transformer_feature_names2(column_transformer, input_features=Non
 
 
 def get_feature_names(estimator, *args, **kwargs):
-    """
+    r"""
     Compatibility function for fetching feature names from an estimator.
 
     Parameters:
@@ -652,7 +652,7 @@ def get_feature_names(estimator, *args, **kwargs):
 
 
 def get_feature_names_out(estimator, *args, **kwargs):
-    """
+    r"""
     Compatibility function for fetching feature names from an estimator, using
     get_feature_names_out for scikit-learn versions that support it.
 
@@ -670,7 +670,7 @@ def get_feature_names_out(estimator, *args, **kwargs):
 
 
 def get_transformers_from_column_transformer(ct):
-    """
+    r"""
     Compatibility function to get transformers from a ColumnTransformer object.
 
     Parameters:
@@ -688,11 +688,13 @@ def get_transformers_from_column_transformer(ct):
             "The ColumnTransformer instance does not have a 'transformers_' attribute."
         )
 
+# near the top you already have: import inspect
+# ...
 
-def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
-    """
+def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
+    r"""
     Compatibility wrapper for scikit-learn's check_is_fitted function.
-
+    
     Parameters:
     - estimator : estimator instance
         The estimator to check.
@@ -702,15 +704,24 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
         The message to display on failure.
     - all_or_any : callable, optional
         all or any; whether all or any of the given attributes must be present.
-
-    Returns:
-    - None
+        
+    
     """
-    return sklearn_check_is_fitted(estimator, attributes, msg, all_or_any)
+    # Build kwargs only for parameters the installed sklearn actually supports
+    sig = inspect.signature(sklearn_check_is_fitted)
+    kw = {}
+    if "attributes" in sig.parameters:
+        kw["attributes"] = attributes
+    if "msg" in sig.parameters:
+        kw["msg"] = msg
+    if "all_or_any" in sig.parameters:
+        kw["all_or_any"] = all_or_any
+    return sklearn_check_is_fitted(estimator, **kw)
+
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred, average_method="arithmetic"):
-    """
+    r"""
     Compatibility function for adjusted_mutual_info_score with the
     average_method parameter.
 
@@ -737,7 +748,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method="arithme
 
 
 def fetch_openml(*args, **kwargs):
-    """
+    r"""
     Compatibility function for fetch_openml to ensure consistent return type.
 
     Parameters:
@@ -756,7 +767,7 @@ def fetch_openml(*args, **kwargs):
 
 
 def plot_confusion_matrix(estimator, X, y_true, *args, **kwargs):
-    """
+    r"""
     Compatibility function for plot_confusion_matrix across scikit-learn versions.
 
     Parameters:
@@ -784,7 +795,7 @@ def plot_confusion_matrix(estimator, X, y_true, *args, **kwargs):
 
 
 def train_test_split(*args, **kwargs):
-    """
+    r"""
     Compatibility wrapper for train_test_split to ensure consistent behavior.
 
     Parameters:
@@ -799,7 +810,7 @@ def train_test_split(*args, **kwargs):
 
 
 def get_transformer_feature_names(transformer, input_features=None):
-    """
+    r"""
     Compatibility function to get feature names from transformers like OneHotEncoder
     in scikit-learn, taking into account changes in method names across versions.
 
@@ -832,7 +843,7 @@ def get_transformer_feature_names(transformer, input_features=None):
 
 
 def get_pipeline_feature_names(pipeline, input_features=None):
-    """
+    r"""
     Compatibility function to safely extract feature names from a pipeline,
     especially when it contains transformers like SimpleImputer that do not
     support get_feature_names_out directly.
@@ -879,7 +890,7 @@ def get_pipeline_feature_names(pipeline, input_features=None):
 
 
 def mean_squared_error(y_true, y_pred, squared=True, **kwargs):
-    """
+    r"""
     Compatibility wrapper for sklearn.metrics.mean_squared_error.
 
     This function behaves like the older version of the function, accepting

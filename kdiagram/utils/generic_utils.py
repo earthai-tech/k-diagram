@@ -52,15 +52,18 @@ def str2columns(
     # If no regex or pattern is provided,
     # just wrap the entire text in a list
     if regex is None and pattern is None:
-        return [text]
+        # default split: commas, whitespace, semicolons, pipes, etc.
+        pattern = r"[#&.*@!_,;|\s-]+"
+        
+        # return [text]
 
     # If the user provided a compiled regex,
     # we use it directly
-    if regex is not None:
-        splitter = regex
-    else:
-        # Otherwise compile from <pattern>
-        splitter = re.compile(pattern, flags=re.IGNORECASE)
+    # if regex is not None:
+    #     splitter = regex
+    # else:
+    # Otherwise compile from <pattern>
+    splitter = regex or re.compile(pattern, flags=re.IGNORECASE)
 
     # Split and filter out empty parts
     parts = splitter.split(text)
@@ -68,7 +71,7 @@ def str2columns(
 
 
 def smart_format(iter_obj, choice: str = "and") -> str:
-    """
+    r"""
     Smartly format an iterable object into a readable
     string with a specific connector (e.g. `'and'`).
 
@@ -124,7 +127,7 @@ def count_functions(
     include_private=False,
     include_local=False,
 ):
-    """
+    r"""
     Count and list the number of functions and classes in a specified module.
 
     Parameters
@@ -265,7 +268,7 @@ def count_functions(
 
 
 def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
-    """
+    r"""
     Drop NaN values from `y_true` and corresponding predictions in `y_preds`.
 
     This function filters out the samples where `y_true` contains NaN values,
@@ -347,7 +350,7 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
 
 
 def get_valid_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
-    """
+    r"""
     Filter and return only the valid keyword arguments for a given
     callable object, while warning about any invalid kwargs.
 
@@ -415,7 +418,7 @@ def error_policy(
     msg: str | None = None,
     valid_policies: set = None,
 ) -> str:
-    """
+    r"""
     Manage error-handling policies like 'warn', 'raise', or 'ignore'.
 
     The `error_policy` function determines how to handle potential

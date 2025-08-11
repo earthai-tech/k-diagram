@@ -33,7 +33,7 @@ def _load_sklearn_metrics():
 
 
 def _build_registry() -> dict[str, Callable[..., float]]:
-    """
+    r"""
     Build the internal mapping of common metric aliases to callables
     with signature (y_true, y_pred, **kwargs) -> score.
     """
@@ -107,7 +107,7 @@ def _get_registry() -> dict[str, Callable[..., float]]:
 
 
 def get_scorer(scoring: str) -> Callable[[Any, Any], float]:
-    """
+    r"""
     Return a metric function matching `scoring` with signature:
         (y_true, y_pred, **kwargs) -> score
 
@@ -161,7 +161,7 @@ def get_scorer(scoring: str) -> Callable[[Any, Any], float]:
 
 
 def available_scorers() -> list[str]:
-    """
+    r"""
     List the metric aliases available in the internal registry.
     (This does not enumerate every function in sklearn.metrics.)
 

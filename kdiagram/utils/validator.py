@@ -17,8 +17,12 @@ import scipy.sparse as sp
 from .generic_utils import smart_format, str2columns
 
 
-def validate_length_range(length_range, sorted_values=True, param_name=None):
-    """
+def validate_length_range(
+    length_range, 
+    sorted_values=True, 
+    param_name=None
+    ):
+    r"""
     Validates the review length range ensuring it's a tuple with two integers
     where the first value is less than the second.
 
@@ -78,9 +82,12 @@ def validate_length_range(length_range, sorted_values=True, param_name=None):
 
 
 def validate_yy(
-    y_true, y_pred, expected_type=None, *, validation_mode="strict", flatten=False
+    y_true, y_pred, 
+    expected_type=None, *, 
+    validation_mode="strict", 
+    flatten=False
 ):
-    """
+    r"""
     Validates the shapes and types of actual and predicted target arrays,
     ensuring they are compatible for further analysis or metrics calculation.
 
@@ -140,7 +147,8 @@ def validate_yy(
         actual_type_y_true = type_of_target(y_true)
         actual_type_y_pred = type_of_target(y_pred)
         if validation_mode == "strict" and (
-            actual_type_y_true != expected_type or actual_type_y_pred != expected_type
+            actual_type_y_true != expected_type 
+            or actual_type_y_pred != expected_type
         ):
             msg = (
                 f"Validation failed in strict mode. Expected type '{expected_type}'"
@@ -153,7 +161,7 @@ def validate_yy(
 
 
 def contains_nested_objects(lst, strict=False, allowed_types=None):
-    """
+    r"""
     Determines whether a list contains nested objects.
 
     Parameters
@@ -223,7 +231,7 @@ def contains_nested_objects(lst, strict=False, allowed_types=None):
 
 
 def check_consistent_length(*arrays):
-    """Check that all arrays have consistent first dimensions.
+    r"""Check that all arrays have consistent first dimensions.
     Checks whether all objects in arrays have the same shape or length.
     Parameters
     ----------
@@ -276,7 +284,7 @@ def is_in_if(
     return_diff: bool = False,
     return_intersect: bool = False,
 ) -> Union[list, None]:
-    """
+    r"""
     Assert the Presence of Items within an Iterable Object.
     
     The ``is_in_if`` function verifies whether specified ``items`` exist within 
@@ -392,6 +400,11 @@ def is_in_if(
            estimator: L2 theory. *Probability Theory and Related Fields*, 57(5), 
            453-476.
     """
+    
+    if error not in {"raise", "warn", "ignore"}:
+        raise ValueError("error must be 'raise', 'warn', or 'ignore'")
+
+
     if isinstance(items, str):
         items = [items]
     elif not isinstance(o, Iterable):
@@ -406,10 +419,13 @@ def is_in_if(
     intersect = list(set_o.intersection(set_items))
 
     # to make a difference be sure to select the long set
-    if len(set_items) >= len(set_o):
-        missing_items = list(set_items.difference(set_o))
-    else:
-        missing_items = list(set_o.difference(set_items))
+    # Always: items that are not in o
+    missing_items = list(set_items.difference(set_o))
+
+    # if len(set_items) >= len(set_o):
+    #     missing_items = list(set_items.difference(set_o))
+    # else:
+    #     missing_items = list(set_o.difference(set_items))
 
     if return_diff or return_intersect:
         error = "ignore"
@@ -435,7 +451,7 @@ def is_in_if(
 
 
 def exist_features(df: pd.DataFrame, features, error="raise", name="Feature") -> bool:
-    """
+    r"""
     Check whether the specified features exist in the dataframe.
 
     Parameters
@@ -566,7 +582,7 @@ def _assert_all_types(
     *expected_objtype: Union[type[Any], tuple[type[Any], ...]],
     objname: Optional[str] = None,
 ) -> object:
-    """
+    r"""
     Robust type checking with enhanced error handling and formatting.
 
     Parameters
@@ -761,7 +777,7 @@ def build_data_if(
     start_incr_at=0,
     **kw,
 ):
-    """
+    r"""
     Validates and converts ``data`` into a pandas DataFrame
     if requested, optionally enforcing consistent column
     naming. Intended to standardize data structures for
@@ -864,7 +880,7 @@ def build_data_if(
 def _convert_int_columns_to_str(
     df: pd.DataFrame, col_prefix: Optional[str] = "col_"
 ) -> pd.DataFrame:
-    """
+    r"""
     Convert integer columns in a DataFrame to string form,
     optionally adding a prefix.
     """
@@ -898,7 +914,7 @@ def recheck_data_types(
     column_prefix: str = "col",
     return_as_numpy: Union[bool, str] = "auto",
 ) -> Union[pd.DataFrame, pd.Series, np.ndarray]:
-    """
+    r"""
     Rechecks and coerces column data types in a DataFrame to the most appropriate
     numeric or datetime types if initially identified as objects. It can also handle
     non-DataFrame inputs by attempting to construct a DataFrame before processing.
@@ -987,7 +1003,7 @@ def array_to_frame(
     input_name="",
     force=False,
 ):
-    """
+    r"""
     Validates and optionally converts an array-like object to a pandas DataFrame,
     applying specified column names if provided or generating them if the `force`
     parameter is set.
@@ -1051,7 +1067,7 @@ def array_to_frame(
 
 
 def convert_array_to_pandas(X, *, to_frame=False, columns=None, input_name="X"):
-    """
+    r"""
     Converts an array-like object to a pandas DataFrame or Series, applying
     provided column names or series name.
 
@@ -1139,7 +1155,7 @@ def convert_array_to_pandas(X, *, to_frame=False, columns=None, input_name="X"):
 
 
 def ensure_2d(X, output_format="auto"):
-    """
+    r"""
     Ensure that the input X is converted to a 2-dimensional structure.
 
     Parameters
@@ -1211,9 +1227,10 @@ def ensure_2d(X, output_format="auto"):
 
 
 def parameter_validator(
-    param_name, target_strs, match_method="contains", raise_exception=True, **kws
+    param_name, target_strs, match_method="contains",
+    raise_exception=True, **kws
 ):
-    """
+    r"""
     Creates a validator function for ensuring a parameter's value matches one
     of the allowed target strings, optionally applying normalization.
 
@@ -1301,7 +1318,7 @@ def normalize_string(
     match_method: str = "exact",
     error_msg: str = None,
 ) -> Union[str, tuple[str, Optional[str]]]:
-    """
+    r"""
     Normalizes a string by applying various transformations and optionally checks
     against a list of target strings based on different matching methods.
 
@@ -1392,7 +1409,8 @@ def normalize_string(
     if matched_target is not None:
         if return_target_only:
             return matched_target
-        return (normalized_str, matched_target) if return_target_str else normalized_str
+        return (
+            normalized_str, matched_target) if return_target_str else normalized_str
 
     if raise_exception:
         error_msg = error_msg or (
@@ -1408,9 +1426,10 @@ def normalize_string(
 
 
 def is_iterable(
-    y, exclude_string: bool = False, transform: bool = False, parse_string: bool = False
+    y, exclude_string: bool = False, transform: bool = False,
+    parse_string: bool = False, delimiter: str = r"[ ,;|\t\n]+", 
 ) -> Union[bool, list]:
-    """
+    r"""
     Asserts whether `<y>` is iterable and optionally transforms
     `<y>` into a list or parses it as columns if it is a string.
 
@@ -1471,11 +1490,12 @@ def is_iterable(
 
     # If parse_string is True, convert string to columns
     if isinstance(y, str) and parse_string:
-        y = str2columns(y)
+        y = str2columns(y, pattern=delimiter)
 
     # Check iterability, but optionally treat string
     # objects as non-iterable
-    is_iter = not (exclude_string and isinstance(y, str)) and hasattr(y, "__iter__")
+    is_iter = not (exclude_string and isinstance(
+        y, str)) and hasattr(y, "__iter__")
 
     # If transform is True, return y as-is if it is
     # iterable, otherwise wrap it in a list.
@@ -1491,7 +1511,7 @@ def check_spatial_columns(
     df: pd.DataFrame,
     spatial_cols: Optional[tuple] = ("longitude", "latitude"),
 ) -> None:
-    """
+    r"""
     Validate the spatial columns in the DataFrame.
 
     Ensures that the specified `spatial_cols` are present in the DataFrame and

@@ -39,7 +39,7 @@ def is_valid_kind(
     valid_kinds: Optional[list[str]] = None,
     error: str = "raise",
 ) -> str:
-    """
+    r"""
     Normalizes and validates plot type specifications,
     handling aliases and suffixes.
 

@@ -200,7 +200,8 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     return output
 
 
-def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
+def check_forecast_mode(mode, q=None, error="raise", ops="validate",
+                        q_mode= "strict", **kw):
     r"""
     Check consistency between forecast mode and quantile values.
 
@@ -235,6 +236,9 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
         performs the checks without returning any value. If set to
         ``"validate"``, the function returns the validated
        (or updated) quantile values. Default is ``"validate"``.
+    q_mode: {'strict', 'soft'} 
+       Validation quantiles mode. See more in 
+       :func:`kdiagram.utils.diagnose_q.validate_quantiles`
     *kw: dict,
         Additional keywords argument of :func:`kdiagram.utils.diagnose_q`.
 
@@ -260,6 +264,7 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
     # Issues a warning and returns [0.1, 0.5, 0.9].
 
     """
+    
     # Ensure mode is valid.
     if mode not in ["point", "quantile"]:
         raise ValueError("mode must be either 'point' or 'quantile'.")
@@ -293,7 +298,7 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
 
             q = [0.1, 0.5, 0.9]
         # then validate quantiles
-        q = validate_quantiles(q, **kw)
+        q = validate_quantiles(q, mode=q_mode, **kw)
     # If ops is "check_only", simply return None.
     if ops == "check_only":
         return None
@@ -413,7 +418,7 @@ def _flatten(nested_list: Any) -> list[Any]:
 
 
 def validate_q_dict(q_dict, recheck=False):
-    """
+    r"""
      Converts the keys of a dictionary of quantile columns (`q_dict`) from
      string representations to numeric values (float) if possible. If the key
      cannot be converted to a number, it returns the dictionary as is.
@@ -1553,7 +1558,9 @@ def validate_consistency_q(
         q_items = q_items.columns
 
     # Detect quantile values from q_items using detect_digits in quantile mode.
-    detected_q_values = detect_digits(q_items, as_q=True, sort=True, return_unique=True)
+    detected_q_values = detect_digits(
+        q_items, as_q=True, sort=True, 
+        return_unique=True)
     if verbose >= 5:
         print(f"[DEBUG] Detected quantile values: {detected_q_values}")
 
@@ -1585,7 +1592,7 @@ def validate_consistency_q(
         elif error == "warn":
             warnings.warn(err_msg + f"{suff}", UserWarning, stacklevel=2)
 
-        return [] if mode == "valid_q" else detected_q_values
+        return [] if default_to == "valid_q" else detected_q_values
 
     # In strict mode, expect the user_q to exactly match the detected quantiles.
     if mode == "strict":
@@ -1634,7 +1641,7 @@ def _verify_identical_items(
     error: str = "raise",
     objname: str = None,
 ) -> Union[bool, list]:
-    """
+    r"""
     Check if two lists contain identical elements according
     to the specified mode.
 
@@ -1749,7 +1756,7 @@ def validate_qcols(
     ncols_exp: Optional[str] = None,
     err_msg: Optional[str] = None,
 ) -> list[str]:
-    """
+    r"""
     Validate and standardise a collection of column names that
     represent quantiles or prediction outputs. The function
     `validate_qcols` converts the input to a clean list of
@@ -1883,7 +1890,7 @@ def build_qcols_multiple(
     enforce_triplet: bool = False,
     allow_pair_when_median: bool = False,
 ) -> list[tuple[str, ...]]:
-    """
+    r"""
     Assemble and validate tuples of quantile columns.
 
     Parameters

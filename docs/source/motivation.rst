@@ -75,7 +75,7 @@ model behavior and uncertainty:
 
 These visualization methods, developed during the course of the land
 subsidence research (aspects of which are detailed in a paper submitted
-to *Nature Sustainability* co-authored with Jianxi Liu, and Liu Rong), 
+to *Nature Communications* co-authored with Jianxi Liu, and Liu Rong), 
 aim to provide more intuitive, spatially
 explicit (when angle represents location or index), and diagnostically
 rich insights than standard Cartesian plots alone.

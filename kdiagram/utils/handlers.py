@@ -22,7 +22,7 @@ def columns_manager(
     wrap_dict: bool = False,
     error: str = "raise",
 ) -> list:
-    """
+    r"""
     A function to handle various types of column inputs, convert them
     into a list, and optionally process them based on additional parameters
     like converting to uppercase, handling empty values, or ensuring all items

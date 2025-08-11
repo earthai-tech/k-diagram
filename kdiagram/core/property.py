@@ -22,7 +22,7 @@ import pandas as pd
 
 
 class PandasDataHandlers:
-    """
+    r"""
     A container for data parsers and writers based on Pandas, supporting a
     wide range of formats for both reading and writing DataFrames. This class
     simplifies data I/O by mapping file extensions to Pandas functions, making
