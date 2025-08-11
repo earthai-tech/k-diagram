@@ -136,7 +136,7 @@ pytest.ini
 * Uploads to Codecov and shows a **badge** in the README,
 * Avoids prior warnings and keeps logs clean.
 
-### Development
+# Development
 
 ***1) README.md suggests pip install -e .\[dev] from the source directory. The project also has an environment.yml file that is not mentioned anywhere, if I'm not mistaken. As this environment has more packages, it might be worth mentioning this somewhere, or let pip install -e .\[dev] also install the development dependencies which are not being installed, but are in the environment.yml file.***
 
