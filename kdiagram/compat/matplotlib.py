@@ -72,7 +72,12 @@ def _get_cmap(name="viridis", lut=None, allow_none=False):
         # continue to work as expected.
         
         try:
-            return matplotlib.colormaps.get(name)
+            result =  matplotlib.colormaps.get(name)
+            if result is None and not allow_none: 
+                raise KeyError 
+            else: 
+                return result 
+                
         except (TypeError, KeyError, ValueError) as err:
             raise ValueError(
                 f"'{name}' is not a valid colormap name."
@@ -117,7 +122,7 @@ def _is_valid_cmap(cmap, default="viridis", error="raise"):
         # We call get_cmap with its safe default (allow_none=False)
         # because this function's purpose is to validate names.
         # It will raise a ValueError for any invalid input.
-        _get_cmap(cmap, allow_none=False)
+        cmap = _get_cmap(cmap, allow_none=False)
         return cmap
     except ValueError:
         # The name is invalid, so handle it based on the 'error' flag.
@@ -164,6 +169,7 @@ def is_valid_cmap(
         or if `cmap` is None and `allow_none` is True. Otherwise,
         returns False.
     """
+    is_valid =False 
     if cmap is None:
         return allow_none
 
@@ -174,15 +180,18 @@ def is_valid_cmap(
         # The most reliable way to check for existence is to try
         # getting it, using the modern API first.
         if _MPL_VERSION >= parse("3.6"):
-            matplotlib.colormaps.get(cmap)
+            is_valid = matplotlib.colormaps.get(cmap)
         else:
-            matplotlib.cm.get_cmap(cmap)
+            is_valid = matplotlib.cm.get_cmap(cmap)
+        
+        if is_valid is None: 
+            return False 
+        
         return True
     except (ValueError, KeyError):
         # ValueError is for old MPL, KeyError for new MPL.
         return False
     
-
 def get_cmap(
     name, default='viridis', allow_none=False, 
     error=None,
@@ -217,6 +226,7 @@ def get_cmap(
         A valid colormap instance, or `None` if `allow_none` is
         True and the input `name` is `None`.
     """
+    result = None
     # For API consistency, acknowledge the old 'error' parameter
     # but inform the user that it's no longer used.
     if error is not None:
@@ -244,8 +254,10 @@ def get_cmap(
         # and proceed to the fallback logic below.
     # 2. Try to validate and retrieve the primary name.
     elif is_valid_cmap(name):
-        return _retrieve(name)
-
+        result= _retrieve(name)
+    
+    if result is not None: 
+        return result 
     # 3. If we are here, 'name' was invalid. Warn and fall back to default.
     warnings.warn(
         f"Colormap '{name}' not found. Falling back to default '{default}'.",
@@ -253,8 +265,11 @@ def get_cmap(
         stacklevel=2
     )
     if is_valid_cmap(default):
-        return _retrieve(default)
-
+        result = _retrieve(default)
+    
+    if result is not None: 
+        return result 
+    
     # apply failure safe here 
     # 4. If the default is also invalid, warn and use the ultimate failsafe.
     # 4. If default is also invalid, determine and use the ultimate failsafe.

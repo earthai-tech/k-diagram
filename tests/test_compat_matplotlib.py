@@ -7,7 +7,6 @@ from packaging.version import parse
 
 from kdiagram.compat import matplotlib as mpl_compat
 
-import re
 import warnings
 
 
@@ -93,8 +92,8 @@ def test_private_is_valid_cmap_modes():
     # warn -> returns default and warns
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        out = mpl_compat._is_valid_cmap("no_such_map", error="warn",
-                                        default="viridis")
+        out = mpl_compat._is_valid_cmap(
+            "no_such_map", error="warn", default="viridis",)
     assert out == "viridis"
     assert any("Falling back to 'viridis'" in str(ww.message) for ww in w)
 

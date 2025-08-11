@@ -12,7 +12,6 @@ def _close_ax(ax):
     except Exception:
         pass
 
-
 def test_basic_success_normalized_save(tmp_path):
     # 3 layers, 4 features
     imp = np.array(

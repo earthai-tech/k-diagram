@@ -25,7 +25,11 @@ from matplotlib.colors import Normalize
 from ..api.summary import ResultSummary
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
-from ..utils.diagnose_q import build_qcols_multiple, detect_quantiles_in, validate_qcols
+from ..utils.diagnose_q import ( 
+    build_qcols_multiple, 
+    detect_quantiles_in, 
+    validate_qcols
+)
 from ..utils.handlers import columns_manager
 from ..utils.plot import set_axis_grid
 from ..utils.validator import (
@@ -65,7 +69,6 @@ def plot_coverage(
     savefig=None,
     verbose=1,
 ):
-
     # Convert the true values to a numpy array for consistency
     y_true = np.array(y_true)
 
@@ -90,11 +93,14 @@ def plot_coverage(
         q = np.array(q)
         if q.ndim != 1:
             raise ValueError(
-                "Parameter 'q' must be a 1D list or" " array of quantile levels."
+                "Parameter 'q' must be a 1D list or" 
+                " array of quantile levels."
             )
 
         if not np.all((0 < q) & (q < 1)):
-            raise ValueError("Quantile levels must be between 0 and 1.")
+            raise ValueError(
+                "Quantile levels must be between 0 and 1."
+            )
         # Sort q and get the sorted indices
         sorted_indices = np.argsort(q)
         q_sorted = q[sorted_indices]
@@ -160,7 +166,8 @@ def plot_coverage(
         plt.bar(x_idx, valid_cov, color="blue", alpha=0.7)
         for idx, val in enumerate(coverage_scores):
             if val is not None:
-                plt.text(x=idx, y=val + 0.01, s=f"{val:.2f}", ha="center", va="bottom")
+                plt.text(x=idx, y=val + 0.01, s=f"{val:.2f}",
+                         ha="center", va="bottom")
         plt.xticks(x_idx, names)
         plt.ylim([0, 1])
         plt.ylabel("Coverage")
@@ -170,7 +177,8 @@ def plot_coverage(
         plt.plot(x_idx, valid_cov, marker="o")
         for idx, val in enumerate(coverage_scores):
             if val is not None:
-                plt.text(x=idx, y=val + 0.01, s=f"{val:.2f}", ha="center", va="bottom")
+                plt.text(x=idx, y=val + 0.01, s=f"{val:.2f}",
+                         ha="center", va="bottom")
         plt.xticks(x_idx, names)
         plt.ylim([0, 1])
         plt.ylabel("Coverage")
@@ -182,7 +190,8 @@ def plot_coverage(
         total_cov = sum(valid_cov)
         if total_cov == 0:
             # Avoid a zero-coverage pie chart.
-            plt.text(0.5, 0.5, "No coverage to plot", ha="center", va="center")
+            plt.text(0.5, 0.5, "No coverage to plot",
+                     ha="center", va="center")
         else:
             plt.pie(
                 valid_cov,
