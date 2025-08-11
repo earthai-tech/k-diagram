@@ -29,7 +29,7 @@ jobs:
           miniforge-variant: Miniforge3  # Updated from Mambaforge
           miniforge-version: latest
           use-mamba: true
-          activate-environment: kdiagram-dev
+          activate-environment: k-diagram-dev
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           # NOTE: intentionally omit auto-activate-base to avoid alias warning
