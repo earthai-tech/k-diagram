@@ -397,7 +397,8 @@ def test_parameter_validator_contains_and_exact_and_no_raise():
         validate_exact("tra")
 
     validate_no_raise = V.parameter_validator(
-        "fill", ["median", "mean"], match_method="contains", raise_exception=False
+        "fill", ["median", "mean"], match_method="contains",
+        raise_exception=False
     )
     assert validate_no_raise("average") is None
 
@@ -411,18 +412,21 @@ def test_normalize_string_modes_and_targets_and_errors():
 
     # exact match
     assert (
-        V.normalize_string("train", ["train", "test"], match_method="exact") == "train"
+        V.normalize_string("train", ["train", "test"], 
+                           match_method="exact") == "train"
     )
 
     # contains
     assert (
-        V.normalize_string("this-is-iqr", ["z_score", "iqr"], match_method="contains")
+        V.normalize_string("this-is-iqr", ["z_score", "iqr"], 
+                           match_method="contains")
         == "this-is-iqr"
     )
 
     # startswith
     norm, target = V.normalize_string(
-        "Goodbye World", ["hello", "goodbye"], num_chars_check=7, return_target_str=True
+        "Goodbye World", ["hello", "goodbye"], num_chars_check=7, 
+        return_target_str=True
     )
     assert norm.startswith("goodbye") and target == "goodbye"
 
@@ -430,7 +434,8 @@ def test_normalize_string_modes_and_targets_and_errors():
     assert V.normalize_string("abc", ["xyzabc123"], deep=True) == "abc"
 
     # return_target_only matched
-    assert V.normalize_string("MODE", ["mode"], return_target_only=True) == "mode"
+    assert V.normalize_string("MODE", ["mode"], return_target_only=True
+                              ) == "mode"
 
     # not found + raise
     with pytest.raises(ValueError):

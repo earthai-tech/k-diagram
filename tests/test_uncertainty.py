@@ -1180,5 +1180,5 @@ def test_plot_temporal_uncertainty_theta_col_warning(sample_data_temporal):
         )
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no-cover
     pytest.main([__file__])

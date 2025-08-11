@@ -76,53 +76,68 @@ def get_cmap(name="viridis", lut=None):
         # The old API raises ValueError directly, so no change is needed here.
         return matplotlib.cm.get_cmap(name, lut)
 
-
 def is_valid_cmap(cmap, default="viridis", error="raise"):
     """
-    Checks if a colormap name is valid and handles invalid names gracefully.
+    Checks if a colormap name is valid by attempting to retrieve it.
 
     This is the recommended utility for validating user-provided colormap names
-    before they are used in a plot.
+    before they are used in a plot. It leverages the `get_cmap` compatibility
+    wrapper to handle different Matplotlib versions seamlessly.
 
     Args:
-        cmap (str): The name of the colormap to validate.
-        default (str, optional): The colormap name to return if `cmap` is invalid
-            and `error` is not 'raise'. Defaults to "viridis".
-        error (str, optional): How to handle an invalid `cmap` name.
-            - 'raise': Raise a ValueError.
-            - 'warn': Issue a UserWarning and return the `default` value (default).
+        cmap (str): 
+            The name of the colormap to validate.
+        default (str, optional): 
+            The colormap name to return if `cmap` is invalid and `error` 
+            is not 'raise'. Defaults to "viridis".
+        error (str, optional): 
+            How to handle an invalid `cmap` name.
+            - 'raise': Raise a ValueError (default).
+            - 'warn': Issue a UserWarning and return the `default` value.
             - 'ignore': Silently return the `default` value.
 
     Returns:
-        str: A valid colormap name (either the original `cmap` or the `default`).
+        str: 
+            A valid colormap name (either the original `cmap` or the `default`).
 
     Raises:
-        ValueError: If `cmap` is invalid and `error` is 'raise'.
-        ValueError: If `error` has an invalid value.
+        ValueError: 
+            If `cmap` is invalid and `error` is 'raise'.
+        ValueError: 
+            If `error` has an invalid value.
     """
-    valid_cmaps = set()
-    if _MPL_VERSION >= parse("3.6"):
-        # New API uses matplotlib.colormaps registry (a dict-like object)
-        valid_cmaps = set(matplotlib.colormaps)
+    # First, ensure the input is a non-empty string
+    if not isinstance(cmap, str) or not cmap:
+        is_valid = False
     else:
-        # Old API used matplotlib.cm.cmap_d dictionary
-        valid_cmaps = set(matplotlib.cm.cmap_d)
+        try:
+            # Use our compatibility wrapper to check for existence.
+            # If this succeeds, the colormap is valid.
+            get_cmap(cmap)
+            is_valid = True
+        except ValueError:
+            # If get_cmap raises a ValueError, the colormap is invalid.
+            is_valid = False
 
-    if cmap in valid_cmaps:
+    if is_valid:
         return cmap
 
-    # Handle invalid cmap based on the 'error' parameter
+    # --- Handle invalid cmap based on the 'error' parameter ---
     if error == "raise":
-        raise ValueError(f"'{cmap}' is not a valid colormap name or alias.")
+        raise ValueError(
+            f"'{cmap}' is not a valid colormap name or alias.")
+    
     elif error == "warn":
         warnings.warn(
             f"Invalid `cmap` name '{cmap}'. Falling back to '{default}'.",
             UserWarning,
-            stacklevel=2,  # Point to the function that called this one
+            stacklevel=2,  # Points to the function that called this one
         )
         return default
+        
     elif error == "ignore":
         return default
+        
     else:
         raise ValueError(
             f"Invalid value for 'error' parameter: '{error}'. "
