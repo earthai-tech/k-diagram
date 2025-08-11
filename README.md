@@ -12,7 +12,7 @@
 [![Codecov][badge-codecov]][link-codecov]
 
 
-*k-diagram* provides polar diagnostic plots (`k-diagrams` 🧭) to evaluate
+ *k-diagram* provides polar diagnostic plots to evaluate
 forecast models with an emphasis on uncertainty. It helps you look
 beyond single metrics and understand **where** and **why** models
 behave as they do.
