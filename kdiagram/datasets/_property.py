@@ -75,7 +75,7 @@ __all__ = [
 
 
 def get_data(data_home: str | None = None) -> str:
-    """Get the path to the k-diagram data cache directory.
+    r"""Get the path to the k-diagram data cache directory.
 
     Determines the local directory path used for caching downloaded
     datasets or storing user-provided data relevant to k-diagram.
@@ -122,7 +122,7 @@ def get_data(data_home: str | None = None) -> str:
 
 
 def remove_data(data_home: str | None = None) -> None:
-    """Delete the k-diagram data cache directory and its contents.
+    r"""Delete the k-diagram data cache directory and its contents.
 
     Removes the entire directory specified by `data_home` (or the
     default k-diagram cache directory if `data_home` is ``None``).
@@ -166,7 +166,7 @@ def download_file_if(
     error: str = "raise",
     verbose: bool = True,
 ) -> str | None:
-    """Find, cache, or download a dataset file.
+    r"""Find, cache, or download a dataset file.
 
     Checks for a dataset file in sequence:
     1. Checks the installed package resources.
@@ -301,7 +301,8 @@ def download_file_if(
                         raise RuntimeError(msg)
                     elif error == "warn":
                         warnings.warn(msg, stacklevel=2)
-                    # Continue to check package resource as fallback only if download failed
+                    # Continue to check package resource as
+                    # fallback only if download failed
 
             except Exception as e:
                 # Handle exceptions from fancier_downloader
@@ -310,7 +311,8 @@ def download_file_if(
                     raise RuntimeError(dl_error_msg) from e
                 elif error == "warn":
                     warnings.warn(dl_error_msg, stacklevel=2)
-                # Continue to check package resource as fallback only if download failed
+                # Continue to check package resource as fallback
+                # only if download failed
         else:
             # Cannot force download if download_if_missing is False
             warnings.warn(

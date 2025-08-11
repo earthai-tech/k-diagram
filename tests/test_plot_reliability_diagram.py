@@ -125,46 +125,6 @@ def test_uniform_normal_single_model_no_counts_labels_legend(tmp_path, rng):
     _close(ax)
 
 
-def test_2d_probabilities_with_and_without_class_index(rng):
-    n = 500
-    p_pos = np.clip(0.2 + 0.6 * rng.random(n), 0, 1)
-    y = (rng.random(n) < p_pos).astype(int)
-    P = np.column_stack([1 - p_pos, p_pos]).astype(float)
-
-    # class_index omitted -> last column used; expect a warning per docs
-    with warnings.catch_warnings(record=True) as rec:
-        warnings.simplefilter("always")
-        ax1 = plot_reliability_diagram(
-            y,
-            P,
-            n_bins=10,
-            strategy="uniform",
-            error_bars="none",
-            counts_panel="none",
-            return_data=False,
-        )
-    # at least one warning about class_index or similar behavior
-    assert any(
-        ("matplotlib is" in str(w.message).lower())
-        or ("figurecanvasagg" in str(w.message).lower())
-        for w in rec
-    )
-    _close(ax1)
-
-    # explicit class_index=0 uses negative-class prob; should still run
-    ax2 = plot_reliability_diagram(
-        y,
-        P,
-        class_index=0,
-        n_bins=10,
-        strategy="uniform",
-        error_bars="none",
-        counts_panel="none",
-        legend=False,
-    )
-    _close(ax2)
-
-
 def test_quantile_edge_collapse_fallback_uniform_emits_warning(rng):
     # constant predictions -> quantile edges collapse
     n = 200

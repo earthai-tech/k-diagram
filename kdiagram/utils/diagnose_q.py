@@ -200,7 +200,9 @@ def parse_qcols(q_cols, fallback_cols=None, error="warn"):
     return output
 
 
-def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
+def check_forecast_mode(
+    mode, q=None, error="raise", ops="validate", q_mode="strict", **kw
+):
     r"""
     Check consistency between forecast mode and quantile values.
 
@@ -235,6 +237,9 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
         performs the checks without returning any value. If set to
         ``"validate"``, the function returns the validated
        (or updated) quantile values. Default is ``"validate"``.
+    q_mode: {'strict', 'soft'}
+       Validation quantiles mode. See more in
+       :func:`kdiagram.utils.diagnose_q.validate_quantiles`
     *kw: dict,
         Additional keywords argument of :func:`kdiagram.utils.diagnose_q`.
 
@@ -260,6 +265,7 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
     # Issues a warning and returns [0.1, 0.5, 0.9].
 
     """
+
     # Ensure mode is valid.
     if mode not in ["point", "quantile"]:
         raise ValueError("mode must be either 'point' or 'quantile'.")
@@ -293,7 +299,7 @@ def check_forecast_mode(mode, q=None, error="raise", ops="validate", **kw):
 
             q = [0.1, 0.5, 0.9]
         # then validate quantiles
-        q = validate_quantiles(q, **kw)
+        q = validate_quantiles(q, mode=q_mode, **kw)
     # If ops is "check_only", simply return None.
     if ops == "check_only":
         return None
@@ -413,7 +419,7 @@ def _flatten(nested_list: Any) -> list[Any]:
 
 
 def validate_q_dict(q_dict, recheck=False):
-    """
+    r"""
      Converts the keys of a dictionary of quantile columns (`q_dict`) from
      string representations to numeric values (float) if possible. If the key
      cannot be converted to a number, it returns the dictionary as is.
@@ -761,7 +767,7 @@ def validate_quantiles_in(
     dtype=None,
     mode="strict",
 ):
-    """
+    r"""
     Validates the input quantiles and optionally returns the output as a
     numpy array or list, with an option to round the quantiles to a
     specified number of decimal places to avoid floating-point precision
@@ -911,24 +917,24 @@ def detect_quantiles_in(
     verbose: int = 0,
 ) -> Union[list[str], list[float], list[np.ndarray], pd.DataFrame, None]:
     r"""
-    Detect quantile columns in a DataFrame using naming patterns and 
+    Detect quantile columns in a DataFrame using naming patterns and
     value validation.
 
-    Identifies columns containing quantile data through structured naming 
-    conventions and value validation [1]_. Supports both absolute and normalized 
+    Identifies columns containing quantile data through structured naming
+    conventions and value validation [1]_. Supports both absolute and normalized
     quantile representations through mode-based value adjustment [2]_.
 
 
     Parameters
     ----------
     df : pd.DataFrame
-        Input DataFrame containing potential quantile columns. Column names 
+        Input DataFrame containing potential quantile columns. Column names
         must be strings.
     col_prefix : str, optional
-        Column name prefix for targeted search (e.g., ``'price'`` for 
+        Column name prefix for targeted search (e.g., ``'price'`` for
         ``price_q0.25``). If None, scans all columns.
     dt_value : list of str, optional
-        Date filters for temporal quantile detection (e.g., ``['2023']`` matches 
+        Date filters for temporal quantile detection (e.g., ``['2023']`` matches
         columns like ``price_2023_q0.5``).
     mode : {'soft', 'strict'}, default='soft'
         Value handling strategy:
@@ -950,20 +956,20 @@ def detect_quantiles_in(
     Returns
     -------
     Union[List[str], List[float], List[np.ndarray], pd.DataFrame, None]
-        Quantile data in format specified by ``return_types``. Returns None if 
+        Quantile data in format specified by ``return_types``. Returns None if
         no quantiles detected.
 
-    Notes 
+    Notes
     --------
-    The detection adjustment can be formulated as : 
-        
+    The detection adjustment can be formulated as :
+
     .. math::
 
         q_{\text{adj}} = \begin{cases}
         \min(1, \max(0, q_{\text{raw}})) & \text{if } mode=\text{'soft'} \\
         q_{\text{raw}} & \text{if } q \in [0,1] \text{ and } mode=\text{'strict'}
         \end{cases}
-            
+
     1. Column name pattern requirements:
        - Requires ``_qX`` suffix where X is numeric
        - Temporal format: ``{prefix}_{date}_q{value}``
@@ -972,22 +978,22 @@ def detect_quantiles_in(
     2. Value adjustment in soft mode uses piecewise function:
        - Clips values to [0,1] range
        - Preserves original values within valid range
-       
+
     Examples
     --------
     >>> from kdiagram.utils.diagnose_q import detect_quantiles_in
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Basic detection
     >>> df = pd.DataFrame({'sales_q0.25': [4.2], 'sales_q0.75': [5.8]})
     >>> detect_quantiles_in(df, col_prefix='sales')
     ['sales_q0.25', 'sales_q0.75']
-    >>> 
+    >>>
     >>> # Temporal quantile filtering
     >>> df = pd.DataFrame({'temp_2023_q0.5': [22.1], 'temp_2024_q0.5': [23.4]})
     >>> detect_quantiles_in(df, dt_value=['2023'], return_types='q_val')
     [0.5]
-    >>> 
+    >>>
     >>> # Value normalization
     >>> df = pd.DataFrame({'risk_q150': [0.8]})
     >>> detect_quantiles_in(df, mode='soft', return_types='q_val')
@@ -1002,7 +1008,7 @@ def detect_quantiles_in(
     ----------
     .. [1] Regular Expression HOWTO, Python Documentation
     .. [2] Pandas API Reference: DataFrame operations
-    
+
     """
 
     is_frame(df, df_only=True, objname="Data 'df'")
@@ -1091,8 +1097,8 @@ def _extract_quantile_value(q_str: str, mode: str) -> float:
     """Extract and validate quantile value with proper error handling."""
     try:
         q_val = float(q_str)
-    except ValueError:
-        raise ValueError(f"Invalid quantile format: {q_str}")
+    except ValueError as e:
+        raise ValueError(f"Invalid quantile format: {q_str}") from e
 
     # Use centralized validation from validate_quantiles
     validated = validate_quantiles(
@@ -1162,12 +1168,12 @@ def build_q_column_names(
         - Float values (e.g., 0.25)
         - String representations (e.g., "25%")
     value_prefix : str, optional
-        Column name prefix for structured naming. If None, 
+        Column name prefix for structured naming. If None,
         looks for unprefixed columns.
     dt_value : list of str/int, optional
-        Temporal identifiers for time-aware quantiles. Converts 
+        Temporal identifiers for time-aware quantiles. Converts
         all values to strings.
-        
+
     strict_match : bool, default=True
         Matching strategy:
         - ``True``: Requires exact column name matches
@@ -1176,13 +1182,13 @@ def build_q_column_names(
     Returns
     -------
     list
-        Valid column names found in the DataFrame matching the 
+        Valid column names found in the DataFrame matching the
         quantile naming pattern.
 
-    Notes 
+    Notes
     -------
     Constructs column names using the pattern:
-    
+
     .. math::
         \text{col_name} = \begin{cases}
         \text{value_prefix}\_\text{date}\_q\text{quantile} & \text{if both prefix and date exist} \\
@@ -1190,23 +1196,23 @@ def build_q_column_names(
         \text{date}\_q\text{quantile} & \text{if only date exists} \\
         q\text{quantile} & \text{otherwise}
         \end{cases}
-        
+
     Examples
     --------
     >>> from kdiagram.utils.diagnose_q import build_q_column_names
     >>> import pandas as pd
-    >>> 
+    >>>
     >>> # Basic usage with prefix
     >>> df = pd.DataFrame(columns=['price_q0.25', 'price_2023_q0.5'])
     >>> build_q_column_names(df, [0.25, 0.5], 'price')
-    >>> 
+    >>>
     >>> # if strict_match ts
     ['price_q0.25', 'price_2023_q0.5']
-    >>> 
+    >>>
     >>> # Date-filtered search
     >>> build_q_column_names(df, [0.5], 'price', dt_value=['2023'])
     ['price_2023_q0.5']
-    >>> 
+    >>>
     >>> # Unprefixed columns
     >>> df = pd.DataFrame(columns=['q0.75', '2024_q0.9'])
     >>> build_q_column_names(df, [0.75, 0.9])
@@ -1585,7 +1591,7 @@ def validate_consistency_q(
         elif error == "warn":
             warnings.warn(err_msg + f"{suff}", UserWarning, stacklevel=2)
 
-        return [] if mode == "valid_q" else detected_q_values
+        return [] if default_to == "valid_q" else detected_q_values
 
     # In strict mode, expect the user_q to exactly match the detected quantiles.
     if mode == "strict":
@@ -1634,7 +1640,7 @@ def _verify_identical_items(
     error: str = "raise",
     objname: str = None,
 ) -> Union[bool, list]:
-    """
+    r"""
     Check if two lists contain identical elements according
     to the specified mode.
 
@@ -1749,7 +1755,7 @@ def validate_qcols(
     ncols_exp: Optional[str] = None,
     err_msg: Optional[str] = None,
 ) -> list[str]:
-    """
+    r"""
     Validate and standardise a collection of column names that
     represent quantiles or prediction outputs. The function
     `validate_qcols` converts the input to a clean list of
@@ -1758,10 +1764,10 @@ def validate_qcols(
     `<ncols_exp>`.
 
     .. math::
-       \text{valid} = \bigl\{\,c \mid c \neq ''\bigr\}
+       \text{valid} = \bigl\\{\\,c \\mid c \neq ''\bigr\\}
 
     If an expectation is supplied, the function compares
-    :math:`|\,\text{valid}\,|` to the requested condition and
+    :math:`|\\,\text{valid}\\,|` to the requested condition and
     raises an error if the test fails.
 
     Parameters
@@ -1883,7 +1889,7 @@ def build_qcols_multiple(
     enforce_triplet: bool = False,
     allow_pair_when_median: bool = False,
 ) -> list[tuple[str, ...]]:
-    """
+    r"""
     Assemble and validate tuples of quantile columns.
 
     Parameters

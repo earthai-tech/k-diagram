@@ -136,4 +136,95 @@ pytest.ini
 * Uploads to Codecov and shows a **badge** in the README,
 * Avoids prior warnings and keeps logs clean.
 
+# Development
 
+***1) README.md suggests pip install -e .\[dev] from the source directory. The project also has an environment.yml file that is not mentioned anywhere, if I'm not mistaken. As this environment has more packages, it might be worth mentioning this somewhere, or let pip install -e .\[dev] also install the development dependencies which are not being installed, but are in the environment.yml file.***
+
+**Action taken** — I initially used the environment.yml from the
+ `fusionlab-learn` project, which was adapted for our `k-diagram` project. 
+ However, I did not update it in sync with our package dependencies. This has 
+ now been corrected, and the README explicitly mentions the correct usage of 
+ `pip install -e .[dev]` for installing the development dependencies. Additionally, 
+ I have aligned the `environment.yml` file with the current dependencies 
+ needed for the `k-diagram` package, ensuring it reflects our project requirements
+  accurately.
+
+---
+
+***2) pytest.ini: Is the marker require\_skbio used anywhere?***
+
+**Action taken** — You are correct; I did not need the `require_skbio` marker, 
+and as such, it has been removed from the `pytest.ini` file. All references to it 
+have been cleaned up to ensure a smoother testing experience.
+
+---
+
+***3) Running just pytest passes 266 tests, skips 29, but produces 339 warnings. Please consult these warnings and see if you can fix them. "UserWarning: FigureCanvasAgg is non-interactive" should be "MatplotlibDeprecationWarning". "RuntimeWarning: All-NaN slice encountered" "PytestConfigWarning: No files were found in testpaths"***
+
+**Action taken** — I have reviewed the warnings and made the necessary adjustments:
+
+* The "UserWarning: FigureCanvasAgg is non-interactive" warning is now replaced
+ with the appropriate `MatplotlibDeprecationWarning`.
+* The "RuntimeWarning: All-NaN slice encountered" was addressed by 
+improving the handling of missing data.
+* The "PytestConfigWarning: No files were found in testpaths" has been 
+resolved by ensuring that all relevant test directories are included.
+
+As a result of these fixes, the test results have significantly improved:
+ **563 tests passed**, **7 skipped**, and only **16 warnings** remaining 
+ in the latest run.
+
+---
+
+***4) When testing kdiagram/tests/test\_uncertainty.py:241 without the skip marker, I get "'qlow\_cols and qup\_cols must be the same length." as a warning, but the expected match is "Features missing". While I did not check what is happening internally, I am not sure I understand the initial reason for skipping "Regex pattern did not match. Unable to exactly match the error message."***
+
+**Action taken** — Thank you for your feedback regarding the regex issue. 
+I agree that the reason for skipping was not reasonable since the expected 
+and actual error messages were about different things. I have now corrected 
+the regex pattern to match the correct error message: "Features missing." 
+This should align with the expected behavior, and I have removed the skip 
+marker for this test case. The error handling and regex matching have been 
+improved accordingly.
+
+---
+
+***5) Do you plan to support numpy\~=2 in the future?***
+
+**Action taken** — Yes, I do plan to support `numpy~=2` in the future. 
+To facilitate this, I have already created a compatibility module in 
+`kdiagram/compat/numpy.py`, which ensures our codebase is compatible 
+with `numpy` version 2.x.
+
+---
+
+***6) The project still has the PyPI classifier "Development Status :: 3 - Alpha". For a publication, I'd assume a later development status of the software should be desirable.***
+
+**Action taken** — I have updated the project to reflect the correct
+ development status in the PyPI classifiers. The current status is now 
+ **4 - Beta**, which is more appropriate for the upcoming publication.
+
+---
+
+***7) As the environment.yml suggests it, have you used code from this project? [https://github.com/taipingeric/fusionlab](https://github.com/taipingeric/fusionlab)***
+
+**Action taken** — No, I have not used code from the `fusionlab` project. 
+The environment.yml file was initially copied from the `fusionlab-learn` 
+project ([https://fusion-lab.readthedocs.io/](https://fusion-lab.readthedocs.io/)). 
+The goal was to adapt it for our project, but unfortunately, I forgot to update 
+it. I apologize. I have since updated the `environment.yml` file to reflect the dependencies 
+required for `k-diagram` and removed any unnecessary references to 
+the `fusionlab-learn` project.
+
+---
+
+***8) Thanks very much for this first batch of questions...***
+
+**Action taken** — Thank you for your thorough review and valuable 
+feedback. I have addressed all of the points raised and updated the 
+relevant sections of the code and documentation. I appreciate your 
+assistance and I hope that these improvements will 
+help make `k-diagram` more robust and acceptable for publication.
+
+I'am still available for any other comments to improve the software! 
+
+Best regards!

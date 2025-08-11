@@ -1413,7 +1413,8 @@ def make_multi_model_quantile_data(
             # from scipy.stats import norm
             # z_score = norm.ppf(q) # Z-score for the quantile
             # Use standard deviation implied by width (e.g. q90-q10 ~ 2.56*std)
-            # implied_std = model_width / (norm.ppf(q_max) - norm.ppf(q_min)) if (q_max != q_min) else 1.0
+            # implied_std = model_width / (norm.ppf(q_max) - norm.ppf(q_min))
+            #  if (q_max != q_min) else 1.0
             # quantile_offset = z_score * implied_std
 
             if abs(q_range) > 1e-9 and abs(width_scale_factor) > 1e-9:

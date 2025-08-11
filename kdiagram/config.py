@@ -27,8 +27,8 @@ def _resolve_category(cat: Union[str, type]) -> type:
     if isinstance(cat, str):
         try:
             return _WARNING_NAME_MAP[cat]
-        except KeyError:
-            raise ValueError(f"Unknown warning category name: {cat!r}")
+        except KeyError as err:
+            raise ValueError(f"Unknown warning category name: {cat!r}") from err
     if isinstance(cat, type) and issubclass(cat, Warning):
         return cat
     raise TypeError(f"Category must be a Warning subclass or name, got {cat!r}")
@@ -41,7 +41,7 @@ def configure_warnings(
     modules: Optional[Iterable[Union[str, Pattern[str]]]] = None,
     clear: bool = False,
 ) -> None:
-    """
+    r"""
     Configure warning filters for callers (tests/docs/apps). No effect unless called.
 
     Parameters
@@ -88,7 +88,7 @@ def configure_warnings(
 
 @contextmanager
 def warnings_config(*args, **kwargs):
-    """
+    r"""
     Context manager that temporarily applies `configure_warnings(...)`.
 
     Example
@@ -106,7 +106,7 @@ def warnings_config(*args, **kwargs):
 
 # Backward-compatible shim for the old API (now opt-in & deprecated)
 def suppress_warnings(suppress: bool = True) -> None:
-    """
+    r"""
     DEPRECATED: Use `configure_warnings(...)` instead.
 
     - suppress=True  -> ignore SyntaxWarning (was the previous default)

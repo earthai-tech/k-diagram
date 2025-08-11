@@ -41,7 +41,7 @@ def fancier_downloader(
     error: str = "raise",
     verbose: bool = True,
 ) -> str | None:
-    """
+    r"""
     Download a remote file with a progress bar and optional size verification.
 
     This function downloads a file from the specified ``url`` and saves it locally
@@ -297,7 +297,7 @@ def fancier_downloader(
 
 
 def download_file(url, filename, dstpath=None):
-    """download a remote file.
+    r"""download a remote file.
 
     Parameters
     -----------
@@ -346,13 +346,22 @@ def download_file(url, filename, dstpath=None):
 
 
 def check_file_exists(package, resource):
-    """
+    r"""
     Check if a file exists in a package's directory with
     importlib.resources.
 
-    :param package: The package containing the resource.
-    :param resource: The resource (file) to check.
-    :return: Boolean indicating if the resource exists.
+    Parameters
+    ----------
+
+    package: str
+        The package containing the resource.
+    resource:  str
+        The resource (file) to check.
+
+    Returns
+    --------
+    bool,
+      Boolean indicating if the resource exists.
 
     :example:
         >>> from kdiagram.utils.io import check_file_exists
@@ -369,7 +378,7 @@ def check_file_exists(package, resource):
 
 
 def move_file(file_path, directory):
-    """Move file to a directory.
+    r"""Move file to a directory.
 
     Create a directory if not exists.
 

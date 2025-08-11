@@ -151,8 +151,9 @@ def load_zhongshan_subsidence(
             local_filepath = str(resources.files(KD_DMODULE).joinpath(filename))
             data_dir = os.path.dirname(local_filepath)
             # took only the file in data path
-        except:
+        except Exception as e:
             # fallback.
+            print(f"An unexpected error occurred: {e}")
             local_filepath = os.path.join(data_dir, filename)
 
     package_module_path = _ZHONGSHAN_METADATA.data_module
@@ -428,7 +429,10 @@ def load_zhongshan_subsidence(
         )
         try:
             start_year = list(requested_years)[0]
-        except:
+        except IndexError:
+            start_year = ""
+        except Exception as err:
+            print(f"An unexpected error occurred: {err}")
             start_year = ""
 
         bunch_dict = {

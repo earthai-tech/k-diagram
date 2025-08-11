@@ -6,7 +6,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..compat.matplotlib import get_cmap, is_valid_cmap
+from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, validate_params
 from ..utils.generic_utils import drop_nan_in
 from ..utils.plot import set_axis_grid
@@ -89,7 +89,7 @@ def plot_relationship(
         - ``'uniform'``: Distributes `y_true` values uniformly around
           the angular range.
 
-    acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'}, 
+    acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
         default='default'
 
         Specifies the angular coverage of the plot:
@@ -150,13 +150,13 @@ def plot_relationship(
     `z_values` can replace angular labels with custom values [3]_.
 
     .. math::
-        \theta = 
-        \begin{cases} 
-        \text{Proportional mapping: } \theta_i = 
+        \theta =
+        \begin{cases}
+        \text{Proportional mapping: } \theta_i =
         \frac{y_{\text{true}_i} - \min(y_{\text{true}})}
-        {\max(y_{\text{true}}) - \min(y_{\text{true}})} 
+        {\max(y_{\text{true}}) - \min(y_{\text{true}})}
         \cdot \text{angular_range} \\
-        \text{Uniform mapping: } \theta_i = 
+        \text{Uniform mapping: } \theta_i =
         \frac{i}{N-1} \cdot \text{angular_range}
         \end{cases}
 
@@ -185,7 +185,7 @@ def plot_relationship(
     >>> # Half-circle visualization with z-values
     >>> z_values = np.linspace(0, 100, len(y_true))
     >>> plot_relationship(
-    ...     y_true, y_pred1, 
+    ...     y_true, y_pred1,
     ...     names=["Model A"],
     ...     acov="half_circle",
     ...     z_values=z_values,
@@ -215,8 +215,8 @@ def plot_relationship(
             validate_yy(y_true, pred, expected_type="continuous", flatten=True)[1]
             for pred in y_preds
         ]
-    except Exception as e:
-        raise ValueError(f"Validation failed, due to {e}. Please check your y_pred")
+    except Exception as err:
+        raise ValueError("Validation failed. Please check your y_pred") from err
 
     # Generate default model names if none are provided
     num_preds = len(y_preds)
@@ -240,9 +240,8 @@ def plot_relationship(
     # --- Color Handling ---
     if color_palette is None:
         # Generate colors from cmap if palette not given
-        cmap = is_valid_cmap(cmap, default="tab10", error="warn")
         try:
-            cmap_obj = get_cmap(cmap)
+            cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
             # Sample enough distinct colors
             if hasattr(cmap_obj, "colors") and len(cmap_obj.colors) >= num_preds:
                 # Use colors directly from discrete map if enough

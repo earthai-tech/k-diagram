@@ -23,8 +23,6 @@ def _cleanup():
 
 
 # ---------- plot_coverage ----------
-
-
 def test_plot_coverage_line_bar_pie_radar(tmp_path):
     y_true = np.linspace(0, 1, 20)
     # one point forecast equals truth -> coverage 1
@@ -96,8 +94,6 @@ def test_plot_coverage_bad_q_raises():
 
 
 # ---------- plot_model_drift ----------
-
-
 def test_plot_model_drift_half_circle_and_colors(tmp_path):
     # 3 horizons, widths positive
     n = 30
@@ -137,8 +133,6 @@ def test_plot_model_drift_half_circle_and_colors(tmp_path):
 
 
 # ---------- plot_velocity ----------
-
-
 def test_plot_velocity_paths_and_warnings(tmp_path):
     # Build df with 3 time steps; include theta_col to trigger warning
     n = 40
@@ -250,8 +244,6 @@ def test_plot_interval_consistency_length_mismatch_raises():
 
 
 # ---------- plot_anomaly_magnitude ----------
-
-
 def test_plot_anomaly_magnitude_under_over_and_cbar(tmp_path):
     n = 60
     df = pd.DataFrame(
@@ -403,7 +395,7 @@ def test_plot_actual_vs_predicted_line_and_dots(tmp_path):
 
 def test_plot_actual_vs_predicted_missing_cols_raises():
     df = pd.DataFrame({"a": [1, 2]})
-    with pytest.raises(Exception):
+    with pytest.raises((KeyError, ValueError)):
         plot_actual_vs_predicted(df=df, actual_col="a", pred_col="not_here")
 
 

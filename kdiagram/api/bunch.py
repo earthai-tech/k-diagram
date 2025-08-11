@@ -262,8 +262,11 @@ class FlexDict(dict):
         """
         try:
             return self[item]
-        except KeyError:
-            raise AttributeError(f"'FlexDict' object has no attribute '{item}'")
+        except KeyError as err:  # Capture the original error as 'err'
+            # Link the new exception to the original one
+            raise AttributeError(
+                f"'FlexDict' object has no attribute '{item}'"
+            ) from err
 
     def __setattr__(self, key, value):
         """

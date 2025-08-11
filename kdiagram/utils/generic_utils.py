@@ -14,7 +14,7 @@ import numpy as np
 def str2columns(
     text: str, regex: re.Pattern | None = None, pattern: str | None = None
 ) -> list[str]:
-    """
+    r"""
     Split the input string `<text>` into words or
     column names using a regular expression.
 
@@ -52,15 +52,18 @@ def str2columns(
     # If no regex or pattern is provided,
     # just wrap the entire text in a list
     if regex is None and pattern is None:
-        return [text]
+        # default split: commas, whitespace, semicolons, pipes, etc.
+        pattern = r"[#&.*@!_,;|\s-]+"
+
+        # return [text]
 
     # If the user provided a compiled regex,
     # we use it directly
-    if regex is not None:
-        splitter = regex
-    else:
-        # Otherwise compile from <pattern>
-        splitter = re.compile(pattern, flags=re.IGNORECASE)
+    # if regex is not None:
+    #     splitter = regex
+    # else:
+    # Otherwise compile from <pattern>
+    splitter = regex or re.compile(pattern, flags=re.IGNORECASE)
 
     # Split and filter out empty parts
     parts = splitter.split(text)
@@ -68,7 +71,7 @@ def str2columns(
 
 
 def smart_format(iter_obj, choice: str = "and") -> str:
-    """
+    r"""
     Smartly format an iterable object into a readable
     string with a specific connector (e.g. `'and'`).
 
@@ -100,7 +103,7 @@ def smart_format(iter_obj, choice: str = "and") -> str:
     # Attempt to ensure it's iterable
     try:
         _ = iter(iter_obj)
-    except:  # TypeError >
+    except Exception:  # TypeError >
         return f"{iter_obj}"
 
     # Convert each element to string
@@ -124,7 +127,7 @@ def count_functions(
     include_private=False,
     include_local=False,
 ):
-    """
+    r"""
     Count and list the number of functions and classes in a specified module.
 
     Parameters
@@ -163,7 +166,7 @@ def count_functions(
     The process can be summarized as:
 
     .. math::
-        \text{total\_count} =
+        \text{total\\_count} =
         \text{len(functions)} + \text{len(classes)}
 
     where:
@@ -265,7 +268,7 @@ def count_functions(
 
 
 def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
-    """
+    r"""
     Drop NaN values from `y_true` and corresponding predictions in `y_preds`.
 
     This function filters out the samples where `y_true` contains NaN values,
@@ -326,10 +329,14 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
 
     # Handle error or nan_policy logic
     if np.any(np.isnan(y_true)) and error == "raise":
-        raise ValueError("NaN values found in y_true, cannot proceed with NaN values.")
+        raise ValueError(
+            "NaN values found in y_true, " "cannot proceed with NaN values."
+        )
     elif np.any(np.isnan(y_true)) and error == "warn":
 
-        warnings.warn("NaN values found in y_true, they will be ignored.", stacklevel=2)
+        warnings.warn(
+            "NaN values found in y_true," " they will be ignored.", stacklevel=2
+        )
     elif np.any(np.isnan(y_true)) and error == "ignore":
         pass  # Silently ignore NaNs in y_true
 
@@ -347,7 +354,7 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
 
 
 def get_valid_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
-    """
+    r"""
     Filter and return only the valid keyword arguments for a given
     callable object, while warning about any invalid kwargs.
 
@@ -415,7 +422,7 @@ def error_policy(
     msg: str | None = None,
     valid_policies: set = None,
 ) -> str:
-    """
+    r"""
     Manage error-handling policies like 'warn', 'raise', or 'ignore'.
 
     The `error_policy` function determines how to handle potential
@@ -431,11 +438,11 @@ def error_policy(
         The user-provided error setting. Can be `'warn'`, `'raise'`,
         `'ignore'`, or `None`. If `None`, the behavior is resolved
         based on ``policy`` and ``base``.
-    
+
     policy : str, default='auto'
         Determines how to interpret a `None` error setting. Valid
         options:
-        
+
         - `'auto'`: Resolve `None` to the default `base` policy.
         - `'strict'`: Disallows `None` for `error`; raises an error
           if encountered.
@@ -476,8 +483,8 @@ def error_policy(
     - When `error=None`, the behavior depends on the `policy` and
       `base` parameters. Setting `policy='strict'` disallows `None`
       for `error`.
-      
-      
+
+
     .. math::
        \\text{error\\_policy}:
        \\begin{cases}
@@ -494,13 +501,13 @@ def error_policy(
     >>> resolved_error = error_policy('warn')
     >>> print(resolved_error)
     'warn'
-    
+
     >>> # Using 'auto' policy with a default base of 'ignore'
     >>> resolved_error = error_policy(None, policy='auto',
     ...                                base='warn')
     >>> print(resolved_error)
     'warn'
-    
+
     >>> # Strict policy disallows None
     >>> error_policy(None, policy='strict')
     ValueError: In strict policy, `None` is not acceptable as error.
