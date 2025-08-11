@@ -190,7 +190,7 @@ improved accordingly.
 
 ***5) Do you plan to support numpy\~=2 in the future?***
 
-**Action taken** — Yes, we do plan to support `numpy~=2` in the future. 
+**Action taken** — Yes, I do plan to support `numpy~=2` in the future. 
 To facilitate this, I have already created a compatibility module in 
 `kdiagram/compat/numpy.py`, which ensures our codebase is compatible 
 with `numpy` version 2.x.
@@ -207,11 +207,11 @@ with `numpy` version 2.x.
 
 ***7) As the environment.yml suggests it, have you used code from this project? [https://github.com/taipingeric/fusionlab](https://github.com/taipingeric/fusionlab)***
 
-**Action taken** — No, we have not used code from the `fusionlab` project. 
+**Action taken** — No, I have not used code from the `fusionlab` project. 
 The environment.yml file was initially copied from the `fusionlab-learn` 
 project ([https://fusion-lab.readthedocs.io/](https://fusion-lab.readthedocs.io/)). 
-The goal was to adapt it for our project, but unfortunately, we forgot to update 
-it. I have since updated the `environment.yml` file to reflect the dependencies 
+The goal was to adapt it for our project, but unfortunately, I forgot to update 
+it. I apologize. I have since updated the `environment.yml` file to reflect the dependencies 
 required for `k-diagram` and removed any unnecessary references to 
 the `fusionlab-learn` project.
 
@@ -225,3 +225,6 @@ relevant sections of the code and documentation. I appreciate your
 assistance and I hope that these improvements will 
 help make `k-diagram` more robust and acceptable for publication.
 
+I'am still available for any other comments to improve the software! 
+
+Best regards!
