@@ -37,7 +37,9 @@ from kdiagram.plot.uncertainty import (
 matplotlib.use("Agg")
 
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive")
+    warnings.filterwarnings(
+        "ignore", 
+        message="FigureCanvasAgg is non-interactive")
     plt.show()
 
 
