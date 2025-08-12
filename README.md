@@ -37,13 +37,13 @@ Key questions it helps answer:
 - **Anomalies** — Where do predictions miss, and by how much?
 - **Patterns** — How does accuracy vary across conditions or locations?
 
-The library is designed with applied settings in mind, including
+The package is designed with applied settings in mind, including
 environmental forecasting (subsidence, floods, climate impacts), but
-is general enough for many time-series and geospatial tasks
+is general enough for many time-series and geospatial tasks.
 
 ---
 
-## Installation
+## 📥 Installation
 
 ### From PyPI (recommended)
 
@@ -141,7 +141,8 @@ A small selection of plots. See the full gallery in the docs.
 ### 1. Coverage Diagnostic
 
 **Insight:** Assess if your prediction intervals (e.g., 90% interval) 
-are well-calibrated. Do they actually cover the observed values at the expected rate?
+are well-calibrated. Do they actually cover the observed values 
+at the expected rate?
 
 **Visualization:** Points plotted at radius 1 (covered) or 0 (not covered).
 A reference line shows the overall empirical coverage rate.
@@ -257,7 +258,7 @@ kd.plot_actual_vs_predicted(
     alt="Actual vs Predicted Plot"
     width="500"
     />
-    </p>
+</p>
 -----
 
 Many more examples, including plots for interval consistency, velocity,
@@ -294,7 +295,8 @@ k-diagram plot_coverage_diagnostic data.csv \
 
 ## 📚 Documentation
 
-For detailed usage, API reference, and more examples, please visit the official documentation:
+For detailed usage, API reference, and more examples, please 
+visit the official documentation:
 
 **[k-diagram.readthedocs.io](https://k-diagram.readthedocs.io/)** 
 
@@ -312,7 +314,8 @@ Contributions are welcome. Please:
 5.  Submit a Pull Request.
 
 Please refer to the [CONTRIBUTING](https://k-diagram.readthedocs.io/en/latest/contributing.html) 
-page or the contributing section in the documentation for more detailed guidelines.
+page or the contributing section in the documentation 
+for more detailed guidelines.
 
 -----
 
