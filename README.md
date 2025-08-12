@@ -88,7 +88,8 @@ python -m pip install . --no-deps --force-reinstall
 
 ## ⚡ Quick Start
 
-Generate an **Interval Width** plot colored by the median prediction in just a few lines:
+Generate an **Interval Width** plot colored by the median prediction
+in just a few lines:
 
 ```python
 import kdiagram as kd
@@ -122,9 +123,13 @@ ax = kd.plot_interval_width(
 # import matplotlib.pyplot as plt
 # plt.show() # Not needed if savefig is None
 ```
-
-<img src="docs/source/images/readme_prediction_interval_width.png" alt="Interval Width Plot" width="600"/>
-
+<p align="center">
+    <img
+    src="docs/source/images/readme_prediction_interval_width.png"
+    alt="Interval Width Plot"
+    width="500"
+    />
+</p>
 ---
 
 ## 📊 Gallery Highlights
@@ -137,6 +142,7 @@ A small selection of plots. See the full gallery in the docs.
 
 **Insight:** Assess if your prediction intervals (e.g., 90% interval) 
 are well-calibrated. Do they actually cover the observed values at the expected rate?
+
 **Visualization:** Points plotted at radius 1 (covered) or 0 (not covered).
 A reference line shows the overall empirical coverage rate.
 
@@ -163,42 +169,22 @@ kd.plot_coverage_diagnostic(
 )
 ````
 
-<img src="docs/source/images/readme_coverage_diagnostic_plot.png" alt="Coverage Diagnostic Plot" width="600"/>
-
+<p align="center">
+    <img
+    src="docs/source/images/readme_coverage_diagnostic_plot.png"
+    alt="Coverage Diagnostic Plot"
+    width="500"
+    />
+</p>
 -----
 
-### 2\. Anomaly Magnitude
 
-**Insight:** Identify where actual values fall outside prediction intervals
-(anomalies) and visualize the magnitude of these errors. Differentiate between
-under- and over-predictions.
-**Visualization:** Points representing anomalies plotted with radius indicating
-error magnitude and color indicating under/over-prediction type.
-
-```python
-# Code Snippet
-import kdiagram as kd
-# (Use df from previous example, adding some anomalies)
-df.loc[::10, 'actual'] = df.loc[::10, 'q10'] - np.random.rand(len(df.loc[::10])) * 3 # Under
-df.loc[5::10, 'actual'] = df.loc[5::10, 'q90'] + np.random.rand(len(df.loc[5::10])) * 4 # Over
-
-kd.plot_anomaly_magnitude(
-    df,
-    actual_col='actual',
-    q_cols=['q10', 'q90'],
-    title='Prediction Anomaly Magnitude',
-    cbar=True
-)
-```
-
-<img src="docs/source/images/readme_prediction_anomaly_magnitude.png" alt="Anomaly Magnitude Plot" width="600"/>
-
------
-
-### 3\. Uncertainty Drift Over Time
+### 2\. Uncertainty Drift Over Time
 
 **Insight:** See how the width of prediction intervals (uncertainty) 
-evolves across different time steps or forecast horizons. Identify locations where uncertainty grows rapidly.
+evolves across different time steps or forecast horizons. Identify locations 
+where uncertainty grows rapidly.
+
 **Visualization:** Concentric rings represent time steps. The radius/shape 
 of each ring indicates the (normalized) interval width at each location/angle.
 
@@ -228,14 +214,20 @@ kd.plot_uncertainty_drift(
 )
 ```
 
-<img src="docs/source/images/readme_uncertainty_drift_plot.png" alt="Uncertainty Drift Plot" width="600"/>
-
+<p align="center">
+    <img
+    src="docs/source/images/readme_uncertainty_drift_plot.png"
+    alt="Uncertainty Drift Plot"
+    width="500"
+    />
+</p>
 -----
 
-### 4\. Actual vs. Predicted
+### 3\. Actual vs. Predicted
 
 **Insight:** Directly compare actual observed values against model predictions
  (e.g., median forecast) point-by-point in a circular layout.
+ 
 **Visualization:** Two lines or sets of points representing actual and predicted
  values. Vertical lines connect corresponding points, showing the error magnitude.
 
@@ -259,8 +251,13 @@ kd.plot_actual_vs_predicted(
 )
 ```
 
-<img src="docs/source/images/readme_actual_vs_predicted.png" alt="Actual vs Predicted Plot" width="600"/>
-
+<p align="center">
+    <img
+    src="docs/source/images/readme_actual_vs_predicted.png"
+    alt="Actual vs Predicted Plot"
+    width="500"
+    />
+    </p>
 -----
 
 Many more examples, including plots for interval consistency, velocity,
@@ -272,7 +269,8 @@ Taylor diagrams, and feature fingerprints, are available in the documentation.
 
 ## 💻 Using the CLI
 
-`k-diagram` also provides a command-line interface for generating plots directly from CSV files.
+`k-diagram` also provides a command-line interface for generating 
+plots directly from CSV files.
 
 **Check available commands:**
 
@@ -306,19 +304,23 @@ For detailed usage, API reference, and more examples, please visit the official 
 
 Contributions are welcome. Please:
 
-1.  Check the **[Issues Tracker](https://github.com/earthai-tech/k-diagram/issues)** for existing bugs or ideas.
+1.  Check the **[Issues Tracker](https://github.com/earthai-tech/k-diagram/issues)** 
+   for existing bugs or ideas.
 2.  Fork the repository.
 3.  Create a new branch for your feature or fix.
 4.  Make your changes and add tests.
 5.  Submit a Pull Request.
 
-Please refer to the [CONTRIBUTING](https://k-diagram.readthedocs.io/en/latest/contributing.html) page or the contributing section in the documentation for more detailed guidelines.
+Please refer to the [CONTRIBUTING](https://k-diagram.readthedocs.io/en/latest/contributing.html) 
+page or the contributing section in the documentation for more detailed guidelines.
 
 -----
 
 ## 📜 License
 
-`k-diagram` is distributed under the terms of the **Apache License 2.0**. See the [LICENSE](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE) file for details.
+`k-diagram` is distributed under the terms of the **Apache License 2.0**. 
+See the [LICENSE](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE) 
+file for details.
 
 -----
 

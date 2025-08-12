@@ -93,7 +93,8 @@ def plot_reliability_diagram(
     y_true = np.asarray(y_true)
     if type_of_target(y_true) not in ("binary", "multiclass"):
         raise ValueError(
-            "y_true must be a classification target. " "Binary reliability is expected."
+            "y_true must be a classification target. "
+            "Binary reliability is expected."
         )
     y_bin = (y_true == positive_label).astype(int)
 
@@ -107,7 +108,8 @@ def plot_reliability_diagram(
         w = np.ones_like(y_bin, dtype=float)
     else:
         w = np.asarray(sample_weight, dtype=float)
-        y_bin, *prob_list, w = drop_nan_in(y_bin, *prob_list, w, error="raise")
+        y_bin, *prob_list, w = drop_nan_in(
+            y_bin, *prob_list, w, error="raise")
 
     clip_lo, clip_hi = clip_probs
     clipped_flag = False
@@ -336,7 +338,9 @@ def _build_bins(
         edges = np.unique(edges)
         if len(edges) - 1 < nb:
             warnings.warn(
-                ("Not enough unique quantile edges; " "falling back to uniform bins."),
+                ("Not enough unique quantile edges; " 
+                 "falling back to uniform bins."
+                ),
                 UserWarning,
                 stacklevel=2,
             )
@@ -443,7 +447,7 @@ def _colors(cmap_name: str, palette: list[Any] | None, k: int) -> list[Any]:
     return [cmo(i / (k - 1)) for i in range(k)]
 
 
-plot_reliability_diagram.__doc__ = r"""\
+plot_reliability_diagram.__doc__ = r"""
 Plot a reliability diagram (calibration plot) for one or more
 classification models.
 

@@ -3,14 +3,14 @@
 ----------------
 Version 1.1.0
 ----------------
-*(Released: 2025-08-09)*
+*(Released: 2025-08-12)*
 
 A feature-focused release adding a full **reliability diagram**
 workflow for classification calibration, broader docs, and stronger
 tests—while keeping the public API stable.
 
-Highlights |Feature|
-~~~~~~~~~~~~~~~~~~~~
+Highlights 
+~~~~~~~~~~~~~
 
 * |Feature| New calibration plotting:
   :func:`~kdiagram.plot.comparison.plot_reliability_diagram`
@@ -18,11 +18,17 @@ Highlights |Feature|
   weights**, **Wilson/normal CIs**, **ECE/Brier** reporting,
   **counts panel**, and **per-bin data export**.
 
-New Features |New|
-~~~~~~~~~~~~~~~~~~
+* |Feature| Matplotlib compatibility layer for colormaps in
+  :mod:`kdiagram.compat.matplotlib` with 
+  ``get_cmap``/``is_valid_cmap`` and safe fallbacks for old and
+  new Matplotlib APIs.
+  
+New Features
+~~~~~~~~~~~~~~
 
 * |New| :func:`~kdiagram.plot.comparison.plot_reliability_diagram`
   (binary classification):
+  
   - Multi-model overlay with shared or custom styles.
   - Binning: ``strategy={'uniform','quantile'}``, configurable
     ``n_bins``; robust handling of duplicate quantiles.
@@ -41,8 +47,17 @@ New Features |New|
   - API/params aligned with the rest of ``kdiagram.plot.*`` (e.g.,
     ``names``, ``show_grid``, ``grid_props``, ``savefig``).
 
-Enhancements |Enhancement|
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+* |New| Colormap compatibility helpers:
+
+  - :func:`~kdiagram.compat.matplotlib.get_cmap`:
+    returns a valid colormap with graceful fallbacks and optional
+    `allow_none`.
+
+  - :func:`~kdiagram.compat.matplotlib.is_valid_cmap`:
+    light-weight name validator with clear error and warning paths.
+    
+Enhancements 
+~~~~~~~~~~~~~~
 
 * |Enhancement| Internal helpers (underscored) split out within
   ``kdiagram.plot.comparison`` for clearer testing and maintenance
@@ -50,46 +65,97 @@ Enhancements |Enhancement|
 * |Enhancement| More consistent color handling across comparison
   plots (respecting explicit palettes first, then ``cmap``).
 * |Enhancement| Better edge-case handling:
+
   - Degenerate bins, tiny/empty bins, constant predictions,
     near-boundary probabilities (0/1).
   - Safer numerical ops for ECE/Brier with weights.
 
-API Changes |API Change|
-~~~~~~~~~~~~~~~~~~~~~~~~
+* |Enhancement| Re-architected the internal colormap compatibility
+  module (`kdiagram.compat.matplotlib`) for greater reliability.
+  The core function `get_cmap` is now "bulletproof," featuring a
+  robust cascading fallback system (`name` -> `default` -> `failsafe`)
+  to ensure it **always** returns a valid colormap object.
+
+* |Enhancement| Added a new `failsafe` parameter to `get_cmap` to
+  allow specifying the type of ultimate fallback colormap:
+  `'continuous'` (for `'viridis'`) or `'discrete'` (for `'tab10'`),
+  making the function more versatile for different plot types.
+ 
+* |Enhancement| ``generic_utils.str2columns`` now uses a sensible
+  default split pattern when no ``regex`` or ``pattern`` is given,
+  avoiding single-token outputs for delimited strings.
+
+* |Enhancement| Quantile reshaping utilities
+  (``melt_q_data``, ``reshape_quantile_data``, ``pivot_q_data``)
+  emit clearer messages and respect a consistent ``error`` policy
+  (``'raise'``, ``'warn'``, ``'ignore'``).
+
+* |Enhancement| Minor consistency passes on comparison plot
+  color handling to prefer explicit palettes before ``cmap``.
+   
+API Changes 
+~~~~~~~~~~~~
 
 * |API Change| **None (backward compatible).** The new function is
   additive. Existing functions keep defaults and signatures.
 
-Bug Fixes |Fix|
-~~~~~~~~~~~~~~~
+* |API Change| The `error` parameter in
+  `kdiagram.compat.matplotlib.get_cmap` is now **deprecated**.
+  It will be ignored and will issue a `FutureWarning` if used, as
+  the function no longer raises errors but instead uses a
+  fallback system.
+
+* |API Change| Added the `failsafe` parameter to
+  `kdiagram.compat.matplotlib.get_cmap` to provide more granular
+  control over the final fallback colormap.
+
+
+Bug Fixes 
+~~~~~~~~~~~
 
 * |Fix| Minor consistency fixes in comparison plotting defaults
   (legends, grid props) to match package-wide conventions.
 * |Fix| More informative warnings for unsupported/ignored options
   (e.g., unexpected colormap names, mismatched ``names`` length).
+* |Fix| Resolved a critical `TypeError: 'NoneType' object is not
+  callable` that occurred when an invalid colormap name was
+  passed to certain plotting functions.
+* |Fix| Eliminated inconsistencies in colormap retrieval that could
+  occur between different versions of Matplotlib, ensuring more
+  predictable behavior across environments.
+* |Fix| Reduced spurious Matplotlib warnings during plotting by
+  routing through the new compatibility helpers and improving
+  warning categories in tests.
+* |Fix| Small wording and formatting cleanups in utility error
+  messages to match package-wide conventions.
+  
+Documentation 
+~~~~~~~~~~~~~~
 
-Documentation |Docs|
-~~~~~~~~~~~~~~~~~~~~
+* |Docs| Gallery: Added **Model Reliability Diagram** example 
+  section in ``gallery/comparison.rst`` (with interpretation notes).
+* |Docs| User Guide: Added a full **Calibration / Reliability**
+  guide to``user_guide/comparison.rst`` including math, ECE/Brier
+  definitions, binning strategies, and interpretation tips.
+* |Docs| Completely rewrote and updated the API documentation
+  (docstrings) for :func:`kdiagram.compat.matplotlib.get_cmap` and
+  ``is_valid_cmap`` to reflect the new robust architecture, fallback
+  behavior, and the new failsafe parameter.
+* |Docs| Citation guide rewritten. JOSS software paper listed.
+* |Docs| `docs/source/citing.rst` updated:
 
-* |Docs| Gallery:
-  - Added **Model Reliability Diagram** example section in
-    ``gallery/comparison.rst`` (with interpretation notes).
-* |Docs| User Guide:
-  - Added a full **Calibration / Reliability** guide to
-    ``user_guide/comparison.rst`` including math, ECE/Brier
-    definitions, binning strategies, and interpretation tips.
-* |Docs| Release Notes:
-  - Introduced ``docs/source/release_notes/index.rst`` and entries
-    for ``v1.0.0``, ``v1.0.3``, and **v1.1.0**.
-* |Docs| Badges:
-  - Added reusable badge roles in ``conf.py`` (success/danger/info/
-    warning/primary/secondary/purple/fix) and shortcuts like
-    ``|Feature|``, ``|Fix|``, ``|Enhancement|`` for release notes.
+  - JOSS software citation listed first.
+  - Lines wrapped at \~70 characters for readability.
+  - Placeholders clarified for submitted manuscripts.
 
-Testing & QA |Tests|
-~~~~~~~~~~~~~~~~~~~~
+* |Docs| Cross-links and parameter docs refined in quantile
+  utilities and comparison plotting pages.
+  
+Testing & QA 
+~~~~~~~~~~~~~
 
 * |Tests| New ``tests/test_plot_reliability_diagram.py`` covering:
+
   - Single & multi-model overlays.
   - Uniform vs. quantile binning; small/degenerate bins.
   - Error bars: ``wilson``, ``normal``, ``none``.
@@ -97,14 +163,29 @@ Testing & QA |Tests|
     for 2D proba, NaN dropping.
   - ``return_data=True`` schema and values.
   - Counts panel rendering and legend text with ECE/Brier.
+
+* |Tests| Enhanced tests for `kdiagram.compat.matplotlib` to
+  validate the new cascading fallback logic, the behavior of the
+  `failsafe` parameter, and the correct issuance of warnings for
+  deprecated parameters and invalid colormap names.
+ 
+* |Tests| New suites covering datasets, quantile reshaping, core
+  utilities, and Matplotlib compatibility, raising overall test
+  coverage.
+  
+* |Tests| Added:
+
+  - ``tests/test_compat_matplotlib.py`` covering
+    ``get_cmap``/``is_valid_cmap`` branches and fallbacks.
+  - ``tests/test_q_utils.py`` covering melt/pivot/reshape paths,
+    filtering, spatial columns, and error policies.
+  - ``tests/test_generic_utils.py`` covering ``str2columns``,
+    ``smart_format``, ``error_policy``, and helpers.
+  - ``tests/test_datasets_make.py`` covering synthetic generators,
+    reproducibility, validations, and edge cases.  
+    
 * |Build| Increased coverage over helpers and edge conditions.
-
-Deprecations
-~~~~~~~~~~~~
-
-* **None.**
-
-Migration Notes
-~~~~~~~~~~~~~~~
-
-* No changes required. The release is additive and backwards compatible.
+* |Build| Initial NumPy 2 readiness via
+  ``kdiagram.compat.numpy`` (shim module to ease transition).
+* |Build| Coverage increased across utils, datasets, and compat
+  layers; flaky cases addressed with deterministic seeds.
