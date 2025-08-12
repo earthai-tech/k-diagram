@@ -41,7 +41,7 @@ The package is designed with applied settings in mind, including
 environmental forecasting (subsidence, floods, climate impacts), but
 is general enough for many time-series and geospatial tasks.
 
----
+-----
 
 ## 📥 Installation
 
@@ -84,7 +84,7 @@ python -m pip install . --no-deps --force-reinstall
 > Tip: Prefer a virtual environment (either `venv` or `conda`) to keep
 > project dependencies isolated.
 
----
+-----
 
 ## ⚡ Quick Start
 
@@ -131,13 +131,44 @@ ax = kd.plot_interval_width(
     />
 </p>
 
----
+-----
+## 📚 Documentation
+
+For detailed usage, API reference, and more examples, please 
+visit the official documentation:
+
+**[k-diagram.readthedocs.io](https://k-diagram.readthedocs.io/)** 
+
+-----
+
+## 💻 Using the CLI
+
+`k-diagram` also provides a command-line interface for generating 
+plots directly from CSV files.
+
+**Check available commands:**
+
+```bash
+k-diagram --help
+```
+
+**Example: Generate a Coverage Diagnostic plot:**
+
+```bash
+k-diagram plot_coverage_diagnostic data.csv \
+    --actual-col actual_obs \
+    --q-cols q10_pred q90_pred \
+    --title "Coverage for My Model" \
+    --savefig coverage_plot.png
+```
+
+*(See `k-diagram <command> --help` for options specific to each plot type).*
+
+-----
 
 ## 📊 Gallery Highlights
 
 A small selection of plots. See the full gallery in the docs.
-
-
 
 ### 1. Coverage Diagnostic
 
@@ -262,46 +293,11 @@ kd.plot_actual_vs_predicted(
 
 -----
 
-Many more examples, including plots for interval consistency, velocity,
-Taylor diagrams, and feature fingerprints, are available in the documentation.
+More examples, including plots for interval consistency, velocity,
+Taylor diagrams,feature fingerprints, etc are available in the documentation.
 
 ➡️ **See the [Complete Gallery](https://k-diagram.readthedocs.io/en/latest/gallery/index.html)**
 
------
-
-## 💻 Using the CLI
-
-`k-diagram` also provides a command-line interface for generating 
-plots directly from CSV files.
-
-**Check available commands:**
-
-```bash
-k-diagram --help
-```
-
-**Example: Generate a Coverage Diagnostic plot:**
-
-```bash
-k-diagram plot_coverage_diagnostic data.csv \
-    --actual-col actual_obs \
-    --q-cols q10_pred q90_pred \
-    --title "Coverage for My Model" \
-    --savefig coverage_plot.png
-```
-
-*(See `k-diagram <command> --help` for options specific to each plot type).*
-
------
-
-## 📚 Documentation
-
-For detailed usage, API reference, and more examples, please 
-visit the official documentation:
-
-**[k-diagram.readthedocs.io](https://k-diagram.readthedocs.io/)** 
-
------
 
 ## 🙌 Contributing
 
