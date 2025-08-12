@@ -89,7 +89,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["kdiagram"]        # measure only the package
+source = ["kdiagram"]       # measure only the package
 branch = true
 parallel = true
 omit = [
