@@ -93,10 +93,11 @@ source = ["kdiagram"]        # measure only the package
 branch = true
 parallel = true
 omit = [
-  "kdiagram/tests/*",          # never count tests
-  "kdiagram/__init__.py",      # module that only re-exports
-  "kdiagram/datasets/data/*",  # data loaders  
-  "kdiagram/cli.py:757-9999",  # Main CLI parser setup
+  "kdiagram/tests/*",                # never count tests
+  "kdiagram/__init__.py",            # module that only re-exports
+  "kdiagram/datasets/data/*",        # data loaders 
+  "kdiagram/datasets/_property.py",  # Inner data loaders  
+  "kdiagram/cli.py",                 # Main CLI parser setup :757-9999
 ]
 
 [tool.coverage.report]

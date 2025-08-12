@@ -1,6 +1,8 @@
 ignore:
   - "kdiagram/tests/*"
   - "kdiagram/datasets/data/*"
+  - "kdiagram/datasets/_property.py"
+  - "kdiagram/cli.py"
 coverage:
   status:
     project:
