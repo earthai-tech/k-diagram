@@ -19,12 +19,9 @@ def fake_dl(url, filename, dstpath, **kwargs):
     dstpath.mkdir(parents=True, exist_ok=True)
     (dstpath / filename).write_bytes(b"ok")
 
-
 # ---------------------------
 # get_data / remove_data
 # ---------------------------
-
-
 def test_get_data_respects_env_and_creates(monkeypatch, tmp_path):
     target = tmp_path / "kd_data_env"
     monkeypatch.setenv("KDIAGRAM_DATA", str(target))
