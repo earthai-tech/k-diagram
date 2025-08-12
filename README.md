@@ -130,13 +130,14 @@ ax = kd.plot_interval_width(
     width="500"
     />
 </p>
+
 ---
 
 ## 📊 Gallery Highlights
 
 A small selection of plots. See the full gallery in the docs.
 
----
+
 
 ### 1. Coverage Diagnostic
 
@@ -177,7 +178,6 @@ kd.plot_coverage_diagnostic(
     width="500"
     />
 </p>
------
 
 
 ### 2\. Uncertainty Drift Over Time
@@ -222,7 +222,7 @@ kd.plot_uncertainty_drift(
     width="500"
     />
 </p>
------
+
 
 ### 3\. Actual vs. Predicted
 
@@ -259,6 +259,7 @@ kd.plot_actual_vs_predicted(
     width="500"
     />
 </p>
+
 -----
 
 Many more examples, including plots for interval consistency, velocity,
