@@ -32,4 +32,5 @@ scikit-learn>=0.24
 # other_library>=1.0
 
 pytest
+pytest-mock
 flake8 # flask or ruff

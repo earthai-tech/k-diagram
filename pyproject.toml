@@ -89,18 +89,15 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["kdiagram"]        # measure only the package
+source = ["kdiagram"]       # measure only the package
 branch = true
 parallel = true
 omit = [
- # "kdiagram/tests/*",        # never count tests
-  "kdiagram/__init__.py",    # optional: module that only re-exports
-  #"kdiagram/cli.py",         # optional: skip CLI wrapper if not tested
-  #"kdiagram/api/*",          # optional: exclude API shims if you want
-  #"kdiagram/compat/*",       # optional: exclude compat layer
-  "kdiagram/datasets/data/*",     # optional: data loaders 
-  "kdiagram/datasets/_property.py",     
-  "kdiagram/cli.py:2090-9999",  
+  "kdiagram/tests/*",                # never count tests
+  "kdiagram/__init__.py",            # module that only re-exports
+  "kdiagram/datasets/data/*",        # data loaders 
+  "kdiagram/datasets/_property.py",  # Inner data loaders  
+  "kdiagram/cli.py",                 # Main CLI parser setup :757-9999
 ]
 
 [tool.coverage.report]

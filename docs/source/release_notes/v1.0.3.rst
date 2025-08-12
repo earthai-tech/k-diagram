@@ -9,8 +9,8 @@ This release improves documentation robustness, fixes bugs found
 during strict Sphinx builds and testing, refines the dataset API,
 and enhances visual styling.
 
-Enhancements |Enhancement|
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enhancements 
+~~~~~~~~~~~~~~~
 
 * |Enhancement| Added synthetic dataset generators:
   :func:`~kdiagram.datasets.make_taylor_data`,
@@ -32,13 +32,9 @@ Enhancements |Enhancement|
 * |Enhancement| Added :mod:`kdiagram.utils.io` and dataset property
   helpers in :mod:`kdiagram.datasets._property` (adapted from
   ``gofast``).
-* |Build| Improved CLI (`kdiagram.cli`) with full argument parsing
-  and better help.
-* |Docs| Enhanced docs theme (``custom.css``) with refined palette,
-  improved tables, clearer admonitions, smoother hover effects.
-* |Build| Added ``CODE_OF_CONDUCT.md``.
 
-Bug Fixes |Fix|
+
+Bug Fixes
 ~~~~~~~~~~~~~~~
 
 * |Fix| Resolved many ReST formatting errors in docstrings across
@@ -66,7 +62,7 @@ Bug Fixes |Fix|
   internal dependency installs; temporarily hardcoded version)
   that caused ``twine check`` metadata errors. (#nnn)
 
-Documentation |Docs|
+Documentation
 ~~~~~~~~~~~~~~~~~~~~
 
 * |Docs| Fixed ``index.rst`` errors around ``sphinx-design``
@@ -85,7 +81,16 @@ Documentation |Docs|
 * |Docs| Added ``CITING.rst`` and ``GLOSSARY.rst``.
 * |Docs| Updated README badges and image sizing; corrected Markdown
   comments.
-* |Build| Updated ``docs/requirements.txt`` and
-  ``.readthedocs.yml``; set ``fail_on_warning: false`` temporarily.
 * |Docs| Polished utility and compatibility module docstrings with
   proper attribution.
+* |Docs| Enhanced docs theme (``custom.css``) with refined palette,
+  improved tables, clearer admonitions, smoother hover effects.
+  
+QA
+~~~~~
+
+* |Build| Updated ``docs/requirements.txt`` and
+  ``.readthedocs.yml``; set ``fail_on_warning: false`` temporarily.
+* |Build| Improved CLI (`kdiagram.cli`) with full argument parsing
+  and better help.
+* |Build| Added ``CODE_OF_CONDUCT.md``.

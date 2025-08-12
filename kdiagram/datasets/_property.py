@@ -71,9 +71,8 @@ __all__ = [
     "remove_data",
 ]
 
+
 # --- Function Definitions ---
-
-
 def get_data(data_home: str | None = None) -> str:
     r"""Get the path to the k-diagram data cache directory.
 

@@ -443,7 +443,7 @@ def _colors(cmap_name: str, palette: list[Any] | None, k: int) -> list[Any]:
     return [cmo(i / (k - 1)) for i in range(k)]
 
 
-plot_reliability_diagram.__doc__ = r"""\
+plot_reliability_diagram.__doc__ = r"""
 Plot a reliability diagram (calibration plot) for one or more
 classification models.
 

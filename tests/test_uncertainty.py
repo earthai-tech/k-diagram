@@ -9,6 +9,7 @@ kdiagram.plot.uncertainty.
 
 import re
 import warnings
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import matplotlib
@@ -129,11 +130,6 @@ def sample_data_velocity():
     return {"df": df, "q50_cols": q50_cols}
 
 
-# --- Test Functions ---
-
-# == Tests for plot_coverage ==
-
-
 @pytest.mark.parametrize("kind", ["line", "bar", "pie", "radar"])
 def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
     """Test plot_coverage with one quantile model for various kinds."""
@@ -198,12 +194,6 @@ def test_plot_coverage_invalid_q(sample_data_coverage):
 
     with pytest.raises(ValueError, match="1D list or array"):
         plot_coverage(data["y_true"], data["y_pred_q1"], q=[[0.1], [0.9]])
-
-
-# Note: Test for q vs pred dimension mismatch is skipped as the
-# check is commented out in the source code provided.
-
-# == Tests for plot_model_drift ==
 
 
 @pytest.mark.parametrize(
@@ -287,9 +277,6 @@ def test_plot_model_drift_mismatched_lengths(sample_data_drift):
             q90_cols=data["q90_cols"],
             horizons=data["horizons"],
         )
-
-
-# == Tests for plot_velocity ==
 
 
 @pytest.mark.parametrize("normalize", [True, False])
@@ -449,11 +436,6 @@ def sample_data_anomaly(request):
     }
 
 
-# --- Test Functions ---
-
-# == Tests for plot_interval_consistency ==
-
-
 @pytest.mark.parametrize("use_cv", [True, False])
 @pytest.mark.parametrize("q50_provided", [True, False])
 @pytest.mark.parametrize("acov", ["default", "half_circle"])
@@ -552,9 +534,6 @@ def test_plot_interval_consistency_zero_mean_warning(sample_data_consistency):
         )
 
 
-# == Tests for plot_anomaly_magnitude ==
-
-
 @pytest.mark.parametrize("theta_col_provided", [True, False])
 @pytest.mark.parametrize("acov", ["default", "quarter_circle"])
 @pytest.mark.parametrize("cbar", [True, False])
@@ -639,18 +618,6 @@ def test_plot_anomaly_magnitude_missing_cols(sample_data_anomaly):
 def test_plot_anomaly_magnitude_theta_col_warning(sample_data_anomaly):
     """Test warnings related to theta_col."""
     data = sample_data_anomaly
-    # df_mod = data["df"].copy()
-
-    # # Case 1: theta_col exists but has non-numeric data (after NaN drop)
-    # df_mod["order_feature_str"] = df_mod["order_feature"].astype(str)
-    # with pytest.warns(UserWarning):
-    #     plot_anomaly_magnitude(
-    #         df=df_mod,
-    #         actual_col=data["actual_col"],
-    #         q_cols=data["q_cols"],
-    #         theta_col="order_feature_str",  # Non-numeric
-    #     )
-
     # Case 2: theta_col does not exist
     with pytest.raises(KeyError):
         plot_anomaly_magnitude(
@@ -799,7 +766,6 @@ def sample_data_temporal():
     }
 
 
-# == Tests for plot_uncertainty_drift ==
 @pytest.mark.parametrize("dt_labels_provided", [True, False])
 @pytest.mark.parametrize("acov", ["default", "quarter_circle"])
 @pytest.mark.parametrize("mask_angle", [True, False])
@@ -900,21 +866,29 @@ def test_plot_uncertainty_drift_width_warnings(sample_data_drift_uncertainty):
         )
 
 
-# --- Corrected Pytest Fixture ---
 @pytest.fixture
 def sample_data_avp():
     """
-    Provides a reasonably sized sample DataFrame for most tests.
-    The original fixture was too large, causing OverflowErrors.
+    Reasonably sized sample DataFrame for tests.
+    Robust across 32/64-bit and Python 3.9–3.12.
     """
     np.random.seed(66)
-    # Reduced n_points from a large number to a safe and fast value.
     n_points = 120
-    data = {"sample": range(n_points)}
-    data["time"] = pd.date_range("2024-01-01", periods=n_points, freq="h")
+    data = {"sample": np.arange(n_points)}
+
+    # Try fast path; fall back if 32-bit pandas overflows
+    try:
+        data["time"] = pd.date_range("2024-01-01", periods=n_points, freq="h")
+    except OverflowError:
+        base = datetime(2024, 1, 1)
+        data["time"] = [base + timedelta(hours=i) for i in range(n_points)]
+        # To stay purely numeric, we could instead do:
+        # data["time"] = np.arange(n_points)
+
     signal = 20 + 15 * np.cos(np.linspace(0, 6 * np.pi, n_points))
     data["actual"] = signal + np.random.randn(n_points) * 3
     data["predicted"] = signal * 0.9 + np.random.randn(n_points) * 2 + 2
+
     df = pd.DataFrame(data)
     return {
         "df": df,
@@ -922,9 +896,6 @@ def sample_data_avp():
         "pred_col": "predicted",
         "theta_col": "time",
     }
-
-
-# --- Corrected Tests ---
 
 
 @pytest.mark.parametrize("line", [True, False])

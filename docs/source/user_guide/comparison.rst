@@ -87,12 +87,12 @@ performance profile.
 * **Radius:** The distance from the center along a metric's axis
   shows the model's (potentially scaled) score for that metric.
   
-    * **Important:** By default (`scale='norm'` with internal inversion
-      for error metrics), a **larger radius generally indicates
-      better performance** (higher score for accuracy/R2, lower score
-      for MAE/RMSE/MAPE/time after inversion during scaling). Check
-      the `scale` parameter used. If `scale=None`, interpret radius
-      based on the raw metric values.
+  * **Important:** By default (`scale='norm'` with internal inversion
+    for error metrics), a **larger radius generally indicates
+    better performance** (higher score for accuracy/R2, lower score
+    for MAE/RMSE/MAPE/time after inversion during scaling). Check
+    the `scale` parameter used. If `scale=None`, interpret radius
+    based on the raw metric values.
 * **Shape Comparison:** Compare the overall shapes and sizes of the
   polygons. A model with a consistently large polygon across multiple
   desirable metrics might be considered the best overall performer.
@@ -102,24 +102,24 @@ performance profile.
 **Use Cases:**
 
 * **Multi-Objective Model Selection:** Choose the best model when
-    performance needs to be balanced across several, potentially
-    conflicting, metrics (e.g., high accuracy vs. low error vs.
-    fast training time).
+  performance needs to be balanced across several, potentially
+  conflicting, metrics (e.g., high accuracy vs. low error vs.
+  fast training time).
 * **Visualizing Strengths/Weaknesses:** Quickly identify which metrics
-    a particular model excels or struggles with compared to others.
+  a particular model excels or struggles with compared to others.
 * **Communicating Comparative Performance:** Provide stakeholders with
-    an intuitive visual summary of how different candidate models stack
-    up against each other based on chosen criteria.
+  an intuitive visual summary of how different candidate models stack
+  up against each other based on chosen criteria.
 * **Comparing Regression and Classification:** Use appropriate default
-    or custom metrics to compare models for either task type.
+  or custom metrics to compare models for either task type.
 
 **Advantages (Radar Context):**
 
 * Effectively displays multiple performance dimensions (>2) for
-    multiple entities (models) in a single, relatively compact plot.
+  multiple entities (models) in a single, relatively compact plot.
 * Allows direct comparison of the *profiles* of different models
-    – are they generally good/bad, or strong in some areas and weak
-    in others?
+  – are they generally good/bad, or strong in some areas and weak
+  in others?
 * Facilitates the identification of trade-offs between different metrics.
 
 **Example:**
