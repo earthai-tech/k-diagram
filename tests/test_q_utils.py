@@ -6,7 +6,6 @@ import pytest
 
 from kdiagram.utils import q_utils
 
-
 # ---------- Fixtures ----------
 @pytest.fixture
 def wide_df():
