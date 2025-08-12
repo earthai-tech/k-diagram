@@ -43,7 +43,6 @@ is general enough for many time-series and geospatial tasks
 
 ---
 
-
 ## Installation
 
 ### From PyPI (recommended)

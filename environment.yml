@@ -54,6 +54,7 @@ dependencies:
   # Docs toolchain (from docs requirements + pyproject dev)
   # Pip-only packages (especially Sphinx extensions)
   - pip:
+    - pytest-mock
     - sphinx>=7.0,<8.0
     - furo
     - sphinx-copybutton
