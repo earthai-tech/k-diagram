@@ -41,14 +41,14 @@ subsidence uncertainty for 898 locations over multiple years.
 **Key Characteristics:**
 
 * **Spatial Coordinates:** Includes ``longitude`` and ``latitude`` for
-    each location.
+  each location.
 * **Target Values:** Contains columns ``subsidence_2022`` and
-    ``subsidence_2023`` representing reference or baseline subsidence
-    values for those years (useful for some diagnostics like coverage).
+  ``subsidence_2023`` representing reference or baseline subsidence
+  values for those years (useful for some diagnostics like coverage).
 * **Quantile Forecasts:** Provides predicted quantiles (Q10, Q50, Q90)
-    for the years 2022 through 2026 (e.g., ``subsidence_2024_q0.1``,
-    ``subsidence_2024_q0.5``, ``subsidence_2024_q0.9``). This allows
-    analysis of uncertainty intervals and their evolution over time.
+  for the years 2022 through 2026 (e.g., ``subsidence_2024_q0.1``,
+  ``subsidence_2024_q0.5``, ``subsidence_2024_q0.9``). This allows
+  analysis of uncertainty intervals and their evolution over time.
 
 **Loading the Data:**
 
@@ -731,6 +731,6 @@ to a 90-degree view (`acov='quarter_circle'`).
    related research publications.
 
    For details on how to cite the `k-diagram` software and these
-   specific papers (including submissions to *Nature Sustainability*
+   specific papers (including submissions to *Nature Communications*
    and the *International Journal of Forecasting*), please refer to
    the :ref:`Citing k-diagram <citing>` page.

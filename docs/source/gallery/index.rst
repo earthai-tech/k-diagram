@@ -23,5 +23,6 @@ Browse through the sections below to see `k-diagram` in action.
    comparison       
    feature_based     
    relationship
+   errors
    hist      
    utils             

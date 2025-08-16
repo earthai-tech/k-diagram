@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 
 from .core.property import PandasDataHandlers
-from .utils.generic_utils import get_valid_kwargs
 
 __all__ = ["check_non_emptiness", "isdf", "SaveFile"]
 
@@ -570,6 +569,8 @@ class SaveFile:
                     return result
 
                 # Get the appropriate writer based on file extension
+                from .utils.generic_utils import get_valid_kwargs
+                
                 writers_dict = self.data_handler.writers(df_to_save)
                 writer_func = writers_dict.get(ext.lower())
                 self.writer_kws = get_valid_kwargs(writer_func, self.writer_kws)

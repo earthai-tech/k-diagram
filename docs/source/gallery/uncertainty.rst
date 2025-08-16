@@ -1271,3 +1271,189 @@ of any pre-calculated, single-column metric.
     * To inspect the distribution of a feature before modeling.
     * To present the distribution of any summary statistic in a
       visually engaging format.
+
+.. raw:: html
+
+    <hr>
+
+.. _gallery_plot_polar_heatmap:
+
+--------------------------
+Polar Heatmap
+--------------------------
+
+Visualizes the 2D density of data points on a polar grid, showing
+the concentration of a radial variable against a cyclical or ordered
+angular variable.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram.plot.uncertainty as kdu
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation ---
+
+    np.random.seed(42)
+    n_points = 5000
+
+    # Simulate hour of day with more events in the afternoon
+
+    hour = np.concatenate([
+        np.random.normal(15, 2, int(n_points * 0.7)),
+        np.random.normal(5, 2, int(n_points * 0.3))
+    ]) % 24
+
+    # Simulate rainfall, correlated with afternoon hours
+
+    rainfall = np.random.gamma(2, 5, n_points) +  
+    (hour > 12) * np.random.gamma(3, 5, n_points)
+
+    df_weather = pd.DataFrame({'hour': hour, 'rainfall_mm': rainfall})
+
+    # --- Plotting ---
+
+    kdu.plot_polar_heatmap(
+        df=df_weather,
+        r_col='rainfall_mm',
+        theta_col='hour',
+        theta_period=24,
+        r_bins=25,
+        theta_bins=24,
+        cmap='plasma',
+        title='Rainfall Intensity vs. Hour of Day',
+        cbar_label='Event Count',
+        savefig="gallery/images/gallery_plot_polar_heatmap.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_polar_heatmap.png
+    :alt: Example of a Polar Heatmap
+    :align: center
+    :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    The **Polar Heatmap** is a powerful tool for finding patterns
+    between a cyclical feature (like time) and a magnitude.
+
+    **Key Features:**
+
+      * **Angle (θ):** Represents the cyclical variable (e.g., hour of the day).
+      * **Radius (r):** Represents the magnitude variable (e.g., rainfall amount).
+      * **Color:** Shows the density or count of data points. Bright, hot
+        colors indicate a high concentration of events in that specific
+        angle-radius bin.
+
+    **🔍 In this Example:**
+
+      * The brightest colors (yellow) are concentrated between roughly
+        180° and 270° (corresponding to the afternoon hours, 12:00 to 18:00)
+        and at a moderate radius (rainfall intensity).
+      * This immediately reveals the pattern in the simulated data: heavy
+        rainfall events are most frequent in the afternoon. The rest of the
+        plot is dark, indicating few events at other times or intensities.
+
+    **💡 When to Use:**
+
+      * To find correlations between a cyclical feature (time, season) and
+        an event's magnitude or error.
+      * To identify "hot spots" in your data where specific conditions
+        (e.g., time of day and error size) frequently co-occur.
+
+.. raw:: html
+
+    <hr>
+
+.. _gallery_plot_polar_quiver:
+
+--------------------------
+Polar Quiver Plot
+--------------------------
+
+Visualizes vector data (magnitude and direction) at specific points
+on a polar grid. It's ideal for showing changes, revisions, or error
+vectors.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram.plot.uncertainty as kdu
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation ---
+
+    np.random.seed(0)
+    n_points = 50
+    locations = np.linspace(0, 360, n_points, endpoint=False)
+    initial_forecast = 10 + 5 * np.sin(np.deg2rad(locations) * 3)
+
+    # Simulate forecast revisions
+
+    radial_change = np.random.normal(0, 1.5, n_points)
+    tangential_change = np.random.normal(0, 0.1, n_points)
+
+    df_forecasts = pd.DataFrame({
+    'location_angle': locations,
+    'initial_value': initial_forecast,
+    'update_radial': radial_change,
+    'update_tangential': tangential_change,
+    })
+
+    # --- Plotting ---
+
+    kdu.plot_polar_quiver(
+        df=df_forecasts,
+        r_col='initial_value',
+        theta_col='location_angle',
+        u_col='update_radial',
+        v_col='update_tangential',
+        theta_period=360,
+        title='Forecast Revisions for Spatial Locations',
+        cmap='coolwarm',
+        scale=25,
+        savefig="gallery/images/gallery_uncertainty_vector_revisions.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_uncertainty_vector_revisions.png
+    :alt: Example of a Polar Quiver Plot
+    :align: center
+    :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    The **Polar Quiver Plot** shows the direction and magnitude of
+    change at different points in a system.
+
+    **Key Features:**
+
+      * **Arrow Position:** The base of each arrow is located at a
+        point (:math:`(r, \theta)`) on the polar grid.
+      * **Arrow Direction & Length:** The arrow points in the direction
+        of the vector, and its length represents the vector's magnitude.
+        Color is also often used to represent magnitude.
+
+    **🔍 In this Example:**
+
+      * The base of each arrow represents an initial forecast value for a
+        specific location (angle).
+      * The arrow itself shows the revision to that forecast. An arrow
+        pointing outward indicates the forecast was revised upward. An arrow
+        pointing inward indicates a downward revision.
+      * The color and length of the arrows show the magnitude of the
+        revision. The long, dark red arrow near 180° represents the largest
+        single forecast update in the dataset.
+
+    **💡 When to Use:**
+
+      * To visualize forecast updates and assess model stability.
+      * To plot error vectors (e.g., where the vector shows the direction
+        and magnitude of error from the true value).
+      * To visualize flow fields or other vector data in a polar context.

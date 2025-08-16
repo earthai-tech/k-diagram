@@ -443,18 +443,19 @@ plot function.
      The red arc represents the standard deviation of the reference
      data (which is approximately 1.0).
    * **Model Performance:** Each colored dot represents a model:
-      * **Model A (Red):** High correlation (~0.9) and standard
-        deviation slightly less than the reference (~0.9). It captures
-        the pattern well but slightly underestimates variability.
-      * **Model B (Purple):** Lower correlation (~0.7) and much higher
-        standard deviation (~1.3). It matches the pattern less well
-        and overestimates variability.
-      * **Model C (Brown):** Good correlation (~0.8) but lower
-        standard deviation (~0.8). Captures the pattern reasonably
-        but underestimates variability.
-      * **Model D (Grey):** Similar correlation to Model B (~0.75) but
-        lower standard deviation (~0.85), closer to Model A/C in
-        variability.
+   
+     * **Model A (Red):** High correlation (~0.9) and standard
+       deviation slightly less than the reference (~0.9). It captures
+       the pattern well but slightly underestimates variability.
+     * **Model B (Purple):** Lower correlation (~0.7) and much higher
+       standard deviation (~1.3). It matches the pattern less well
+       and overestimates variability.
+     * **Model C (Brown):** Good correlation (~0.8) but lower
+       standard deviation (~0.8). Captures the pattern reasonably
+       but underestimates variability.
+     * **Model D (Grey):** Similar correlation to Model B (~0.75) but
+       lower standard deviation (~0.85), closer to Model A/C in
+       variability.
    * **Overall Skill (RMSD):** The distance from each model point to
      the reference point on the arc (at Corr=1.0, StdDev=1.0)
      indicates the centered RMS difference. Model C appears closest,
@@ -547,13 +548,15 @@ DataFrame using ``as_frame=True``) and visualizes it with
 
    * **Distinct Profiles:** Each model clearly relies on different
      features. For instance:
-        * **SVM (Green):** Primarily driven by F3, with some
-          contribution from F1 and F2.
-        * **RF (Orange):** Shows high relative importance for F1 and
-          F6, moderate for F2.
-        * **MLP (Blue):** Relies most heavily on F3 and F5.
-        * **XGB (Brown):** Dominated by F4, with moderate importance
-          for F2, F3, and F5.
+     
+     * **SVM (Green):** Primarily driven by F3, with some
+       contribution from F1 and F2.
+      
+     * **RF (Orange):** Shows high relative importance for F1 and
+       F6, moderate for F2.
+     * **MLP (Blue):** Relies most heavily on F3 and F5.
+     * **XGB (Brown):** Dominated by F4, with moderate importance
+       for F2, F3, and F5.
    * **Feature Comparison:** We can compare feature relevance *across*
      models. F3 is important for SVM, MLP, and XGB, but not RF. F7
      appears relatively unimportant for all models shown. F1 is crucial

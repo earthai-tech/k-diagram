@@ -56,7 +56,9 @@ __all__ = [
     "plot_temporal_uncertainty",
     "plot_uncertainty_drift",
     "plot_velocity",
-    "plot_radial_density_ring"
+    "plot_radial_density_ring", 
+    "plot_polar_heatmap", 
+    "plot_polar_quiver"
 ]
 
 
@@ -5164,6 +5166,358 @@ Examples
 ... )
 """
 
+
+@check_non_emptiness
+@isdf
+def plot_polar_quiver(
+    df: pd.DataFrame,
+    r_col: str,
+    theta_col: str,
+    u_col: str,
+    v_col: str,
+    *,
+    color_col: Optional[str] = None,
+    theta_period: Optional[float] = None,
+    title: Optional[str] = None,
+    figsize: Tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    mask_angle: bool = False,
+    mask_radius: bool = False,
+    show_grid: bool = True,
+    grid_props: Optional[Dict[str, Any]] = None,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+    **quiver_kws,
+):
+    
+    required_cols = [r_col, theta_col, u_col, v_col]
+    if color_col:
+        required_cols.append(color_col)
+    exist_features(df, features=required_cols)
+    
+    data = df[required_cols].dropna()
+    if data.empty:
+        warnings.warn(
+            "DataFrame is empty after dropping NaNs in "
+            "required columns. Cannot plot.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+
+    r_data = data[r_col].to_numpy()
+    theta_data = data[theta_col].to_numpy()
+    u_data = data[u_col].to_numpy()  # Radial component
+    v_data = data[v_col].to_numpy()  # Angular component
+
+    if theta_period:
+        theta_rad = (theta_data % theta_period) / theta_period * (
+            2 * np.pi
+        )
+    else:
+        min_theta, max_theta = theta_data.min(), theta_data.max()
+        if (max_theta - min_theta) > 1e-9:
+            theta_rad = (
+                (theta_data - min_theta) / (max_theta - min_theta)
+            ) * 2 * np.pi
+        else:
+            theta_rad = np.zeros_like(theta_data)
+
+    if color_col:
+        color_data = data[color_col].to_numpy()
+        cbar_label = color_col
+    else:
+        # Default to coloring by vector magnitude
+        color_data = np.sqrt(u_data**2 + v_data**2)
+        cbar_label = "Vector Magnitude"
+
+    norm = Normalize(
+        vmin=np.min(color_data), vmax=np.max(color_data)
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(norm(color_data))
+
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    
+    # Matplotlib's quiver on a polar axis expects:
+    # (theta, r, angular_change, radial_change)
+    ax.quiver(
+        theta_rad, r_data, v_data, u_data,
+        color=colors, **quiver_kws
+    )
+
+    cbar = plt.colorbar(
+        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj),
+        ax=ax, pad=0.1, shrink=0.75
+    )
+    cbar.set_label(cbar_label, fontsize=10)
+
+    ax.set_title(
+        title or f"Quiver Plot of ({u_col}, {v_col})"
+    )
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    if mask_angle:
+        ax.set_xticklabels([])  
+
+    if mask_radius:
+        ax.set_yticklabels([])  
+        
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+plot_polar_quiver.__doc__ = r"""
+Plot a polar quiver plot to visualize vector data.
+
+This function draws arrows (vectors) on a polar grid. Each arrow's
+origin, direction, and magnitude are determined by the data. This is
+highly effective for visualizing dynamic phenomena like forecast
+revisions, error vectors, or flow fields.
+
+Parameters
+----------
+df : pd.DataFrame
+    The input DataFrame containing the vector data.
+
+r_col : str
+    Name of the column for the **radial position** of the vector's
+    origin (tail).
+
+theta_col : str
+    Name of the column for the **angular position** of the vector's
+    origin.
+
+u_col : str
+    Name of the column for the **radial component** of the vector
+    (the change in radius).
+
+v_col : str
+    Name of the column for the **tangential component** of the vector
+    (the change in angle).
+
+color_col : str, optional
+    Name of a column to use for coloring the arrows. If ``None``,
+    arrows are colored by their total vector magnitude.
+
+theta_period : float, optional
+    The period of the cyclical data in ``theta_col``. For example,
+    if ``theta_col`` represents degrees in a circle, the period is
+    360. If provided, the angle is mapped to ``[0, 2*pi]`` based
+    on this cycle.
+
+title : str, optional
+    The title for the plot. If ``None``, a default is generated.
+
+figsize : tuple of (float, float), default=(8, 8)
+    Figure size in inches.
+
+cmap : str, default='viridis'
+    Matplotlib colormap for coloring the arrows.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization.
+
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels (e.g., degrees).
+
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+dpi : int, default=300
+    Resolution for the saved figure.
+
+**quiver_kws : dict, optional
+    Additional keyword arguments passed to the ``ax.quiver`` call
+    (e.g., ``scale``, ``width``, ``headwidth``).
+
+Returns
+-------
+ax : matplotlib.axes.Axes or None
+    The Matplotlib Axes object containing the plot, or ``None``
+    if the plot could not be generated.
+
+Notes
+-----
+The plot visualizes a vector field on a polar coordinate system. For
+each data point :math:`i`, a vector is drawn.
+
+1.  **Vector Origin**: The tail of the vector is positioned at the
+    polar coordinates :math:`(r_i, \theta_i)` specified by ``r_col``
+    and ``theta_col``.
+
+2.  **Vector Components**: The vector itself is defined by its
+    components in the radial and tangential directions.
+    - :math:`u_i` (from ``u_col``) is the component in the radial
+      direction (pointing away from the center).
+    - :math:`v_i` (from ``v_col``) is the component in the tangential
+      direction (perpendicular to the radial line).
+
+3.  **Visualization**: Matplotlib's polar ``quiver`` function places an
+    arrow at each origin point :math:`(r_i, \theta_i)`. The arrow's
+    length and orientation are determined by the vector
+    :math:`(u_i, v_i)`.
+
+4.  **Coloring**: The color of each arrow can be determined by a
+    separate metric from ``color_col``. If not specified, it defaults
+    to the vector's Euclidean magnitude, :math:`M_i`.
+
+    .. math::
+
+        M_i = \sqrt{u_i^2 + v_i^2}
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot.uncertainty import plot_polar_quiver
+>>>
+>>> # Simulate forecast revisions for 50 spatial locations
+>>> np.random.seed(0)
+>>> n_points = 50
+>>> locations = np.linspace(0, 360, n_points, endpoint=False)
+>>> initial_forecast = 10 + 5 * np.sin(np.deg2rad(locations) * 3)
+>>>
+>>> # Simulate revisions (changes in value)
+>>> radial_change = np.random.normal(0, 1.5, n_points)
+>>> tangential_change = np.random.normal(0, 0.1, n_points)
+>>>
+>>> df_forecasts = pd.DataFrame({
+...     'location_angle': locations,
+...     'initial_value': initial_forecast,
+...     'update_radial': radial_change,
+...     'update_tangential': tangential_change,
+... })
+>>>
+>>> # Generate the polar quiver plot
+>>> ax = plot_polar_quiver(
+...     df=df_forecasts,
+...     r_col='initial_value',
+...     theta_col='location_angle',
+...     u_col='update_radial',
+...     v_col='update_tangential',
+...     theta_period=360,
+...     title='Forecast Revisions for Spatial Locations',
+...     cmap='coolwarm',
+...     scale=25  # Adjusts arrow size for better visibility
+... )
+"""
+
+@check_non_emptiness
+@isdf
+def plot_polar_heatmap(
+    df: pd.DataFrame,
+    r_col: str,
+    theta_col: str,
+    *,
+    theta_period: Optional[float] = None,
+    r_bins: int = 20,
+    theta_bins: int = 36,
+    statistic: str = "count",
+    cbar_label: Optional[str] = None,
+    title: Optional[str] = None,
+    figsize: Tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    mask_angle: bool = False,
+    mask_radius: bool = False,
+    show_grid: bool = True,
+    grid_props: Optional[Dict[str, Any]] = None,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    exist_features(df, features=[r_col, theta_col])
+    
+    data = df[[r_col, theta_col]].dropna()
+    if data.empty:
+        warnings.warn(
+            "DataFrame is empty after dropping NaNs in "
+            f"'{r_col}' or '{theta_col}'. Cannot plot.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+
+    r_data = data[r_col].to_numpy()
+    theta_data = data[theta_col].to_numpy()
+
+    if theta_period:
+        # Map to [0, 2*pi] based on a known cycle
+        theta_rad = (theta_data % theta_period) / theta_period * (
+            2 * np.pi
+        )
+    else:
+        # Min-max scale to [0, 2*pi]
+        min_theta, max_theta = theta_data.min(), theta_data.max()
+        if (max_theta - min_theta) > 1e-9:
+            theta_rad = (
+                (theta_data - min_theta) / (max_theta - min_theta)
+            ) * 2 * np.pi
+        else:
+            theta_rad = np.zeros_like(theta_data)
+
+    # Define bins for the 2D histogram
+    r_edges = np.linspace(
+        r_data.min(), r_data.max(), r_bins + 1
+    )
+    theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
+
+    # Use np.histogram2d to get counts in each polar bin
+    counts, _, _ = np.histogram2d(
+        x=r_data, y=theta_rad, bins=[r_edges, theta_edges]
+    )
+
+    # Transpose counts to match pcolormesh expectations
+    # counts = counts.T
+
+    # Create the polar plot
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+
+    # Use pcolormesh to draw the heatmap
+    T, R = np.meshgrid(theta_edges, r_edges)
+    pcm = ax.pcolormesh(T, R, counts, cmap=cmap_obj, shading="auto")
+
+    # Add a color bar
+    cbar = plt.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
+    cbar.set_label(
+        cbar_label or statistic.capitalize(),
+        fontsize=10
+    )
+
+    ax.set_title(title or f"Density of {r_col} vs. {theta_col}")
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    if mask_angle:
+        ax.set_xticklabels([])  
+    
+    if mask_radius:
+        ax.set_yticklabels([]) 
+        
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+ 
+    return ax
+
+
 def _calculate_kde_for_ring(
     data: np.ndarray, bandwidth: Optional[float] = None
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -5194,6 +5548,141 @@ def _calculate_kde_for_ring(
     pdf = kde(grid)
     return grid, pdf
 
+plot_polar_heatmap.__doc__ = r"""
+Plot a polar heatmap to visualize a 2D density distribution.
+
+This function creates a heatmap on a polar grid to show the
+concentration of data points based on two variables: one mapped to
+the **radius** and another to the **angle**. It is highly effective
+for identifying patterns and correlations between a linear metric and
+a cyclical or ordered feature.
+
+Parameters
+----------
+df : pd.DataFrame
+    The input DataFrame containing the data.
+
+r_col : str
+    Name of the column to be used for the radial coordinate.
+
+theta_col : str
+    Name of the column to be used for the angular coordinate.
+
+theta_period : float, optional
+    The period of the cyclical data in ``theta_col``. For example,
+    if ``theta_col`` represents the hour of the day, ``theta_period``
+    should be 24. If provided, the angle is mapped to ``[0, 2*pi]``
+    based on this cycle. If ``None``, the angle is scaled from the
+    data's min/max values.
+
+r_bins : int, default=20
+    The number of bins to create along the radial axis.
+
+theta_bins : int, default=36
+    The number of bins to create around the angular axis.
+
+statistic : str, default='count'
+    The statistic to compute in each bin. Currently, only 'count'
+    is supported, which corresponds to a 2D histogram.
+
+cbar_label : str, optional
+    Custom label for the color bar. If ``None``, it defaults to
+    the value of ``statistic``.
+
+title : str, optional
+    The title for the plot. If ``None``, a default is generated.
+
+figsize : tuple of (float, float), default=(8, 8)
+    Figure size in inches.
+
+cmap : str, default='viridis'
+    Matplotlib colormap for the heatmap.
+
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels (e.g., degrees).
+
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization.
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+dpi : int, default=300
+    Resolution for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes or None
+    The Matplotlib Axes object containing the plot, or ``None``
+    if the plot could not be generated.
+
+Notes
+-----
+The heatmap is constructed by binning the 2D polar space and
+counting the number of data points that fall into each bin.
+
+1.  **Coordinate Mapping**:
+    - The radial data from ``r_col`` is used directly.
+    - The angular data from ``theta_col``, :math:`\theta_{data}`, is
+      converted to radians in the range :math:`[0, 2\pi]`. If
+      ``theta_period`` (:math:`P`) is given, the mapping is:
+
+      .. math::
+          \theta_{rad} = \left( \frac{\theta_{data} \pmod P}{P} \right) \cdot 2\pi
+
+      Otherwise, it is linearly scaled from the data's range.
+
+2.  **Binning**: The data space is divided into a grid of polar
+    bins defined by ``r_bins`` and ``theta_bins``. A 2D histogram
+    is then computed, where the value of each cell :math:`C_{ij}`
+    is the number of data points :math:`(r, \theta)` that fall
+    within the radial and angular bounds of that cell.
+
+3.  **Visualization**: The resulting count matrix :math:`\mathbf{C}`
+    is visualized using ``pcolormesh``, where the color of each
+    cell corresponds to its count, creating the heatmap effect.
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot.uncertainty import plot_polar_heatmap
+>>>
+>>> # Simulate weather data with a daily cycle
+>>> np.random.seed(42)
+>>> n_points = 5000
+>>> # Simulate hour of day with more events in the afternoon
+>>> hour = np.concatenate([
+...     np.random.normal(15, 2, int(n_points * 0.7)),
+...     np.random.normal(5, 2, int(n_points * 0.3))
+... ]) % 24
+>>> # Simulate rainfall, correlated with afternoon hours
+>>> rainfall = np.random.gamma(2, 5, n_points) + \
+...     (hour > 12) * np.random.gamma(3, 5, n_points)
+>>>
+>>> df_weather = pd.DataFrame({'hour': hour, 'rainfall_mm': rainfall})
+>>>
+>>> # Generate the polar heatmap
+>>> ax = plot_polar_heatmap(
+...     df=df_weather,
+...     r_col='rainfall_mm',
+...     theta_col='hour',
+...     theta_period=24,
+...     r_bins=25,
+...     theta_bins=24,
+...     cmap='plasma',
+...     title='Rainfall Intensity vs. Hour of Day',
+...     cbar_label='Event Count'
+... )
+"""
 
 class PerformanceWarning(Warning):
     pass

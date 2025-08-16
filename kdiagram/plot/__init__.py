@@ -44,5 +44,8 @@ __all__ = [
     "plot_relationship",
     "plot_radial_density_ring", 
     "plot_reliability_diagram", 
-    "plot_horizon_metrics"
+    "plot_horizon_metrics", 
+    "plot_error_ellipses",
+    "plot_error_bands" , 
+    "plot_error_violins"
 ]

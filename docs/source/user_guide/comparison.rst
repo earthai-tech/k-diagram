@@ -146,7 +146,6 @@ error bars (e.g., Wilson intervals), and a counts panel for diagnosing data
 sparsity across probability ranges.
 
 **Mathematical Concept:**
-
 Given binary labels :math:`y_j \in \{0,1\}` and predicted probabilities
 :math:`p_j \in [0,1]` (optionally with per-sample weights
 :math:`w_j \ge 0`), probabilities are partitioned into bins via a
@@ -272,7 +271,6 @@ runnable snippet that saves an image and returns per-bin statistics.)
 Comparing Metrics Across Horizons (:func:`~kdiagram.plot.comparison.plot_horizon_metrics`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 **Purpose:**
 This function creates a **polar bar chart** to visually compare key
 metrics across a set of distinct categories, most commonly different
@@ -282,7 +280,6 @@ width) and central tendency (median prediction) evolve as it
 forecasts further into the future?"
 
 **Mathematical Concept:**
-
 The plot summarizes metrics for :math:`N` horizons (corresponding to
 the rows in the input `df`) using data from :math:`M` samples
 (corresponding to the provided columns for each quantile). Let the

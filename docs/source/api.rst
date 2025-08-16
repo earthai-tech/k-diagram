@@ -43,6 +43,9 @@ anomalies, drift, and other uncertainty-related diagnostics.
    ~kdiagram.plot.uncertainty.plot_temporal_uncertainty
    ~kdiagram.plot.uncertainty.plot_uncertainty_drift
    ~kdiagram.plot.uncertainty.plot_velocity
+   ~kdiagram.plot.uncertainty.plot_radial_density_ring
+   ~kdiagram.plot.uncertainty.plot_polar_heatmap
+   ~kdiagram.plot.uncertainty.plot_polar_quiver
 
 
 .. _api_evaluation: 
@@ -61,6 +64,24 @@ Diagrams.
    ~kdiagram.plot.evaluation.plot_taylor_diagram_in
    ~kdiagram.plot.evaluation.plot_taylor_diagram
 
+.. _api_errors:
+
+Model Error Analysis (`kdiagram.plot.errors`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Functions for diagnosing and visualizing model errors, focusing on
+systemic vs. random errors, comparing error distributions, and
+visualizing 2D uncertainty.
+
+.. autosummary::
+   :toctree: _autosummary/errors
+   :nosignatures:
+
+   ~kdiagram.plot.errors.plot_error_bands
+   ~kdiagram.plot.errors.plot_error_violins
+   ~kdiagram.plot.errors.plot_error_ellipses
+
+
 Model Comparison (`kdiagram.plot.comparison`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -71,7 +92,8 @@ Functions for comparing multi-model performances on a radar chart.
    :nosignatures:
 
    ~kdiagram.plot.comparison.plot_model_comparison 
-   ~kdiagram.plot.comparison.plot_reliability_diagram 
+   ~kdiagram.plot.comparison.plot_reliability_diagram
+   ~kdiagram.plot.comparison.plot_horizon_metrics  
    
    
 .. _api_feature_based: 
@@ -120,6 +142,8 @@ used for preparing data for visualization functions.
    ~kdiagram.utils.melt_q_data
    ~kdiagram.utils.pivot_q_data   
    ~kdiagram.utils.reshape_quantile_data
+   ~kdiagram.utils.plot_hist_kde
+   
 
 
 

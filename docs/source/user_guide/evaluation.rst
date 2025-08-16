@@ -56,23 +56,23 @@ involves looking at the position of points (representing models or
 predictions) relative to the reference point and the axes:
 
 * **Reference Point/Arc:** Typically marked on the horizontal axis (at
-    angle 0) or as an arc. Its radial distance from the origin represents
-    the standard deviation of the reference (observed) data (:math:`\sigma_r`).
+  angle 0) or as an arc. Its radial distance from the origin represents
+  the standard deviation of the reference (observed) data (:math:`\sigma_r`).
 * **Radial Axis (Distance from Origin):** Represents the standard
-    deviation of the prediction (:math:`\sigma_p`). Models with standard
-    deviations similar to the reference will lie near the reference arc.
+  deviation of the prediction (:math:`\sigma_p`). Models with standard
+  deviations similar to the reference will lie near the reference arc.
 * **Angular Axis (Angle from Horizontal/Reference):** Represents the
-    correlation coefficient (:math:`\rho`) between the prediction and the
-    reference, usually via the relation :math:`\theta = \arccos(\rho)`.
-    Points closer to the horizontal axis (smaller angle) have higher
-    correlations.
+  correlation coefficient (:math:`\rho`) between the prediction and the
+  reference, usually via the relation :math:`\theta = \arccos(\rho)`.
+  Points closer to the horizontal axis (smaller angle) have higher
+  correlations.
 * **Distance to Reference Point:** The *straight-line distance* between a
-    model point and the reference point is proportional to the centered
-    Root Mean Square Difference (RMSD) between the prediction and the
-    reference.
+  model point and the reference point is proportional to the centered
+  Root Mean Square Difference (RMSD) between the prediction and the
+  reference.
 * **Overall Skill:** Generally, models plotted closer to the reference
-    point are considered more skillful, indicating a better balance of
-    correlation and amplitude of variations (standard deviation).
+  point are considered more skillful, indicating a better balance of
+  correlation and amplitude of variations (standard deviation).
 
 Detailed Explanations
 ------------------------
@@ -103,6 +103,7 @@ centered Root Mean Square Difference (RMSD):
    RMSD^2 = \sigma_p^2 + \sigma_r^2 - 2\sigma_p \sigma_r \rho
 
 On the diagram:
+
  * Radius (distance from origin) = :math:`\sigma_p`
  * Angle (from reference axis) = :math:`\theta = \arccos(\rho)`
  * Distance from Reference Point = RMSD
@@ -114,30 +115,31 @@ On the diagram:
     higher correlation), and their radial position relative to the
     reference arc/point (matching standard deviation is often desired).
 * If `cmap` is used, the background shading provides additional context
-    based on the `radial_strategy`:
-    * `'rwf'`: Emphasizes points with high correlation *and* standard
-        deviation close to the reference.
-    * `'convergence'` / `'norm_r'`: Simple radial gradients.
-    * `'center_focus'`: Highlights a central region.
-    * `'performance'`: Highlights the area around the best-performing
-        point based on correlation and std. dev. matching the reference.
+  based on the `radial_strategy`:
+    
+  * `'rwf'`: Emphasizes points with high correlation *and* standard
+    deviation close to the reference.
+  * `'convergence'` / `'norm_r'`: Simple radial gradients.
+  * `'center_focus'`: Highlights a central region.
+  * `'performance'`: Highlights the area around the best-performing
+    point based on correlation and std. dev. matching the reference.
 
 **Use Cases:**
 
 * Comparing multiple model results when only summary statistics
-    (std. dev., correlation) are available.
+  (std. dev., correlation) are available.
 * Generating standard Taylor diagrams from raw model output and
-    observation arrays.
+  observation arrays.
 * Creating visually enhanced diagrams with background shading to guide
-    interpretation towards specific performance criteria.
+  interpretation towards specific performance criteria.
 * Customizing the appearance of the reference marker and plot labels.
 
 **Advantages:**
 
 * High flexibility in accepting either pre-computed statistics or raw
-    data arrays.
+  data arrays.
 * Offers multiple strategies for informative background shading to
-    enhance interpretation.
+  enhance interpretation.
 * Provides options for customizing reference display and label sizes.
 
 
@@ -168,30 +170,31 @@ of the background color field `CC` based on `radial_strategy`:
 **Interpretation:**
 
 * Interpret model points relative to the reference point/arc as described
-    in the general interpretation guide.
+  in the general interpretation guide.
 * The **background color** provides context:
-    * With `'convergence'`, colors directly map to correlation values
-        (e.g., warmer colors for higher correlation).
-    * With `'norm_r'`, colors show relative standard deviation.
-    * With `'performance'`, the brightest color highlights the region
-        closest to the best-performing input model.
+
+  * With `'convergence'`, colors directly map to correlation values
+    (e.g., warmer colors for higher correlation).
+  * With `'norm_r'`, colors show relative standard deviation.
+  * With `'performance'`, the brightest color highlights the region
+    closest to the best-performing input model.
 * The `zero_location` and `direction` parameters change the orientation
-    of the plot, affecting where correlation=1 appears and whether angles
-    increase clockwise or counter-clockwise.
+  of the plot, affecting where correlation=1 appears and whether angles
+  increase clockwise or counter-clockwise.
 
 **Use Cases:**
 
 * Creating visually rich Taylor diagrams where the background emphasizes
-    correlation levels or proximity to the best model.
+  correlation levels or proximity to the best model.
 * Comparing models when a strong visual cue for correlation or relative
-    performance across the diagram space is desired.
+  performance across the diagram space is desired.
 * Generating diagrams with specific orientations (e.g., correlation=1 at
-    the top North position).
+  the top North position).
 
 **Advantages:**
 
 * Provides built-in, visually informative background shading options
-    focused on correlation or performance.
+  focused on correlation or performance.
 * Offers fine control over plot orientation (`zero_location`, `direction`).
 
 **Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_background_shading_focus>`
@@ -207,11 +210,6 @@ generating a standard Taylor Diagram, requiring raw prediction and
 reference arrays as input. It compares models based on standard
 deviation (radius) and correlation (angle).
 
-*(Note: Based on the provided signature with `...` for some arguments,
-this function's definition might be incomplete or it might act as a
-wrapper around other plotting logic. Its specific features beyond the
-core Taylor Diagram depend on its full implementation.)*
-
 **Mathematical Concept:**
 Utilizes the same core principles as the other Taylor diagram functions,
 mapping standard deviation (:math:`\sigma_p`) to the radial coordinate
@@ -221,22 +219,22 @@ and correlation (:math:`\rho`) to the angular coordinate
 **Interpretation:**
 
 * Interpret points based on their standard deviation (radius),
-    correlation (angle), and distance to the reference point (RMSD) as
-    outlined in the general interpretation guide above.
+  correlation (angle), and distance to the reference point (RMSD) as
+  outlined in the general interpretation guide above.
 * Customization options like `zero_location`, `direction`, and
-    `angle_to_corr` allow tailoring the plot's appearance and labeling.
+  `angle_to_corr` allow tailoring the plot's appearance and labeling.
 
 **Use Cases:**
 
 * Generating standard Taylor diagrams for model evaluation when background
-    shading is not required.
+  shading is not required.
 * Comparing multiple predictions against a common reference based on
-    correlation and standard deviation.
+  correlation and standard deviation.
 
 **Advantages:**
 
 * May offer a more streamlined interface if fewer customization options
-    are needed compared to `taylor_diagram` or `plot_taylor_diagram_in`.
+  are needed compared to `taylor_diagram` or `plot_taylor_diagram_in`.
 
 **Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_basic>`
 

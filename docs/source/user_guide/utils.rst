@@ -68,19 +68,19 @@ likely represent quantile data, based on common naming conventions
 
 * ``df``: The input DataFrame.
 * ``col_prefix``: Optional prefix to narrow down the search (e.g.,
-    `'prediction'` for columns like `'prediction_q0.5'`).
+  `'prediction'` for columns like `'prediction_q0.5'`).
 * ``dt_value``: Optional list of date/time strings to filter columns
-    that include a temporal component in their name (e.g.,
-    `'prediction_2023_q0.9'`).
+  that include a temporal component in their name (e.g.,
+  `'prediction_2023_q0.9'`).
 * ``return_types``: Specifies the output format ('columns', 'q_val',
-    'values', 'frame').
+  'values', 'frame').
 
 **Use Cases:**
 
 * Automatically finding all quantile-related columns in a large dataset
-    without manually listing them.
+  without manually listing them.
 * Extracting specific quantile information (just the levels, the actual
-    data arrays, or a subset DataFrame).
+  data arrays, or a subset DataFrame).
 * Verifying which quantile levels are present in your data.
 
 **Example:** :ref:`View Gallery Example <gallery_detect_quantiles>`
@@ -108,9 +108,9 @@ It then checks if these constructed names exist in the provided DataFrame.
 **Use Cases:**
 
 * Programmatically generating lists of column names needed for other
-    `k-diagram` functions (like `qlow_cols`, `qup_cols`).
+  `k-diagram` functions (like `qlow_cols`, `qup_cols`).
 * Validating whether all expected quantile columns for a given analysis
-    are present in the DataFrame.
+  are present in the DataFrame.
 
 **Example:** :ref:`View Gallery Example <gallery_build_q_names>`
 
@@ -141,9 +141,9 @@ time step, while different quantile levels become separate columns
 **Use Cases:**
 
 * Preparing data for time-series analysis or plotting where you need
-    different quantiles aligned row-wise for each time step.
+  different quantiles aligned row-wise for each time step.
 * Structuring data before calculating metrics that depend on having
-    lower and upper bounds in the same row (e.g., interval width).
+  lower and upper bounds in the same row (e.g., interval width).
 * Simplifying DataFrames with numerous time-stamped quantile columns.
 
 **Example:** :ref:`View Gallery Example <gallery_reshape_q_data>` 
@@ -178,10 +178,10 @@ documenting based on the common understanding of "melting" to a long format.)*
 **Use Cases:**
 
 * Creating a "tidy" representation of quantile data suitable for use
-    with plotting libraries like Seaborn or Altair that prefer long-format
-    data.
+  with plotting libraries like Seaborn or Altair that prefer long-format
+  data.
 * Preparing data for statistical analysis or database storage where each
-    observation is a separate row.
+  observation is a separate row.
 * Filtering or grouping data easily by time step or quantile level.
 
 **Example:** :ref:`View Gallery Example <gallery_melt_q_data>` 
@@ -201,21 +201,21 @@ quantile level, following the pattern `prefix_date_qX.X`.
 **Key Parameters:**
 
 * ``df``: The input long-format DataFrame. Must contain columns for
-    time (``dt_col``) and the quantile values (named like
-    `prefix_qX.X`).
+  time (``dt_col``) and the quantile values (named like
+  `prefix_qX.X`).
 * ``value_prefix``: The common prefix used in the long-format quantile
-    column names and for reconstructing the wide-format names.
+  column names and for reconstructing the wide-format names.
 * ``dt_col``: The name of the column containing the time step identifiers.
 * ``q``: Optional list to filter specific quantiles before pivoting.
 * ``spatial_cols``: Optional list/tuple of spatial identifier columns
-    that form part of the index in the long format.
+  that form part of the index in the long format.
 
 **Use Cases:**
 
 * Reconstructing the original wide data format after performing analyses
-    in long format.
+  in long format.
 * Preparing data for tools or functions that expect time steps and
-    quantiles spread across columns.
+  quantiles spread across columns.
 * Creating summary tables or reports where different time points are columns.
 
 **Example:** :ref:`View Gallery Example <gallery_pivot_q_data>` 

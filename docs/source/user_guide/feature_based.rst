@@ -87,49 +87,49 @@ is the number of features.
 
 * **Axes:** Each angular axis corresponds to a specific input feature.
 * **Polygons (Layers):** Each colored polygon represents a different
-    layer (e.g., Model A vs. Model B, or Zone 1 vs. Zone 2).
+  layer (e.g., Model A vs. Model B, or Zone 1 vs. Zone 2).
 * **Radius:** The distance from the center along a feature's axis
-    indicates the importance of that feature for a given layer.
+  indicates the importance of that feature for a given layer.
 * **Shape (Normalized View):** When ``normalize=True``, compare the
-    *shapes* of the polygons. This highlights the *relative* importance
-    patterns. Which features are *most* important within each layer,
-    regardless of overall magnitude? Do different layers rely on vastly
-    different feature subsets?
+  *shapes* of the polygons. This highlights the *relative* importance
+  patterns. Which features are *most* important within each layer,
+  regardless of overall magnitude? Do different layers rely on vastly
+  different feature subsets?
 * **Size (Raw View):** When ``normalize=False``, compare the overall
-    *size* of the polygons. A larger polygon indicates that the layer
-    generally assigns higher absolute importance scores across features
-    compared to a smaller polygon (though interpretation depends on the
-    nature of the importance metric).
+  *size* of the polygons. A larger polygon indicates that the layer
+  generally assigns higher absolute importance scores across features
+  compared to a smaller polygon (though interpretation depends on the
+  nature of the importance metric).
 * **Dominant Features:** Features corresponding to axes where polygons
-    extend furthest are the most influential for those respective layers.
+  extend furthest are the most influential for those respective layers.
 
 **Use Cases:**
 
 * **Comparing Model Interpretations:** Visualize and contrast feature
-    importance derived from different model types (e.g., Random Forest vs.
-    Gradient Boosting) trained on the same data.
+  importance derived from different model types (e.g., Random Forest vs.
+  Gradient Boosting) trained on the same data.
 * **Analyzing Importance Drift:** Plot importance profiles calculated
-    for different time periods or spatial regions to see if feature
-    influence changes.
+  for different time periods or spatial regions to see if feature
+  influence changes.
 * **Identifying Characteristic Fingerprints:** Understand the typical
-    pattern of feature reliance for a specific system or model setup.
+  pattern of feature reliance for a specific system or model setup.
 * **Debugging and Validation:** Check if the feature importance profile
-    aligns with domain knowledge or expectations.
+  aligns with domain knowledge or expectations.
 
 **Advantages (Polar/Radar Context):**
 
 * Excellent for simultaneously comparing multiple multi-dimensional
-    profiles (feature importance vectors) against a common set of axes
-    (features).
+  profiles (feature importance vectors) against a common set of axes
+  (features).
 * The closed polygon shape provides a distinct visual "fingerprint" for
-    each layer.
+  each layer.
 * Makes it easy to spot the most dominant features (those axes with the
-    largest radial values) for each layer.
+  largest radial values) for each layer.
 * Normalization allows comparing relative patterns effectively, even if
-    absolute importance scales differ significantly between layers.
+  absolute importance scales differ significantly between layers.
 
 **Example:**
-(See the :ref:`Gallery <gallery_plot_feature_based>` section below for a runnable code example and plot)
+(See the :ref:`Gallery <gallery_feature_based>` section for a runnable code example and plot)
 
 
 .. raw:: html

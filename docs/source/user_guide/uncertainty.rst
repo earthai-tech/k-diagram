@@ -402,6 +402,7 @@ steps, providing context.
   center have stable interval width predictions over time.
   
 * **CV vs. Standard Deviation (`use_cv`):**
+
   * If `use_cv=False` (default), radius shows *absolute* standard
     deviation. A large radius means large absolute fluctuations in width.
   * If `use_cv=True`, radius shows *relative* variability (CV). A large
@@ -772,19 +773,19 @@ absolute magnitude of the Q50 predictions
   * If normalized, the radius shows relative velocity across locations.
   
 * **Color (Mapped to Velocity):** If ``use_abs_color=False``, color
-    directly reflects the velocity value :math:`v_j`. Using a diverging
-    colormap (like 'coolwarm') helps distinguish between positive average
-    change (e.g., red/warm colors for increasing values) and negative
-    average change (e.g., blue/cool colors for decreasing values).
+  directly reflects the velocity value :math:`v_j`. Using a diverging
+  colormap (like 'coolwarm') helps distinguish between positive average
+  change (e.g., red/warm colors for increasing values) and negative
+  average change (e.g., blue/cool colors for decreasing values).
     
 * **Color (Mapped to Q50 Magnitude):** If ``use_abs_color=True``, color
-    shows the average absolute value of the Q50 predictions themselves.
-    This provides context: Is high velocity (large radius) associated
-    with high or low absolute predicted values (color)?
+  shows the average absolute value of the Q50 predictions themselves.
+  This provides context: Is high velocity (large radius) associated
+  with high or low absolute predicted values (color)?
     
 * **Angular Patterns:** Look for clusters of points with similar radius
-    (velocity) or color at specific angles, which might indicate spatial
-    patterns in the predicted dynamics.
+  (velocity) or color at specific angles, which might indicate spatial
+  patterns in the predicted dynamics.
 
 **Use Cases:**
 
@@ -828,7 +829,6 @@ distribution, answering the question: "What is the shape of this
 data's distribution, and where are its most common values?"
 
 **Mathematical Concept:**
-
 The function first derives a one-dimensional data vector :math:`\mathbf{x}`
 based on the ``kind`` and ``target_cols`` parameters. For instance, with
 ``kind='width'``, :math:`x_i = Q_{up,i} - Q_{low,i}`.
@@ -892,3 +892,135 @@ value :math:`x`, and the color at that radius is determined by
 .. raw:: html
 
    <hr>
+
+
+.. _ug_plot_polar_heatmap:
+
+2D Density Analysis (:func:`~kdiagram.plot.uncertainty.plot_polar_heatmap`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+
+This function creates a **polar heatmap** to visualize the two-dimensional
+density distribution of data points. It is particularly powerful for
+uncovering relationships between a linear variable (mapped to the radius)
+and a cyclical or ordered variable (mapped to the angle). It answers the
+question: "Do high or low values of one metric tend to concentrate at
+specific times, seasons, or categories?"
+
+**Mathematical Concept:**
+The plot is a 2D histogram in polar coordinates.
+
+1. **Coordinate Mapping:** The data is mapped to polar coordinates. The
+   radial variable :math:`r` is taken from ``r_col``. The angular
+   variable :math:`\theta_{data}` from ``theta_col`` is converted to
+   radians :math:`[0, 2\pi]`. If a period :math:`P` is provided (e.g.,
+   24 for hours), the mapping is:
+
+   .. math::
+
+      \theta_{rad} = \left( \frac{\theta_{data} \pmod P}{P} \right) \cdot 2\pi
+
+2. **Binning and Counting:** The polar space is divided into a grid of
+   bins defined by ``r_bins`` and ``theta_bins``. The function then
+   counts the number of data points that fall into each polar sector
+   :math:`(r_j, \theta_k)`. The result is a count matrix :math:`\mathbf{C}`.
+
+**Interpretation:**
+
+* **Angle:** Represents the cyclical or ordered feature (e.g., hour of
+  the day, month of the year).
+* **Radius:** Represents the magnitude of the second variable (e.g.,
+  prediction error, rainfall amount).
+* **Color:** The color intensity of each polar bin corresponds to the
+  **count** or density of data points within it. "Hot" or bright
+  colors indicate a high concentration of data, revealing a strong
+  relationship between the radial and angular variables in that region.
+
+**Use Cases:**
+
+* **Error Analysis:** Identify if large forecast errors (radius) are
+  more frequent at certain times of the day (angle).
+* **Feature Correlation:** Discover patterns between a cyclical feature
+  and a measurement, like finding the time of day when wind speeds
+  are highest.
+* **Identifying "Hot Spots":** Pinpoint specific conditions where events
+  of a certain magnitude are most likely to occur.
+
+**Advantages of Polar View:**
+
+* Makes cyclical patterns immediately obvious, which can be harder to
+  spot in a standard Cartesian heatmap.
+* Provides a compact and intuitive overview of a 2D distribution.
+
+**Example:**
+(See :ref:`Gallery <gallery_plot_polar_heatmap>` for code and plot examples)
+
+.. raw:: html
+
+    <hr>
+
+.. _ug_plot_polar_quiver:
+
+Visualizing Vector Fields (:func:`~kdiagram.plot.uncertainty.plot_polar_quiver`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+
+This function creates a **polar quiver plot** to visualize vector data.
+Each arrow on the plot represents a vector, showing both its **magnitude**
+and **direction**. It is an excellent tool for understanding dynamic
+processes like forecast revisions, error vectors, or physical flows.
+
+**Mathematical Concept:**
+Each arrow is a vector defined at an origin point in polar coordinates.
+
+1. **Vector Origin:** The tail of each vector :math:`i` is placed at the
+   polar coordinate :math:`(r_i, \theta_i)`, determined by the `r_col`
+   and `theta_col`.
+
+2. **Vector Components:** The vector itself is defined by its components
+   in the local radial and tangential directions.
+
+   * :math:`u_i` (from `u_col`) is the vector's component in the
+     **radial** direction (pointing away from the center).
+   * :math:`v_i` (from `v_col`) is the vector's component in the
+     **tangential** direction (perpendicular to the radial line).
+
+3. **Magnitude:** The color and/or length of the arrow typically
+   represents the vector's Euclidean magnitude, :math:`M_i`.
+
+   .. math::
+
+      M_i = \sqrt{u_i^2 + v_i^2}
+
+**Interpretation:**
+
+  * **Arrow Position:** The base of the arrow shows the location where the
+    vector originates.
+  * **Arrow Direction:** The arrow points in the direction of the vector.
+    For forecast revisions, an arrow pointing outward means the forecast
+    was revised upward; an inward arrow means a downward revision.
+  * **Arrow Length & Color:** The size and color of the arrow represent
+    the magnitude of the vector. Longer, more intense arrows indicate
+    stronger flows or larger changes.
+
+**Use Cases:**
+
+  * **Forecast Stability:** Visualize how much forecasts change between
+    updates. Small, randomly oriented arrows suggest a stable model.
+    Large, consistently oriented arrows might indicate model drift.
+  * **Error Vector Analysis:** Plot the error as a vector pointing from
+    the predicted value to the actual value.
+  * **Flow Visualization:** Model physical phenomena like wind or ocean
+    currents in a polar context.
+
+**Advantages of Polar View:**
+
+  * Provides an intuitive way to visualize vector fields that have a
+    natural central point or cyclical nature.
+  * Can reveal large-scale rotational or radial patterns in the vector
+    data.
+
+**Example:**
+(See :ref:`Gallery <gallery_plot_polar_quiver>` for code and plot examples)

@@ -44,19 +44,22 @@ k-diagram: Polar Insights for Forecasting
     :margin: auto  
 
     * **Intuitive Polar Perspective:** Visualize multi-dimensional
-        aspects like uncertainty spread, temporal drift, and spatial
-        patterns in a compact circular layout.
+      aspects like uncertainty spread, temporal drift, and spatial
+      patterns in a compact circular layout.
+    * **Advanced Error Analysis:** A dedicated suite of plots to
+      diagnose systemic bias vs. random error, compare error
+      distributions, and visualize 2D uncertainty.
     * **Targeted Diagnostics:** Functions specifically designed to
-        assess interval coverage, consistency, anomaly magnitude, model
-        velocity, and drift.
+      assess interval coverage, consistency, anomaly magnitude, model
+      velocity, and drift.
     * **Uncertainty-Aware Evaluation:** Move beyond point-forecast
-        accuracy and evaluate the reliability of your model's
-        uncertainty estimates.
+      accuracy and evaluate the reliability of your model's
+      uncertainty estimates.
     * **Identify Model Weaknesses:** Pinpoint where and when your
-        forecasts are less reliable or exhibit significant anomalies.
+      forecasts are less reliable or exhibit significant anomalies.
     * **Clear Communication:** Generate publication-ready plots to
-        effectively communicate model performance and uncertainty
-        characteristics.
+      effectively communicate model performance and uncertainty
+      characteristics.
 
 .. # Table of Contents Tree (often hidden and rendered by the theme's sidebar)
 .. # The 'hidden' option prevents it from being displayed directly here.
@@ -87,12 +90,14 @@ k-diagram: Polar Insights for Forecasting
 Quick links to the main sections of the API Reference:
 
 * :ref:`Uncertainty Visualization <api_uncertainty>`: Functions for
-    analyzing prediction intervals, coverage, anomalies, and drift.
+  analyzing prediction intervals, coverage, anomalies, and drift.
+* :ref:`Error Visualization <api_errors>`: Functions for diagnosing
+  systemic bias, variance, and comparing error distributions.
 * :ref:`Model Evaluation <api_evaluation>`: Functions for generating
-    Taylor Diagrams to compare model performance.
+  Taylor Diagrams to compare model performance.
 * :ref:`Feature Importance <api_feature_based>`: Functions for
-    visualizing feature influence patterns (fingerprints).
+  visualizing feature influence patterns (fingerprints).
 * :ref:`Relationship Visualization <api_relationship>`: Functions for
-    plotting true vs. predicted values in polar coordinates.
+  plotting true vs. predicted values in polar coordinates.
 * Full :doc:`API Reference <api>`: Browse the complete API documentation.
 

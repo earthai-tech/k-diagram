@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
   "numpydoc>=1.6",
-  "numpy>=1.22",          # I'm preparing 2.x support; pin can be loosened further after CI passes
+  "numpy>=1.22",          
   "pandas",
   "scipy",
   "matplotlib",
@@ -66,7 +66,6 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["kdiagram*"]
 
-# If you ship non-Python files later, add globs here.
 [tool.setuptools.package-data]
 kdiagram = []
 

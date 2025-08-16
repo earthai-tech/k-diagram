@@ -32,6 +32,7 @@ forecasting models and data.
    comparison               
    feature_based       
    relationship 
+   errors
    hist  
    datasets                 
    utils
