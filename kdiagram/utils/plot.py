@@ -2,10 +2,16 @@
 #   Author: LKouadio <etanoyau@gmail.com>
 
 import re
-from typing import Optional
+from typing import Optional, Tuple
+from scipy.stats import gaussian_kde
+import numpy as np
+import matplotlib.pyplot as plt
 
+from .generic_utils import get_valid_kwargs 
 
-def set_axis_grid(ax, show_grid: bool = True, grid_props: dict = None) -> None:
+def set_axis_grid(
+        ax, show_grid: bool = True, grid_props: dict = None
+        ) -> None:
     """Robustly set grid properties on one or more matplotlib axes."""
     # Ensure grid_props is a dictionary.
     grid_props = (
@@ -149,3 +155,335 @@ def is_valid_kind(
             raise ValueError(f"Invalid plot type '{kind}'. Allowed: {allowed}")
 
     return final_kind
+
+
+def prepare_data_for_kde(
+    data: np.ndarray,
+    bandwidth: Optional[float] = None
+) -> Tuple[np.ndarray, np.ndarray]:
+    r"""
+    Prepares the data for Kernel Density Estimate (KDE) calculation.
+    
+    This function cleans the data by removing non-finite values, then creates
+    a grid for KDE evaluation. It then computes the Kernel Density Estimate 
+    using a Gaussian kernel.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to calculate the KDE from.
+    bandwidth : float, optional
+        Bandwidth for the KDE. Default is None, which uses Silverman's rule 
+        of thumb for bandwidth estimation.
+
+    Returns
+    -------
+    grid : np.ndarray
+        The x-values grid for KDE evaluation.
+    pdf : np.ndarray
+        The estimated probability density function (PDF) from the KDE.
+
+    Notes
+    -----
+    The KDE is computed by finding the optimal bandwidth (if not provided)
+    and applying a Gaussian kernel to the data. The bandwidth is chosen 
+    using Silverman's rule of thumb when not explicitly provided.
+
+    Examples
+    --------
+    >>> data = np.random.normal(0, 1, 1000)
+    >>> grid, pdf = prepare_data_for_kde(data)
+    >>> print(grid, pdf)
+
+    See Also
+    --------
+    _kde_pdf : Helper function that calculates the KDE.
+
+    References
+    ----------
+    [1] Silverman, B. W. (1986). Density Estimation for Statistics and Data 
+        Analysis. CRC Press.
+    """
+    data = np.asarray(data, dtype=float)
+    data = data[np.isfinite(data)]
+    
+    if data.size == 0:
+        raise ValueError("`data` is empty after removing non-finite values.")
+    
+    lo, hi = np.min(data), np.max(data)
+    grid = np.linspace(lo, hi, 512)
+    
+    pdf = _kde_pdf(data, grid, bandwidth=bandwidth)
+    
+    return grid, pdf
+
+
+def _kde_pdf(
+    x: np.ndarray,
+    grid: np.ndarray,
+    bandwidth: Optional[float] = None
+) -> np.ndarray:
+    r"""
+    Helper function to calculate the Kernel Density Estimate (KDE).
+
+    This function computes the KDE for a given dataset and returns the 
+    probability density function (PDF) evaluated at the grid points.
+    
+    Parameters
+    ----------
+    x : np.ndarray
+        The data values to estimate the KDE from.
+    grid : np.ndarray
+        The grid points at which to evaluate the KDE.
+    bandwidth : float, optional
+        Bandwidth for the KDE. Default is None, which uses Silverman's rule 
+        of thumb.
+
+    Returns
+    -------
+    np.ndarray
+        The estimated probability density function evaluated at the grid points.
+
+    Notes
+    -----
+    Silverman's rule of thumb is used to calculate the bandwidth if it is 
+    not provided. The `gaussian_kde` function from SciPy is then used to 
+    estimate the probability density function.
+
+    Examples
+    --------
+    >>> data = np.random.normal(0, 1, 1000)
+    >>> grid = np.linspace(-5, 5, 100)
+    >>> pdf = _kde_pdf(data, grid)
+    >>> print(pdf)
+
+    References
+    ----------
+    [1] Silverman, B. W. (1986). Density Estimation for Statistics and Data 
+        Analysis. CRC Press.
+    """
+    
+    
+    x = np.asarray(x, dtype=float)
+    grid = np.asarray(grid, dtype=float)
+    x = x[np.isfinite(x)]
+    
+    if x.size == 0:
+        return np.zeros_like(grid)
+
+    if bandwidth is None:
+        std = np.std(x, ddof=1) if x.size > 1 else 1.0
+        bandwidth = 1.06 * std * (x.size ** (-1/5)) if std > 0 else 1.0
+
+    kde = gaussian_kde(x, bw_method=bandwidth / np.std(
+        x, ddof=1) if np.std(x, ddof=1) > 0 else None)
+                
+    return kde(grid)
+
+
+def normalize_pdf(pdf: np.ndarray) -> np.ndarray:
+    r"""
+    Normalize the probability density function (PDF) to [0, 1].
+
+    This function scales the PDF so that the maximum value is 1. It ensures 
+    that the PDF is normalized, making it suitable for visual comparison.
+
+    Parameters
+    ----------
+    pdf : np.ndarray
+        The probability density function to normalize.
+
+    Returns
+    -------
+    np.ndarray
+        The normalized probability density function.
+
+    Notes
+    -----
+    The PDF is normalized by dividing by the maximum value to scale the 
+    entire distribution to the [0, 1] range.
+
+    Examples
+    --------
+    >>> pdf = np.random.normal(0, 1, 1000)
+    >>> normalized_pdf = normalize_pdf(pdf)
+    >>> print(normalized_pdf)
+
+    See Also
+    --------
+    prepare_data_for_kde : Function to prepare data and compute the PDF.
+    """
+    pdf_normalized = pdf.copy()
+    if np.max(pdf_normalized) > 0:
+        pdf_normalized = pdf_normalized / np.max(pdf_normalized)
+    
+    return pdf_normalized
+
+
+def setup_plot_axes(
+    figsize: Tuple[float, float] = (8, 6),
+    title: str = "", 
+    x_label: str = "Value",  
+    y_label: str = "Density" 
+) -> plt.Axes:
+    r"""
+    Setup and return the axes for the plot with common formatting.
+
+    This function initializes a new plot with a title, and labels for the 
+    x-axis and y-axis, and returns the axes object for further customizations.
+
+    Parameters
+    ----------
+    figsize : tuple of float, optional
+        Size of the figure. Default is (8, 6).
+    title : str, optional
+        Title of the plot. Default is an empty string.
+
+    Returns
+    -------
+    plt.Axes
+        The axes object for the plot.
+
+    Examples
+    --------
+    >>> ax = setup_plot_axes(figsize=(10, 8), title="My Plot")
+    >>> ax.set_xlabel("X Axis Label")
+    >>> ax.set_ylabel("Y Axis Label")
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.set_title(title, fontsize=14)
+    ax.set_xlabel(x_label, fontsize=12)
+    ax.set_ylabel(y_label, fontsize=12)
+    
+    return ax
+
+
+def add_kde_to_plot(
+    grid: np.ndarray,
+    pdf: np.ndarray,
+    ax: plt.Axes,
+    color: str = 'orange',
+    line_width: float = 2
+) -> None:
+    r"""
+    Add the KDE line to the plot.
+
+    This function adds the KDE line (calculated previously) 
+    to the provided axes object (`ax`).
+
+    Parameters
+    ----------
+    grid : np.ndarray
+        The grid values over which to evaluate the KDE.
+    pdf : np.ndarray
+        The probability density function (PDF) values.
+    ax : plt.Axes
+        The axes object to which the KDE line will be added.
+    color : str, optional
+        The color of the KDE line. Default is 'orange'.
+    line_width : float, optional
+        The line width for the KDE plot. Default is 2.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> add_kde_to_plot(grid, pdf, ax, color='red', line_width=3)
+    """
+    ax.plot(
+        grid, 
+        pdf, 
+        color=color, 
+        linewidth=line_width, 
+        label="KDE", 
+        zorder=3 # Ensure KDE is drawn on top
+    )
+    # ax.legend()
+def add_histogram_to_plot(
+    data: np.ndarray,
+    ax: plt.Axes,
+    bins: int = 50,
+    hist_color: str = 'skyblue',
+    hist_edge_color: str = 'white',
+    hist_alpha: float = 0.7, 
+    **hist_kws
+) -> None:
+    r"""
+    Add the histogram to the plot.
+
+    This function adds a histogram to the plot, taking the data values 
+    and customizes the appearance of the histogram bars.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to plot the histogram from.
+    ax : plt.Axes
+        The axes object to which the histogram will be added.
+    bins : int, optional
+        The number of bins for the histogram. Default is 50.
+    hist_color : str, optional
+        The color of the histogram bars. Default is 'skyblue'.
+    hist_edge_color : str, optional
+        The color of the histogram bars' edges. Default is 'white'.
+    hist_alpha : float, optional
+        The transparency of the histogram bars. Default is 0.7.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> add_histogram_to_plot(data, ax, bins=40, hist_color='green')
+    """
+    label = hist_kws.pop("label", "Histogram")
+    zorder = hist_kws.pop("zorder", 2) # Ensure histogram is drawn below the KDE line, 
+    
+    hist_kws = get_valid_kwargs(ax.hist, hist_kws)
+    ax.hist(
+        data, 
+        bins=bins, 
+        density=True, 
+        alpha=hist_alpha, 
+        color=hist_color, 
+        edgecolor=hist_edge_color, 
+        label=label, 
+        zorder=zorder,  
+        **hist_kws
+    )
+
+def setup_polar_plot(
+    figsize: Tuple[float, float] = (8, 8),
+    title: str = ""
+) -> plt.Axes:
+    r"""
+    Setup and return the polar axes for radial density plotting.
+
+    This function initializes a polar plot with a specified title. The radial 
+    labels and angular grid lines are customizable as needed.
+
+    Parameters
+    ----------
+    figsize : tuple of float, optional
+        Size of the figure. Default is (8, 8).
+    title : str, optional
+        Title of the plot. Default is an empty string.
+
+    Returns
+    -------
+    plt.Axes
+        The polar axes object for the plot.
+
+    Examples
+    --------
+    >>> ax = setup_polar_plot(figsize=(10, 8), title="Radial Density Ring")
+    >>> ax.set_rlabel_position(90)
+    """
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, projection='polar')
+    ax.set_title(title, fontsize=14)
+    
+    return ax

@@ -89,6 +89,9 @@ from .plot import (  # noqa: E402
     plot_uncertainty_drift,
     plot_velocity,
     taylor_diagram,
+    plot_radial_density_ring, 
+    plot_reliability_diagram, 
+    plot_horizon_metrics
 )
 
 __all__ = [
@@ -111,4 +114,7 @@ __all__ = [
     "plot_feature_fingerprint",
     "plot_relationship",
     "plot_model_comparison",
+    "plot_radial_density_ring", 
+    "plot_reliability_diagram", 
+    "plot_horizon_metrics"
 ]

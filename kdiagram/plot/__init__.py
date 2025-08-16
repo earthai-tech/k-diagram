@@ -1,4 +1,9 @@
-from .comparison import plot_model_comparison
+from .comparison import ( 
+    plot_model_comparison, 
+    plot_reliability_diagram, 
+    plot_horizon_metrics
+)
+    
 from .evaluation import (
     plot_taylor_diagram,
     plot_taylor_diagram_in,
@@ -17,6 +22,7 @@ from .uncertainty import (
     plot_temporal_uncertainty,
     plot_uncertainty_drift,
     plot_velocity,
+    plot_radial_density_ring
 )
 
 __all__ = [
@@ -36,4 +42,7 @@ __all__ = [
     "taylor_diagram",
     "plot_feature_fingerprint",
     "plot_relationship",
+    "plot_radial_density_ring", 
+    "plot_reliability_diagram", 
+    "plot_horizon_metrics"
 ]

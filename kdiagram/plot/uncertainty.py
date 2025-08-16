@@ -14,6 +14,12 @@ from __future__ import annotations
 import warnings
 from typing import (
     Any,
+    Optional, 
+    Union, 
+    List, 
+    Literal, 
+    Dict, 
+    Tuple
 )
 
 import matplotlib.cm as cm
@@ -21,17 +27,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.colors import Normalize
+from scipy.stats import gaussian_kde
 
 from ..api.summary import ResultSummary
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
-from ..utils.diagnose_q import build_qcols_multiple, detect_quantiles_in, validate_qcols
+from ..utils.diagnose_q import ( 
+    build_qcols_multiple,
+    detect_quantiles_in, 
+    validate_qcols
+)
 from ..utils.handlers import columns_manager
 from ..utils.plot import set_axis_grid
 from ..utils.validator import (
     _assert_all_types,
     exist_features,
 )
+
 
 __all__ = [
     "plot_actual_vs_predicted",
@@ -44,6 +56,7 @@ __all__ = [
     "plot_temporal_uncertainty",
     "plot_uncertainty_drift",
     "plot_velocity",
+    "plot_radial_density_ring"
 ]
 
 
@@ -499,7 +512,8 @@ Examples
 
 """
 
-
+@check_non_emptiness
+@isdf
 def plot_model_drift(
     df: pd.DataFrame,
     q_cols: list | None = None,
@@ -4874,6 +4888,311 @@ def plot_temporal_uncertainty(
         plt.show()
 
     return ax
+
+
+@check_non_emptiness
+@isdf
+def plot_radial_density_ring(
+    df: pd.DataFrame,
+    *,
+    kind: Literal["width", "velocity", "direct"] = "direct",
+    target_cols: Union[str, List[str]],
+    title: Optional[str] = None,
+    r_label: Optional[str] = None,
+    figsize: Tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    alpha: float = 0.8,
+    cbar: bool = True,
+    show_grid: bool = True,
+    grid_props: Optional[Dict[str, any]] = None,
+    show_yticklabels: bool = False,
+    bandwidth: Optional[float] = None,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    cols = columns_manager(target_cols)
+    exist_features(df, features=cols)
+
+    if kind == "direct":
+        if len(cols) != 1:
+            raise ValueError(
+                "`kind='direct'` requires one column in "
+                f"`target_cols`, but got {len(cols)}."
+            )
+        data_1d = df[cols[0]]
+        r_label = r_label or cols[0]
+        title = title or f"Distribution of {cols[0]}"
+
+    elif kind in ("width", "velocity"):
+        if len(cols) != 2:
+            raise ValueError(
+                f"`kind='{kind}'` requires two columns in "
+                f"`target_cols`, but got {len(cols)}."
+            )
+        data_1d = df[cols[1]] - df[cols[0]]
+        r_label = r_label or f"{cols[1]} $-$ {cols[0]}"
+        title = title or f"Distribution of {kind.title()}"
+    else:
+        raise ValueError(
+            f"Invalid `kind`: '{kind}'. Use 'width', "
+            "'velocity', or 'direct'."
+        )
+
+    data_1d = data_1d.dropna()
+    if data_1d.empty:
+        warnings.warn(
+            "Derived data is empty after dropping NaNs. "
+            "Cannot generate plot.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+
+    grid, pdf = _calculate_kde_for_ring(
+        data_1d.to_numpy(), bandwidth=bandwidth
+    )
+    if grid.size == 0:
+        warnings.warn(
+            "Could not compute KDE. Cannot generate plot.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+
+    pdf_norm = pdf.copy()
+    pdf_max = np.max(pdf_norm)
+    if pdf_max > 0:
+        pdf_norm /= pdf_max
+
+    thetas = np.linspace(0, 2 * np.pi, 128)
+    T, R = np.meshgrid(thetas, grid)
+    C = np.tile(pdf_norm, (len(thetas), 1)).T
+
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+
+    pcm = ax.pcolormesh(
+        T,
+        R,
+        C,
+        shading="auto",
+        cmap=cmap_obj,
+        alpha=alpha,
+        vmin=0,
+        vmax=1,
+    )
+
+    ax.set_title(title, va="bottom", fontsize=14)
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    ax.set_thetagrids([])
+    ax.set_rlabel_position(0)
+
+    if r_label:
+        ax.set_ylabel(r_label, fontsize=12, labelpad=20)
+
+    if not show_yticklabels:
+        ax.set_yticklabels([])
+
+    if cbar:
+        cbar_obj = plt.colorbar(
+            pcm, ax=ax, pad=0.1, shrink=0.7
+        )
+        cbar_obj.set_label(
+            "Normalized Density",
+            rotation=270,
+            labelpad=15,
+            fontsize=10,
+        )
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+plot_radial_density_ring.__doc__ = r"""
+Plot a radial density ring to visualize a 1D distribution.
+
+This function computes the probability density function (PDF) of a
+one-dimensional variable using Kernel Density Estimation (KDE) and
+visualizes it as a colored ring on a polar plot. It's a
+powerful way to inspect the shape, peaks, and spread of a
+distribution, such as forecast errors or interval widths.
+
+- **Radial Distance (`r`)**: Represents the domain of the
+  variable being analyzed (e.g., interval width in mm).
+- **Color**: Represents the **probability density** at each
+  radial position. More intense colors indicate more common
+  values (peaks in the distribution).
+- **Angular Position (`theta`)**: Is purely for aesthetics and
+  carries no information; the density is uniform around the
+  circle to form the ring.
+
+
+Parameters
+----------
+df : pd.DataFrame
+    The input DataFrame containing the data.
+
+kind : {'width', 'velocity', 'direct'}, default='direct'
+    Specifies how to derive the 1D data for the distribution
+    plot from the ``target_cols``.
+    
+    - ``'direct'``: Directly uses the data from a single
+      column specified in ``target_cols``.
+    - ``'width'``: Calculates the interval width by
+      subtracting the first column from the second in
+      ``target_cols`` (e.g., ``q90 - q10``).
+    - ``'velocity'``: Calculates the difference between two
+      columns, representing a change or velocity (e.g.,
+      ``value_t2 - value_t1``).
+
+target_cols : str or list of str
+    The column(s) to use for deriving the data.
+    
+    - For ``kind='direct'``, this must be a single column name
+      (``str``).
+    - For ``kind='width'`` or ``kind='velocity'``, this must be a
+      list of exactly two column names (``[col1, col2]``).
+
+title : str, optional
+    The title for the plot. If ``None``, a default is generated.
+
+r_label : str, optional
+    Custom label for the radial axis. If ``None``, a default
+    is generated from the column names.
+
+figsize : tuple of (float, float), default=(8, 8)
+    Figure size in inches.
+
+cmap : str, default='viridis'
+    Matplotlib colormap name for the density ring.
+
+alpha : float, default=0.8
+    Transparency level for the density ring.
+
+cbar : bool, default=True
+    If ``True``, display a color bar representing the
+    normalized density.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization.
+
+show_yticklabels : bool, default=False
+    If ``True``, show the tick labels on the radial axis.
+    Defaults to ``False`` as the ring is primarily a
+    qualitative visual.
+
+bandwidth : float, optional
+    The bandwidth for the Kernel Density Estimation. If ``None``,
+    it is estimated using Silverman's rule of thumb.
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+dpi : int, default=300
+    Resolution for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes or None
+    The Matplotlib Axes object containing the plot, or ``None``
+    if the plot could not be generated (e.g., due to empty data).
+
+Notes
+-----
+The plot is generated through the following steps:
+
+1.  **Data Derivation**: A one-dimensional data vector,
+    :math:`\mathbf{x}`, is created from the ``target_cols``
+    based on the specified ``kind``.
+
+2.  **Kernel Density Estimation**: The probability density
+    function (PDF), :math:`\hat{f}_h(x)`, is estimated from
+    the data vector :math:`\mathbf{x}` using a Gaussian kernel.
+    This step is handled by ``scipy.stats.gaussian_kde``.
+
+3.  **Normalization for Coloring**: The estimated PDF is
+    normalized to the range ``[0, 1]`` to map its values to the
+    color map.
+
+    .. math::
+        \text{PDF}_{\text{norm}}(x) = \frac{\hat{f}_h(x)}{\max(\hat{f}_h)}
+
+4.  **Visualization**: The plot is rendered on polar axes using
+    ``pcolormesh``. The radial axis corresponds to the value
+    domain :math:`x`, and the color at each radius corresponds
+    to :math:`\text{PDF}_{\text{norm}}(x)`. This color value is
+    repeated across all angles to form a ring.
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot.uncertainty import plot_radial_density_ring
+>>>
+>>> # Create synthetic data
+>>> np.random.seed(42)
+>>> n_samples = 500
+>>> df_test = pd.DataFrame({
+...     'q10_pred': np.random.normal(10, 2, n_samples),
+...     'q90_pred': np.random.normal(30, 3, n_samples),
+... })
+>>> # Ensure upper bound is greater than lower bound
+>>> df_test['q90_pred'] = df_test[['q10_pred', 'q90_pred']].max(axis=1) \
+...     + np.random.rand(n_samples)
+>>>
+>>> # Generate the plot for the distribution of interval widths
+>>> ax = plot_radial_density_ring(
+...     df=df_test,
+...     kind="width",
+...     target_cols=["q10_pred", "q90_pred"],
+...     title="Distribution of Prediction Interval Width",
+...     r_label="Interval Width (mm)",
+...     cmap="magma",
+...     show_yticklabels=True
+... )
+"""
+
+def _calculate_kde_for_ring(
+    data: np.ndarray, bandwidth: Optional[float] = None
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Internal helper to compute KDE. In a package, this
+    should be a shared utility.
+    """
+    data = data[np.isfinite(data)]
+    if data.size == 0:
+        return np.array([]), np.array([])
+
+    lo, hi = np.min(data), np.max(data)
+    pad = 0.05 * (hi - lo) if (hi - lo) > 0 else 0.5
+    grid = np.linspace(lo - pad, hi + pad, 512)
+
+    if bandwidth is None:
+        std = np.std(data, ddof=1) if data.size > 1 else 1.0
+        # Silverman's rule of thumb
+        bw_val = (
+            1.06 * std * (data.size ** (-1 / 5)) if std > 0 else 1.0
+        )
+    else:
+        bw_val = bandwidth
+
+    std_dev = np.std(data, ddof=1)
+    bw_method = bw_val / std_dev if std_dev > 0 else "silverman"
+    kde = gaussian_kde(data, bw_method=bw_method)
+    pdf = kde(grid)
+    return grid, pdf
 
 
 class PerformanceWarning(Warning):

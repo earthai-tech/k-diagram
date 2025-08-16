@@ -22,5 +22,6 @@ Browse through the sections below to see `k-diagram` in action.
    evaluation 
    comparison       
    feature_based     
-   relationship      
+   relationship
+   hist      
    utils             

@@ -31,7 +31,8 @@ forecasting models and data.
    evaluation  
    comparison               
    feature_based       
-   relationship   
+   relationship 
+   hist  
    datasets                 
    utils
    case_history              

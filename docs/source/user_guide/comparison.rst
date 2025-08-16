@@ -29,7 +29,9 @@ Summary of Comparison Functions
    * - :func:`~kdiagram.plot.comparison.plot_reliability_diagram`
      - Draws a reliability (calibration) diagram to assess how
        well predicted probabilities match observed frequencies.
-
+   * - :func:`~kdiagram.plot.comparison.plot_horizon_metrics`
+     - Draw a polar bar chart to visually compare key metrics across
+       a set of distinct categories.
 
 Detailed Explanations
 ---------------------
@@ -125,6 +127,10 @@ performance profile.
 **Example:**
 (See the :ref:`Model Comparison Example <gallery_plot_model_comparison>`
 in the Gallery)
+
+.. raw:: html
+
+   <hr>
 
 
 .. _ug_plot_reliability:
@@ -254,3 +260,106 @@ Lower ECE/MCE/Brier indicate better calibration (and accuracy for Brier).
 **Example:**
 (See the :ref:`Gallery example <gallery_plot_reliability>` for a complete,
 runnable snippet that saves an image and returns per-bin statistics.)
+
+
+
+.. raw:: html
+
+   <hr>
+
+.. _ug_plot_horizon_metrics:
+
+Comparing Metrics Across Horizons (:func:`~kdiagram.plot.comparison.plot_horizon_metrics`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+**Purpose:**
+This function creates a **polar bar chart** to visually compare key
+metrics across a set of distinct categories, most commonly different
+**forecast horizons** (e.g., H+1, H+2, etc.). It is designed to
+answer questions like: "How does my model's uncertainty (interval
+width) and central tendency (median prediction) evolve as it
+forecasts further into the future?"
+
+**Mathematical Concept:**
+
+The plot summarizes metrics for :math:`N` horizons (corresponding to
+the rows in the input `df`) using data from :math:`M` samples
+(corresponding to the provided columns for each quantile). Let the
+input data be represented by matrices for the lower, upper, and
+median quantiles: :math:`\mathbf{L}`, :math:`\mathbf{U}`, and
+:math:`\mathbf{Q50}`, all of shape :math:`(N, M)`.
+
+1.  **Interval Width Calculation**: First, a matrix of interval
+    widths :math:`\mathbf{W}` of shape :math:`(N, M)` is computed by
+    element-wise subtraction. Each element :math:`W_{j,i}`
+    represents the interval width for horizon :math:`j` and sample
+    :math:`i`.
+
+    .. math::
+
+        W_{j,i} = U_{j,i} - L_{j,i}
+
+2.  **Radial Value (Bar Height)**: The primary metric plotted as the
+    bar height (radial value :math:`r_j`) for each horizon :math:`j`
+    is the **mean** of its interval widths across all :math:`M`
+    samples.
+
+    .. math::
+
+        r_j = \frac{1}{M} \sum_{i=0}^{M-1} W_{j,i}
+
+    If `normalize_radius=True`, these values are then min-max scaled
+    to the range `[0, 1]`.
+
+3.  **Color Value**: The secondary metric, encoded as color, is the
+    **mean of the Q50 values** for each horizon :math:`j`.
+
+    .. math::
+
+        c_j = \frac{1}{M} \sum_{i=0}^{M-1} Q50_{j,i}
+
+    If `q50_cols` are not provided, the color value defaults to the
+    radial value, :math:`c_j = r_j`. These color values are then mapped
+    to a colormap via a standard normalization.
+
+**Interpretation:**
+
+* **Angle:** Each angular segment represents a different horizon or
+    category, as specified by the ``xtick_labels`` parameter. The plot typically
+    starts at the top (12 o'clock) and proceeds clockwise.
+* **Radius (Bar Height):** The length of each bar indicates the
+    magnitude of the primary metric (e.g., **mean interval width**).
+    Longer bars signify larger values.
+* **Color:** The color of each bar represents the magnitude of the
+    secondary metric (e.g., **mean Q50 value**). The color bar on the
+    side of the plot provides the scale for this metric.
+
+**Use Cases:**
+
+* **Analyzing Uncertainty Drift:** Track how a model's predictive
+    uncertainty (interval width) grows or shrinks over a forecast horizon.
+* **Comparing Forecast Magnitudes:** Simultaneously visualize how the
+    central tendency (Q50) of the forecast changes along with its
+    uncertainty.
+* **Comparing Models:** Generate this plot for multiple models to
+    compare their uncertainty profiles over time. A model with shorter,
+    more stable bars may be preferable.
+* **Categorical Performance:** The "horizons" can represent any set of
+    categories, such as different geographic regions or model configurations,
+    to compare aggregated metrics.
+
+**Advantages (Polar Bar Context):**
+
+* **Intuitive Comparison:** The circular layout allows for easy comparison
+    of values across sequential categories.
+* **Two-Dimensional Insight:** It effectively encodes two different
+    metrics (bar height and bar color) for each category in a single,
+    compact plot.
+* **Highlights Trends:** Trends across horizons, such as consistently
+    increasing uncertainty, are immediately apparent.
+
+**Example:**
+(See the :ref:`Horizon Metrics Example <gallery_plot_horizon_metrics>`
+in the Gallery)
+

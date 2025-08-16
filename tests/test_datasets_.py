@@ -133,7 +133,6 @@ def test_load_uncertainty_data_bunch():
     assert hasattr(result, 'quantile_cols')
 
 
-
 if __name__ == "__main__": # pragma : no-cover
     pytest.main([__file__])
 

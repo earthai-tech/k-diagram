@@ -1043,3 +1043,231 @@ Q50.
 
     <hr>
 
+
+.. _gallery_plot_radial_density_ring:
+
+--------------------------
+Radial Density Ring
+--------------------------
+
+Visualizes the **1D probability distribution** of a metric using
+Kernel Density Estimation (KDE). This plot is a unique way to
+inspect the shape, peaks, and spread of a distribution, such as
+prediction interval widths or forecast errors.
+
+The key features are:
+
+  - **Radius (`r`)**: Represents the value of the metric.
+  - **Color**: Represents the probability density at that radius.
+    Brighter/more intense colors indicate more common values.
+
+.. _gallery_plot_density_ring_width:
+
+Distribution of Interval Width (`kind='width'`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This example shows the distribution of the prediction interval
+width (Q90 - Q10), a key measure of model uncertainty.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram as kd
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation (shared for all examples) ---
+    np.random.seed(42)
+    n_samples = 500
+    df_test = pd.DataFrame({
+        'q10': np.random.normal(10, 2, n_samples),
+        'q90': np.random.normal(30, 3, n_samples),
+        'value_2022': np.random.gamma(3, 5, n_samples),
+        'value_2023': np.random.gamma(4, 5, n_samples),
+        'error_metric': np.random.randn(n_samples) * 5,
+    })
+    # Ensure q90 is always greater than q10
+    df_test['q90'] = df_test[['q10', 'q90']].max(axis=1) + \
+        np.random.rand(n_samples) * 2
+
+    # --- Plotting ---
+    kd.plot_radial_density_ring(
+        df=df_test,
+        kind="width",
+        target_cols=["q10", "q90"],
+        title="Distribution of Prediction Interval Width",
+        cmap="Blues",
+        show_yticklabels=True,
+        r_label="q90 − q10",
+        savefig="gallery/images/gallery_plot_density_ring_prediction_interval.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_density_ring_prediction_interval.png
+    :alt: Radial Density Ring for Interval Width
+    :align: center
+    :width: 70%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    This plot reveals the distribution of the model's uncertainty estimates.
+
+    **Key Insights:**
+
+    * **Most Likely Uncertainty**: The brightest ring indicates the
+      most common interval width. This represents the model's
+      typical uncertainty range.
+    * **Consistency**: A narrow, bright ring suggests the model
+      produces highly consistent uncertainty estimates. A wide,
+      diffuse ring indicates high variability in uncertainty.
+    * **Multi-modality**: Multiple distinct bright rings would
+      suggest the model operates in different uncertainty modes
+      for different subsets of the data.
+
+    **🔍 In this Example:**
+
+    * The brightest part of the ring is centered around a radius
+      of **20**. This means for most samples, the prediction
+      interval (Q90 - Q10) has a width of about 20 units.
+    * The distribution is relatively symmetric and bell-shaped,
+      fading out for very narrow (<10) or very wide (>30)
+      intervals.
+
+    **💡 When to Use:**
+
+    Use this plot to answer questions like:
+
+    * "What is the typical range of my model's uncertainty?"
+    * "Does my model produce consistent uncertainty estimates, or
+      do they vary wildly?"
+    * "Are there multiple, distinct levels of uncertainty in my
+      predictions?"
+
+
+.. _gallery_plot_density_ring_velocity:
+
+Distribution of Change (`kind='velocity'`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This example visualizes the distribution of change between two
+time points (e.g., year-over-year velocity).
+
+.. code-block:: python
+    :linenos:
+
+    # Assumes df_test is already created from the previous block
+
+    kd.plot_radial_density_ring(
+        df=df_test,
+        kind="velocity",
+        target_cols=["value_2022", "value_2023"],
+        title="Distribution of Value Change (2022 to 2023)",
+        cmap="Reds",
+        show_yticklabels=True,
+        r_label="value_2023 − value_2022",
+        savefig="gallery/images/gallery_plot_density_ring_distr_value.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_density_ring_distr_value.png
+    :alt: Radial Density Ring for Velocity
+    :align: center
+    :width: 70%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    This plot shows the distribution of the rate of change between
+    two sets of values.
+
+    **Key Insights:**
+
+    * **Central Tendency**: The brightest ring shows the most
+      common change or velocity. If it's centered at zero, it
+      suggests stability; otherwise, it indicates a consistent
+      positive or negative trend.
+    * **Magnitude of Change**: The spread of the ring shows the
+      variability in the rate of change. A tight ring means
+      the change is consistent across all samples.
+
+    **🔍 In this Example:**
+
+    * The distribution is centered around a radius of **+5**. This
+      indicates that the most common change from 2022 to 2023
+      was a positive increase of 5 units.
+    * The distribution has a longer tail towards higher values,
+      suggesting that while a +5 change is most typical, some
+      samples experienced a much larger increase.
+
+    **💡 When to Use:**
+
+    * To analyze the distribution of year-over-year changes in
+      a forecast.
+    * To study the distribution of differences between two model
+      versions.
+    * To visualize the distribution of treatment effects
+      (post-treatment vs. pre-treatment values).
+
+
+
+.. _gallery_plot_density_ring_direct:
+
+Distribution of a Direct Metric (`kind='direct'`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is the most general use case, visualizing the distribution
+of any pre-calculated, single-column metric.
+
+.. code-block:: python
+    :linenos:
+
+    # Assumes df_test is already created from the first block
+
+    kd.plot_radial_density_ring(
+        df=df_test,
+        kind="direct",
+        target_cols="error_metric",
+        title="Distribution of a Pre-calculated Error Metric",
+        cmap="Greens",
+        show_yticklabels=True,
+        r_label="error_metric",
+        savefig="gallery/images/gallery_plot_density_ring_error_metric.jpg"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_density_ring_error_metric.jpg
+    :alt: Radial Density Ring for a Direct Metric
+    :align: center
+    :width: 70%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    This plot is a general-purpose tool for inspecting the shape
+    of any continuous variable.
+
+    **Key Insights:**
+
+    * **Distribution Shape**: Immediately reveals if a
+      distribution is symmetric, skewed, normal, or bimodal.
+    * **Central Point**: The brightest ring highlights the mode
+      (peak) of the distribution.
+    * **Spread**: The width of the colored area indicates the
+      variance or standard deviation of the metric.
+
+    **🔍 In this Example:**
+
+    * The synthetic `error_metric` was generated from a standard
+      normal distribution, and the plot reflects this perfectly.
+    * The brightest ring is at a radius of **0**, indicating an
+      unbiased error distribution centered at zero.
+    * The density is symmetric around zero and fades smoothly,
+      as expected for a Gaussian (bell-curve) distribution.
+
+    **💡 When to Use:**
+
+    * To visualize the distribution of model residuals or errors.
+    * To inspect the distribution of a feature before modeling.
+    * To present the distribution of any summary statistic in a
+      visually engaging format.
