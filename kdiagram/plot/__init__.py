@@ -22,9 +22,17 @@ from .uncertainty import (
     plot_temporal_uncertainty,
     plot_uncertainty_drift,
     plot_velocity,
-    plot_radial_density_ring
+    plot_radial_density_ring, 
+    plot_polar_heatmap, 
+    plot_polar_quiver, 
 )
 
+from .errors import ( 
+    plot_error_bands, 
+    plot_error_ellipses, 
+    plot_error_violins
+)
+    
 __all__ = [
     "plot_model_comparison",
     "plot_actual_vs_predicted",
@@ -44,8 +52,11 @@ __all__ = [
     "plot_relationship",
     "plot_radial_density_ring", 
     "plot_reliability_diagram", 
-    "plot_horizon_metrics", 
-    "plot_error_ellipses",
-    "plot_error_bands" , 
+    "plot_horizon_metrics",  
+    "plot_polar_heatmap", 
+    "plot_polar_quiver", 
+    "plot_error_bands", 
+    "plot_error_ellipses", 
     "plot_error_violins"
+    
 ]

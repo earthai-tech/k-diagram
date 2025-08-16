@@ -1,6 +1,7 @@
 import inspect
 import os
 import warnings
+from typing import Dict, Any
 from functools import wraps
 
 import numpy as np
@@ -569,11 +570,9 @@ class SaveFile:
                     return result
 
                 # Get the appropriate writer based on file extension
-                from .utils.generic_utils import get_valid_kwargs
-                
                 writers_dict = self.data_handler.writers(df_to_save)
                 writer_func = writers_dict.get(ext.lower())
-                self.writer_kws = get_valid_kwargs(writer_func, self.writer_kws)
+                self.writer_kws = _get_valid_kwargs(writer_func, self.writer_kws)
 
                 if writer_func is None:
                     warnings.warn(
@@ -627,7 +626,8 @@ def save_file(func=None, *, data_index=0, dout=".csv"):
     Both save_file (function-based) and SaveFile (class-based) decorators
     are designed to allow users to save the returned DataFrame(s) from a
     decorated function to a file, if needed. For more details and advanced
-    usage, please refer to the documentation of :class:`kdiagram.decorators.SaveFile`,
+    usage, please refer to the documentation 
+    of :class:`kdiagram.decorators.SaveFile`,
     as both operate in a similar manner.
 
     * When to Use SaveFile vs. save_file?
@@ -672,7 +672,8 @@ def save_file(func=None, *, data_index=0, dout=".csv"):
             result = func(*args, **kwargs)
             savefile = kwargs.get("savefile", None)
             if savefile is not None:
-                df_to_save, ext = _get_df_to_save(savefile, dout, result, data_index)
+                df_to_save, ext = _get_df_to_save(
+                    savefile, dout, result, data_index)
                 if df_to_save is None:
                     return result
                 _perform_save(df_to_save, savefile, ext)
@@ -705,7 +706,8 @@ def _extract_dataframe(result, data_index):
             df = result[data_index]
         except IndexError:
             warnings.warn(
-                f"`data_index` {data_index} is out of range " "for the returned tuple.",
+                f"`data_index` {data_index} is out of range "
+                "for the returned tuple.",
                 stacklevel=2,
             )
             return None
@@ -718,7 +720,8 @@ def _extract_dataframe(result, data_index):
         return df
     else:
         warnings.warn(
-            f"Return type '{type(result)}' is not a DataFrame or tuple.", stacklevel=2
+            f"Return type '{type(result)}' is not a DataFrame or tuple.",
+            stacklevel=2
         )
         return None
 
@@ -744,3 +747,66 @@ def _perform_save(df_to_save, savefile, ext):
 
 
 save_file.__doc__ = SaveFile.__doc__
+
+
+def _get_valid_kwargs(
+    callable_obj: Any, kwargs: Dict[str, Any]
+    ) -> Dict[str, Any]:
+    r"""
+    Filter and return only the valid keyword arguments for a given
+    callable object, while warning about any invalid kwargs.
+
+    Parameters
+    ----------
+    callable_obj : callable
+        The callable object (function, lambda function, method, or class)
+        for which the keyword arguments need to be validated.
+
+    kwargs : dict
+        Dictionary of keyword arguments to be validated against 
+        the callable object.
+
+    Returns
+    -------
+    valid_kwargs : dict
+        Dictionary containing only the valid keyword arguments
+        for the callable object.
+    """
+    # If the callable_obj is an instance, get its class
+    if not inspect.isclass(callable_obj) and not callable(callable_obj):
+        callable_obj = callable_obj.__class__
+
+    try:
+        # Retrieve the signature of the callable object
+        signature = inspect.signature(callable_obj)
+    except ValueError:
+        # If signature cannot be obtained, return empty kwargs and warn
+        warnings.warn(
+            "Unable to retrieve signature of the callable object. "
+            "No keyword arguments will be passed.",
+            stacklevel=2,
+        )
+        return {}
+
+    # Extract parameter names from the function signature
+    valid_params = set(signature.parameters.keys())
+
+    # Identify valid and invalid kwargs
+    valid_kwargs = {}
+    invalid_kwargs = {}
+    for k, v in kwargs.items():
+        if k in valid_params:
+            valid_kwargs[k] = v
+        else:
+            invalid_kwargs[k] = v
+
+    # Warn the user about invalid kwargs
+    if invalid_kwargs:
+        invalid_keys = ", ".join(invalid_kwargs.keys())
+        warnings.warn(
+            f"The following keyword arguments are invalid"
+            f" and will be ignored: {invalid_keys}",
+            stacklevel=2,
+        )
+
+    return valid_kwargs

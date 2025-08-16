@@ -9,13 +9,15 @@ from matplotlib.colors import Normalize
 from typing import Optional, Tuple, Dict, Any, List
 from scipy.stats import gaussian_kde
 
+from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
 from ..utils.validator import exist_features
-from ..compat.matplotlib import get_cmap
 from ..utils.plot import set_axis_grid
 
 __all__ = [
-    "plot_error_ellipses","plot_error_bands" , "plot_error_violins"
+    "plot_error_ellipses",
+    "plot_error_bands" , 
+    "plot_error_violins"
   ]
 
 @check_non_emptiness
