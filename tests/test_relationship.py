@@ -165,5 +165,5 @@ def test_plot_relationship_invalid_acov(sample_data_relationship, invalid_acov):
         plot_relationship(data["y_true"], data["y_preds"][0], acov=invalid_acov)
 
 
-if __name__ == "__main__":# pragma : no-cover
+if __name__ == "__main__":  # pragma : no-cover
     pytest.main([__file__])

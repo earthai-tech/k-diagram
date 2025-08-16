@@ -9,6 +9,7 @@ kdiagram.plot.uncertainty.
 
 import re
 import warnings
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import matplotlib
@@ -37,9 +38,7 @@ from kdiagram.plot.uncertainty import (
 matplotlib.use("Agg")
 
 with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore", 
-        message="FigureCanvasAgg is non-interactive")
+    warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive")
     plt.show()
 
 
@@ -279,6 +278,7 @@ def test_plot_model_drift_mismatched_lengths(sample_data_drift):
             horizons=data["horizons"],
         )
 
+
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("use_abs_color", [True, False])
 @pytest.mark.parametrize("acov", ["default", "quarter_circle"])
@@ -435,6 +435,7 @@ def sample_data_anomaly(request):
         "has_anomalies": generate_anomalies,  # Flag for assertions
     }
 
+
 @pytest.mark.parametrize("use_cv", [True, False])
 @pytest.mark.parametrize("q50_provided", [True, False])
 @pytest.mark.parametrize("acov", ["default", "half_circle"])
@@ -531,6 +532,7 @@ def test_plot_interval_consistency_zero_mean_warning(sample_data_consistency):
             qup_cols=data["qup_cols"],
             use_cv=True,  # Warning occurs during CV calculation
         )
+
 
 @pytest.mark.parametrize("theta_col_provided", [True, False])
 @pytest.mark.parametrize("acov", ["default", "quarter_circle"])
@@ -863,10 +865,6 @@ def test_plot_uncertainty_drift_width_warnings(sample_data_drift_uncertainty):
             df=df_zero, qlow_cols=data["qlow_cols"], qup_cols=data["qup_cols"]
         )
 
-# import numpy as np
-# import pandas as pd
-# import pytest
-from datetime import datetime, timedelta
 
 @pytest.fixture
 def sample_data_avp():
@@ -880,8 +878,7 @@ def sample_data_avp():
 
     # Try fast path; fall back if 32-bit pandas overflows
     try:
-        data["time"] = pd.date_range(
-            "2024-01-01", periods=n_points, freq="h")
+        data["time"] = pd.date_range("2024-01-01", periods=n_points, freq="h")
     except OverflowError:
         base = datetime(2024, 1, 1)
         data["time"] = [base + timedelta(hours=i) for i in range(n_points)]
@@ -894,18 +891,17 @@ def sample_data_avp():
 
     df = pd.DataFrame(data)
     return {
-        "df": df, 
-        "actual_col": "actual", 
-        "pred_col": "predicted", 
-        "theta_col": "time"
-   }
+        "df": df,
+        "actual_col": "actual",
+        "pred_col": "predicted",
+        "theta_col": "time",
+    }
 
 
 @pytest.mark.parametrize("line", [True, False])
 @pytest.mark.parametrize("acov", ["default", "half_circle"])
 @pytest.mark.parametrize("show_legend", [True, False])
-def test_plot_actual_vs_predicted_runs_ok(
-        sample_data_avp, line, acov, show_legend):
+def test_plot_actual_vs_predicted_runs_ok(sample_data_avp, line, acov, show_legend):
     """Test plot_actual_vs_predicted runs okay with standard-sized data."""
     data = sample_data_avp
     props = {"linestyle": "--", "marker": "x"} if not line else {}

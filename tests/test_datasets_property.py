@@ -19,6 +19,7 @@ def fake_dl(url, filename, dstpath, **kwargs):
     dstpath.mkdir(parents=True, exist_ok=True)
     (dstpath / filename).write_bytes(b"ok")
 
+
 # ---------------------------
 # get_data / remove_data
 # ---------------------------
