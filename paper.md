@@ -53,25 +53,28 @@ are increasingly applied to complex, high-dimensional problems where
 understanding the local and temporal behavior of uncertainty is paramount. 
 A growing body of applied research highlights this challenge in fields as 
 diverse as predictive policing [@Rummens2021], energy forecasting [@Liu2021], 
-climatology [@Baillie2002] and geohazard [@Liu2024].
+chaotic market dynamics [@Caulk2022], climatology [@Baillie2002] 
+and geohazard [@Liu2024].
 
-While standard visualization tools exist, they are often not well-suited for the 
-specific task of diagnosing high-dimensional forecast uncertainty. 
-General-purpose libraries like matplotlib [@Hunter:2007] and seaborn 
-[@Waskom2021] provide the building blocks but lack dedicated functions 
-for these specialized diagnostics. Even established forecasting visualizations 
-like fan charts, which have seen recent innovations [@Sokol2025], are 
-primarily designed for single time series and do not scale well to 
-problems involving thousands of simultaneous forecasts[@Hong2025]. This creates a 
-critical gap between the generation of complex probabilistic forecasts 
-and the ability to interpret them effectively.
+While an ecosystem of open-source forecasting tools exists, many focus 
+on specific modeling or post-processing tasks, such as forecast 
+reconciliation [@Biswas2025], or provide verification suites for specific 
+domains like climate science [@Brady2021]. General-purpose libraries like 
+matplotlib [@Hunter:2007] and seaborn [@Waskom2021] provide the building blocks 
+but lack dedicated functions for the specialized diagnostics needed for 
+high-dimensional uncertainty. Even established visualizations like fan charts, 
+which have seen recent innovations [@Sokol2025], are primarily designed for 
+single time series and do not scale well to problems involving thousands of 
+simultaneous forecasts[@Hong2025]. This creates a critical gap between the 
+generation of complex probabilistic forecasts and the ability to interpret 
+them effectively.
 
 `k-diagram` addresses this gap by providing a scalable and intuitive 
 toolkit designed specifically for the visual diagnosis of spatiotemporal 
-probabilistic forecasts [@Liu2024]. The package's novelty lies in its use of polar 
-coordinates to map different dimensions of forecast performance—such as 
-uncertainty magnitude, reliability, and temporal stability—onto angle and 
-radius. This approach provides compact overviews that reveal patterns 
+probabilistic forecasts [@Liu2024; @kouadiob2025]. The package's novelty lies  
+in its use of polar coordinates to map different dimensions of forecast 
+performance—such as uncertainty magnitude, reliability, and temporal stability—onto 
+angle and radius. This approach provides compact overviews that reveal patterns 
 obscured in traditional Cartesian plots. By providing clear visual 
 answers to key diagnostic questions (e.g., "Where is a forecast least certain?", 
 "How is its uncertainty evolving?"), `k-diagram` serves as an essential tool 
@@ -109,9 +112,9 @@ around a cohesive API for diagnosing key aspects of forecast quality
         systemic bias from random error, while polar violins—a novel
         adaptation of the traditional violin plot [@Hintze1998]—are
         used to compare the full error distributions of multiple models.
-      * **2D Uncertainty:** The package introduces polar heatmaps, quiver
-        plots, and error ellipses to visualize complex, multi-dimensional
-        error and uncertainty structures.
+      * **2D Uncertainty:** The package introduces velocity diagram, polar 
+        heatmaps, quiver plots, and error ellipses to visualize complex, 
+        multi-dimensional error and uncertainty structures.
 
   * **Model Evaluation and Comparison:** The package implements
     established, well-regarded evaluation methods, adapting them for
@@ -207,9 +210,9 @@ invaluable feedback during the development of `k-diagram`, as well as those
 who rigorously tested its early iterations. Their insights and dedication 
 were instrumental in refining the software.
 
-I also appreciate the constructive feedback from early users and 
-reviewers, whose contributions have significantly enhanced the quality 
-and usability of the project.
+I also appreciate the constructive feedback from reviewers and early users, 
+whose contributions have significantly enhanced the quality and usability 
+of the project.
 
 
 ### References
