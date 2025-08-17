@@ -55,52 +55,52 @@ The function first partitions the dataset into :math:`K` bins,
 :math:`B_k`, based on the ``theta_col`` values.
 
 1. **Mean Error (Bias):** For each bin :math:`B_k`, the mean error
-    :math:`\mu_{e,k}` is calculated. This represents the average bias
-    of the model under the conditions of that bin.
+   :math:`\mu_{e,k}` is calculated. This represents the average bias
+   of the model under the conditions of that bin.
 
-    .. math::
+   .. math::
 
-       \mu_{e,k} = \frac{1}{|B_k|} \sum_{i \in B_k} e_i
+      \mu_{e,k} = \frac{1}{|B_k|} \sum_{i \in B_k} e_i
 
-    where :math:`e_i` is the error of sample :math:`i`. This is plotted
-    as the central black line.
+   where :math:`e_i` is the error of sample :math:`i`. This is plotted
+   as the central black line.
 
 2. **Error Variance:** The standard deviation of the error,
-    :math:`\sigma_{e,k}`, is calculated for each bin. This measures the
-    consistency or random scatter of the errors.
+   :math:`\sigma_{e,k}`, is calculated for each bin. This measures the
+   consistency or random scatter of the errors.
 
-    .. math::
+   .. math::
 
-       \sigma_{e,k} = \sqrt{\frac{1}{|B_k|-1} \sum_{i \in B_k} (e_i - \mu_{e,k})^2}
+      \sigma_{e,k} = \sqrt{\frac{1}{|B_k|-1} \sum_{i \in B_k} (e_i - \mu_{e,k})^2}
 
 3. **Error Band:** A shaded band is drawn around the mean error line,
-    with its boundaries defined as:
+   with its boundaries defined as:
 
-    .. math::
+   .. math::
 
-       \text{Bounds}_k = \mu_{e,k} \pm n_{std} \cdot \sigma_{e,k}
+      \text{Bounds}_k = \mu_{e,k} \pm n_{std} \cdot \sigma_{e,k}
 
-    The width of this band is a direct visualization of the model's
-    random error.
+   The width of this band is a direct visualization of the model's
+   random error.
 
 **Interpretation:**
 
 * **Mean Error Line (Bias):** If this line deviates from the "Zero Error"
-    reference circle, the model has a systemic bias in that angular region.
-    An outward deviation means over-prediction on average; an inward
-    deviation means under-prediction.
+  reference circle, the model has a systemic bias in that angular region.
+  An outward deviation means over-prediction on average; an inward
+  deviation means under-prediction.
 * **Shaded Band (Variance):** A wide band indicates high variance, meaning
-    the model's predictions are inconsistent and unreliable in that region.
-    A narrow band indicates consistent, low-variance errors.
+  the model's predictions are inconsistent and unreliable in that region.
+  A narrow band indicates consistent, low-variance errors.
 
 **Use Cases:**
 
 * Diagnosing if a model's bias is dependent on a cyclical feature like
-    seasonality or time of day.
+  seasonality or time of day.
 * Identifying conditions under which a model's performance becomes
-    unstable or inconsistent.
+  unstable or inconsistent.
 * Separating reducible systemic errors (bias) from irreducible random
-    errors (variance) to guide model improvement efforts.
+  errors (variance) to guide model improvement efforts.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_error_bands>` for code and plot examples)
@@ -198,18 +198,18 @@ approximates a 95% confidence region).
 **Interpretation:**
 
 * **Ellipse Position:** The center of the ellipse marks the mean predicted
-    location.
+  location.
 * **Ellipse Size:** A larger ellipse indicates greater overall positional
-    uncertainty.
+  uncertainty.
 * **Ellipse Shape (Eccentricity):** The shape reveals the nature of the
-    uncertainty. A circular ellipse means the error is similar in all
-    directions. An elongated ellipse indicates that the error is much
-    larger in one direction (e.g., radial) than the other (e.g., angular).
+  uncertainty. A circular ellipse means the error is similar in all
+  directions. An elongated ellipse indicates that the error is much
+  larger in one direction (e.g., radial) than the other (e.g., angular).
 
 **Use Cases:**
 
 * Visualizing the uncertainty in tracking applications (e.g., predicting
-    the future position of a vehicle or storm).
+  the future position of a vehicle or storm).
 * Understanding the directionality of spatial forecast errors.
 * Assessing the positional accuracy of simulation models.
 
