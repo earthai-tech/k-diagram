@@ -70,7 +70,7 @@ release = pkg_version
 extensions = [
     "numpydoc",
     "sphinx.ext.autodoc",  # Include documentation from docstrings
-    "sphinx.ext.autosummary",  # Generate summary tables for API docs
+    # "sphinx.ext.autosummary",  # Generate summary tables for API docs
     "sphinx.ext.napoleon",  # Support NumPy and Google style docstrings
     "sphinx.ext.intersphinx",  # Link to other projects' documentation
     "sphinx.ext.viewcode",  # Add links to source code
@@ -79,6 +79,7 @@ extensions = [
     "sphinx_copybutton",  # Add a "copy" button to code blocks
     "myst_parser",  # Allow parsing Markdown files (like README.md)
     "sphinx_design",  # Enable design elements like cards, buttons, grids
+    'sphinxcontrib.bibtex',
 ]
 
 # Configure Napoleon settings (for parsing NumPy/Google docstrings)
@@ -101,6 +102,8 @@ napoleon_attr_annotations = True
 numpydoc_show_class_members = False  # don't duplicate __init__ params under the class
 numpydoc_class_members_toctree = False  # keep methods out of the class TOC
 numpydoc_xref_param_type = True  # auto-link types in parameter lists
+
+bibtex_bibfiles = ['references.bib']
 
 # Configure Autodoc settings
 autodoc_default_options = {

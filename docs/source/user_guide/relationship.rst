@@ -47,7 +47,7 @@ relationship between a single set of true (observed) values and one or
 more sets of corresponding predicted values. It maps the true values to
 the angular position and the predicted values (normalized) to the radial
 position, allowing comparison of how different predictions behave across
-the range of true values. 
+the range of true values :cite:t:`kouadiob2025`. 
 
 **Mathematical Concept:**
 
@@ -142,3 +142,7 @@ the range of true values.
 
    <hr>
 
+.. rubric:: References
+
+.. bibliography::
+   :style: plain

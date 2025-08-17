@@ -9,7 +9,7 @@ requires considering multiple aspects simultaneously. How well does the
 model capture the overall variability (standard deviation) of the observed
 phenomenon? How well does the pattern of the model's output correlate
 with the observed pattern? A Taylor Diagram, developed by Karl E. Taylor
-(2001), provides an elegant solution by graphically summarizing these
+:cite:t:`Taylor2001`, provides an elegant solution by graphically summarizing these
 key statistics in a single, concise plot.
 
 Taylor diagrams are widely used, particularly in climate science and
@@ -241,3 +241,8 @@ and correlation (:math:`\rho`) to the angular coordinate
 .. raw:: html
 
    <hr>
+
+.. rubric:: References
+
+.. bibliography::
+   :style: plain

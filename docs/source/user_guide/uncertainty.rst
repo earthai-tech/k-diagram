@@ -11,6 +11,18 @@ when making critical decisions based on them. `k-diagram` provides a
 suite of specialized polar visualizations designed to dissect and
 illuminate various facets of forecast uncertainty.
 
+.. admonition:: From Theory to Practice: A Real-World Case Study
+   :class: hint
+
+   The visualization methods described in this guide were developed to
+   solve practical challenges in interpreting complex, high-dimensional
+   forecasts. For a detailed case study demonstrating how these plots
+   are used to analyze the spatiotemporal uncertainty of a deep
+   learning model for land subsidence forecasting, please refer to our
+   research paper, :cite:t:`kouadiob2025`. The paper showcases how
+   these diagnostics can reveal critical trade-offs between models that
+   are often invisible to standard aggregate metrics.
+   
 Why Polar Plots for Uncertainty?
 ------------------------------------
 
@@ -824,9 +836,10 @@ Radial Density Ring (:func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`
 **Purpose:**
 This plot provides a unique visualization of the **one-dimensional
 probability distribution** of a continuous variable. It uses Kernel
-Density Estimation (KDE) to create a smooth representation of the data's
+Density Estimation (KDE), a standard non-parametric method for density
+estimation :cite:t:`Silverman1986`, to create a smooth representation of the data's
 distribution, answering the question: "What is the shape of this
-data's distribution, and where are its most common values?"
+data's distribution, and where are its most common values?
 
 **Mathematical Concept:**
 The function first derives a one-dimensional data vector :math:`\mathbf{x}`
@@ -900,13 +913,13 @@ value :math:`x`, and the color at that radius is determined by
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-
-This function creates a **polar heatmap** to visualize the two-dimensional
-density distribution of data points. It is particularly powerful for
-uncovering relationships between a linear variable (mapped to the radius)
-and a cyclical or ordered variable (mapped to the angle). It answers the
-question: "Do high or low values of one metric tend to concentrate at
-specific times, seasons, or categories?"
+This function creates a **polar heatmap**, a novel visualization method
+developed as part of the analytics framework in :cite:t:`kouadiob2025`,
+to visualize the two-dimensional density distribution of data points. It is
+particularly powerful for uncovering relationships between a linear
+variable (mapped to the radius) and a cyclical or ordered variable
+(mapped to the angle). It answers the question: "Do high or low values
+of one metric tend to concentrate at specific times, seasons, or categories?"
 
 **Mathematical Concept:**
 The plot is a 2D histogram in polar coordinates.
@@ -966,8 +979,8 @@ Visualizing Vector Fields (:func:`~kdiagram.plot.uncertainty.plot_polar_quiver`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-
-This function creates a **polar quiver plot** to visualize vector data.
+This function creates a **polar quiver plot**, another novel visualization
+from the framework in :cite:t:`kouadiob2025`, to visualize vector data.
 Each arrow on the plot represents a vector, showing both its **magnitude**
 and **direction**. It is an excellent tool for understanding dynamic
 processes like forecast revisions, error vectors, or physical flows.
@@ -1024,3 +1037,12 @@ Each arrow is a vector defined at an origin point in polar coordinates.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_polar_quiver>` for code and plot examples)
+
+.. raw:: html
+
+   <hr>
+
+.. rubric:: References
+
+.. bibliography::
+   :style: plain

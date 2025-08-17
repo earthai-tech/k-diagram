@@ -16,6 +16,7 @@ sphinx-bootstrap-theme
 sphinx-issues
 sphinx-design
 sphinx-prompt
+sphinxcontrib-bibtex
 
 # k-diagram Core Dependencies
 # Required for Sphinx autodoc to import the package and for gallery examples.

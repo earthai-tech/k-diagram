@@ -312,7 +312,7 @@ This plot provides a high-level summary of whether prediction
 intervals are well-calibrated on average across the entire
 dataset. It's useful for quickly comparing the overall
 reliability of uncertainty estimates from different models or
-parameter settings before diving into finer diagnostics.
+parameter settings before diving into finer diagnostics [1]_.
 
 Parameters
 ----------
@@ -471,7 +471,7 @@ intervals [1]_.
 **Interpretation:** Compare the calculated coverage score(s) to
 the nominal coverage rate implied by the quantiles (e.g., 80%
 for a Q10-Q90 interval). Scores far from the nominal rate suggest
-miscalibration (intervals too wide or too narrow on average).
+miscalibration (intervals too wide or too narrow on average) [2]_.
 
 **Radar Plot Fill (`cov_fill=True`):**
 
@@ -483,7 +483,12 @@ miscalibration (intervals too wide or too narrow on average).
 
 References
 ----------
-.. [1] Gneiting, T., & Raftery, A. E. (2007). Strictly Proper
+
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+   *International Journal of Forecasting*. Manuscript submitted.
+   
+.. [2] Gneiting, T., & Raftery, A. E. (2007). Strictly Proper
        Scoring Rules, Prediction, and Estimation. *Journal of the
        American Statistical Association*, 102(477), 359–378.
        *(General reference on probabilistic forecast evaluation)*
@@ -672,11 +677,16 @@ def plot_model_drift(
 
     Radii may be scaled relative to the maximum radius if a
     restricted angular coverage (``acov`` is not 'default') is used,
-    to better fit the visual sector.
+    to better fit the visual sector [2]_.
 
     References
     ----------
-    .. [1] Gama, J., Žliobaitė, I., Bifet, A., Pechenizkiy, M., &
+
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic 
+       Forecasts. *International Journal of Forecasting*. Manuscript submitted.
+       
+    .. [2] Gama, J., Žliobaitė, I., Bifet, A., Pechenizkiy, M., &
            Bouchachia, A. (2014). A survey on concept drift
            adaptation. *ACM Computing Surveys (CSUR)*, 46(4), 1-37.
 
@@ -972,9 +982,7 @@ def plot_velocity(
       DataFrame index, mapped linearly onto the angular range defined
       by `acov`. The `theta_col` parameter is not used for positioning
       in the current implementation, which might be revised in future
-      versions. A warning is issued if `theta_col` is provided.
-    - Input validation relies on decorators `@isdf` and
-      `@check_non_emptiness` from the `gofast` library.
+      versions. A warning is issued if `theta_col` is provided [2]_.
 
     Let :math:`\mathbf{Q}` be the data matrix extracted from `df` using
     columns `q50_cols`, with shape :math:`(N, M)`, where :math:`N` is
@@ -1033,7 +1041,12 @@ def plot_velocity(
 
     References
     ----------
-    .. [1] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
+
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
+       
+    .. [2] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
            Computing in Science & Engineering, 9(3), 90-95.
 
     Examples
@@ -1345,7 +1358,7 @@ def plot_interval_consistency(
     This plot is useful for diagnosing model reliability, identifying
     locations or conditions where the model's uncertainty estimates
     are unstable or vary considerably across different forecast
-    horizons.
+    horizons [1]_.
 
     Parameters
     ----------
@@ -1519,7 +1532,11 @@ def plot_interval_consistency(
 
     References
     ----------
-    .. [1] Matplotlib documentation: https://matplotlib.org/
+    
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
+       
 
     Examples
     --------
@@ -2019,8 +2036,11 @@ def plot_anomaly_magnitude(
 
     References
     ----------
-    .. [1] Matplotlib documentation: https://matplotlib.org/stable/
-
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., 
+           & Liu, W. (2025). Analytics Framework for Interpreting 
+           Spatiotemporal Probabilistic Forecasts. 
+           *International Journal of Forecasting*. Manuscript submitted.
+       
     Examples
     --------
     >>> import pandas as pd
@@ -2398,7 +2418,7 @@ def plot_uncertainty_drift(
     the prediction interval (e.g., Q90 - Q10), representing model
     uncertainty, evolves over multiple time steps (e.g., years) across
     different locations. Each time step is depicted as a distinct
-    concentric ring.
+    concentric ring [1]_.
 
     - **Angular Position (`theta`)**: Represents each location or data
       point. Currently derived from the DataFrame index, mapped
@@ -2592,7 +2612,10 @@ def plot_uncertainty_drift(
 
     References
     ----------
-    .. [1] Matplotlib: Visualization with Python. https://matplotlib.org/
+    
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
 
     Examples
     --------
@@ -2922,7 +2945,7 @@ def plot_actual_vs_predicted(
     This function generates a polar plot to visually compare actual
     ground truth values against model predictions (typically a central
     estimate like the median, Q50) for multiple data points or
-    locations arranged circularly.
+    locations arranged circularly [1]_.
 
     - **Angular Position (`theta`)**: Represents each data point or
       location. Points are currently plotted in their DataFrame index
@@ -2937,7 +2960,7 @@ def plot_actual_vs_predicted(
     - **Visual Comparison**:
 
       - Actual and predicted values are shown as either continuous
-        lines or individual dots based on the `line` parameter [1]_.
+        lines or individual dots based on the `line` parameter [2]_.
       - Gray vertical lines connect the actual and predicted values
         at each angle, visually highlighting the magnitude and
         direction (over- or under-prediction) of the difference
@@ -3068,7 +3091,7 @@ def plot_actual_vs_predicted(
     - The `cmap` parameter is currently unused. The difference lines are
       hardcoded to 'gray'.
     - Default plotting styles are black for actual and red for predicted,
-      but can be overridden using `actual_props` and `pred_props`.
+      but can be overridden using `actual_props` and `pred_props` [1]_.
 
     Let :math:`y_j` be the actual value and :math:`\hat{y}_j` the
     predicted value for data point (location) :math:`j` (:math:`j=0,
@@ -3094,7 +3117,12 @@ def plot_actual_vs_predicted(
 
     References
     ----------
-    .. [1] Matplotlib documentation: https://matplotlib.org/stable/
+    
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
+       
+    .. [2] Matplotlib documentation: https://matplotlib.org/stable/
 
     Examples
     --------
@@ -3553,7 +3581,10 @@ def plot_interval_width(
 
     References
     ----------
-    .. [1] Matplotlib documentation: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.scatter.html
+    
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
 
     Examples
     --------
@@ -3886,7 +3917,7 @@ def plot_coverage_diagnostic(
 
     This plot is essential for evaluating if the model's uncertainty
     quantification is reliable (i.e., if a 90% prediction interval truly
-    covers about 90% of the actual outcomes).
+    covers about 90% of the actual outcomes) [2]_.
 
     Parameters
     ----------
@@ -4037,6 +4068,10 @@ def plot_coverage_diagnostic(
 
     References
     ----------
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
+       
     .. [1] Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring
            rules, prediction, and estimation. Journal of the American
            Statistical Association, 102(477), 359-378. (Discusses
@@ -4418,7 +4453,7 @@ def plot_temporal_uncertainty(
     This function creates a general-purpose polar scatter plot to
     visualize and compare one or more data series (columns) from a
     DataFrame in a circular layout. Each series is plotted with a
-    distinct color.
+    distinct color [1]_.
 
     - **Angular Position (`theta`)**: Represents each data point or
       sample, ordered by the DataFrame index after removing rows with
@@ -4431,7 +4466,7 @@ def plot_temporal_uncertainty(
       normalized independently for each series using min-max scaling
       (`normalize=True`).
     - **Color**: Each data series (column in `q_cols`) is assigned a
-      unique color based on the specified `cmap` [1]_.
+      unique color based on the specified `cmap` [2]_.
 
     This plot is flexible and can be used for various purposes, such as:
 
@@ -4589,7 +4624,11 @@ def plot_temporal_uncertainty(
 
     References
     ----------
-    .. [1] Matplotlib documentation: https://matplotlib.org/stable/
+    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+       *International Journal of Forecasting*. Manuscript submitted.
+       
+    .. [2] Matplotlib documentation: https://matplotlib.org/stable/
 
     Examples
     --------
@@ -4907,14 +4946,28 @@ def plot_radial_density_ring(
     cbar: bool = True,
     show_grid: bool = True,
     grid_props: Optional[Dict[str, any]] = None,
-    show_yticklabels: bool = False,
+    mask_angle: bool=True, 
     bandwidth: Optional[float] = None,
     savefig: Optional[str] = None,
     dpi: int = 300,
+    show_yticklabels: bool = False, 
 ):
+    if show_yticklabels:
+        warnings.warn(
+            'Parameter "show_yticklabels" is deprecated as of v1.2.0'
+            ' and will be removed in a future release. '
+            'Use "mask_angle" instead '
+            '(set mask_angle=False to show angular labels, '
+            'mask_angle=True to hide).',
+            DeprecationWarning,
+            stacklevel=2
+        )
+        # delegate to mask angle
+        mask_angle = False
+
     cols = columns_manager(target_cols)
     exist_features(df, features=cols)
-
+  
     if kind == "direct":
         if len(cols) != 1:
             raise ValueError(
@@ -4994,7 +5047,7 @@ def plot_radial_density_ring(
     if r_label:
         ax.set_ylabel(r_label, fontsize=12, labelpad=20)
 
-    if not show_yticklabels:
+    if mask_angle:
         ax.set_yticklabels([])
 
     if cbar:
@@ -5089,9 +5142,9 @@ grid_props : dict, optional
     Keyword arguments passed to ``set_axis_grid`` for grid
     customization.
 
-show_yticklabels : bool, default=False
-    If ``True``, show the tick labels on the radial axis.
-    Defaults to ``False`` as the ring is primarily a
+mask_angle : bool, default=True
+    If ``False``, show the tick labels on the radial axis.
+    Defaults to ``True`` as the ring is primarily a
     qualitative visual.
 
 bandwidth : float, optional

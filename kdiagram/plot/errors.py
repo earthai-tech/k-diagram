@@ -126,7 +126,7 @@ This function creates a polar plot where each angular sector
 contains a violin plot representing the error distribution of a
 different model or dataset. It is a powerful tool for visually
 comparing bias, variance, and the overall shape of error
-distributions.
+distributions [1]_.
 
 Parameters
 ----------
@@ -180,7 +180,9 @@ ax : matplotlib.axes.Axes or None
 Notes
 -----
 The plot visualizes and compares several one-dimensional error
-distributions.
+distributions. It adapts the standard violin plot [1]_ to a polar
+coordinate system for multi-model comparison.
+
 
 1.  **Kernel Density Estimation (KDE)**: For each model's error
     data :math:`\mathbf{x} = \{x_1, x_2, ..., x_n\}`, the
@@ -234,6 +236,13 @@ Examples
 ...     cmap='plasma',
 ...     alpha=0.7
 ... )
+
+References
+----------
+.. [1] Hintze, J. L., & Nelson, R. D. (1998). Violin Plots: A Box
+   Plot-Density Trace Synergism. The American Statistician, 52(2),
+   181-184.
+
 """
 
 @check_non_emptiness

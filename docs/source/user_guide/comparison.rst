@@ -139,7 +139,8 @@ Reliability Diagram (:func:`~kdiagram.plot.comparison.plot_reliability_diagram`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This function draws a **reliability (calibration) diagram** to assess how
+This function draws a **reliability (calibration) diagram**, a standard
+method in forecast verification :cite:t:`Jolliffe2012`, to assess how
 well **predicted probabilities** match **observed frequencies**. It supports
 one or many models on the same figure, multiple binning strategies, optional
 error bars (e.g., Wilson intervals), and a counts panel for diagnosing data
@@ -272,12 +273,13 @@ Comparing Metrics Across Horizons (:func:`~kdiagram.plot.comparison.plot_horizon
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This function creates a **polar bar chart** to visually compare key
-metrics across a set of distinct categories, most commonly different
-**forecast horizons** (e.g., H+1, H+2, etc.). It is designed to
-answer questions like: "How does my model's uncertainty (interval
-width) and central tendency (median prediction) evolve as it
-forecasts further into the future?"
+This function creates a polar bar chart, a novel visualization
+developed as part of the analytics framework in :cite:t:`kouadiob2025`,
+to visually compare key metrics across a set of distinct categories,
+most commonly different forecast horizons (e.g., H+1, H+2, etc.).
+It is designed to answer questions like: "How does my model's
+uncertainty (interval width) and central tendency (median prediction)
+evolve as it forecasts further into the future?"
 
 **Mathematical Concept:**
 The plot summarizes metrics for :math:`N` horizons (corresponding to
@@ -360,3 +362,12 @@ median quantiles: :math:`\mathbf{L}`, :math:`\mathbf{U}`, and
 (See the :ref:`Horizon Metrics Example <gallery_plot_horizon_metrics>`
 in the Gallery)
 
+.. raw:: html
+
+   <hr>
+
+
+.. rubric:: References
+
+.. bibliography::
+   :style: plain

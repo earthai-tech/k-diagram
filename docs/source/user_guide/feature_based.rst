@@ -47,9 +47,9 @@ This function generates a polar radar chart designed to visually
 compare the importance or contribution profiles of multiple features
 across different groups, conditions, or models (referred to as "layers").
 Each layer is represented by a distinct colored polygon on the chart,
-creating a unique "fingerprint" of feature influence for that layer. It
+creating a unique "fingerprint" of feature influence for that layer :cite:t:`kouadiob2025`. 
 allows for easy identification of dominant features, relative importance
-patterns, and shifts in influence across the layers being compared.
+It patterns, and shifts in influence across the layers being compared.
 
 **Mathematical Concept:**
 Let :math:`\mathbf{R}` be the input `importances` matrix of shape
@@ -136,3 +136,7 @@ is the number of features.
 
    <hr>
 
+.. rubric:: References
+
+.. bibliography::
+   :style: plain
