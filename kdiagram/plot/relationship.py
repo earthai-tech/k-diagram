@@ -338,7 +338,7 @@ def plot_relationship(
             theta,
             r,
             label=names[i],
-            color=final_colors[i],  # FIX: Use 'color' instead of 'c'
+            color=final_colors[i], 
             s=s,
             alpha=alpha,
             edgecolor="black",

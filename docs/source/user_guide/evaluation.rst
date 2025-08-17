@@ -104,9 +104,9 @@ centered Root Mean Square Difference (RMSD):
 
 On the diagram:
 
- * Radius (distance from origin) = :math:`\sigma_p`
- * Angle (from reference axis) = :math:`\theta = \arccos(\rho)`
- * Distance from Reference Point = RMSD
+* Radius (distance from origin) = :math:`\sigma_p`
+* Angle (from reference axis) = :math:`\theta = \arccos(\rho)`
+* Distance from Reference Point = RMSD
 
 **Interpretation:**
 
@@ -165,7 +165,7 @@ of the background color field `CC` based on `radial_strategy`:
 * `'convergence'`: :math:`CC = \cos(\theta)` (directly maps correlation).
 * `'norm_r'`: :math:`CC = r / \max(r)` (maps normalized radius).
 * `'performance'`: :math:`CC = \exp(-(\sigma_p - \sigma_{best})^2 / \epsilon_\sigma) \cdot \exp(-(\theta - \theta_{best})^2 / \epsilon_\theta)`
-    (Gaussian-like function centered on the best model point).
+  (Gaussian-like function centered on the best model point).
 
 **Interpretation:**
 
@@ -241,8 +241,9 @@ and correlation (:math:`\rho`) to the angular coordinate
 .. raw:: html
 
    <hr>
-
+   
 .. rubric:: References
 
 .. bibliography::
    :style: plain
+   :filter: cited

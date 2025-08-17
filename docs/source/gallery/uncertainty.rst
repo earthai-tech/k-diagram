@@ -283,16 +283,16 @@ for two simulated models.
     In this example radar plot:
 
     * **Model A (Wider):** Exhibits a higher coverage rate
-        (closer to the outer edge, likely near the target 80% or
-        higher). This indicates its wider prediction intervals
-        successfully encompass a larger fraction of the true values.
-        While seemingly safer, it might suggest the model is
-        conservative, potentially overestimating uncertainty.
+      (closer to the outer edge, likely near the target 80% or
+      higher). This indicates its wider prediction intervals
+      successfully encompass a larger fraction of the true values.
+      While seemingly safer, it might suggest the model is
+      conservative, potentially overestimating uncertainty.
     * **Model B (Narrower):** Shows a lower coverage rate (points
-        closer to the center). Its narrower intervals fail to capture
-        the true value more often. This model might seem more precise
-        but likely underestimates uncertainty, increasing the risk of
-        errors where reality falls outside the predicted range.
+      closer to the center). Its narrower intervals fail to capture
+      the true value more often. This model might seem more precise
+      but likely underestimates uncertainty, increasing the risk of
+      errors where reality falls outside the predicted range.
 
     The radar layout effectively contrasts the coverage profiles.
     Points closer to the outer boundary (radius 1.0) represent
@@ -301,15 +301,15 @@ for two simulated models.
     **When to Use This Plot:**
 
     * **Comparing Interval Calibration:** Ideal for a high-level
-        comparison of how well different models' uncertainty estimates
-        are calibrated (on average). Is one model consistently too wide
-        (over-covered) or too narrow (under-covered)?
+      comparison of how well different models' uncertainty estimates
+      are calibrated (on average). Is one model consistently too wide
+      (over-covered) or too narrow (under-covered)?
     * **Model Selection:** Aids in selecting a model based on risk
-        tolerance. Model A might be preferred for risk-averse tasks,
-        while Model B might be chosen if tighter (though less reliable)
-        intervals are desired.
+      tolerance. Model A might be preferred for risk-averse tasks,
+      while Model B might be chosen if tighter (though less reliable)
+      intervals are desired.
     * **Summarizing Reliability:** Provides a concise summary of the
-        average reliability of prediction intervals.
+      average reliability of prediction intervals.
 
 .. raw:: html
 
@@ -376,36 +376,36 @@ using bars.
     **🔍 Key Insights from this Example:**
 
     * **Bar Height/Radius:** Indicates coverage status. A bar
-        reaching radius **1** means the actual value was *inside* the
-        interval (success). A bar at radius **0** means the actual
-        value was *outside* (failure).
+      reaching radius **1** means the actual value was *inside* the
+      interval (success). A bar at radius **0** means the actual
+      value was *outside* (failure).
     * **Color (Implied):** Although not the primary focus here,
-        the points/bars are often colored by coverage status (e.g.,
-        using the `cmap` parameter, green for 1, red for 0).
+      the points/bars are often colored by coverage status (e.g.,
+      using the `cmap` parameter, green for 1, red for 0).
     * **Average Coverage Line:** The solid circular line (orange
-        in this example code's customization) is drawn at the
-        radius corresponding to the **overall coverage rate**
-        (e.g., 0.75 if 75% of points are covered). This provides an
-        immediate visual benchmark against the nominal target (e.g.,
-        0.80 for a Q10-Q90 interval) and the plot boundaries (0 & 1).
+      in this example code's customization) is drawn at the
+      radius corresponding to the **overall coverage rate**
+      (e.g., 0.75 if 75% of points are covered). This provides an
+      immediate visual benchmark against the nominal target (e.g.,
+      0.80 for a Q10-Q90 interval) and the plot boundaries (0 & 1).
     * **Patterns:** Look for clusters of bars at radius 0. These
-        indicate ranges of samples (or specific conditions if the
-        angle represented something else) where the model's intervals
-        consistently fail.
+      indicate ranges of samples (or specific conditions if the
+      angle represented something else) where the model's intervals
+      consistently fail.
 
     **💡 When to Use This Plot:**
 
     * **Diagnosing Interval Failures:** Go beyond the average score
-        provided by ``plot_coverage`` to see *which specific samples*
-        are missed by the prediction intervals.
+      provided by ``plot_coverage`` to see *which specific samples*
+      are missed by the prediction intervals.
     * **Identifying Systematic Errors:** Determine if coverage
-        failures are random or concentrated in certain parts of the
-        data distribution (represented by angles).
+      failures are random or concentrated in certain parts of the
+      data distribution (represented by angles).
     * **Visual Calibration Assessment:** Get a detailed view of how
-        well the empirical coverage matches the nominal rate point-
-        by-point, complementing the overall average line.
+      well the empirical coverage matches the nominal rate point-
+      by-point, complementing the overall average line.
     * **Guiding Model Improvement:** Pinpoint problematic samples
-        or regimes where uncertainty quantification needs refinement.
+      or regimes where uncertainty quantification needs refinement.
 
 .. raw:: html
 
@@ -1004,15 +1004,16 @@ Q50.
    * **Angle (θ):** Represents the sample index/location, arranged
      circularly.
    * **Color (Context):** The color provides context.
-        * If ``use_abs_color=True`` (default, as in this example):
-          Color maps to the **average absolute Q50 value** across
-          periods. This helps see if rapid changes (high radius)
-          occur in high-value (e.g., yellow in `cividis`) or
-          low-value (e.g., purple) regions.
-        * If ``use_abs_color=False``: Color maps directly to the
-          **velocity value**. Using a diverging colormap (like
-          'coolwarm') distinguishes between positive velocity
-          (increasing trend) and negative velocity (decreasing trend).
+   
+     * If ``use_abs_color=True`` (default, as in this example):
+       Color maps to the **average absolute Q50 value** across
+       periods. This helps see if rapid changes (high radius)
+       occur in high-value (e.g., yellow in `cividis`) or
+       low-value (e.g., purple) regions.
+     * If ``use_abs_color=False``: Color maps directly to the
+       **velocity value**. Using a diverging colormap (like
+       'coolwarm') distinguishes between positive velocity
+       (increasing trend) and negative velocity (decreasing trend).
 
    **🔍 Key Insights from this Example:**
 
@@ -1057,13 +1058,13 @@ prediction interval widths or forecast errors.
 
 The key features are:
 
-  - **Radius (`r`)**: Represents the value of the metric.
-  - **Color**: Represents the probability density at that radius.
-    Brighter/more intense colors indicate more common values.
+- **Radius (`r`)**: Represents the value of the metric.
+- **Color**: Represents the probability density at that radius.
+  Brighter/more intense colors indicate more common values.
 
 .. _gallery_plot_density_ring_width:
 
-Distribution of Interval Width (`kind='width'`)
+Distribution of Interval Width (``kind='width'``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This example shows the distribution of the prediction interval
@@ -1148,7 +1149,7 @@ width (Q90 - Q10), a key measure of model uncertainty.
 
 .. _gallery_plot_density_ring_velocity:
 
-Distribution of Change (`kind='velocity'`)
+Distribution of Change (``kind='velocity'``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This example visualizes the distribution of change between two
@@ -1214,7 +1215,7 @@ time points (e.g., year-over-year velocity).
 
 .. _gallery_plot_density_ring_direct:
 
-Distribution of a Direct Metric (`kind='direct'`)
+Distribution of a Direct Metric (``kind='direct'``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This is the most general use case, visualizing the distribution
 of any pre-calculated, single-column metric.
@@ -1232,11 +1233,11 @@ of any pre-calculated, single-column metric.
         cmap="Greens",
         show_yticklabels=True,
         r_label="error_metric",
-        savefig="gallery/images/gallery_plot_density_ring_error_metric.jpg"
+        savefig="gallery/images/gallery_plot_density_ring_error_metric.png"
     )
     plt.close()
 
-.. image:: ../images/gallery_plot_density_ring_error_metric.jpg
+.. image:: ../images/gallery_plot_density_ring_error_metric.png
     :alt: Radial Density Ring for a Direct Metric
     :align: center
     :width: 70%
@@ -1342,27 +1343,27 @@ angular variable.
 
     **Key Features:**
 
-      * **Angle (θ):** Represents the cyclical variable (e.g., hour of the day).
-      * **Radius (r):** Represents the magnitude variable (e.g., rainfall amount).
-      * **Color:** Shows the density or count of data points. Bright, hot
-        colors indicate a high concentration of events in that specific
-        angle-radius bin.
+    * **Angle (θ):** Represents the cyclical variable (e.g., hour of the day).
+    * **Radius (r):** Represents the magnitude variable (e.g., rainfall amount).
+    * **Color:** Shows the density or count of data points. Bright, hot
+      colors indicate a high concentration of events in that specific
+      angle-radius bin.
 
     **🔍 In this Example:**
 
-      * The brightest colors (yellow) are concentrated between roughly
-        180° and 270° (corresponding to the afternoon hours, 12:00 to 18:00)
-        and at a moderate radius (rainfall intensity).
-      * This immediately reveals the pattern in the simulated data: heavy
-        rainfall events are most frequent in the afternoon. The rest of the
-        plot is dark, indicating few events at other times or intensities.
+    * The brightest colors (yellow) are concentrated between roughly
+      180° and 270° (corresponding to the afternoon hours, 12:00 to 18:00)
+      and at a moderate radius (rainfall intensity).
+    * This immediately reveals the pattern in the simulated data: heavy
+      rainfall events are most frequent in the afternoon. The rest of the
+      plot is dark, indicating few events at other times or intensities.
 
     **💡 When to Use:**
 
-      * To find correlations between a cyclical feature (time, season) and
-        an event's magnitude or error.
-      * To identify "hot spots" in your data where specific conditions
-        (e.g., time of day and error size) frequently co-occur.
+    * To find correlations between a cyclical feature (time, season) and
+      an event's magnitude or error.
+    * To identify "hot spots" in your data where specific conditions
+      (e.g., time of day and error size) frequently co-occur.
 
 .. raw:: html
 
@@ -1434,26 +1435,26 @@ vectors.
 
     **Key Features:**
 
-      * **Arrow Position:** The base of each arrow is located at a
-        point (:math:`(r, \theta)`) on the polar grid.
-      * **Arrow Direction & Length:** The arrow points in the direction
-        of the vector, and its length represents the vector's magnitude.
-        Color is also often used to represent magnitude.
+    * **Arrow Position:** The base of each arrow is located at a
+      point (:math:`(r, \theta)`) on the polar grid.
+    * **Arrow Direction & Length:** The arrow points in the direction
+      of the vector, and its length represents the vector's magnitude.
+      Color is also often used to represent magnitude.
 
     **🔍 In this Example:**
 
-      * The base of each arrow represents an initial forecast value for a
-        specific location (angle).
-      * The arrow itself shows the revision to that forecast. An arrow
-        pointing outward indicates the forecast was revised upward. An arrow
-        pointing inward indicates a downward revision.
-      * The color and length of the arrows show the magnitude of the
-        revision. The long, dark red arrow near 180° represents the largest
-        single forecast update in the dataset.
+    * The base of each arrow represents an initial forecast value for a
+      specific location (angle).
+    * The arrow itself shows the revision to that forecast. An arrow
+      pointing outward indicates the forecast was revised upward. An arrow
+      pointing inward indicates a downward revision.
+    * The color and length of the arrows show the magnitude of the
+      revision. The long, dark red arrow near 180° represents the largest
+      single forecast update in the dataset.
 
     **💡 When to Use:**
 
-      * To visualize forecast updates and assess model stability.
-      * To plot error vectors (e.g., where the vector shows the direction
-        and magnitude of error from the true value).
-      * To visualize flow fields or other vector data in a polar context.
+    * To visualize forecast updates and assess model stability.
+    * To plot error vectors (e.g., where the vector shows the direction
+      and magnitude of error from the true value).
+    * To visualize flow fields or other vector data in a polar context.

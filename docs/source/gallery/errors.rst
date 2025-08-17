@@ -80,32 +80,32 @@ error variance (consistency).
 
     **Key Features:**
 
-      * **Angle (θ):** Represents a binned feature, like the month.
-      * **Radius (r):** Represents the forecast error value. The red dashed
-        circle indicates zero error.
-      * **Mean Error (Black Line):** Shows the average error for each bin.
-        If this line deviates from the zero-circle, it reveals a systemic bias.
-      * **Error Band (Shaded Area):** Represents the standard deviation of
-        the error. A wide band indicates high variance and inconsistent
-        performance.
+    * **Angle (θ):** Represents a binned feature, like the month.
+    * **Radius (r):** Represents the forecast error value. The red dashed
+      circle indicates zero error.
+    * **Mean Error (Black Line):** Shows the average error for each bin.
+      If this line deviates from the zero-circle, it reveals a systemic bias.
+    * **Error Band (Shaded Area):** Represents the standard deviation of
+      the error. A wide band indicates high variance and inconsistent
+      performance.
 
     **🔍 In this Example:**
 
-      * **Systemic Bias:** The mean error line is clearly outside the zero-circle
-        (positive error) for the top-right quadrant (spring/summer months) and
-        inside the circle (negative error) for the bottom-left (autumn/winter),
-        indicating a strong seasonal bias.
-      * **Variable Consistency:** The shaded band is much wider in the
-        bottom-left quadrant (winter) than in the top-right (summer),
-        showing that the model's predictions are far more inconsistent and
-        variable during the winter months.
+    * **Systemic Bias:** The mean error line is clearly outside the zero-circle
+      (positive error) for the top-right quadrant (spring/summer months) and
+      inside the circle (negative error) for the bottom-left (autumn/winter),
+      indicating a strong seasonal bias.
+    * **Variable Consistency:** The shaded band is much wider in the
+      bottom-left quadrant (winter) than in the top-right (summer),
+      showing that the model's predictions are far more inconsistent and
+      variable during the winter months.
 
     **💡 When to Use:**
 
-      * To diagnose if a model has a systemic bias related to a cyclical
-        feature (e.g., time of day, month of year).
-      * To identify periods or conditions where a model's performance is
-        less consistent (i.e., has higher error variance).
+    * To diagnose if a model has a systemic bias related to a cyclical
+      feature (e.g., time of day, month of year).
+    * To identify periods or conditions where a model's performance is
+      less consistent (i.e., has higher error variance).
 
 .. raw:: html
 
@@ -165,28 +165,28 @@ polar plot, revealing differences in bias, variance, and shape.
 
     **Key Features:**
 
-      * **Angle (θ):** Each angular sector is dedicated to a different model.
-      * **Radius (r):** Represents the forecast error value. The black
-        dashed circle is the zero-error reference line.
-      * **Violin Shape:** The width of the violin at a given radius shows the
-        density of errors at that value.
+    * **Angle (θ):** Each angular sector is dedicated to a different model.
+    * **Radius (r):** Represents the forecast error value. The black
+      dashed circle is the zero-error reference line.
+    * **Violin Shape:** The width of the violin at a given radius shows the
+      density of errors at that value.
 
     **🔍 In this Example:**
 
-      * **Good Model:** The blue violin is tightly centered around the zero-error
-        line, indicating low bias and low variance.
-      * **Biased Model:** The pink violin is shifted significantly inward from
-        the zero-error line. Its peak density is around -4.0, revealing a
-        strong negative bias (under-prediction).
-      * **Inconsistent Model:** The yellow violin is centered on zero but is
-        much wider and taller than the others, indicating it has a very high
-        error variance and is therefore unreliable.
+    * **Good Model:** The blue violin is tightly centered around the zero-error
+      line, indicating low bias and low variance.
+    * **Biased Model:** The pink violin is shifted significantly inward from
+      the zero-error line. Its peak density is around -4.0, revealing a
+      strong negative bias (under-prediction).
+    * **Inconsistent Model:** The yellow violin is centered on zero but is
+      much wider and taller than the others, indicating it has a very high
+      error variance and is therefore unreliable.
 
     **💡 When to Use:**
 
-      * To directly compare the bias and consistency of several models at once.
-      * To select a model based on the most desirable error profile (e.g.,
-        low bias and low variance).
+    * To directly compare the bias and consistency of several models at once.
+    * To select a model based on the most desirable error profile (e.g.,
+      low bias and low variance).
 
 .. raw:: html
 
@@ -254,28 +254,28 @@ error (standard deviation) in both the radial and angular directions.
 
     **Key Features:**
 
-      * **Ellipse Position:** The center of each ellipse is the mean
-        predicted position (:math:`(r, \theta)`).
-      * **Ellipse Shape:** The shape and size are determined by the
-        standard deviations in the radial (`r_std_col`) and tangential
-        (`theta_std_col`) directions. A long, thin ellipse indicates
-        high uncertainty in one direction but low uncertainty in the other.
-      * **Color:** Can be used to represent a third variable, such as the
-        priority or type of the object being tracked.
+    * **Ellipse Position:** The center of each ellipse is the mean
+      predicted position (:math:`(r, \theta)`).
+    * **Ellipse Shape:** The shape and size are determined by the
+      standard deviations in the radial (`r_std_col`) and tangential
+      (`theta_std_col`) directions. A long, thin ellipse indicates
+      high uncertainty in one direction but low uncertainty in the other.
+    * **Color:** Can be used to represent a third variable, such as the
+      priority or type of the object being tracked.
 
     **🔍 In this Example:**
 
-      * Each ellipse represents the 1.5-sigma uncertainty region for a
-        tracked object.
-      * We can see that some objects have highly elongated uncertainty (e.g.,
-        the one near 135°), meaning their radial position is well-known,
-        but their angular position is not.
-      * Other objects have more circular uncertainty regions, indicating
-        similar error magnitudes in both directions.
+    * Each ellipse represents the 1.5-sigma uncertainty region for a
+      tracked object.
+    * We can see that some objects have highly elongated uncertainty (e.g.,
+      the one near 135°), meaning their radial position is well-known,
+      but their angular position is not.
+    * Other objects have more circular uncertainty regions, indicating
+      similar error magnitudes in both directions.
 
     **💡 When to Use:**
 
-      * For spatial forecasting problems, such as tracking objects,
-        predicting storm paths, or modeling animal movements.
-      * When you need to visualize and understand the magnitude and
-        anisotropy (directionality) of two-dimensional errors.
+    * For spatial forecasting problems, such as tracking objects,
+      predicting storm paths, or modeling animal movements.
+    * When you need to visualize and understand the magnitude and
+      anisotropy (directionality) of two-dimensional errors.

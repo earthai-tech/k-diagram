@@ -325,38 +325,38 @@ median quantiles: :math:`\mathbf{L}`, :math:`\mathbf{U}`, and
 **Interpretation:**
 
 * **Angle:** Each angular segment represents a different horizon or
-    category, as specified by the ``xtick_labels`` parameter. The plot typically
-    starts at the top (12 o'clock) and proceeds clockwise.
+  category, as specified by the ``xtick_labels`` parameter. The plot typically
+  starts at the top (12 o'clock) and proceeds clockwise.
 * **Radius (Bar Height):** The length of each bar indicates the
-    magnitude of the primary metric (e.g., **mean interval width**).
-    Longer bars signify larger values.
+  magnitude of the primary metric (e.g., **mean interval width**).
+  Longer bars signify larger values.
 * **Color:** The color of each bar represents the magnitude of the
-    secondary metric (e.g., **mean Q50 value**). The color bar on the
-    side of the plot provides the scale for this metric.
+  secondary metric (e.g., **mean Q50 value**). The color bar on the
+  side of the plot provides the scale for this metric.
 
 **Use Cases:**
 
 * **Analyzing Uncertainty Drift:** Track how a model's predictive
-    uncertainty (interval width) grows or shrinks over a forecast horizon.
+  uncertainty (interval width) grows or shrinks over a forecast horizon.
 * **Comparing Forecast Magnitudes:** Simultaneously visualize how the
-    central tendency (Q50) of the forecast changes along with its
-    uncertainty.
+  central tendency (Q50) of the forecast changes along with its
+  uncertainty.
 * **Comparing Models:** Generate this plot for multiple models to
-    compare their uncertainty profiles over time. A model with shorter,
-    more stable bars may be preferable.
+  compare their uncertainty profiles over time. A model with shorter,
+  more stable bars may be preferable.
 * **Categorical Performance:** The "horizons" can represent any set of
-    categories, such as different geographic regions or model configurations,
-    to compare aggregated metrics.
+  categories, such as different geographic regions or model configurations,
+  to compare aggregated metrics.
 
 **Advantages (Polar Bar Context):**
 
 * **Intuitive Comparison:** The circular layout allows for easy comparison
-    of values across sequential categories.
+  of values across sequential categories.
 * **Two-Dimensional Insight:** It effectively encodes two different
-    metrics (bar height and bar color) for each category in a single,
-    compact plot.
+  metrics (bar height and bar color) for each category in a single,
+  compact plot.
 * **Highlights Trends:** Trends across horizons, such as consistently
-    increasing uncertainty, are immediately apparent.
+  increasing uncertainty, are immediately apparent.
 
 **Example:**
 (See the :ref:`Horizon Metrics Example <gallery_plot_horizon_metrics>`
@@ -366,8 +366,8 @@ in the Gallery)
 
    <hr>
 
-
 .. rubric:: References
 
 .. bibliography::
    :style: plain
+   :filter: cited

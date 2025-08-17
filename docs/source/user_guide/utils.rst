@@ -103,7 +103,7 @@ It then checks if these constructed names exist in the provided DataFrame.
 * ``value_prefix``: Optional common prefix for the values.
 * ``dt_value``: Optional list of date/time identifiers.
 * ``strict_match``: If `True`, requires exact name matches; if `False`,
-    allows pattern matching.
+  allows pattern matching.
 
 **Use Cases:**
 
@@ -132,11 +132,11 @@ time step, while different quantile levels become separate columns
 
 * ``df``: The input wide-format DataFrame.
 * ``value_prefix``: The common prefix identifying the quantile columns
-    (e.g., `'subs'` for columns like `'subs_2022_q0.1'`).
+  (e.g., `'subs'` for columns like `'subs_2022_q0.1'`).
 * ``spatial_cols``: Optional list of columns identifying unique
-    locations (e.g., `['lon', 'lat']`), preserved as index/columns.
+  locations (e.g., `['lon', 'lat']`), preserved as index/columns.
 * ``dt_col``: The name for the new column that will hold the extracted
-    time step information (e.g., `'year'`).
+  time step information (e.g., `'year'`).
 
 **Use Cases:**
 
@@ -171,7 +171,7 @@ documenting based on the common understanding of "melting" to a long format.)*
 * ``df``: The input wide-format DataFrame.
 * ``value_prefix``: The common prefix identifying the quantile columns.
 * ``dt_name``: The name for the new column holding the extracted time
-    step information.
+  step information.
 * ``q``: Optional list to filter specific quantiles.
 * ``spatial_cols``: Optional list/tuple of spatial identifier columns.
 

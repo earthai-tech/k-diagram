@@ -146,3 +146,4 @@ the range of true values :cite:t:`kouadiob2025`.
 
 .. bibliography::
    :style: plain
+   :filter: cited

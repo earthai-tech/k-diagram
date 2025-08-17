@@ -140,3 +140,4 @@ is the number of features.
 
 .. bibliography::
    :style: plain
+   :filter: cited

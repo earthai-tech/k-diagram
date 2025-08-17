@@ -138,6 +138,10 @@ emphasize the error magnitude and direction.
 **Example:**
 (See :ref:`Gallery <gallery_plot_actual_vs_predicted>` for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_anomaly_magnitude:
 
 Anomaly Magnitude Analysis (:func:`~kdiagram.plot.uncertainty.plot_anomaly_magnitude`)
@@ -218,7 +222,6 @@ a plotted point is :math:`r_i`.
 
    <hr>
 
-
 .. _ug_coverage:
 
 Overall Coverage Scores (:func:`~kdiagram.plot.uncertainty.plot_coverage`)
@@ -239,6 +242,7 @@ The empirical coverage for a given prediction interval
 :math:`N` samples is calculated as:
 
 .. math::
+   :label: eq:coverage
 
    \text{Coverage} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{1}\{Q_{low,i} \le y_i \le Q_{up,i}\}
 
@@ -293,6 +297,10 @@ discrete): :math:`\text{Coverage} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{1}\{y_i =
 **Example:**
 (See :ref:`Gallery <gallery_plot_overall_coverage>` for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_coverage_diagnostic:
 
 Point-wise Coverage Diagnostic (:func:`~kdiagram.plot.uncertainty.plot_coverage_diagnostic`)
@@ -370,6 +378,10 @@ The plot also typically shows the overall coverage rate
 **Example:**
 (See :ref:`Gallery <gallery_plot_coverage_diagnostic>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_interval_consistency:
 
 Interval Width Consistency (:func:`~kdiagram.plot.uncertainty.plot_interval_consistency`)
@@ -526,6 +538,10 @@ the color typically represents the width :math:`w_i` itself.
 **Example:**
 (See :ref:`Gallery <gallery_plot_interval_width>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_model_drift:
 
 Model Forecast Drift (:func:`~kdiagram.plot.uncertainty.plot_model_drift`)
@@ -591,6 +607,10 @@ aggregated metric for that horizon if ``color_metric_cols`` is used.
 **Example:**
 (See :ref:`Gallery <gallery_plot_model_drift>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_temporal_uncertainty:
 
 General Polar Series Visualization (:func:`~kdiagram.plot.uncertainty.plot_temporal_uncertainty`)
@@ -662,7 +682,6 @@ Each series :math:`k` is assigned a distinct color.
 .. raw:: html
 
    <hr>
-
 
 .. _ug_uncertainty_drift:
 
@@ -743,6 +762,10 @@ Each ring :math:`t` receives a distinct color from the specified
 **Example:**
 (See :ref:`Gallery <gallery_plot_uncertainty_drift>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_velocity:
 
 Prediction Velocity Visualization (:func:`~kdiagram.plot.uncertainty.plot_velocity`)
@@ -827,7 +850,6 @@ absolute magnitude of the Q50 predictions
 
    <hr>
 
-
 .. _ug_radial_density_ring:
 
 Radial Density Ring (:func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`)
@@ -905,7 +927,6 @@ value :math:`x`, and the color at that radius is determined by
 .. raw:: html
 
    <hr>
-
 
 .. _ug_plot_polar_heatmap:
 
@@ -1009,31 +1030,31 @@ Each arrow is a vector defined at an origin point in polar coordinates.
 
 **Interpretation:**
 
-  * **Arrow Position:** The base of the arrow shows the location where the
-    vector originates.
-  * **Arrow Direction:** The arrow points in the direction of the vector.
-    For forecast revisions, an arrow pointing outward means the forecast
-    was revised upward; an inward arrow means a downward revision.
-  * **Arrow Length & Color:** The size and color of the arrow represent
-    the magnitude of the vector. Longer, more intense arrows indicate
-    stronger flows or larger changes.
+* **Arrow Position:** The base of the arrow shows the location where the
+  vector originates.
+* **Arrow Direction:** The arrow points in the direction of the vector.
+  For forecast revisions, an arrow pointing outward means the forecast
+  was revised upward; an inward arrow means a downward revision.
+* **Arrow Length & Color:** The size and color of the arrow represent
+  the magnitude of the vector. Longer, more intense arrows indicate
+  stronger flows or larger changes.
 
 **Use Cases:**
 
-  * **Forecast Stability:** Visualize how much forecasts change between
-    updates. Small, randomly oriented arrows suggest a stable model.
-    Large, consistently oriented arrows might indicate model drift.
-  * **Error Vector Analysis:** Plot the error as a vector pointing from
-    the predicted value to the actual value.
-  * **Flow Visualization:** Model physical phenomena like wind or ocean
-    currents in a polar context.
+* **Forecast Stability:** Visualize how much forecasts change between
+  updates. Small, randomly oriented arrows suggest a stable model.
+  Large, consistently oriented arrows might indicate model drift.
+* **Error Vector Analysis:** Plot the error as a vector pointing from
+  the predicted value to the actual value.
+* **Flow Visualization:** Model physical phenomena like wind or ocean
+  currents in a polar context.
 
 **Advantages of Polar View:**
 
-  * Provides an intuitive way to visualize vector fields that have a
-    natural central point or cyclical nature.
-  * Can reveal large-scale rotational or radial patterns in the vector
-    data.
+* Provides an intuitive way to visualize vector fields that have a
+  natural central point or cyclical nature.
+* Can reveal large-scale rotational or radial patterns in the vector
+  data.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_polar_quiver>` for code and plot examples)
@@ -1046,3 +1067,4 @@ Each arrow is a vector defined at an origin point in polar coordinates.
 
 .. bibliography::
    :style: plain
+   :filter: cited

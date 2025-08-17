@@ -444,4 +444,23 @@ table.docutils tbody tr:hover {
     padding: 1.2em;
 }
 
+/* --- Option 2: Modern Accent Reference Style --- */
+.citation {
+    /* A colored accent bar on the left */
+    border-left: 3px solid var(--color-brand-primary);
+    /* Space between the bar and the text */
+    padding-left: 1.5em;
+    /* Space between each reference entry */
+    margin-bottom: 1.5em;
+}
 
+.citation .label {
+    /* Make the citation label (e.g., [Hin98]) bold */
+    font-weight: bold;
+}
+
+/* --- Elegant Card Reference Style --- */
+.citation:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}

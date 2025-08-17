@@ -104,7 +104,7 @@ of the forecast uncertainty and model behavior.
 Loading Zhongshan Data for Interval Consistency Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example demonstrates loading the packaged Zhongshan dataset using
-:func:`~kdiagram.datasets.load_zhongshan_subsidence` (as a Bunch object)
+:func:`~kdiagram.datasets.load.load_zhongshan_subsidence` (as a Bunch object)
 and analyzing the temporal consistency of its prediction interval widths
 using :func:`~kdiagram.plot.uncertainty.plot_interval_consistency`. Includes
 basic error handling in case the data cannot be loaded.

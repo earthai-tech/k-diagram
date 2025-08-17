@@ -24,7 +24,7 @@ Summary of Histogram Functions
 
     *   - Function
         - Description
-    *   - :func:`~kdiagram.utils.hist.plot_hist_kde`
+    *   - :func:`~kdiagram.utils.plot_hist_kde`
         - Plots a histogram combined with a smooth Kernel Density
           Estimate (KDE) curve to visualize a 1D distribution.
 
@@ -35,7 +35,7 @@ Let's explore the `plot_hist_kde` function in detail.
 
 .. _ug_plot_hist_kde:
 
-Histogram and KDE (:func:`~kdiagram.utils.hist.plot_hist_kde`)
+Histogram and KDE (:func:`~kdiagram.utils.plot_hist_kde`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
@@ -72,31 +72,37 @@ spread of a variable.
 **Interpretation:**
 
 * **Shape:** The overall shape of the histogram and KDE curve reveals
-   the nature of the distribution. Is it symmetric (like a normal
-   distribution), skewed to one side, or does it have multiple peaks
-   (bimodal or multimodal)?
+  the nature of the distribution. Is it symmetric (like a normal
+  distribution), skewed to one side, or does it have multiple peaks
+  (bimodal or multimodal)?
 * **Central Tendency:** The location of the highest peak(s) indicates
-   the mode(s) of the data—the most frequently occurring values.
+  the mode(s) of the data—the most frequently occurring values.
 * **Spread:** The width of the distribution indicates the variability
-   or dispersion of the data. A narrow plot signifies low variance,
-   while a wide plot signifies high variance.
+  or dispersion of the data. A narrow plot signifies low variance,
+  while a wide plot signifies high variance.
 * **Outliers:** Data points that fall far from the central mass of the
-   distribution can be identified in the tails of the plot.
+  distribution can be identified in the tails of the plot.
 
 **Use Cases:**
 
 * **Forecast Error Analysis:** This is a primary use case. Plotting the
-   distribution of prediction errors (:math:`y_{true} - \hat{y}_{pred}`)
-   is crucial. A good model often has errors that are normally
-   distributed and centered at zero.
+  distribution of prediction errors (:math:`y_{true} - \hat{y}_{pred}`)
+  is crucial. A good model often has errors that are normally
+  distributed and centered at zero.
 * **Uncertainty Assessment:** Visualize the distribution of prediction
-   interval widths (:math:`Q_{up} - Q_{low}`). A narrow, unimodal
-   distribution is often desirable, as it suggests the model produces
-   consistent uncertainty estimates.
+  interval widths (:math:`Q_{up} - Q_{low}`). A narrow, unimodal
+  distribution is often desirable, as it suggests the model produces
+  consistent uncertainty estimates.
 * **Feature Inspection:** Before building a model, inspect the
-   distribution of input features to identify skewness or other
-   characteristics that might require transformation.
+  distribution of input features to identify skewness or other
+  characteristics that might require transformation.
 
 **Example:**
 (See the :ref:`Histogram with KDE Overlay <gallery_plot_hist_kde>`
 in the Gallery for code and a plot example)
+
+.. rubric:: References
+
+.. bibliography::
+   :style: plain
+   :filter: cited

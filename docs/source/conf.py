@@ -97,7 +97,7 @@ napoleon_use_rtype = True  # Use :rtype: for return types
 napoleon_preprocess_types = True  # Process type strings into links
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
-
+math_number_all = True
 # numpydoc configuration
 numpydoc_show_class_members = False  # don't duplicate __init__ params under the class
 numpydoc_class_members_toctree = False  # keep methods out of the class TOC

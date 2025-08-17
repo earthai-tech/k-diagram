@@ -145,5 +145,23 @@ used for preparing data for visualization functions.
    ~kdiagram.utils.plot_hist_kde
    
 
+.. _api_datasets:
 
+Datasets (`kdiagram.datasets`)
+--------------------------------
+
+Functions for loading sample datasets and generating synthetic data
+for examples and testing.
+
+.. autosummary::
+   :toctree: _autosummary/datasets
+   :nosignatures:
+
+   ~kdiagram.datasets.load_uncertainty_data
+   ~kdiagram.datasets.load_zhongshan_subsidence
+   ~kdiagram.datasets.make_cyclical_data
+   ~kdiagram.datasets.make_fingerprint_data
+   ~kdiagram.datasets.make_multi_model_quantile_data
+   ~kdiagram.datasets.make_taylor_data
+   ~kdiagram.datasets.make_uncertainty_data
 

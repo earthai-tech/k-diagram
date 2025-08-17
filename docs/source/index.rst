@@ -80,9 +80,10 @@ k-diagram: Polar Insights for Forecasting
    contributing
    code_of_conduct
    citing
-   release_notes/index       
+   release_notes/index 
+   license         
    glossary
-   license
+   references
 
 
 .. rubric:: See Also

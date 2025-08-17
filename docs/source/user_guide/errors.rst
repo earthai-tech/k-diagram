@@ -29,7 +29,7 @@ Summary of Error Visualization Functions
     *   - :func:`~kdiagram.plot.errors.plot_error_violins`
         - Compares the full error distributions of multiple models on a
           single polar plot.
-    *   - :func:`~kdiagram.plot.errors.plot_polar_error_ellipses`
+    *   - :func:`~kdiagram.plot.errors.plot_error_ellipses`
         - Displays two-dimensional uncertainty using error ellipses,
           ideal for spatial or positional errors.
 
@@ -48,7 +48,7 @@ This plot is designed to decompose a model's error into two components:
 **systemic error (bias)** and **random error (variance)**. It achieves
 this by aggregating errors across bins of an angular variable (like
 the month of the year or hour of the day) and displaying the mean and
-standard deviation of the errors in each bin :cite:t:`kouadiob2025`.
+standard deviation of the errors in each bin (:cite:t:`kouadiob2025`).
 
 **Mathematical Concept:**
 The function first partitions the dataset into :math:`K` bins,
@@ -117,7 +117,7 @@ Comparing Error Distributions (:func:`~kdiagram.plot.errors.plot_error_violins`)
 **Purpose:**
 This function provides a direct visual comparison of the **full error
 distributions** for multiple models on a single polar plot. It adapts the 
-traditional violin plot :cite:t:`Hintze1998` to a polar coordinate system, 
+traditional violin plot (:cite:t:`Hintze1998`) to a polar coordinate system, 
 to show the shape, bias, and variance of each model's errors, making it an
 excellent tool for model selection.
 
@@ -128,7 +128,7 @@ function, :math:`\hat{f}_h(x)`.
 
 .. math::
 
-\\hat{f}_h(x) = \\frac{1}{nh} \\sum_{i=1}^{n} K\\left(\\frac{x - x_i}{h}\\right)
+   \hat{f}_h(x) = \frac{1}{nh} \sum_{i=1}^{n} K\left(\frac{x - x_i}{h}\right)
 
 This density curve is then plotted symmetrically around a radial axis to
 form the "violin" shape. The width of the violin at any error value
@@ -137,25 +137,25 @@ Each model is assigned its own angular sector on the polar plot.
 
 **Interpretation:**
 
-  * **Bias (Centering):** The location of the widest part of the violin
-    relative to the "Zero Error" circle reveals the model's bias. A violin
-    centered on the circle is unbiased. A violin shifted outward indicates
-    a positive bias (over-prediction), while a shift inward indicates a
-    negative bias (under-prediction).
-  * **Variance (Width/Height):** A short, wide violin signifies a
-    high-variance model with inconsistent errors. A tall, narrow violin
-    signifies a low-variance model with consistent performance.
-  * **Shape:** The shape of the violin reveals further details. An
-    asymmetric shape indicates skewed errors. Multiple wide sections
-    (bimodality) suggest the model makes two or more common types of errors.
+* **Bias (Centering):** The location of the widest part of the violin
+  relative to the "Zero Error" circle reveals the model's bias. A violin
+  centered on the circle is unbiased. A violin shifted outward indicates
+  a positive bias (over-prediction), while a shift inward indicates a
+  negative bias (under-prediction).
+* **Variance (Width/Height):** A short, wide violin signifies a
+  high-variance model with inconsistent errors. A tall, narrow violin
+  signifies a low-variance model with consistent performance.
+* **Shape:** The shape of the violin reveals further details. An
+  asymmetric shape indicates skewed errors. Multiple wide sections
+  (bimodality) suggest the model makes two or more common types of errors.
 
 **Use Cases:**
 
-  * Directly comparing the overall performance of multiple candidate models.
-  * Selecting a model based on a holistic view of its error profile
-    (e.g., choosing a slightly biased but highly consistent model over an
-    unbiased but inconsistent one).
-  * Presenting a summary of comparative model performance to stakeholders.
+* Directly comparing the overall performance of multiple candidate models.
+* Selecting a model based on a holistic view of its error profile
+  (e.g., choosing a slightly biased but highly consistent model over an
+  unbiased but inconsistent one).
+* Presenting a summary of comparative model performance to stakeholders.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_error_violins>` for code and plot examples)
@@ -171,7 +171,7 @@ Visualizing 2D Uncertainty (:func:`~kdiagram.plot.errors.plot_error_ellipses`)
 
 **Purpose:**
 This function is designed for visualizing **two-dimensional uncertainty**,
-a concept explored in :cite:t:`kouadiob2025`,  which is common in spatial
+a concept explored in (:cite:t:`kouadiob2025`),  which is common in spatial
 or positional forecasting. It draws an ellipse for each data point, where 
 the ellipse's size and orientation represent the uncertainty in both the 
 radial and angular directions.
@@ -225,3 +225,4 @@ approximates a 95% confidence region).
 
 .. bibliography::
    :style: plain
+   :filter: cited

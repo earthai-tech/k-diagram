@@ -300,7 +300,7 @@ def plot_coverage(
     plt.show()
 
 
-plot_coverage.__doc__ = r"""\
+plot_coverage.__doc__ = r"""
 Plot overall coverage scores for forecast intervals or points.
 
 Computes and visualizes the empirical coverage rate, which is

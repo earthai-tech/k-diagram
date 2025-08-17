@@ -231,10 +231,9 @@ Examples
 
 See Also
 --------
-- `scipy.stats.gaussian_kde`: For the Kernel Density Estimate 
-  implementation.
-- `matplotlib.pyplot.hist`: For plotting histograms in matplotlib.
-- `pandas.Series.hist`: For creating histograms from pandas Series.
+scipy.stats.gaussian_kde : For the Kernel Density Estimate implementation.
+matplotlib.pyplot.hist : For plotting histograms in matplotlib.
+pandas.Series.hist : For creating histograms from pandas Series.
 
 References
 ----------
