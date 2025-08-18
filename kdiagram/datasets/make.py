@@ -43,130 +43,6 @@ def make_cyclical_data(
     seed: int | None = 404,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-    r"""Generate synthetic data with cyclical patterns.
-
-    Creates a dataset containing a 'true' cyclical signal (e.g.,
-    seasonal temperature) and one or more 'prediction' series that
-    may have different amplitudes, phases, biases, and noise levels
-    relative to the true signal.
-
-    This data is useful for demonstrating and testing functions like
-    :func:`~kdiagram.plot.relationship.plot_relationship` or
-    :func:`~kdiagram.plot.uncertainty.plot_temporal_uncertainty` where
-    visualizing behavior over a cycle is important.
-
-    Parameters
-    ----------
-    n_samples : int, default=365
-        Number of data points (rows) to generate, representing steps
-        within cycles.
-
-    n_series : int, default=2
-        Number of simulated prediction series (e.g., models) to generate.
-
-    cycle_period : float, default=365
-        The number of samples that constitute one full cycle (e.g.,
-        365 for daily data over one year). Used for generating the
-        underlying sinusoidal pattern.
-
-    noise_level : float, default=0.5
-        Standard deviation of the Gaussian noise added to the true
-        signal and scaled for predictions.
-
-    amplitude_true : float, default=10.0
-        Amplitude of the underlying sinusoidal 'true' signal.
-
-    offset_true : float, default=20.0
-        Vertical offset (mean) of the 'true' signal.
-
-    pred_bias : float or list of float, default=[0, 1.5]
-        Systematic bias added to each prediction series relative to the
-        true signal. If a float, the same bias is applied to all. If
-        a list, its length must match `n_series`.
-
-    pred_noise_factor : float or list of float, default=[1.0, 1.5]
-        Factor by which `noise_level` is multiplied for each
-        prediction series. Allows models to have different noise
-        levels. If a float, applied to all. If list, length must
-        match `n_series`.
-
-    pred_amplitude_factor : float or list of float, default=[1.0, 0.8]
-        Factor by which `amplitude_true` is multiplied for each
-        prediction series. Allows models to under/over-estimate
-        cyclical amplitude. If float, applied to all. If list,
-        length must match `n_series`.
-
-    pred_phase_shift : float or list of float, default=[0, np.pi / 6]
-        Phase shift (in radians) applied to the sinusoidal component
-        of each prediction series relative to the true signal.
-        Positive values create a lag. If float, applied to all. If
-        list, length must match `n_series`.
-
-    prefix : str, default="model"
-        Base prefix used for naming the prediction columns
-        (e.g., ``model_A``, ``model_B``).
-
-    series_names : list of str, optional
-        Optional list of names for the prediction series. If ``None``,
-        names like "Model_A", "Model_B" are generated. Must match
-        `n_series` if provided. Default is ``None``.
-
-    seed : int, optional
-        Seed for NumPy's random number generator for reproducibility.
-        Default is 404.
-
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object.
-        - If ``True``: Returns only the pandas DataFrame.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with the following attributes:
-            - ``frame`` : pandas.DataFrame
-                DataFrame containing 'time_step', 'y_true', and
-                prediction columns (e.g., 'model_A', 'model_B').
-            - ``feature_names`` : list of str
-                Name of the time step column (``['time_step']``).
-            - ``target_names`` : list of str
-                Name of the target column (``['y_true']``).
-            - ``target`` : ndarray of shape (n_samples,)
-                NumPy array of 'y_true' values.
-            - ``series_names`` : list of str
-                Names assigned to the prediction series/models.
-            - ``prediction_columns`` : list of str
-                Names of the prediction columns in the frame.
-            - ``DESCR`` : str
-                Description of the generated cyclical dataset.
-
-        If ``as_frame=True``:
-        pandas.DataFrame
-            The generated data solely as a pandas DataFrame.
-
-    Raises
-    ------
-    ValueError
-        If list lengths for prediction parameters do not match `n_series`.
-    TypeError
-        If inputs cannot be processed numerically.
-
-    Examples
-    --------
-    >>> from kdiagram.datasets import make_cyclical_data
-
-    >>> # Generate data as Bunch
-    >>> cycle_bunch = make_cyclical_data(n_samples=12*2, n_series=1,
-    ...                                  cycle_period=12, seed=5)
-    >>> print(cycle_bunch.DESCR)
-    >>> print(cycle_bunch.frame.head())
-
-    >>> # Generate data as DataFrame
-    >>> cycle_df = make_cyclical_data(n_samples=50, n_series=2,
-    ...                               as_frame=True, seed=6)
-    >>> print(cycle_df.columns)
-    """
     # --- Input Validation & Setup ---
     if pred_phase_shift is None:
         pred_phase_shift = [0, np.pi / 6]
@@ -322,6 +198,191 @@ def make_cyclical_data(
             DESCR=descr,
         )
 
+make_cyclical_data.__doc__ = r"""
+Generate synthetic cyclical data for relationship and temporal plots.
+
+Creates a dataset with a single **true** cyclical signal and one or
+more **prediction** series that can differ in amplitude, phase, bias,
+and noise relative to the truth. This is useful for demos of
+polar relationship and temporal-uncertainty plots in `k-diagram`
+:footcite:p:`harris2020array, 2020SciPy-NMeth, Hunter:2007`.
+
+This data is useful for demonstrating and testing functions like
+:func:`~kdiagram.plot.relationship.plot_relationship` or
+:func:`~kdiagram.plot.uncertainty.plot_temporal_uncertainty` where
+visualizing behavior over a cycle is important.
+
+Parameters
+----------
+n_samples : int, default=365
+    Number of time steps to generate. Interpreted as evenly
+    spaced samples over one or more cycles.
+
+n_series : int, default=2
+    Number of simulated prediction series (e.g., models).
+
+cycle_period : float, default=365
+    Samples per full cycle :math:`P`. The angular frequency is
+    :math:`\omega = 2\pi / P`. Use ``365`` for daily data over
+    one year, ``12`` for monthly data over one year, etc.
+
+noise_level : float, default=0.5
+    Standard deviation of Gaussian noise added to the **true**
+    signal. Prediction series scale this by ``pred_noise_factor``.
+
+amplitude_true : float, default=10.0
+    Amplitude of the sinusoidal **true** signal.
+
+offset_true : float, default=20.0
+    Vertical offset (mean level) of the **true** signal.
+
+pred_bias : float or list of float, optional
+    Additive bias for each prediction series. If a scalar is
+    provided it is broadcast to all ``n_series``. If a list is
+    provided, its length must equal ``n_series``. Defaults to
+    ``[0.0, 1.5]`` when ``None``.
+
+pred_noise_factor : float or list of float, optional
+    Multiplier for ``noise_level`` per series. Scalar values are
+    broadcast; lists must match ``n_series`` in length. Defaults
+    to ``[1.0, 1.5]`` when ``None``.
+
+pred_amplitude_factor : float or list of float, optional
+    Multiplier of ``amplitude_true`` per series (allows under/
+    over-estimation of the cycle amplitude). Scalar broadcast is
+    supported. Defaults to ``[1.0, 0.8]`` when ``None``.
+
+pred_phase_shift : float or list of float, optional
+    Phase shift (radians) added to each series. Positive values
+    produce a lag relative to the truth. Scalar broadcast is
+    supported. Defaults to ``[0.0, np.pi / 6]`` when ``None``.
+
+prefix : str, default='model'
+    Prefix used to generate prediction column names, e.g.,
+    ``model_A``, ``model_B``, …
+
+series_names : list of str, optional
+    Explicit names for prediction columns. If omitted, names are
+    generated from ``prefix`` as ``prefix_A``, ``prefix_B``, …
+    Must have length ``n_series`` if provided.
+
+seed : int or None, default=404
+    Seed for NumPy’s random generator. If ``None``, a fresh RNG
+    is used.
+
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` with
+    metadata and arrays. If ``True``, return only the pandas
+    ``DataFrame``.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default), a Bunch with:
+
+    - ``frame`` : pandas ``DataFrame`` containing ``'time_step'``,
+      ``'y_true'``, and prediction columns.
+    - ``feature_names`` : ``['time_step']``.
+    - ``target_names`` : ``['y_true']``.
+    - ``target`` : ``ndarray`` of shape ``(n_samples,)`` with the
+      true signal.
+    - ``series_names`` : list of prediction series names.
+    - ``prediction_columns`` : list of prediction column names.
+    - ``DESCR`` : human-readable description.
+
+    If ``as_frame=True``, only the pandas ``DataFrame`` is
+    returned.
+
+Raises
+------
+ValueError
+    If a provided list for prediction parameters does not match
+    ``n_series`` in length.
+
+TypeError
+    If prediction parameters are not float or list of float.
+
+Notes
+-----
+**Signal model.** Let :math:`P` be the cycle period and
+:math:`\omega = 2\pi/P`. The **true** signal at time step
+:math:`t \in \{0,\dots,n\_samples-1\}` is
+
+.. math::
+
+   y_{\text{true}}(t)
+   \;=\;
+   \texttt{offset\_true}
+   \;+\;
+   \texttt{amplitude\_true}\,\sin(\omega t)
+   \;+\;
+   \varepsilon_t,
+   \qquad
+   \varepsilon_t \sim \mathcal{N}(0,\sigma^2),
+   \;\; \sigma=\texttt{noise\_level}.
+
+For series :math:`k=1,\dots,n\_{\text{series}}`, the prediction is
+
+.. math::
+
+   y_{\text{pred}}^{(k)}(t)
+   \;=\;
+   \texttt{offset\_true}
+   \;+\;
+   b_k
+   \;+\;
+   \big(\texttt{amplitude\_true}\,\alpha_k\big)
+   \sin(\omega t + \phi_k)
+   \;+\;
+   \eta^{(k)}_t,
+
+with :math:`\eta^{(k)}_t \sim \mathcal{N}\!\big(0,\,
+(\sigma\,\gamma_k)^2\big)`.
+Here :math:`b_k` is the bias (``pred_bias``),
+:math:`\alpha_k` the amplitude factor (``pred_amplitude_factor``),
+:math:`\phi_k` the phase shift (``pred_phase_shift``), and
+:math:`\gamma_k` the noise factor (``pred_noise_factor``).
+Numerical generation and plotting typically rely on array/scientific
+and graphics stacks :footcite:p:`harris2020array, 2020SciPy-NMeth, Hunter:2007`.
+
+See Also
+--------
+kdiagram.plot.relationship.plot_relationship
+    Polar relationship scatter for true vs. predictions.
+
+kdiagram.plot.uncertainty.plot_temporal_uncertainty
+    General-purpose polar series plot; useful for Q10/Q50/Q90 and
+    cyclical visualizations.
+
+Examples
+--------
+>>> Generate a small cyclical dataset as a Bunch:
+>>> 
+>>> from kdiagram.datasets import make_cyclical_data
+>>> ds = make_cyclical_data(
+...     n_samples=24, n_series=2, cycle_period=12, seed=7
+... )
+>>> ds.frame.head().columns.tolist()[:3]
+['time_step', 'y_true', ds.prediction_columns[0]]
+>>> 
+>>> Return only a DataFrame and supply custom names:
+>>> 
+>>> df = make_cyclical_data(
+...     n_samples=50,
+...     n_series=3,
+...     series_names=['A','B','C'],
+...     as_frame=True,
+...     seed=1
+... )
+>>> set(['time_step','y_true']).issubset(df.columns)
+True
+
+References 
+------------
+
+.. footbibliography::
+    
+"""
 
 def make_fingerprint_data(
     n_layers: int = 3,
@@ -334,111 +395,7 @@ def make_fingerprint_data(
     seed: int | None = 303,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-    r"""Generate synthetic feature importance data for fingerprint plots.
-
-    Creates a dataset representing feature importance scores across
-    multiple layers (e.g., different models, time periods, or
-    experimental groups). The output is suitable for visualization
-    with :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`.
-
-    Parameters
-    ----------
-    n_layers : int, default=3
-        Number of layers (rows) in the importance matrix, representing
-        different models, groups, or time steps.
-
-    n_features : int, default=8
-        Number of features (columns) in the importance matrix.
-
-    layer_names : list of str, optional
-        Optional list of names for the layers (rows). If ``None``,
-        generic names like "Layer A", "Layer B" are generated. Must
-        match `n_layers` if provided. Default is ``None``.
-
-    feature_names : list of str, optional
-        Optional list of names for the features (columns). If ``None``,
-        generic names like "Feature 1", "Feature 2" are generated.
-        Must match `n_features` if provided. Default is ``None``.
-
-    value_range : tuple of (float, float), default=(0.0, 1.0)
-        The approximate range ``(min_val, max_val)`` from which the raw
-        importance scores are initially sampled (uniformly).
-
-    sparsity : float, default=0.1
-        The approximate fraction (0.0 to 1.0) of importance values
-        that will be randomly set to zero, simulating unimportant
-        features for certain layers.
-
-    add_structure : bool, default=True
-        If ``True``, adds some simple patterns to the importance
-        values to make the "fingerprints" more distinct between
-        layers (e.g., first layer emphasizes early features, last
-        layer emphasizes later features). If ``False``, values are purely
-        random within the range (plus sparsity).
-
-    seed : int, optional
-        Seed for NumPy's random number generator for reproducibility.
-        Default is 303.
-
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object containing
-          the importance matrix, names, and metadata.
-        - If ``True``: Returns a pandas DataFrame containing the
-          importance matrix, indexed by layer names and with feature
-          names as columns.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with the following attributes:
-            - ``importances`` : ndarray of shape (n_layers, n_features)
-                The generated feature importance matrix.
-            - ``frame`` : pandas.DataFrame
-                The importance matrix presented as a DataFrame with
-                layer names as index and feature names as columns.
-            - ``layer_names`` : list of str
-                Names associated with the layers (rows).
-            - ``feature_names`` : list of str
-                Names associated with the features (columns).
-            - ``DESCR`` : str
-                A description of the generated synthetic data.
-
-        If ``as_frame=True``:
-        pandas.DataFrame
-            The generated importance matrix as a pandas DataFrame, with
-            layer names as index and feature names as columns.
-
-    Raises
-    ------
-    ValueError
-        If `layer_names` or `feature_names` lengths mismatch dimensions,
-        or if `sparsity` or `value_range` are invalid.
-
-    Examples
-    --------
-    >>> from kdiagram.datasets import make_fingerprint_data
-
-    >>> # Get data as Bunch (default)
-    >>> fp_bunch = make_fingerprint_data(n_layers=4, n_features=10, seed=1)
-    >>> print(fp_bunch.DESCR)
-    >>> print(fp_bunch.importances.shape)
-    >>> print(fp_bunch.frame.head(2))
-
-    >>> # Get data as DataFrame
-    >>> fp_df = make_fingerprint_data(as_frame=True, seed=2)
-    >>> print(fp_df)
-
-    >>> # Use with plotting function
-    >>> # import kdiagram.plot.feature_based as kdf
-    >>> # data = make_fingerprint_data()
-    >>> # kdf.plot_feature_fingerprint(
-    ... #    importances=data.importances, # or data.frame
-    ... #    features=data.feature_names,
-    ... #    labels=data.layer_names
-    ... # )
-    """
+    
     # --- Input Validation & Setup ---
     if not (0.0 <= sparsity <= 1.0):
         raise ValueError("sparsity must be between 0.0 and 1.0")
@@ -544,6 +501,145 @@ def make_fingerprint_data(
             DESCR=descr,
         )
 
+make_fingerprint_data.__doc__ = r"""
+Generate synthetic feature-importance data for fingerprint plots.
+
+Creates a matrix of feature-importance scores across multiple
+**layers** (e.g., models, periods, experimental groups) suitable
+for visualization with
+:func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`.
+This is handy for comparing profiles in a compact polar radar
+view and for testing feature-comparison workflows in forecasting
+and ML :footcite:p:`scikit-learn, Lim2021, kouadiob2025`.
+
+Parameters
+----------
+n_layers : int, default=3
+    Number of rows (layers) in the importance matrix. Each row
+    represents a group such as a model or time period.
+
+n_features : int, default=8
+    Number of columns (features) in the importance matrix.
+
+layer_names : list of str, optional
+    Names for the layers. If ``None``, generic names like
+    ``'Layer_A'``, ``'Layer_B'`` are generated. Must have length
+    ``n_layers`` if provided.
+
+feature_names : list of str, optional
+    Names for the features. If ``None``, generic names like
+    ``'Feature_1'``, ``'Feature_2'`` are generated. Must have
+    length ``n_features`` if provided.
+
+value_range : tuple of (float, float), default=(0.0, 1.0)
+    Approximate sampling range ``(min_val, max_val)`` for raw
+    importance scores. Values are drawn from a uniform
+    distribution before structure/sparsity are applied.
+
+sparsity : float, default=0.1
+    Fraction in ``[0, 1]`` of entries that are set to zero
+    at random, simulating unimportant features for some layers.
+
+add_structure : bool, default=True
+    If ``True``, inject simple patterns to make fingerprints
+    distinct, e.g., emphasizing one feature per layer and
+    de-emphasizing another. If ``False``, the matrix is fully
+    random apart from sparsity.
+
+seed : int or None, default=303
+    Seed for NumPy’s random generator. If ``None``, a fresh RNG
+    is used.
+
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` with
+    metadata and arrays. If ``True``, return only the pandas
+    ``DataFrame`` indexed by layers with feature columns.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default), a Bunch with:
+
+    - ``importances`` : ``ndarray`` of shape
+      ``(n_layers, n_features)``.
+    - ``frame`` : pandas ``DataFrame`` view of the matrix with
+      layers as index and features as columns.
+    - ``layer_names`` : list of layer names.
+    - ``feature_names`` : list of feature names.
+    - ``DESCR`` : human-readable description.
+
+    If ``as_frame=True``, only the pandas ``DataFrame`` is
+    returned.
+
+Raises
+------
+ValueError
+    If ``layer_names`` or ``feature_names`` lengths do not match
+    the specified dimensions, if ``sparsity`` is outside
+    ``[0, 1]``, or if ``value_range`` does not satisfy
+    ``min_val <= max_val``.
+
+Notes
+-----
+**Generation model.** Let :math:`I \in \mathbb{R}^{L \times F}`
+denote the importance matrix with :math:`L = \texttt{n\_layers}`
+and :math:`F = \texttt{n\_features}`. Raw scores are sampled as
+
+.. math::
+
+   I_{k,j}^{(0)} \sim \mathcal{U}(m, M),
+   \qquad m = \texttt{value\_range[0]},\; M = \texttt{value\_range[1]}.
+
+If structure is enabled, a layer-specific emphasis and
+de-emphasis may be applied, producing :math:`I^{(1)}`. Finally,
+a sparsity mask :math:`\;M_{k,j} \sim \text{Bernoulli}(1-s)\;`
+with :math:`s=\texttt{sparsity}` is applied:
+
+.. math::
+
+   I_{k,j} \;=\; I_{k,j}^{(1)} \cdot M_{k,j}.
+
+Scores are left in their original scale; you may normalize
+per-layer or per-feature downstream if desired. For practical
+feature-importance workflows and attribution in forecasting,
+see :footcite:t:`scikit-learn` and :footcite:t:`Lim2021`. The
+fingerprint visualization concept is part of our polar analytics
+framework :footcite:t:`kouadiob2025`.
+
+See Also
+--------
+kdiagram.plot.feature_based.plot_feature_fingerprint
+    Radar-style comparison of multi-feature profiles across layers.
+
+Examples
+--------
+>>> Return a Bunch with arrays and a DataFrame view:
+>>> 
+>>> from kdiagram.datasets import make_fingerprint_data
+>>> fp = make_fingerprint_data(n_layers=4, n_features=10, seed=1)
+>>> fp.importances.shape
+(4, 10)
+>>> list(fp.frame.index)[:2], list(fp.frame.columns)[:3]
+(['Layer_A', 'Layer_B'], ['Feature_1', 'Feature_2', 'Feature_3'])
+>>> 
+>>> Return only a DataFrame with custom names:
+>>> 
+>>> df = make_fingerprint_data(
+...     n_layers=3,
+...     n_features=5,
+...     layer_names=['L1','L2','L3'],
+...     feature_names=['f1','f2','f3','f4','f5'],
+...     as_frame=True,
+...     seed=2,
+... )
+>>> df.shape
+(3, 5)
+
+References
+----------
+.. footbibliography::
+"""
+
 
 def make_uncertainty_data(
     n_samples: int = 150,
@@ -559,139 +655,8 @@ def make_uncertainty_data(
     interval_width_trend: float = 0.5,
     seed: int | None = 42,
     as_frame: bool = False,
-) -> Bunch | pd.DataFrame:  # Updated return type
-    r"""Generate synthetic dataset for uncertainty visualization.
+) -> Bunch | pd.DataFrame: 
 
-    Creates a dataset with features commonly used for testing and
-    demonstrating `k-diagram` uncertainty plotting functions.
-    The dataset includes simulated actual values, quantile predictions
-    (Q10, Q50, Q90) evolving across multiple time periods,
-    deliberately introduced anomalies relative to the first period's
-    interval, and basic spatial/feature columns.
-
-    This function allows generating data with controlled trends and noise
-    in both the central tendency (Q50) and the uncertainty width
-    (Q90-Q10), making it suitable for testing drift and consistency
-    visualizations.
-
-    Parameters
-    ----------
-    n_samples : int, default=150
-        Number of data points (rows) to generate, representing
-        different locations or independent samples.
-
-    n_periods : int, default=4
-        Number of consecutive time periods (e.g., years) for which
-        to generate quantile data (Q10, Q50, Q90).
-
-    anomaly_frac : float, default=0.15
-        Approximate fraction (0.0 to 1.0) of samples where the
-        'actual' value (representing the first period) is
-        deliberately placed outside the generated Q10-Q90 interval
-        of that *first* time period. Useful for testing anomaly plots.
-
-    start_year : int, default=2022
-        The starting year used for naming time-dependent columns
-        following the pattern ``{prefix}_{year}_q{quantile}``.
-
-    prefix : str, default="value"
-        The base prefix used for naming the generated value and
-        quantile columns (e.g., ``value_2022_q0.1``).
-
-    base_value : float, default=10.0
-        Approximate mean value for the underlying signal and Q50
-        prediction in the first time period.
-
-    trend_strength : float, default=1.5
-        Controls the strength of the linear trend added to the Q50
-        predictions over consecutive time periods. A positive value
-        means the Q50 tends to increase over time.
-
-    noise_level : float, default=2.0
-        Standard deviation of the Gaussian noise added to the base
-        signal and quantile predictions, controlling random spread.
-
-    interval_width_base : float, default=4.0
-        Approximate base width of the Q10-Q90 prediction interval
-        in the first time period.
-
-    interval_width_noise : float, default=1.5
-        Amount of random noise (sampled uniformly) added to the
-        interval width for each sample and period, introducing
-        variability in uncertainty estimates.
-
-    interval_width_trend : float, default=0.5
-        Controls the linear trend applied to the average interval
-        width over time periods. A positive value simulates
-        increasing uncertainty (drift).
-
-    seed : int, optional
-        Seed for NumPy's random number generator to ensure
-        reproducible results. Default is 42.
-
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object containing
-          the DataFrame and associated metadata (see Returns section).
-        - If ``True``: Returns only the generated pandas DataFrame.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with the following attributes:
-            - ``frame`` : pandas.DataFrame
-                The complete generated data. Columns include spatial info,
-                features, the 'actual' value for the first period, and
-                quantile columns (Q10, Q50, Q90) for all periods.
-            - ``feature_names`` : list of str
-                Names of spatial/auxiliary feature columns
-                (``['location_id', 'longitude', 'latitude', 'elevation']``).
-            - ``target_names`` : list of str
-                Name of the target column (``['{prefix}_actual']``).
-            - ``target`` : ndarray of shape (n_samples,)
-                NumPy array of the 'actual' target values.
-            - ``quantile_cols`` : dict
-                Dictionary mapping quantile levels ('q0.1', 'q0.5', 'q.09')
-                to lists of corresponding column names across periods.
-            - ``q10_cols`` : list of str
-                Convenience list of all Q10 column names.
-            - ``q50_cols`` : list of str
-                Convenience list of all Q50 column names.
-            - ``q90_cols`` : list of str
-                Convenience list of all Q90 column names.
-            - ``n_periods`` : int
-                Number of periods for which quantile data was generated.
-            - ``prefix`` : str
-                The prefix used for value/quantile columns.
-            - ``DESCR`` : str
-                A detailed description of the synthetic dataset and the
-                parameters used for its generation.
-
-        If ``as_frame=True``:
-        pandas.DataFrame
-            The generated data solely as a pandas DataFrame, ordered
-            logically.
-
-    Raises
-    ------
-    TypeError
-        If inputs cannot be processed numerically.
-
-    Examples
-    --------
-    >>> from kdiagram.datasets import make_uncertainty_data
-
-    >>> # Generate data as a Bunch object (default)
-    >>> data_bunch = make_uncertainty_data(n_samples=20, n_periods=3, seed=10)
-    >>> print(data_bunch.DESCR)
-    >>> print(data_bunch.frame.shape)
-    >>> print(f"Q10 Columns: {data_bunch.q10_cols}")
-
-    >>> # Generate data directly as a DataFrame
-    >>> df_direct = make_uncertainty_data(as_frame=True, n_samples=30)
-    >>> print(df_direct.columns)
-    """
     # --- Generation Logic (same as before) ---
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -866,6 +831,205 @@ def make_uncertainty_data(
             DESCR=descr,
         )
 
+make_uncertainty_data.__doc__ = r"""
+Generate a synthetic multi-period uncertainty dataset.
+
+Creates a compact dataset for testing `k-diagram` uncertainty
+visualizations: simulated **actuals** (for the first period),
+quantile predictions **Q10/Q50/Q90** over multiple periods,
+controllable trends and noise, injected interval-coverage
+failures (anomalies), and simple spatial features. This is
+useful for coverage, calibration, drift, and consistency
+diagnostics :footcite:p:`Jolliffe2012, Gneiting2007b, kouadiob2025`.
+
+Parameters
+----------
+n_samples : int, default=150
+    Number of rows (locations) to generate.
+
+n_periods : int, default=4
+    Number of consecutive periods (e.g., years) for which to
+    generate quantiles.
+
+anomaly_frac : float, default=0.15
+    Fraction in ``[0, 1]`` of rows whose first-period actual is
+    forced **outside** the Q10–Q90 interval (half under-, half
+    over-prediction, up to rounding).
+
+start_year : int, default=2022
+    First period’s year used in column names.
+
+prefix : str, default='value'
+    Base prefix for generated value/quantile columns.
+
+base_value : float, default=10.0
+    Mean level for the latent signal that drives Q50.
+
+trend_strength : float, default=1.5
+    Linear trend added to Q50 by period index (lead time).
+
+noise_level : float, default=2.0
+    Standard deviation for Gaussian noise added to the latent
+    signal (for Q50 and actuals).
+
+interval_width_base : float, default=4.0
+    Baseline width of the Q10–Q90 interval in the first period.
+
+interval_width_noise : float, default=1.5
+    Uniform jitter magnitude applied per row/period to the
+    interval width.
+
+interval_width_trend : float, default=0.5
+    Linear trend added to interval width across periods.
+
+seed : int or None, default=42
+    NumPy RNG seed for reproducibility. If ``None``, a fresh RNG
+    is used.
+
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` with
+    arrays and metadata. If ``True``, return only the pandas
+    ``DataFrame``.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default), a Bunch with:
+
+    - ``frame`` : pandas ``DataFrame`` with spatial features,
+      first-period actual, and Q10/Q50/Q90 columns by period.
+    - ``feature_names`` : ``['location_id','longitude','latitude',
+      'elevation']``.
+    - ``target_names`` : ``[f'{prefix}_actual']``.
+    - ``target`` : ``ndarray`` of actual values.
+    - ``quantile_cols`` : dict mapping ``'q0.1'``, ``'q0.5'``,
+      ``'q0.9'`` to lists of column names across periods.
+    - ``q10_cols``, ``q50_cols``, ``q90_cols`` : convenience lists.
+    - ``n_periods`` : number of generated periods.
+    - ``prefix`` : the column name prefix.
+    - ``DESCR`` : human-readable description.
+
+    If ``as_frame=True``, only the pandas ``DataFrame`` is
+    returned.
+
+Raises
+------
+TypeError
+    If numeric inputs cannot be processed.
+
+Notes
+-----
+**Column naming.** Quantile columns encode the year :math:`y`
+and quantile level :math:`q`:
+
+.. math::
+
+   \text{quantile name}
+   \;\equiv\;
+   \texttt{<prefix>}\_{y}\_\texttt{q}q,
+   \qquad
+   y \in \{\texttt{start\_year},\dots\},
+   \;\; q \in \{0.1,0.5,0.9\}.
+
+The first-period actual is stored once as
+``f"{prefix}_actual"``.
+
+**Signal and interval model.** Let period index be
+:math:`t \in \{0,\dots,n\_\text{periods}-1\}` and row index
+:math:`i`. Define latent base signal :math:`s_i` and Q50:
+
+.. math::
+
+   s_i \;=\; \texttt{base\_value}
+          \;+\; \varepsilon_i,
+   \qquad
+   \varepsilon_i \sim \mathcal{N}(0, \sigma^2),\;
+   \sigma=\texttt{noise\_level}/2,
+
+.. math::
+
+   Q50_{i,t} \;=\; s_i \;+\; t\cdot\texttt{trend\_strength}
+                   \;+\; \eta_{i,t},
+   \quad
+   \eta_{i,t} \sim \mathcal{N}\!\big(0,
+   (\texttt{noise\_level}/3)^2\big).
+
+Interval width :math:`w_{i,t}` has baseline, trend, and jitter:
+
+.. math::
+
+   w_{i,t}
+   \;=\;
+   \max\!\Bigl(
+     0.1,\,
+     \texttt{interval\_width\_base}
+     + t\cdot\texttt{interval\_width\_trend}
+     + u_{i,t}
+   \Bigr),
+   \quad
+   u_{i,t} \sim \mathcal{U}\!\Bigl(-\tfrac{
+   \texttt{interval\_width\_noise}}{2},\,
+   \tfrac{\texttt{interval\_width\_noise}}{2}\Bigr),
+
+and
+
+.. math::
+
+   Q10_{i,t} \;=\; Q50_{i,t} - \tfrac{1}{2}w_{i,t},\qquad
+   Q90_{i,t} \;=\; Q50_{i,t} + \tfrac{1}{2}w_{i,t}.
+
+**Anomaly injection (first period).** For a fraction
+``anomaly_frac`` of rows we enforce a coverage failure:
+
+.. math::
+
+   y^{\text{actual}}_{i}
+   \notin
+   [\,Q10_{i,0},\,Q90_{i,0}\,],
+
+splitting under/over cases approximately evenly to aid tests of
+coverage diagnostics and anomaly magnitude plots. Use this data to
+study calibration vs. sharpness trade-offs
+:footcite:p:`Gneiting2007b` and operational verification practice
+:footcite:p:`Jolliffe2012`.
+
+See Also
+--------
+kdiagram.plot.uncertainty.plot_coverage
+    Aggregate empirical coverage vs. nominal levels.
+
+kdiagram.plot.uncertainty.plot_coverage_diagnostic
+    Point-wise success/failure on a polar layout.
+
+kdiagram.plot.uncertainty.plot_interval_consistency
+    Temporal stability of interval widths per location.
+
+kdiagram.plot.uncertainty.plot_model_drift
+    Lead-time trend of mean interval width.
+
+kdiagram.plot.uncertainty.plot_anomaly_magnitude
+    Where and how severely intervals fail.
+
+Examples
+--------
+>>> # Return a Bunch and inspect quantile columns:
+>>> 
+>>> from kdiagram.datasets import make_uncertainty_data
+>>> ds = make_uncertainty_data(n_samples=12, n_periods=3, seed=7)
+>>> sorted(ds.quantile_cols.keys())
+['q0.1', 'q0.5', 'q0.9']
+>>> 
+>>> # Return only a DataFrame and check column order:
+>>> 
+>>> df = make_uncertainty_data(as_frame=True, n_samples=5, seed=0)
+>>> df.columns[:6].tolist()  # features + actual then Q10/Q50/Q90
+['location_id', 'longitude', 'latitude', 'elevation',
+ f'{ 'value'}_actual', 'value_2022_q0.1']  # doctest: +ELLIPSIS
+
+References
+----------
+.. footbibliography::
+"""
 
 def make_taylor_data(
     n_samples: int = 100,
@@ -876,131 +1040,8 @@ def make_taylor_data(
     noise_level: float = 0.3,
     bias_level: float = 0.1,
     seed: int | None = 101,
-    as_frame: bool = False,  # Added parameter
-) -> Bunch | pd.DataFrame:  # Updated return type
-    r"""Generate synthetic data suitable for Taylor Diagrams.
-
-    Creates a reference dataset and multiple simulated "prediction"
-    datasets designed to exhibit a range of standard deviations and
-    correlations relative to the reference. This is useful for
-    demonstrating and testing Taylor Diagram functions like
-    :func:`~kdiagram.plot.evaluation.taylor_diagram`.
-
-    The function generates predictions :math:`p` based on the reference
-    :math:`r` and independent noise :math:`\epsilon` using the
-    relationship :math:`p = a \cdot r + b \cdot \epsilon + \text{bias}`,
-    where coefficients `a` and `b` are calculated to approximate the
-    target correlation and standard deviation for each model.
-
-    Parameters
-    ----------
-    n_samples : int, default=100
-        Number of data points in each generated series.
-
-    n_models : int, default=3
-        Number of simulated prediction series ('models') to generate.
-
-    ref_std : float, default=1.0
-        The target standard deviation for the generated reference
-        series (centered at mean 0).
-
-    corr_range : tuple of (float, float), default=(0.5, 0.99)
-        The approximate range ``(min_corr, max_corr)`` from which
-        target correlation coefficients (:math:`\rho`) for the models
-        will be randomly sampled. Values should be between 0 and 1
-        for standard Taylor Diagram usage.
-
-    std_range : tuple of (float, float), default=(0.7, 1.3)
-        The approximate range ``(min_std_factor, max_std_factor)``
-        used to scale the standard deviation of the predictions
-        relative to the actual reference std dev (`ref_std`). Factors
-        should be non-negative.
-
-    noise_level : float, default=0.3
-        Standard deviation of the random noise component (`epsilon`)
-        added to generate predictions. Must be > 0 if target
-        correlation is < 1.
-
-    bias_level : float, default=0.1
-        Maximum absolute bias randomly added to each model prediction
-        series (sampled uniformly from ``[-bias_level, bias_level]``).
-        Note: Taylor Diagrams are insensitive to overall bias.
-
-    seed : int, optional
-        Random seed for NumPy's random number generator to ensure
-        reproducible results. Default is 101.
-
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object containing
-          data arrays, stats, names, and metadata.
-        - If ``True``: Returns a pandas DataFrame containing the
-          reference and all prediction series as columns.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with the following attributes:
-            - ``frame`` : pandas.DataFrame
-                DataFrame containing 'reference' and prediction columns
-                (e.g., 'Model_A', 'Model_B').
-            - ``reference`` : ndarray of shape (n_samples,)
-                The generated reference data array.
-            - ``predictions`` : list of ndarray
-                List containing the generated prediction arrays
-                (n_models arrays, each shape (n_samples,)).
-            - ``model_names`` : list of str
-                Generated names for models (e.g., "Model_A").
-            - ``stats`` : pandas.DataFrame
-                DataFrame with calculated 'stddev' and 'corrcoef'
-                for each model vs reference, indexed by model name.
-            - ``ref_std`` : float
-                The actual calculated standard deviation of the
-                generated reference array.
-            - ``DESCR`` : str
-                Description of the generated dataset and parameters.
-
-        If ``as_frame=True``:
-        pandas.DataFrame
-            A DataFrame where the first column is 'reference' and
-            subsequent columns contain the predictions for each model,
-            named according to `model_names`.
-
-    Raises
-    ------
-    ValueError
-        If `noise_level` is zero or negative when target correlation
-        is less than 1, or if range values are invalid.
-
-    Examples
-    --------
-    >>> from kdiagram.datasets import make_taylor_data
-
-    >>> # Get data as Bunch (default)
-    >>> taylor_bunch = make_taylor_data(n_models=2, seed=0)
-    >>> print(taylor_bunch.DESCR)
-    >>> print(taylor_bunch.stats)
-    >>> print(taylor_bunch.frame.head(3))
-
-    >>> # Get data as DataFrame
-    >>> taylor_df = make_taylor_data(n_models=2, seed=0, as_frame=True)
-    >>> print(taylor_df.head(3))
-    >>> print(taylor_df.columns)
-
-    >>> # Use with plotting function
-    >>> # import kdiagram.plot.evaluation as kde
-    >>> # data = make_taylor_data()
-    >>> # kde.taylor_diagram(
-    ... #    stddev=data.stats['stddev'],
-    ... #    corrcoef=data.stats['corrcoef'],
-    ... #    ref_std=data.ref_std,
-    ... #    names=data.model_names
-    ... # )
-    >>> # kde.plot_taylor_diagram(
-    ... #    *data.predictions, reference=data.reference, names=data.model_names
-    ... # )
-    """
+    as_frame: bool = False,  
+) -> Bunch | pd.DataFrame:  
     # --- Input Validation & Setup ---
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -1135,7 +1176,6 @@ def make_taylor_data(
         """
         )
 
-        # Create and return Bunch object
         return Bunch(
             frame=df,
             reference=reference,
@@ -1146,6 +1186,154 @@ def make_taylor_data(
             DESCR=descr,
         )
 
+make_taylor_data.__doc__ = r"""
+Generate synthetic data for Taylor diagrams.
+
+Taylor diagrams, introduced by :footcite:t:`Taylor2001`, summarize
+correlation, standard deviation, and centered RMS difference between
+model outputs and a reference. This routine creates one reference
+series and several model-like series with controllable correlation
+and spread, suitable for exercising plotting functions such as
+:func:`~kdiagram.plot.evaluation.taylor_diagram`. Practical guidance
+on verification appears in :footcite:p:`Jolliffe2012`.
+
+Parameters
+----------
+n_samples : int, default=100
+    Number of observations in each generated series.
+
+n_models : int, default=3
+    Number of model (prediction) series to simulate.
+
+ref_std : float, default=1.0
+    Target standard deviation for the reference series
+    (mean is centered to 0).
+
+corr_range : tuple of (float, float), default=(0.5, 0.99)
+    Closed interval from which target correlations :math:`\rho`
+    for models are sampled uniformly. Values should be in
+    :math:`[0,1]` for standard Taylor use.
+
+std_range : tuple of (float, float), default=(0.7, 1.3)
+    Closed interval for multiplicative factors applied to the
+    reference standard deviation to obtain each model’s target
+    spread.
+
+noise_level : float, default=0.3
+    Standard deviation of the independent noise used to reach
+    the requested spread and correlation. Must be positive if
+    any target correlation is less than 1.
+
+bias_level : float, default=0.1
+    Maximum absolute bias added to each model series (uniform
+    in ``[-bias_level, bias_level]``). Note that Taylor diagrams
+    are insensitive to overall bias.
+
+seed : int or None, default=101
+    NumPy random seed. If ``None``, a fresh RNG is used.
+
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` with
+    arrays, names, and summary stats. If ``True``, return only
+    a pandas ``DataFrame`` with columns for the reference and
+    each model series.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default), a Bunch with:
+
+    - ``frame`` : pandas ``DataFrame`` with ``'reference'`` and
+      model columns.
+    - ``reference`` : ``ndarray`` of shape ``(n_samples,)``.
+    - ``predictions`` : list of ``ndarray`` predictions.
+    - ``model_names`` : list of model labels.
+    - ``stats`` : pandas ``DataFrame`` with columns
+      ``'stddev'`` and ``'corrcoef'`` vs the reference.
+    - ``ref_std`` : actual standard deviation of the reference.
+    - ``DESCR`` : human-readable description.
+
+    If ``as_frame=True``, only the pandas ``DataFrame`` is
+    returned.
+
+Raises
+------
+ValueError
+    If ranges are invalid, or ``noise_level`` is non-positive
+    while a sub-perfect target correlation is requested.
+
+Notes
+-----
+**Construction.** Let the reference be :math:`r` with
+:math:`\mathrm{E}[r]=0` and :math:`\mathrm{sd}(r)=\sigma_r`
+(we target :math:`\sigma_r=\texttt{ref\_std}`). For model
+:math:`k`, we synthesize
+
+.. math::
+
+   p^{(k)} \;=\; a^{(k)} r \;+\; b^{(k)} \epsilon^{(k)} \;+\; \text{bias}^{(k)},
+
+with :math:`\epsilon^{(k)} \sim \mathcal{N}(0,\sigma_\epsilon^2)`
+independent of :math:`r`, where
+:math:`\sigma_\epsilon=\texttt{noise\_level}`. Ignoring bias
+(centered statistics), the model spread and correlation satisfy
+
+.. math::
+
+   \sigma_{p}^{(k)} \;=\; \sqrt{(a^{(k)} \sigma_r)^2 + (b^{(k)} \sigma_\epsilon)^2},
+   \qquad
+   \rho^{(k)} \;=\; \frac{a^{(k)} \sigma_r}{\sigma_{p}^{(k)}}.
+
+We sample a target
+:math:`\rho^{(k)} \in \texttt{corr\_range}` and a target spread
+factor :math:`\alpha^{(k)} \in \texttt{std\_range}`, set
+:math:`\sigma_p^{(k)} = \alpha^{(k)} \sigma_r`, choose
+
+.. math::
+
+   a^{(k)} \;=\; \rho^{(k)} \alpha^{(k)}, \qquad
+   b^{(k)} \;=\; \frac{\sqrt{\left(\sigma_p^{(k)}\right)^2 -
+                           \left(a^{(k)} \sigma_r\right)^2}}
+                        {\sigma_\epsilon},
+
+and draw a small constant :math:`\text{bias}^{(k)} \in
+[-\texttt{bias\_level},\texttt{bias\_level}]`. Centered Taylor
+statistics are unaffected by bias. See :footcite:t:`Taylor2001`
+for interpretation; broader verification context is covered in
+:footcite:p:`Jolliffe2012`.
+
+See Also
+--------
+kdiagram.plot.evaluation.taylor_diagram
+    Flexible Taylor diagram from raw arrays or pre-computed stats.
+
+kdiagram.plot.evaluation.plot_taylor_diagram
+    Standard Taylor diagram from raw arrays.
+
+kdiagram.plot.evaluation.plot_taylor_diagram_in
+    Taylor diagram with background shading.
+
+Examples
+--------
+>>>  # Get arrays and stats as a Bunch:
+>>> 
+>>> from kdiagram.datasets import make_taylor_data
+>>> ds = make_taylor_data(n_models=2, seed=0)
+>>> list(ds.frame.columns)
+['reference', 'Model_A', 'Model_B']
+>>> set(ds.stats.columns) == {'stddev', 'corrcoef'}
+True
+>>> 
+>>> # Return only a DataFrame:
+>>> 
+>>> df = make_taylor_data(as_frame=True, seed=1)
+>>> 'reference' in df.columns
+True
+
+References
+----------
+.. footbibliography::
+"""
 
 def make_multi_model_quantile_data(
     n_samples: int = 100,
@@ -1161,170 +1349,6 @@ def make_multi_model_quantile_data(
     seed: int | None = 202,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-    r"""Generate synthetic data with multiple models' quantile predictions.
-
-    Creates a dataset simulating a scenario where multiple models
-    provide quantile forecasts (e.g., Q10, Q50, Q90) for the same
-    target variable (`y_true`) at a single time point or forecast
-    horizon. Each simulated model can have different systematic biases
-    and prediction interval widths.
-
-    This function is primarily used for demonstrating and testing other
-    `k-diagram` functions that compare model performance or visualize
-    quantile spreads across different models, such as
-    :func:`~kdiagram.plot.uncertainty.plot_coverage` or
-    :func:`~kdiagram.plot.uncertainty.plot_temporal_uncertainty`. It
-    helps create reproducible examples and test cases.
-
-    Parameters
-    ----------
-    n_samples : int, default=100
-        Number of data points (rows) to generate in the dataset.
-        Represents the number of independent samples or locations.
-
-    n_models : int, default=3
-        Number of simulated models for which to generate quantile
-        predictions.
-
-    quantiles : list of float, default=[0.1, 0.5, 0.9]
-        List of quantile levels (values between 0 and 1) to generate
-        for *each* simulated model. The list must include 0.5, as
-        other quantiles are generated relative to the Q50 (median)
-        prediction. The provided list will be sorted internally.
-
-    prefix : str, default="pred"
-        Base prefix used for naming the generated prediction columns.
-        The final names follow the pattern
-        ``{prefix}_{model_name}_q{quantile}``.
-
-    model_names : list of str, optional
-        Optional list providing custom names for the simulated models.
-        If provided, its length must equal `n_models`. If ``None``,
-        default names like "Model_A", "Model_B", etc., are generated.
-        Default is ``None``.
-
-    true_mean : float, default=50.0
-        The mean value used for generating the underlying 'true'
-        target variable `y_true` from a normal distribution.
-
-    true_std : float, default=10.0
-        The standard deviation used for generating the underlying
-        'true' target variable `y_true` from a normal distribution.
-
-    bias_range : tuple of (float, float), default=(-2.0, 2.0)
-        Specifies the range ``(min_bias, max_bias)`` from which a
-        systematic bias is uniformly sampled for each model. This
-        bias is added to the model's Q50 prediction relative to
-        `y_true`.
-
-    width_range : tuple of (float, float), default=(5.0, 15.0)
-        Specifies the range ``(min_width, max_width)`` from which the
-        target average width between the lowest and highest specified
-        quantiles (e.g., Q90-Q10) is uniformly sampled for each model.
-
-    noise_level : float, default=1.0
-        Standard deviation of the Gaussian noise added independently
-        to each generated quantile prediction value, introducing
-        random variability.
-
-    seed : int, optional
-        Seed for the random number generator (NumPy's default_rng)
-        to ensure reproducible dataset generation. Default is 202.
-
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object containing
-          the DataFrame and associated metadata (see Returns section).
-        - If ``True``: Returns only the generated pandas DataFrame.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with the following attributes:
-            - ``frame`` : pandas.DataFrame of shape (n_samples, \
-3 + n_models * n_quantiles)
-                The complete generated data. Columns include 'y_true',
-                'feature_1', 'feature_2', and prediction columns like
-                ``{prefix}_{model_name}_q{quantile}``.
-            - ``data`` : ndarray of shape (n_samples, \
-2 + n_models * n_quantiles)
-                NumPy array containing only the numeric feature and
-                prediction columns (excludes 'y_true').
-            - ``feature_names`` : list of str
-                Names of the generated auxiliary feature columns
-                (``['feature_1', 'feature_2']``).
-            - ``target_names`` : list of str
-                Name of the target column (``['y_true']``).
-            - ``target`` : ndarray of shape (n_samples,)
-                NumPy array containing the 'y_true' target values.
-            - ``model_names`` : list of str
-                Names assigned to the simulated models.
-            - ``quantile_levels``: list of float
-                Sorted list of the quantile levels generated.
-            - ``prediction_columns`` : dict
-                Dictionary mapping each model name to a list of its
-                corresponding quantile column names in the frame.
-            - ``prefix`` : str
-                The prefix used for prediction columns.
-            - ``DESCR`` : str
-                A description of the generated synthetic dataset.
-
-        If ``as_frame=True``:
-        pandas.DataFrame
-            The generated data solely as a pandas DataFrame.
-
-    Raises
-    ------
-    ValueError
-        If `quantiles` list does not contain 0.5, if `model_names`
-        length mismatches `n_models`, or if range parameters
-        (`bias_range`, `width_range`) are invalid.
-    TypeError
-        If internal calculations fail due to non-numeric types
-        (should not happen with default generation).
-
-    See Also
-    --------
-    make_uncertainty_data : Generate data with temporal drift.
-    make_taylor_data : Generate data suitable for Taylor diagrams.
-    load_synthetic_uncertainty_data : API to load synthetic data
-        with temporal drift.
-
-    Notes
-    -----
-    - The function generates `y_true` from a normal distribution.
-    - Each model's Q50 prediction is simulated as
-      `y_true + sampled_bias + noise`.
-    - Other quantiles (Qlow, Qup, etc.) for a model are generated
-      symmetrically around its Q50 based on a sampled interval
-      `model_width`, then noise is added, and finally, the values
-      are sorted per sample to ensure quantile ordering (e.g.,
-      Q10 <= Q50 <= Q90).
-    - The generated `feature_1` and `feature_2` columns are simple
-      random numbers provided for context or potential use as axes,
-      but are not directly used in generating the target or quantile
-      predictions in this function.
-
-    Examples
-    --------
-    >>> from kdiagram.datasets import make_multi_model_quantile_data
-
-    >>> # Generate data as a Bunch object (default)
-    >>> data_bunch = make_multi_model_quantile_data(
-    ...     n_samples=50, n_models=2, seed=1
-    ... )
-    >>> print(data_bunch.DESCR) # Display dataset description
-    >>> print(data_bunch.frame.head(3)) # Show first few rows of DataFrame
-    >>> print(f"Quantile levels generated: {data_bunch.quantile_levels}")
-    >>> print(f"Model A columns: {data_bunch.prediction_columns['Model_A']}")
-
-    >>> # Generate data directly as a DataFrame
-    >>> df_direct = make_multi_model_quantile_data(
-    ...     n_samples=20, as_frame=True, seed=2
-    ... )
-    >>> print(df_direct.columns)
-    """
 
     # --- Input Validation ---
     if quantiles is None:
@@ -1511,3 +1535,152 @@ def make_multi_model_quantile_data(
             prefix=prefix,
             DESCR=descr,
         )
+
+make_multi_model_quantile_data.__doc__ = r"""
+Generate multi-model quantile forecast data for a single horizon.
+
+Simulates a target variable :math:`y_{\text{true}}` and
+quantile predictions (e.g., Q10/Q50/Q90) from several models
+for the **same** forecast time. Each model can have its own
+systematic bias and characteristic interval width, enabling
+reproducible examples for coverage/calibration and cross-model
+comparisons :footcite:p:`Gneiting2007b, Jolliffe2012`.
+
+Parameters
+----------
+n_samples : int, default=100
+    Number of rows (independent samples/locations).
+
+n_models : int, default=3
+    Number of simulated models providing quantile forecasts.
+
+quantiles : list of float, default=[0.1, 0.5, 0.9]
+    Quantile levels in ``(0, 1)`` to generate for **each** model.
+    Must include ``0.5`` (the median). The list is de-duplicated
+    and sorted internally.
+
+prefix : str, default='pred'
+    Base prefix for prediction columns. Final names follow
+    ``{prefix}_{model_name}_q{quantile}``.
+
+model_names : list of str, optional
+    Custom model names of length ``n_models``. If ``None``,
+    ``'Model_A'``, ``'Model_B'``, … are generated.
+
+true_mean : float, default=50.0
+    Mean of the Normal distribution used to draw ``y_true``.
+
+true_std : float, default=10.0
+    Standard deviation of the Normal distribution for ``y_true``.
+
+bias_range : tuple of (float, float), default=(-2.0, 2.0)
+    Uniform range from which a model-specific bias for Q50 is
+    sampled and added to ``y_true``.
+
+width_range : tuple of (float, float), default=(5.0, 15.0)
+    Uniform range for the target **overall** interval width
+    (e.g., Q90–Q10) of each model.
+
+noise_level : float, default=1.0
+    Standard deviation of independent Gaussian noise added to
+    each generated quantile series.
+
+seed : int or None, default=202
+    NumPy RNG seed (``default_rng``). If ``None``, a fresh RNG is used.
+
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` with
+    arrays/metadata; if ``True``, return only the pandas ``DataFrame``.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default), a Bunch with:
+
+    - ``frame`` : pandas ``DataFrame`` of shape
+      ``(n_samples, 3 + n_models * n_quantiles)`` containing
+      ``'y_true'``, two auxiliary features, and all quantile columns.
+    - ``data`` : ``ndarray`` with numeric feature + prediction columns.
+    - ``feature_names`` : ``['feature_1', 'feature_2']``.
+    - ``target_names`` : ``['y_true']``.
+    - ``target`` : ``ndarray`` of ``y_true`` values.
+    - ``model_names`` : list of model labels.
+    - ``quantile_levels`` : sorted list of unique quantiles.
+    - ``prediction_columns`` : dict mapping each model name to its
+      list of quantile column names.
+    - ``prefix`` : the column prefix.
+    - ``DESCR`` : human-readable description.
+
+    If ``as_frame=True``, only the pandas ``DataFrame`` is returned.
+
+Raises
+------
+ValueError
+    If ``0.5`` is not in ``quantiles``, if name/range lengths are
+    inconsistent, or if ranges are invalid.
+
+TypeError
+    If non-numeric inputs prevent computation.
+
+Notes
+-----
+**Generation model.** Draw the truth as
+:math:`y_{\text{true}} \sim \mathcal{N}(\mu, \sigma^2)` with
+``mu=true_mean`` and ``sigma=true_std``. For model :math:`m`, let
+:math:`b^{(m)}` be a sampled bias
+and :math:`W^{(m)}` a sampled overall width (e.g., Q90–Q10). The
+median prediction (Q50) is
+
+.. math::
+
+   q_{0.5}^{(m)} \;=\; y_{\text{true}} \;+\; b^{(m)} \;+\;
+   \varepsilon^{(m)}, \qquad
+   \varepsilon^{(m)} \sim \mathcal{N}(0, \sigma_\varepsilon^2),
+
+with ``sigma_ε = noise_level``. Other quantiles are created by
+adding offsets proportional to their distance from the median and
+scaled so that the extreme quantiles span approximately
+:math:`W^{(m)}`; small independent noise is then added. Finally, for
+each row we sort the model’s quantile values to enforce
+:math:`q_{\alpha} \le q_{0.5} \le q_{\beta}` (e.g., Q10 ≤ Q50 ≤ Q90),
+which is useful for coverage and calibration diagnostics
+:footcite:p:`Gneiting2007b, Jolliffe2012`.
+
+Two auxiliary columns (``feature_1``, ``feature_2``) are included
+for convenience in examples; they do not influence the simulated
+target or quantiles.
+
+See Also
+--------
+make_uncertainty_data
+    Temporal multi-period quantiles with drift/consistency controls.
+make_taylor_data
+    Synthetic data tailored for Taylor diagram evaluation.
+kdiagram.plot.uncertainty.plot_coverage
+    Aggregate empirical coverage vs nominal.
+kdiagram.plot.uncertainty.plot_temporal_uncertainty
+    General polar visualization for multiple series.
+
+Examples
+--------
+>>> # As a Bunch with metadata:
+>>> 
+>>> from kdiagram.datasets import make_multi_model_quantile_data
+>>> ds = make_multi_model_quantile_data(n_samples=50, n_models=2, seed=1)
+>>> ds.model_names
+['Model_A', 'Model_B']
+>>> sorted(ds.quantile_levels)
+[0.1, 0.5, 0.9]
+>>> ds.prediction_columns['Model_A'][:3]  # doctest: +ELLIPSIS
+['pred_Model_A_q0.1', 'pred_Model_A_q0.5', 'pred_Model_A_q0.9']
+>>> 
+>>> # As a DataFrame:
+>>> 
+>>> df = make_multi_model_quantile_data(as_frame=True, seed=2)
+>>> set(['y_true','feature_1','feature_2']).issubset(df.columns)
+True
+
+References
+----------
+.. footbibliography::
+"""

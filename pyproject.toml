@@ -22,13 +22,13 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Operating System :: OS Independent",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Operating System :: Unix"
 ]
 dependencies = [
-  "numpydoc>=1.6",
   "numpy>=1.22",          
   "pandas",
   "scipy",
@@ -52,18 +52,28 @@ write_to = "kdiagram/_scm_version.py"
 k-diagram = "kdiagram.cli:main"
 
 [project.optional-dependencies]
+
 dev = [
   "pytest>=8.0",
   "pytest-cov>=4.1",
-  "pytest-xdist", 
+  "pytest-xdist",
+  "black>=24.0",
+  "ruff>=0.4",
+  "coverage[toml]>=7.0",
+  "tqdm",
+  # Sphinx and related tools for docs
   "sphinx>=7.0",
   "furo",
   "sphinx-copybutton",
   "myst-parser",
   "sphinx-design",
-  "black>=24.0",
-  "ruff>=0.4",
-  "coverage[toml]>=7.0"
+  "sphinx-gallery",
+  "sphinxcontrib-jsmath",
+  "sphinx-mathjax-offline",
+  "sphinx-issues",
+  "sphinx-prompt",
+  "sphinxcontrib-bibtex",
+  "numpydoc>=1.6"
 ]
 
 [tool.setuptools.packages.find]

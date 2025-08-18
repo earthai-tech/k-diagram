@@ -30,16 +30,10 @@ def _lazy_import(module_name, alias=None):
         globals()[module_name] = _lazy_loader
 
 
-# Version (single source)
 try:
-    from importlib.metadata import PackageNotFoundError, version  # Py ≥3.8
-except ImportError:  # pragma: no cover
-    from importlib_metadata import PackageNotFoundError, version  # backport
-
-try:
-    __version__ = version("k-diagram")  # distribution name from pyproject.toml
-except PackageNotFoundError:  # running from source without install
-    __version__ = "1.1.0"  # # same as pyproject.toml
+    from ._scm_version import version as __version__
+except Exception:
+    __version__ = "0+unknown"  # Fallback version in case Git is not available
 
 # Dependency check
 _required_dependencies = [

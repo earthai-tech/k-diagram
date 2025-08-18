@@ -112,20 +112,21 @@ The basic structure of a `k-diagram` CLI command is:
    k-diagram <plot_command> [input_files...] [options...]
 
 * **`<plot_command>`:** The name of the plot you want to generate
-    (e.g., `plot_anomaly_magnitude`, `plot_coverage`).
+  (e.g., `plot_anomaly_magnitude`, `plot_coverage`).
 * **`[input_files...]`:** One or more positional arguments specifying
-    the path(s) to your input CSV data file(s). The number and meaning
-    of these files depend on the specific command (check its `--help`).
+  the path(s) to your input CSV data file(s). The number and meaning
+  of these files depend on the specific command (check its `--help`).
 * **`[options...]`:** Flags and arguments starting with `--` or `-`
-    used to specify necessary information (like column names) or customize
-    the plot appearance. Common options include:
-    * `--actual_col`, `--q_cols`, `--q10_cols`, etc.: Specify which
-        columns in your CSV contain the relevant data. **These are often
-        required.**
-    * `--title`: Set a custom plot title.
-    * `--savefig`: Save the output plot to a file instead of displaying it.
-    * Options specific to the plot type (e.g., `--acov`, `--cmap`,
-        `--normalize`).
+  used to specify necessary information (like column names) or customize
+  the plot appearance. Common options include:
+    
+  * `--actual_col`, `--q_cols`, `--q10_cols`, etc.: Specify which
+    columns in your CSV contain the relevant data. **These are often
+    required.**
+  * `--title`: Set a custom plot title.
+  * `--savefig`: Save the output plot to a file instead of displaying it.
+  * Options specific to the plot type (e.g., `--acov`, `--cmap`,
+    `--normalize`).
 
 Command Examples
 ------------------
@@ -205,8 +206,11 @@ prediction models against true values.
 
 * `true_values.csv`: File with actual values (first positional argument).
 * `model_A_preds.csv model_B_preds.csv`: Files with predictions for
-    each model (subsequent positional arguments for `y_preds_files`).
-    *Note: Assumes these CSVs contain just the lower and upper bounds needed.*
+  each model (subsequent positional arguments for `y_preds_files`).
+  
+  .. note:: 
+     Assumes these CSVs contain just the lower and upper bounds needed.
+  
 * `--q 0.05 0.95`: Specifies the quantile levels used for the interval (90%).
 * `--names ...`: Provides labels for the models in the legend.
 * `--kind radar`: Selects the radar chart type.
@@ -258,9 +262,9 @@ changes across forecast horizons defined in `multi_horizon_preds.csv`.
 
 * `multi_horizon_preds.csv`: The input data file.
 * `--q10_cols ...`: Lists the columns containing the lower quantile
-    for each horizon.
+  for each horizon.
 * `--q90_cols ...`: Lists the columns containing the upper quantile
-    for each horizon.
+  for each horizon.
 * `--horizons ...`: Provides labels for each horizon shown on the plot.
 * `--acov quarter_circle`: Restricts the plot to a 90-degree arc.
 * `--savefig ...`: Saves the plot as an SVG file.
@@ -285,7 +289,7 @@ Colors points by velocity and saves as SVG.
 * `median_predictions.csv`: Positional argument for input CSV.
 * `--q50-cols ...`: Specifies the Q50 columns for consecutive periods.
 * `--use-velocity-color`: Colors points by the calculated velocity
-    value (positive/negative change) instead of absolute Q50 magnitude.
+  value (positive/negative change) instead of absolute Q50 magnitude.
 * `--cmap coolwarm`: Uses a diverging colormap suitable for velocity.
 * `--title "..."`: Custom plot title.
 * `--cbar`: Adds a color bar (representing velocity).
@@ -311,12 +315,12 @@ providing raw data arrays and using background shading.
 
 * `--reference-file observed_data.csv`: Specifies the reference data.
 * `--y-preds-files ...`: Specifies the files containing predictions
-    from Model X and Model Y. Assumes each CSV contains a single column
-    of values.
+  from Model X and Model Y. Assumes each CSV contains a single column
+  of values.
 * `--names ...`: Assigns names for the legend.
 * `--cmap plasma --radial-strategy performance --norm-c`: Configures
-    the background shading to highlight the best-performing region and
-    normalizes its colors.
+  the background shading to highlight the best-performing region and
+  normalizes its colors.
 * `--savefig ...`: Saves the output.
 
 Taylor Diagram Example (Shaded Background & Orientation)
@@ -339,11 +343,11 @@ the background shading and changing the plot orientation.
        --savefig taylor_in_plot.svg
 
 * `observed_data.csv`, `model_X_output.csv`, `model_Y_output.csv`:
-    Positional arguments for reference and prediction files.
+  Positional arguments for reference and prediction files.
 * `--radial-strategy convergence --cmap viridis`: Sets the background
-    color to represent the correlation coefficient.
+  color to represent the correlation coefficient.
 * `--zero-location N --direction 1`: Orients the plot with Corr=1 at
-    the top (North) and angles increasing counter-clockwise.
+  the top (North) and angles increasing counter-clockwise.
 * `--cbar True`: Displays the color bar for the background map.
 * `--savefig ...`: Saves the output.
 
@@ -365,11 +369,11 @@ numeric importance values (rows=layers, columns=features).
        --savefig fingerprint.png
 
 * `feature_importances.csv`: Positional argument for the CSV file
-    containing the importance matrix.
+  containing the importance matrix.
 * `--features ...`: Provides names for the columns (axes).
 * `--labels ...`: Provides names for the rows (layers/polygons).
 * `--no-normalize`: Plots the raw importance scores instead of
-    scaling each layer to [0, 1].
+  scaling each layer to [0, 1].
 * `--fill`: Fills the area under the polygons.
 * `--savefig ...`: Saves the output.
 
@@ -394,10 +398,10 @@ half circle.
 
 * `true_data.csv`: Positional argument for the true values file.
 * `predictions_model_A.csv`, `predictions_model_B.csv`: Positional
-    arguments for the prediction files.
+  arguments for the prediction files.
 * `--names ...`: Assigns names for the legend.
 * `--theta-scale proportional`: Maps the angle based on the range of
-    true values.
+  true values.
 * `--acov half_circle`: Restricts the plot to 180 degrees.
 * `--savefig ...`: Saves the output as PDF.
 

@@ -118,6 +118,7 @@ Documentation
     `plot_error_violins`, and `plot_error_ellipses`.
   - Added a new ``hist.rst`` user guide detailing the usage and
     concepts behind `plot_hist_kde`.
+    
 * |Docs| New Gallery Pages:
 
   - Created a new ``errors.rst`` gallery page with runnable examples and
@@ -125,13 +126,24 @@ Documentation
   - Created a new `hist.rst` gallery page for `plot_hist_kde`.
   - Added new sections to the `uncertainty.rst` gallery for
     `plot_polar_heatmap` and `plot_polar_quiver`.
+    
 * |Docs| Scientific Context: Updated all user guides and relevant
   docstrings with citations to foundational scientific literature and
   our own research paper to clarify the origin of each method.
 * |Docs| New API Documentation: Added comprehensive, well-structured
   docstrings for all new functions, including mathematical notes, 
   parameter descriptions, and runnable examples.
-
+* |Docs| Updated the documentation to remove duplicated citations and 
+  correct issues related to `:footcite:`.
+* |Docs| Reworked and enhanced the documentation for various plot functions
+  like `plot_polar_heatmap`, `plot_polar_quiver`, and `plot_anomaly_magnitude`.
+* |Docs| Replaced the previous citation format with more consistent usage 
+  of `:footcite:` for scientific references in the documentation.
+* |Docs| Fixed the indentation and formatting errors in the docstrings, 
+  ensuring compliance with the linting rules (max 62 characters per line).
+* |Docs| Updated all citations in the documentation to follow the correct 
+  reStructuredText formatting with `footcite` for scientific accuracy.
+  
 Testing & QA
 ~~~~~~~~~~~~~~~
 

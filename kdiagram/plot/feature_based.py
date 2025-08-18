@@ -29,178 +29,6 @@ def plot_feature_fingerprint(
     show_grid: bool = True,
     savefig: Optional[str] = None,
 ):
-    r"""Create a radar chart visualizing feature importance profiles.
-
-    This function generates a polar (radar) chart to visually
-    compare the importance or contribution profiles of a set of
-    features across different groups, conditions, or time periods
-    (e.g., geographical zones, yearly data, different models). Each
-    group is represented by a distinct polygon (layer) on the chart,
-    making it easy to identify patterns, dominant features, and
-    shifts in feature influence across the groups, often referred
-    to as a 'fingerprint'.
-
-    It is particularly useful for model interpretation, allowing a
-    quick comparison of how feature rankings change under different
-    circumstances.
-
-    Parameters
-    -------------
-    importances : array-like of shape (n_layers, n_features)
-        The core data containing feature importance values. Each row
-        represents a different layer (e.g., a zone, a year, a model)
-        and each column corresponds to a feature. Can be a list of
-        lists or a NumPy array.
-
-    features : list of str, optional
-        Names of the features corresponding to the columns in
-        ``importances``. The order must match the columns. If ``None``,
-        generic names like 'feature 1', 'feature 2', etc., will be
-        generated.
-        Default is ``None``.
-
-    labels : list of str, optional
-        Names for each layer (row) in ``importances``. These labels
-        will appear in the legend. If ``None``, generic names like
-        'Layer 1', 'Layer 2', etc., will be generated.
-        Default is ``None``.
-
-    normalize : bool, default=True
-        If ``True``, normalize the importance values within each layer
-        (row) to a range of [0, 1] by dividing by the maximum
-        importance value in that layer. This is useful for comparing
-        the *shape* of the importance profiles independent of their
-        absolute magnitudes. If ``False``, the raw importance values
-        are plotted.
-
-    fill : bool, default=True
-        If ``True``, the area enclosed by each layer's polygon on the
-        radar chart will be filled with a semi-transparent color,
-        enhancing visual distinction between layers. If ``False``, only
-        the outlines are plotted.
-
-    cmap : str or list, default='tab10'
-        Matplotlib colormap name (e.g., 'viridis', 'plasma', 'tab10')
-        or a list of valid color specifications (e.g., ['red',
-        '#00FF00', 'blue']) to color the different layers. If a
-        colormap name is provided, colors will be sampled from it. If
-        a list is provided, it should ideally have at least as many
-        colors as there are layers.
-
-    title : str, default="Feature Impact Fingerprint"
-        The title displayed above the radar chart.
-
-    figsize : tuple of (float, float), default=(8, 8)
-        The width and height of the figure in inches.
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines (both radial and
-        angular) on the plot, which can aid in reading values. If
-        ``False``, the grid is hidden.
-
-    savefig : str, optional
-        The file path (including extension, e.g., 'fingerprint.png')
-        where the plot should be saved. If ``None``, the plot is
-        displayed interactively using ``plt.show()`` instead of being
-        saved.
-        Default is ``None``.
-
-    Returns
-    --------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the radar chart. This
-        can be used for further customization if needed.
-
-    See Also
-    ---------
-    matplotlib.pyplot.polar : Underlying function for polar plots.
-    numpy.linspace : Used for calculating angles.
-
-    Notes
-    ------
-    - The function uses helper utilities like `ensure_2d` and
-      `columns_manager` (assumed available) for input validation
-      and preprocessing.
-    - To create closed polygons, the function appends the first data
-      point and the first angle to the end of their respective lists
-      before plotting each layer.
-    - Normalization (`normalize=True`) scales each layer independently:
-      :math:`r'_{ij} = r_{ij} / \max_{j}(r_{ij})`, where :math:`r_{ij}`
-      is the importance of feature :math:`j` for layer :math:`i`. This
-      can highlight relative importance patterns but obscures absolute
-      magnitude differences between layers.
-    - The angular positions of features are evenly spaced around the
-      circle: :math:`\theta_j = 2 \pi j / N` for :math:`j=0, ..., N-1`,
-      where :math:`N` is the number of features.
-
-    Let :math:`\mathbf{R}` be the input `importances` matrix of shape
-    :math:`(M, N)`, where :math:`M` is the number of layers (labels)
-    and :math:`N` is the number of features.
-
-    1. **Angle Calculation**: Angles for each feature axis are
-       calculated as:
-
-       .. math::
-           \theta_j = \frac{2 \pi j}{N}, \quad j = 0, 1, \dots, N-1
-
-    2. **Normalization** (if `normalize=True`): Each row
-       :math:`\mathbf{r}_i = (r_{i0}, r_{i1}, \dots, r_{i,N-1})` is
-       normalized:
-
-       .. math::
-           r'_{ij} = \frac{r_{ij}}{\max_{k}(r_{ik})}
-       If :math:`\max_{k}(r_{ik}) = 0`, :math:`r'_{ij}` is set to 0.
-       Let :math:`\mathbf{R}'` be the matrix of normalized values.
-
-    3. **Plotting**: For each layer :math:`i`, the function plots points
-       in polar coordinates :math:`(r'_{ij}, \theta_j)` (or
-       :math:`(r_{ij}, \theta_j)` if not normalized). To close the shape,
-       the first point :math:`(r'_{i0}, \theta_0)` is repeated at angle
-       :math:`2\pi`. The points are connected by lines, and optionally,
-       the enclosed area is filled.
-
-    Examples
-    ---------
-    >>> import numpy as np
-    >>> from kdiagram.plot.feature_based import plot_feature_fingerprint
-
-    **1. Random Example:**
-
-    >>> np.random.seed(42) # for reproducibility
-    >>> random_importances = np.random.rand(3, 6) # 3 layers, 6 features
-    >>> feature_names = [f'Feature {i+1}' for i in range(6)]
-    >>> layer_labels = ['Model A', 'Model B', 'Model C']
-    >>> ax = plot_feature_fingerprint(
-    ...     importances=random_importances,
-    ...     features=feature_names,
-    ...     labels=layer_labels,
-    ...     title="Random Feature Importance Comparison",
-    ...     cmap='Set3',
-    ...     normalize=True,
-    ...     fill=True
-    ... )
-    >>> # plt.show() is called internally if savefig is None
-
-    **2. Concrete Example (Yearly Weights):**
-
-    >>> features = ['rainfall', 'GWL', 'seismic', 'density', 'geo']
-    >>> weights_per_year = [
-    ...     [0.2, 0.4, 0.1, 0.6, 0.3],  # 2023
-    ...     [0.3, 0.5, 0.2, 0.4, 0.4],  # 2024
-    ...     [0.1, 0.6, 0.2, 0.5, 0.3],  # 2025
-    ... ]
-    >>> years = ['2023', '2024', '2025']
-    >>> ax_yearly = plot_feature_fingerprint(
-    ...     importances=weights_per_year,
-    ...     features=features,
-    ...     labels=years,
-    ...     title="Feature Influence Over Years",
-    ...     cmap='tab10',
-    ...     normalize=False # Show raw weights
-    ... )
-    >>> # plt.show() is called internally
-
-    """
     # --- Input Validation and Preparation ---
     # Ensure importances is a 2D NumPy array
     importance_matrix = ensure_2d(importances)
@@ -398,3 +226,226 @@ def plot_feature_fingerprint(
         plt.show()
 
     return ax
+
+plot_feature_fingerprint.__doc__ = r"""
+Create a radar chart visualizing feature-importance profiles.
+
+This function draws a polar (radar) chart that compares how the
+importance of a common set of features varies across multiple
+groups/layers (e.g., different models, years, or spatial zones).
+Each group is drawn as a closed polygon, producing an interpretable
+"fingerprint" of relative influence across features (see also the
+dataset helper :func:`~kdiagram.datasets.make_fingerprint_data`;
+concept introduced in :footcite:t:`kouadiob2025`.
+
+The angular position encodes the feature index, and the radius encodes
+its (optionally normalized) importance value. Normalization allows
+shape-only comparison across layers, independent of absolute scale.
+
+Parameters
+----------
+importances : array-like of shape (n_layers, n_features)
+    The importance matrix. Each row corresponds to one layer/group
+    and each column to a feature. Accepts a list of lists, a NumPy
+    array, or a pandas DataFrame.
+
+features : list of str, optional
+    Names of the features (length must match the number of columns
+    in ``importances``). If ``None``, generic names
+    ``['feature 1', ..., 'feature N']`` are generated.
+
+labels : list of str, optional
+    Display names for layers (length should match ``n_layers``).
+    If ``None``, generic names ``['Layer 1', ..., 'Layer M']`` are
+    generated. When counts mismatch, the function pads/truncates and
+    issues a warning.
+
+normalize : bool, default=True
+    If ``True``, normalize each row to the unit interval via
+    :math:`r'_{ij} = r_{ij}/\max_k r_{ik}` (safe-dividing by zero
+    yields zeros). This highlights *shape* differences across layers.
+    If ``False``, raw magnitudes are plotted.
+
+fill : bool, default=True
+    If ``True``, fill each polygon with a translucent color; otherwise
+    draw outlines only.
+
+cmap : str or list, default='tab10'
+    Either a Matplotlib colormap name (e.g., ``'viridis'``,
+    ``'plasma'``, ``'tab10'``) or an explicit list of colors. Lists
+    shorter than the number of layers will cycle with a warning.
+
+title : str, default='Feature Impact Fingerprint'
+    Figure title.
+
+figsize : tuple of (float, float), optional
+    Figure size in inches. If ``None``, a sensible default is used.
+
+show_grid : bool, default=True
+    Whether to show polar grid lines.
+
+savefig : str, optional
+    Path to save the figure (e.g., ``'fingerprint.png'``). If
+    omitted, the plot is shown interactively.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The polar axes containing the radar chart (useful for further
+    customization).
+
+Notes
+-----
+**Angular encoding.** With :math:`N` features, angular positions are
+equally spaced:
+
+.. math::
+
+   \theta_j \;=\; \frac{2\pi j}{N}, \qquad j = 0, \dots, N-1.
+
+**Closing polygons.** To draw closed fingerprints, the first vertex
+:math:`(\theta_0, r_{i0})` is appended again at :math:`2\pi` for each
+layer :math:`i`.
+
+**Row-wise normalization (default).** If ``normalize=True``, each row
+:math:`\mathbf r_i=(r_{i0},\dots,r_{i,N-1})` is scaled to its maximum:
+
+.. math::
+
+   r'_{ij} \;=\;
+   \begin{cases}
+     \dfrac{r_{ij}}{\max_k r_{ik}}, & \max_k r_{ik} > 0,\\[6pt]
+     0, & \text{otherwise,}
+   \end{cases}
+
+which emphasizes *shape* differences between layers but removes absolute
+magnitude information. Set ``normalize=False`` to compare magnitudes.
+
+**Alternative min–max scaling (pre-processing).** If you prefer values
+distributed over :math:`[0,1]` using the local range, apply this
+transformation per row before calling the function:
+
+.. math::
+
+   r''_{ij} \;=\;
+   \frac{r_{ij} - \min_k r_{ik}}
+        {\max_k r_{ik} - \min_k r_{ik} + \varepsilon},
+
+with a small :math:`\varepsilon>0` to avoid division by zero.
+
+**Data assumptions.** Importance values are expected to be non-negative.
+Rows with a non-positive maximum (all zeros or all negative) become
+zeros under the default normalization. If your data can be negative,
+either:
+(1) set ``normalize=False`` and choose appropriate radial limits, or
+(2) shift/scale to non-negative values (e.g., min–max per row).
+
+**Missing/invalid values.** ``NaN`` or ``inf`` entries propagate to the
+plot and may render gaps. Clean data beforehand, e.g.:
+
+.. code-block:: python
+
+   import numpy as np
+   X = np.asarray(importances, float)
+   X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+
+**Radial limits and ticks.** The plot enforces a non-negative radius
+(``ax.set_ylim(bottom=0)``). For unnormalized data, you may set a
+custom maximum:
+
+.. code-block:: python
+
+   ax.set_rmax( np.nanmax(importances) )
+
+Optionally add/readjust radial ticks for readability:
+
+.. code-block:: python
+
+   ax.set_yticks([0.25, 0.5, 0.75, 1.0])
+   ax.set_yticklabels(["0.25", "0.50", "0.75", "1.00"])
+
+**Feature order matters.** The perceived shape depends on feature
+ordering around the circle. Keep a consistent, meaningful order across
+comparisons (e.g., domain grouping or sorted by average importance).
+
+**Many features or layers.** With large :math:`N`, tick labels can
+overlap. Consider thinning labels or rotating them:
+
+.. code-block:: python
+
+   angles = ax.get_xticks()
+   ax.set_xticks(angles[::2])
+   ax.set_xticklabels([lbl for i, lbl in enumerate(features) if i % 2 == 0],
+                      rotation=25, ha="right")
+
+For many layers, prefer a discrete colormap and a multi-column legend
+or move it outside:
+
+.. code-block:: python
+
+   ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), ncol=2)
+
+**Color and accessibility.** Use colorblind-friendly palettes (e.g.,
+``'tab10'``, ``'tab20'``) or pass an explicit color list. Avoid relying
+on color alone when printing in grayscale—consider distinct linestyles.
+
+**Complexity.** Runtime and memory scale as
+:math:`\mathcal O(MN)` for :math:`M` layers and :math:`N` features.
+For very large inputs, down-select features or layers for clarity.
+
+**Utilities.** Inputs are coerced to a numeric 2D array and feature
+names managed via lightweight helpers (e.g., ``ensure_2d``,
+``columns_manager``). Name count mismatches are padded/truncated with a
+warning rather than raising.
+
+See Also
+--------
+kdiagram.datasets.make_fingerprint_data :
+    Generate a synthetic importance matrix suitable for this plot.
+kdiagram.plot.relationship.plot_relationship :
+    Polar scatter for true–predicted relationships.
+matplotlib.pyplot.polar :
+    Underlying polar plotting primitives.
+
+Examples
+--------
+Generate random importances and plot with normalization and fills.
+
+>>> import numpy as np
+>>> from kdiagram.plot.feature_based import plot_feature_fingerprint
+>>> rng = np.random.default_rng(42)
+>>> imp = rng.random((3, 6))   # 3 layers, 6 features
+>>> feats = [f'Feature {i+1}' for i in range(6)]
+>>> labels = ['Model A', 'Model B', 'Model C']
+>>> ax = plot_feature_fingerprint(
+...     importances=imp,
+...     features=feats,
+...     labels=labels,
+...     title='Random Feature Importance Comparison',
+...     cmap='Set3',
+...     normalize=True,
+...     fill=True
+... )
+
+Year-over-year weights without normalization.
+
+>>> features = ['rainfall', 'GWL', 'seismic', 'density', 'geo']
+>>> weights = [
+...     [0.2, 0.4, 0.1, 0.6, 0.3],  # 2023
+...     [0.3, 0.5, 0.2, 0.4, 0.4],  # 2024
+...     [0.1, 0.6, 0.2, 0.5, 0.3],  # 2025
+... ]
+>>> years = ['2023', '2024', '2025']
+>>> ax = plot_feature_fingerprint(
+...     importances=weights,
+...     features=features,
+...     labels=years,
+...     title='Feature Influence Over Years',
+...     cmap='tab10',
+...     normalize=False
+... )
+
+References
+----------
+.. footbibliography::
+"""

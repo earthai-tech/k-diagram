@@ -48,7 +48,7 @@ This plot is designed to decompose a model's error into two components:
 **systemic error (bias)** and **random error (variance)**. It achieves
 this by aggregating errors across bins of an angular variable (like
 the month of the year or hour of the day) and displaying the mean and
-standard deviation of the errors in each bin (:footcite:t:`kouadiob2025`).
+standard deviation of the errors in each bin :footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 The function first partitions the dataset into :math:`K` bins,
@@ -171,7 +171,7 @@ Visualizing 2D Uncertainty (:func:`~kdiagram.plot.errors.plot_error_ellipses`)
 
 **Purpose:**
 This function is designed for visualizing **two-dimensional uncertainty**,
-a concept explored in (:footcite:t:`kouadiob2025`), which is common in spatial
+a concept explored in :footcite:t:`kouadiob2025`, which is common in spatial
 or positional forecasting. It draws an ellipse for each data point, where
 the ellipse's size and orientation represent the uncertainty in both the
 radial and angular directions.

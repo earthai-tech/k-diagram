@@ -21,7 +21,7 @@ True vs. Predicted Relationship
 
 Uses :func:`~kdiagram.plot.relationship.plot_relationship` to map
 true values to the angular axis and normalized predicted values to the
-radial axis (:cite:t:`kouadiob2025`). This creates a spiral-like plot that 
+radial axis. This creates a spiral-like plot that 
 reveals the consistency and correlation of model predictions across the entire
 range of true values.
 
@@ -110,8 +110,3 @@ range of true values.
 
    <hr>
    
-.. rubric:: References
-
-.. bibliography::
-   :style: plain
-   :filter: cited

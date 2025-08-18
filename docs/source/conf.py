@@ -18,7 +18,6 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 # -- Path setup --------------------------------------------------------------
-# -- Path setup --------------------------------------------------------------
 import datetime
 import warnings
 import sys
@@ -74,7 +73,6 @@ copyright = f"{current_year}, {author}"
 extensions = [
     "numpydoc",
     "sphinx.ext.autodoc",  # Include documentation from docstrings
-    # "sphinx.ext.autosummary",  # Generate summary tables for API docs
     "sphinx.ext.napoleon",  # Support NumPy and Google style docstrings
     "sphinx.ext.intersphinx",  # Link to other projects' documentation
     "sphinx.ext.viewcode",  # Add links to source code

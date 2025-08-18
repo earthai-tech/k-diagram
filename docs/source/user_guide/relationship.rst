@@ -15,7 +15,7 @@ discussion on calibration and sharpness in probabilistic evaluation,
 `k-diagram` provides the ``plot_relationship`` function to explore these
 connections using a flexible polar scatter plot where the angle is
 derived from the true values and the radius from the predicted values
-(:footcite:p:`kouadiob2025`).
+:footcite:p:`kouadiob2025`.
 
 Summary of Relationship Functions
 ---------------------------------

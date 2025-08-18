@@ -301,7 +301,8 @@ This plot provides a high-level summary of whether prediction
 intervals are well-calibrated on average across the entire
 dataset. It's useful for quickly comparing the overall
 reliability of uncertainty estimates from different models or
-parameter settings before diving into finer diagnostics [1]_.
+parameter settings before diving into finer diagnostics 
+:footcite:p:`kouadiob2025`.
 
 Parameters
 ----------
@@ -425,15 +426,14 @@ TypeError
 
 See Also
 --------
-kdiagram.plot.uncertainty.plot_coverage_diagnostic : Plot point-wise
-    coverage status.
+plot_coverage_diagnostic : Plot point-wise coverage status.
 numpy.mean : Used to calculate the average coverage rate.
 
 Notes
 -----
 The empirical coverage rate is a key metric for assessing the
 calibration of probabilistic forecasts, particularly prediction
-intervals [1]_.
+intervals :footcite:p:`kouadiob2025`.
 
 **Calculation:**
 
@@ -447,6 +447,7 @@ intervals [1]_.
      \text{Coverage} = \frac{1}{N}\sum_{i=1}^{N}
      \mathbf{1}\{\hat{y}_{i}^{(\ell)} \leq y_i
      \leq \hat{y}_{i}^{(u)}\}
+     
   where :math:`\mathbf{1}\{\cdot\}` is 1 if true, 0 otherwise.
 
 - For point forecasts (1D `y_preds`), coverage is the proportion
@@ -455,12 +456,14 @@ intervals [1]_.
   .. math::
      \text{Coverage} = \frac{1}{N}\sum_{i=1}^{N}
      \mathbf{1}\{ \hat{y}_i = y_i \}
+     
   This is typically very low for continuous :math:`y_true`.
 
 **Interpretation:** Compare the calculated coverage score(s) to
 the nominal coverage rate implied by the quantiles (e.g., 80%
 for a Q10-Q90 interval). Scores far from the nominal rate suggest
-miscalibration (intervals too wide or too narrow on average) [2]_.
+miscalibration (intervals too wide or too narrow on average)
+:footcite:p:`Gneiting2007b`.
 
 **Radar Plot Fill (`cov_fill=True`):**
 
@@ -469,18 +472,6 @@ miscalibration (intervals too wide or too narrow on average) [2]_.
   reference line at the coverage score.
 - Multiple models: Fills the polygon defined by the coverage
   scores for all models with a semi-transparent color.
-
-References
-----------
-
-.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-   *International Journal of Forecasting*. Manuscript submitted.
-   
-.. [2] Gneiting, T., & Raftery, A. E. (2007). Strictly Proper
-       Scoring Rules, Prediction, and Estimation. *Journal of the
-       American Statistical Association*, 102(477), 359–378.
-       *(General reference on probabilistic forecast evaluation)*
 
 Examples
 --------
@@ -506,6 +497,10 @@ Examples
 ...               title='Coverage Comparison (Radar)',
 ...               cov_fill=True, cmap='Set2')
 
+References
+----------
+.. footbibliography::
+    
 """
 
 
@@ -825,300 +820,6 @@ def plot_velocity(
     cbar: bool = True,
     mask_angle: bool = False,
 ):
-    r"""Polar plot visualizing average velocity across locations.
-
-    Generates a polar scatter plot where each point represents a
-    unique location or observation from the input DataFrame. The
-    radial distance (`r`) of each point corresponds to the average
-    rate of change (velocity) of the median prediction (Q50) over
-    consecutive time periods (e.g., years), optionally normalized
-    to [0, 1]. The angular position (`theta`) represents the location,
-    currently determined by its index in the DataFrame, mapped onto a
-    specified angular coverage. The color of each point provides an
-    additional dimension, representing either the calculated velocity
-    itself or the average absolute magnitude of the Q50 predictions
-    over the considered time periods [1]_.
-
-    This visualization is useful for identifying spatial patterns in
-    the dynamics of a phenomenon, such as locating areas of rapid or
-    slow change (high/low velocity) in land subsidence predictions.
-    Coloring by magnitude helps to contextualize the velocity (e.g.,
-    is high velocity occurring in areas of already high subsidence?).
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the data. Must include the columns
-        specified in `q50_cols`. Decorator `@isdf` ensures this is a
-        pandas DataFrame. Decorator `@check_non_emptiness` ensures
-        it's not empty.
-
-    q50_cols : list of str
-        An ordered list of column names representing the Q50 (median)
-        predictions for consecutive time steps (e.g., years). The list
-        must contain at least two column names to compute velocity.
-        Example: ``['subsidence_2022_q50', 'subsidence_2023_q50',
-        'subsidence_2024_q50']``.
-
-    theta_col : str, optional
-        *Intended* column name to determine the angular position (`theta`)
-        for each location (e.g., 'latitude', 'longitude', or a spatial
-        index). If ``None``, the DataFrame index is conceptually used.
-        *Note: The current implementation maps the DataFrame row index
-        to the angular range specified by `acov`, regardless of whether
-        `theta_col` is provided. Providing `theta_col` will currently
-        trigger a warning but will not affect the plot's angular axis.*
-        Default is ``None``.
-
-    cmap : str, default='viridis'
-        The name of the Matplotlib colormap used to color the scatter
-        points based on `color_vals` (determined by `use_abs_color`).
-
-    acov : str, default='default'
-        Angular coverage defining the span of the polar plot's theta
-        axis. Options are:
-
-        - ``'default'``: Full circle (2p radians or 360 degrees).
-        - ``'half_circle'``: Half circle (p radians or 180 degrees).
-        - ``'quarter_circle'``: Quarter circle (p/2 radians or 90
-          degrees).
-        - ``'eighth_circle'``: Eighth circle (p/4 radians or 45
-          degrees).
-        Invalid options default to ``'default'``.
-
-    normalize : bool, default=True
-        If ``True``, the calculated average velocity values (`r`) are
-        min-max normalized to the range [0, 1] before plotting radially.
-        This emphasizes relative velocity patterns. If ``False``, the
-        raw average velocity values are used for the radial coordinate.
-
-    use_abs_color : bool, default=True
-        Determines the variable used for coloring the points:
-
-        - If ``True``, points are colored based on the average absolute
-          magnitude of the Q50 values across the specified `q50_cols`.
-          This highlights areas with high overall prediction values.
-        - If ``False``, points are colored based on the calculated
-          average velocity (`r`) itself. This highlights areas of high
-          or low rate of change.
-
-    figsize : tuple of (float, float), default=(9, 9)
-        The width and height of the figure in inches.
-
-    title : str, optional
-        The title displayed above the polar plot. If ``None``, a default
-        title "Normalized Subsidence Velocity" (or similar, depending
-        on context, though not dynamically changed here) is used.
-        Default is ``None``.
-
-    s : float or int, default=30
-        The marker size for the scatter points.
-
-    alpha : float, default=0.85
-        The transparency level of the scatter points (0=transparent,
-        1=opaque). Useful for visualizing dense data.
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines (radial and angular)
-        on the plot.
-
-    savefig : str, optional
-        The file path (including extension, e.g., 'velocity_plot.pdf')
-        where the plot image should be saved. If ``None``, the plot is
-        displayed interactively using `plt.show()`.
-        Default is ``None``.
-
-    cbar : bool, default=True
-        If ``True``, display a color bar alongside the plot indicating
-        the mapping between colors and the values defined by
-        `use_abs_color`.
-
-    mask_angle : bool, default=False
-        If ``True``, hide the angular tick labels (the degrees/radians
-        around the circumference). This can be useful if the angular
-        position based on index is not inherently meaningful.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the polar scatter plot.
-        Can be used for further customization.
-
-    Raises
-    ------
-    ValueError
-        If `q50_cols` contains fewer than two column names.
-
-    See Also
-    --------
-    numpy.diff : Computes the difference between consecutive elements.
-    numpy.mean : Computes the arithmetic mean.
-    matplotlib.pyplot.scatter : Creates scatter plots.
-    matplotlib.pyplot.polar : Creates polar plots.
-    kdiagram.plot.uncertainty.plot_uncertainty_drift : Visualizes
-        uncertainty width changes over time.
-
-    Notes
-    -----
-
-    - The function assumes the columns in `q50_cols` represent equally
-      spaced time steps for the velocity calculation to be meaningful
-      as an average *yearly* (or per-step) velocity.
-    - The average velocity (`r`) is calculated as the mean of the
-      first-order differences between consecutive columns in `q50_cols`.
-    - Normalization of `r` uses min-max scaling:
-      :math:`r' = (r - \min(r)) / (\max(r) - \min(r))`.
-    - The angular coordinate `theta` is currently derived from the
-      DataFrame index, mapped linearly onto the angular range defined
-      by `acov`. The `theta_col` parameter is not used for positioning
-      in the current implementation, which might be revised in future
-      versions. A warning is issued if `theta_col` is provided [2]_.
-
-    Let :math:`\mathbf{Q}` be the data matrix extracted from `df` using
-    columns `q50_cols`, with shape :math:`(N, M)`, where :math:`N` is
-    the number of locations (rows) and :math:`M` is the number of time
-    points (columns). Note the transpose compared to the description
-    in `plot_feature_fingerprint`.
-
-    1. **Velocity Calculation**: The differences between consecutive time
-       points for each location :math:`j` are computed:
-
-       :math:`\Delta Q_{j,i} = Q_{j, i+1} - Q_{j, i}` for
-       :math:`i = 0, \dots, M-2`.
-
-       The average velocity for location :math:`j` is:
-
-       .. math::
-           r_j = \frac{1}{M-1} \sum_{i=0}^{M-2} \Delta Q_{j,i}
-
-    2. **Radial Normalization** (if `normalize=True`):
-
-       Let :math:`\mathbf{r} = (r_0, \dots, r_{N-1})`.
-
-       .. math::
-           r'_j = \frac{r_j - \min(\mathbf{r})}{\max(\mathbf{r}) - \min(\mathbf{r})}
-
-       If :math:`\max(\mathbf{r}) = \min(\mathbf{r})`, :math:`r'_j = 0`.
-
-    3. **Color Value Calculation**:
-
-       - If `use_abs_color=True`: Average absolute magnitude.
-
-         .. math::
-             c_j = \frac{1}{M} \sum_{i=0}^{M-1} |Q_{j,i}|
-
-       - If `use_abs_color=False`: Use average velocity.
-         :math:`c_j = r_j`
-
-    4. **Angular Coordinate Calculation**:
-
-       Let :math:`S` be the angular span in radians determined by `acov`
-       (e.g., :math:`2\pi` for ``'default'``). The angle for location
-       :math:`j` (where :math:`j` is the row index from :math:`0` to
-       :math:`N-1`) is:
-
-       .. math::
-            \theta_j = \frac{j}{N} \times S
-
-       *(Note: The code uses `np.linspace(0, 1, N)` which generates N
-       points from 0 to 1 inclusive, so the formula might be slightly
-       different depending on endpoint handling, effectively
-       :math:`\theta_j = \frac{j}{N-1} \times S` for the N points if
-       endpoint=True, or spacing relates to N intervals if
-       endpoint=False)*. The code uses `np.linspace(0, 1, N)` and
-       multiplies by `angle_span`, suggesting the angles might span
-       from 0 up to `angle_span`.
-
-    References
-    ----------
-
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-
-    .. [2] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
-           Computing in Science & Engineering, 9(3), 90-95.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_velocity
-
-    **1. Random Example:**
-
-    >>> np.random.seed(0)
-    >>> N_points = 100
-    >>> df_random = pd.DataFrame({
-    ...     'location_id': range(N_points),
-    ...     'value_2020_q50': np.random.rand(N_points) * 10,
-    ...     'value_2021_q50': (np.random.rand(N_points) * 10 +
-    ...                        np.linspace(0, 5, N_points)),
-    ...     'value_2022_q50': (np.random.rand(N_points) * 10 +
-    ...                        np.linspace(0, 10, N_points)),
-    ...     'latitude': np.linspace(22, 23, N_points)
-    ... })
-    >>> q50_cols_random = ['value_2020_q50', 'value_2021_q50',
-    ...                    'value_2022_q50']
-    >>> ax_random = plot_velocity(
-    ...     df=df_random,
-    ...     q50_cols=q50_cols_random,
-    ...     theta_col='latitude', # Note: currently ignored for pos
-    ...     acov='default',
-    ...     normalize=True,
-    ...     use_abs_color=False, # Color by velocity
-    ...     title='Random Data Velocity Profile',
-    ...     cmap='coolwarm',
-    ...     s=40,
-    ...     cbar=True
-    ... )
-    >>> # plt.show() is called internally if savefig is None
-
-    **2. Concrete Example (Subsidence Data - adapted from docstring):**
-
-    >>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame like:
-    >>> # zhongshan_pred_2023_2026 = pd.DataFrame({
-    >>> #     'subsidence_2022_q50': np.random.rand(50)*5 + 5,
-    >>> #     'subsidence_2023_q50': np.random.rand(50)*6 + 6,
-    >>> #     'subsidence_2024_q50': np.random.rand(50)*7 + 7,
-    >>> #     'subsidence_2025_q50': np.random.rand(50)*8 + 8,
-    >>> #     'subsidence_2026_q50': np.random.rand(50)*9 + 9,
-    >>> #     'latitude': np.linspace(22.2, 22.8, 50)
-    >>> # }) # Dummy data for example execution
-    >>> # Create dummy data if zhongshan_pred_2023_2026 doesn't exist
-    >>> try:
-    ...    zhongshan_pred_2023_2026
-    ... except NameError:
-    ...    print("Creating dummy subsidence data for example...")
-    ...    zhongshan_pred_2023_2026 = pd.DataFrame({
-    ...       'subsidence_2022_q50': np.random.rand(150)*5 + 5,
-    ...       'subsidence_2023_q50': np.random.rand(150)*6 + 6 + np.linspace(0, 2, 150),
-    ...       'subsidence_2024_q50': np.random.rand(150)*7 + 7 + np.linspace(0, 4, 150),
-    ...       'subsidence_2025_q50': np.random.rand(150)*8 + 8 + np.linspace(0, 6, 150),
-    ...       'subsidence_2026_q50': np.random.rand(150)*9 + 9 + np.linspace(0, 8, 150),
-    ...       'latitude': np.linspace(22.2, 22.8, 150)
-    ...     })
-    >>> subsidence_q50_cols = [
-    ...     'subsidence_2022_q50', 'subsidence_2023_q50',
-    ...     'subsidence_2024_q50', 'subsidence_2025_q50',
-    ...     'subsidence_2026_q50',
-    ... ]
-    >>> ax_subsidence = plot_velocity(
-    ...     df=zhongshan_pred_2023_2026,
-    ...     q50_cols=subsidence_q50_cols,
-    ...     theta_col='latitude',       # Ignored for pos, triggers warning
-    ...     acov='quarter_circle',      # Focus angular range
-    ...     normalize=True,
-    ...     use_abs_color=True,         # Color by Q50 magnitude
-    ...     title='Subsidence Velocity Across Zhongshan (20222026)',
-    ...     cmap='plasma',
-    ...     s=25,
-    ...     cbar=True,
-    ...     mask_angle=True             # Hide angle labels
-    ... )
-    >>> # plt.show() called internally
-
-    """
     # --- Input Validation ---
     # Check if required q50_cols exist in the DataFrame
     missing_cols = [col for col in q50_cols if col not in df.columns]
@@ -1300,7 +1001,302 @@ def plot_velocity(
 
     return ax
 
+plot_velocity.__doc__ =r"""
+Polar plot visualizing average velocity across locations.
 
+Generates a polar scatter plot where each point represents a
+unique location or observation from the input DataFrame. The
+radial distance (`r`) of each point corresponds to the average
+rate of change (velocity) of the median prediction (Q50) over
+consecutive time periods (e.g., years), optionally normalized
+to [0, 1]. The angular position (`theta`) represents the location,
+currently determined by its index in the DataFrame, mapped onto a
+specified angular coverage. The color of each point provides an
+additional dimension, representing either the calculated velocity
+itself or the average absolute magnitude of the Q50 predictions
+over the considered time periods [1]_.
+
+This visualization is useful for identifying spatial patterns in
+the dynamics of a phenomenon, such as locating areas of rapid or
+slow change (high/low velocity) in land subsidence predictions.
+Coloring by magnitude helps to contextualize the velocity (e.g.,
+is high velocity occurring in areas of already high subsidence?).
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing the data. Must include the columns
+    specified in `q50_cols`. Decorator `@isdf` ensures this is a
+    pandas DataFrame. Decorator `@check_non_emptiness` ensures
+    it's not empty.
+
+q50_cols : list of str
+    An ordered list of column names representing the Q50 (median)
+    predictions for consecutive time steps (e.g., years). The list
+    must contain at least two column names to compute velocity.
+    Example: ``['subsidence_2022_q50', 'subsidence_2023_q50',
+    'subsidence_2024_q50']``.
+
+theta_col : str, optional
+    *Intended* column name to determine the angular position (`theta`)
+    for each location (e.g., 'latitude', 'longitude', or a spatial
+    index). If ``None``, the DataFrame index is conceptually used.
+    *Note: The current implementation maps the DataFrame row index
+    to the angular range specified by `acov`, regardless of whether
+    `theta_col` is provided. Providing `theta_col` will currently
+    trigger a warning but will not affect the plot's angular axis.*
+    Default is ``None``.
+
+cmap : str, default='viridis'
+    The name of the Matplotlib colormap used to color the scatter
+    points based on `color_vals` (determined by `use_abs_color`).
+
+acov : str, default='default'
+    Angular coverage defining the span of the polar plot's theta
+    axis. Options are:
+
+    - ``'default'``: Full circle (2p radians or 360 degrees).
+    - ``'half_circle'``: Half circle (p radians or 180 degrees).
+    - ``'quarter_circle'``: Quarter circle (p/2 radians or 90
+      degrees).
+    - ``'eighth_circle'``: Eighth circle (p/4 radians or 45
+      degrees).
+    
+    Invalid options default to ``'default'``.
+
+normalize : bool, default=True
+    If ``True``, the calculated average velocity values (`r`) are
+    min-max normalized to the range [0, 1] before plotting radially.
+    This emphasizes relative velocity patterns. If ``False``, the
+    raw average velocity values are used for the radial coordinate.
+
+use_abs_color : bool, default=True
+    Determines the variable used for coloring the points:
+
+    - If ``True``, points are colored based on the average absolute
+      magnitude of the Q50 values across the specified `q50_cols`.
+      This highlights areas with high overall prediction values.
+    - If ``False``, points are colored based on the calculated
+      average velocity (`r`) itself. This highlights areas of high
+      or low rate of change.
+
+figsize : tuple of (float, float), default=(9, 9)
+    The width and height of the figure in inches.
+
+title : str, optional
+    The title displayed above the polar plot. If ``None``, a default
+    title "Normalized Subsidence Velocity" (or similar, depending
+    on context, though not dynamically changed here) is used.
+    Default is ``None``.
+
+s : float or int, default=30
+    The marker size for the scatter points.
+
+alpha : float, default=0.85
+    The transparency level of the scatter points (0=transparent,
+    1=opaque). Useful for visualizing dense data.
+
+show_grid : bool, default=True
+    If ``True``, display the polar grid lines (radial and angular)
+    on the plot.
+
+savefig : str, optional
+    The file path (including extension, e.g., 'velocity_plot.pdf')
+    where the plot image should be saved. If ``None``, the plot is
+    displayed interactively using `plt.show()`.
+    Default is ``None``.
+
+cbar : bool, default=True
+    If ``True``, display a color bar alongside the plot indicating
+    the mapping between colors and the values defined by
+    `use_abs_color`.
+
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels (the degrees/radians
+    around the circumference). This can be useful if the angular
+    position based on index is not inherently meaningful.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar scatter plot.
+    Can be used for further customization.
+
+Raises
+------
+ValueError
+    If `q50_cols` contains fewer than two column names.
+
+See Also
+--------
+numpy.diff : Computes the difference between consecutive elements.
+numpy.mean : Computes the arithmetic mean.
+matplotlib.pyplot.scatter : Creates scatter plots.
+matplotlib.pyplot.polar : Creates polar plots.
+kdiagram.plot.uncertainty.plot_uncertainty_drift : Visualizes
+    uncertainty width changes over time.
+
+Notes
+-----
+
+- The function assumes the columns in `q50_cols` represent equally
+  spaced time steps for the velocity calculation to be meaningful
+  as an average *yearly* (or per-step) velocity.
+- The average velocity (`r`) is calculated as the mean of the
+  first-order differences between consecutive columns in `q50_cols`.
+- Normalization of `r` uses min-max scaling:
+  :math:`r' = (r - \min(r)) / (\max(r) - \min(r))`.
+- The angular coordinate `theta` is currently derived from the
+  DataFrame index, mapped linearly onto the angular range defined
+  by `acov`. The `theta_col` parameter is not used for positioning
+  in the current implementation, which might be revised in future
+  versions. A warning is issued if `theta_col` is provided [2]_.
+
+Let :math:`\mathbf{Q}` be the data matrix extracted from `df` using
+columns `q50_cols`, with shape :math:`(N, M)`, where :math:`N` is
+the number of locations (rows) and :math:`M` is the number of time
+points (columns). Note the transpose compared to the description
+in `plot_feature_fingerprint`.
+
+1. **Velocity Calculation**: The differences between consecutive time
+   points for each location :math:`j` are computed:
+
+   :math:`\Delta Q_{j,i} = Q_{j, i+1} - Q_{j, i}` for
+   :math:`i = 0, \dots, M-2`.
+
+   The average velocity for location :math:`j` is:
+
+   .. math::
+       r_j = \frac{1}{M-1} \sum_{i=0}^{M-2} \Delta Q_{j,i}
+
+2. **Radial Normalization** (if `normalize=True`):
+
+   Let :math:`\mathbf{r} = (r_0, \dots, r_{N-1})`.
+
+   .. math::
+       r'_j = \frac{r_j - \min(\mathbf{r})}{\max(\mathbf{r}) - \min(\mathbf{r})}
+
+   If :math:`\max(\mathbf{r}) = \min(\mathbf{r})`, :math:`r'_j = 0`.
+
+3. **Color Value Calculation**:
+
+   - If `use_abs_color=True`: Average absolute magnitude.
+
+     .. math::
+         c_j = \frac{1}{M} \sum_{i=0}^{M-1} |Q_{j,i}|
+
+   - If `use_abs_color=False`: Use average velocity.
+     :math:`c_j = r_j`
+
+4. **Angular Coordinate Calculation**:
+
+   Let :math:`S` be the angular span in radians determined by `acov`
+   (e.g., :math:`2\pi` for ``'default'``). The angle for location
+   :math:`j` (where :math:`j` is the row index from :math:`0` to
+   :math:`N-1`) is:
+
+   .. math::
+        \theta_j = \frac{j}{N} \times S
+
+   The code uses `np.linspace(0, 1, N)` which generates N
+   points from 0 to 1 inclusive, so the formula might be slightly
+   different depending on endpoint handling, effectively
+   :math:`\theta_j = \frac{j}{N-1} \times S` for the N points if
+   endpoint=True, or spacing relates to N intervals if
+   ``endpoint=False``. The code uses `np.linspace(0, 1, N)` and
+   multiplies by `angle_span`, suggesting the angles might span
+   from 0 up to `angle_span`.
+
+References
+----------
+
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+   *International Journal of Forecasting*. Manuscript submitted.
+
+.. [2] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
+       Computing in Science & Engineering, 9(3), 90-95.
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_velocity
+
+**1. Random Example:**
+
+>>> np.random.seed(0)
+>>> N_points = 100
+>>> df_random = pd.DataFrame({
+...     'location_id': range(N_points),
+...     'value_2020_q50': np.random.rand(N_points) * 10,
+...     'value_2021_q50': (np.random.rand(N_points) * 10 +
+...                        np.linspace(0, 5, N_points)),
+...     'value_2022_q50': (np.random.rand(N_points) * 10 +
+...                        np.linspace(0, 10, N_points)),
+...     'latitude': np.linspace(22, 23, N_points)
+... })
+>>> q50_cols_random = ['value_2020_q50', 'value_2021_q50',
+...                    'value_2022_q50']
+>>> ax_random = plot_velocity(
+...     df=df_random,
+...     q50_cols=q50_cols_random,
+...     theta_col='latitude', # Note: currently ignored for pos
+...     acov='default',
+...     normalize=True,
+...     use_abs_color=False, # Color by velocity
+...     title='Random Data Velocity Profile',
+...     cmap='coolwarm',
+...     s=40,
+...     cbar=True
+... )
+>>> # plt.show() is called internally if savefig is None
+
+**2. Concrete Example (Subsidence Data - adapted from docstring):**
+
+>>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame like:
+>>> # zhongshan_pred_2023_2026 = pd.DataFrame({
+>>> #     'subsidence_2022_q50': np.random.rand(50)*5 + 5,
+>>> #     'subsidence_2023_q50': np.random.rand(50)*6 + 6,
+>>> #     'subsidence_2024_q50': np.random.rand(50)*7 + 7,
+>>> #     'subsidence_2025_q50': np.random.rand(50)*8 + 8,
+>>> #     'subsidence_2026_q50': np.random.rand(50)*9 + 9,
+>>> #     'latitude': np.linspace(22.2, 22.8, 50)
+>>> # }) # Dummy data for example execution
+>>> # Create dummy data if zhongshan_pred_2023_2026 doesn't exist
+>>> try:
+...    zhongshan_pred_2023_2026
+... except NameError:
+...    print("Creating dummy subsidence data for example...")
+...    zhongshan_pred_2023_2026 = pd.DataFrame({
+...       'subsidence_2022_q50': np.random.rand(150)*5 + 5,
+...       'subsidence_2023_q50': np.random.rand(150)*6 + 6 + np.linspace(0, 2, 150),
+...       'subsidence_2024_q50': np.random.rand(150)*7 + 7 + np.linspace(0, 4, 150),
+...       'subsidence_2025_q50': np.random.rand(150)*8 + 8 + np.linspace(0, 6, 150),
+...       'subsidence_2026_q50': np.random.rand(150)*9 + 9 + np.linspace(0, 8, 150),
+...       'latitude': np.linspace(22.2, 22.8, 150)
+...     })
+>>> subsidence_q50_cols = [
+...     'subsidence_2022_q50', 'subsidence_2023_q50',
+...     'subsidence_2024_q50', 'subsidence_2025_q50',
+...     'subsidence_2026_q50',
+... ]
+>>> ax_subsidence = plot_velocity(
+...     df=zhongshan_pred_2023_2026,
+...     q50_cols=subsidence_q50_cols,
+...     theta_col='latitude',       # Ignored for pos, triggers warning
+...     acov='quarter_circle',      # Focus angular range
+...     normalize=True,
+...     use_abs_color=True,         # Color by Q50 magnitude
+...     title='Subsidence Velocity Across Zhongshan (20222026)',
+...     cmap='plasma',
+...     s=25,
+...     cbar=True,
+...     mask_angle=True             # Hide angle labels
+... )
+>>> # plt.show() called internally
+
+"""
 @check_non_emptiness
 @isdf
 def plot_interval_consistency(
@@ -1320,294 +1316,6 @@ def plot_interval_consistency(
     mask_angle: bool = False,
     savefig: str | None = None,
 ):
-    r"""Polar plot showing consistency of prediction interval widths.
-
-    This function generates a polar scatter plot to visualize the
-    temporal consistency (or variability) of prediction interval
-    widths (e.g., Q90 - Q10) across different locations over multiple
-    time steps or forecast horizons.
-
-    - The **angular position (`theta`)** represents each location,
-      currently derived from the DataFrame index and mapped onto the
-      specified angular coverage (`acov`).
-    - The **radial distance (`r`)** quantifies the inconsistency or
-      variability of the interval width over time for each location. It
-      is calculated as either the standard deviation (absolute
-      variability) or the coefficient of variation (CV, relative
-      variability) of the interval widths (Upper Quantile - Lower
-      Quantile) across the specified time steps. Higher `r` values
-      indicate locations where the predicted uncertainty range
-      fluctuates more significantly over time.
-    - The **color** of each point typically represents the average
-      median prediction (Q50) across the time steps (if `q50_cols`
-      are provided). This adds context, helping to identify if interval
-      inconsistency occurs in regions of high or low average predictions.
-      If `q50_cols` are not provided, color defaults to representing the
-      inconsistency measure `r`.
-
-    This plot is useful for diagnosing model reliability, identifying
-    locations or conditions where the model's uncertainty estimates
-    are unstable or vary considerably across different forecast
-    horizons [1]_.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the data. Must include columns
-        specified in `qlow_cols` and `qup_cols`. Decorator `@isdf`
-        ensures this is a pandas DataFrame. Decorator
-        `@check_non_emptiness` ensures it's not empty.
-
-    qlow_cols : list of str
-        List of column names representing the lower quantile (e.g., Q10)
-        predictions for consecutive time steps (e.g., years). Order
-        should correspond to the time steps. Example:
-        ``['subsidence_2023_q10', 'subsidence_2024_q10', ...]``.
-
-    qup_cols : list of str
-        List of column names representing the upper quantile (e.g., Q90)
-        predictions for the same consecutive time steps as `qlow_cols`.
-        Must be the same length as `qlow_cols`. Example:
-        ``['subsidence_2023_q90', 'subsidence_2024_q90', ...]``.
-
-    q50_cols : list of str, optional
-        List of column names representing the median quantile (Q50)
-        predictions for the same time steps. If provided, the average
-        Q50 value across these columns will be used to color the points.
-        Must be the same length as `qlow_cols` if provided. If ``None``,
-        the color will represent the radial value `r` (the inconsistency
-        measure). Default is ``None``.
-
-    theta_col : str, optional
-        *Intended* column name to determine the angular position (`theta`)
-        for each location (e.g., 'latitude', 'longitude', or a spatial
-        index). If ``None``, the DataFrame index is conceptually used.
-        *Note: The current implementation maps the DataFrame row index
-        to the angular range specified by `acov`, regardless of whether
-        `theta_col` is provided. Providing `theta_col` will currently
-        trigger a warning but will not affect the plot's angular axis.*
-        Default is ``None``.
-
-    use_cv : bool, default=True
-        Determines the measure of interval width variability used for the
-        radial coordinate `r`:
-
-        - If ``True``, `r` is the Coefficient of Variation (CV) of the
-          interval widths (Std Dev / Mean). CV measures relative
-          variability, useful when mean widths differ substantially.
-        - If ``False``, `r` is the Standard Deviation (Std Dev) of the
-          interval widths. Std Dev measures absolute variability.
-
-    cmap : str, default='coolwarm'
-        The name of the Matplotlib colormap used to color the scatter
-        points based on the average Q50 value (or `r` if `q50_cols` is
-        ``None``).
-
-    acov : str, default='default'
-        Angular coverage defining the span of the polar plot's theta
-        axis. Options: ``'default'`` (360°), ``'half_circle'`` (180°),
-        ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°). Invalid
-        options default to ``'default'``.
-
-    title : str, optional
-        The title displayed above the polar plot. If ``None``, a default
-        title like "Prediction Interval Consistency (Q90Q10)" is used.
-        Default is ``None``.
-
-    figsize : tuple of (float, float), default=(9, 9)
-        The width and height of the figure in inches.
-
-    s : float or int, default=30
-        The marker size for the scatter points.
-
-    alpha : float, default=0.85
-        The transparency level of the scatter points (0=transparent,
-        1=opaque).
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines.
-
-    mask_angle : bool, default=False
-        If ``True``, hide the angular tick labels. Useful if the index-
-        based angle is not directly interpretable.
-
-    savefig : str, optional
-        File path to save the plot image. If ``None``, displays the plot
-        interactively. Default is ``None``.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the polar scatter plot.
-
-    Raises
-    ------
-    AssertionError
-        If `qlow_cols` and `qup_cols` have different lengths.
-    ValueError
-        If specified columns in `qlow_cols`, `qup_cols`, or `q50_cols`
-        are not found in the DataFrame.
-
-    See Also
-    --------
-    plot_velocity : Plot average velocity in polar coordinates.
-    plot_polar_uncertainty_spread : Plot uncertainty ranges year-wise.
-    numpy.std : Compute the standard deviation.
-    numpy.mean : Compute the arithmetic mean.
-    matplotlib.pyplot.scatter : Create scatter plots.
-
-    Notes
-    -------
-
-    - The function requires corresponding lower and upper quantile
-      columns for multiple time steps (at least two steps are implicitly
-      needed for std dev/CV calculation, though one step would yield 0).
-    - The interval width is calculated as `Upper Quantile - Lower Quantile`
-      for each location and time step.
-    - The Coefficient of Variation (CV) calculation handles potential
-      division by zero (when mean width is zero) by setting CV to 0.
-    - The angular coordinate `theta` is derived from the DataFrame index,
-      not the `theta_col` parameter in the current implementation.
-
-    Let :math:`\mathbf{L}` and :math:`\mathbf{U}` be data matrices
-    extracted from `df` using columns `qlow_cols` and `qup_cols`
-    respectively, both of shape :math:`(N, M)`, where :math:`N` is the
-    number of locations and :math:`M` is the number of time steps.
-
-    1. **Interval Width Calculation**: The matrix of interval widths
-       :math:`\mathbf{W}` (shape :math:`(N, M)`) is calculated as:
-
-       .. math::
-           W_{j,i} = U_{j,i} - L_{j,i}
-       where :math:`j` indexes locations (:math:`0` to :math:`N-1`) and
-       :math:`i` indexes time steps (:math:`0` to :math:`M-1`).
-
-    2. **Radial Coordinate Calculation (`r`)**: Let :math:`\mathbf{w}_j =
-       (W_{j,0}, \dots, W_{j,M-1})` be the vector of widths over time
-       for location :math:`j`. Let :math:`\bar{w}_j = \text{mean}(\mathbf{w}_j)`
-       and :math:`\sigma_{w_j} = \text{std}(\mathbf{w}_j)`.
-
-       - If `use_cv=False` (Standard Deviation):
-
-         .. math::
-             r_j = \sigma_{w_j}
-
-       - If `use_cv=True` (Coefficient of Variation):
-
-         .. math::
-             r_j = \begin{cases} \frac{\sigma_{w_j}}{\bar{w}_j} &\\
-                 \text{if } |\bar{w}_j| > \epsilon \\ 0 & \text{if }\\
-                     |\bar{w}_j| \le \epsilon \end{cases}
-         where :math:`\epsilon` is a small threshold to prevent division
-         by zero.
-
-    3. **Color Value Calculation (`c`)**: Let :math:`\mathbf{Q50}` be the
-       data matrix (shape :math:`(N, M)`) from `q50_cols`.
-
-       - If `q50_cols` is provided: Let :math:`\mathbf{q50}_j =
-         (Q50_{j,0}, \dots, Q50_{j,M-1})`.
-
-         .. math::
-             c_j = \text{mean}(\mathbf{q50}_j) = \frac{1}{M} \sum_{i=0}^{M-1} Q50_{j,i}
-       - If `q50_cols` is ``None``:
-         :math:`c_j = r_j`
-
-    4. **Angular Coordinate Calculation (`theta`)**:
-
-       Same index-based calculation as `plot_velocity`. Let :math:`S` be
-       the angular span from `acov`.
-
-       .. math::
-            \theta_j = \frac{j}{N} \times S
-
-    References
-    ----------
-    
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-       
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_interval_consistency
-
-    **1. Random Example:**
-
-    >>> np.random.seed(1)
-    >>> N_points = 120
-    >>> df_rand_interval = pd.DataFrame({
-    ...     'id': range(N_points),
-    ...     'lat': np.linspace(30, 31, N_points),
-    ...     'val_2021_q10': np.random.rand(N_points) * 5,
-    ...     'val_2021_q50': np.random.rand(N_points) * 5 + 5,
-    ...     'val_2021_q90': np.random.rand(N_points) * 5 + 10,
-    ...     'val_2022_q10': np.random.rand(N_points) * 6, # Slightly wider
-    ...     'val_2022_q50': np.random.rand(N_points) * 6 + 6,
-    ...     'val_2022_q90': np.random.rand(N_points) * 6 + 12,
-    ...     'val_2023_q10': np.random.rand(N_points) * 4, # Narrower
-    ...     'val_2023_q50': np.random.rand(N_points) * 4 + 7,
-    ...     'val_2023_q90': np.random.rand(N_points) * 4 + 11,
-    ... })
-    >>> q10_cols_rand = ['val_2021_q10', 'val_2022_q10', 'val_2023_q10']
-    >>> q90_cols_rand = ['val_2021_q90', 'val_2022_q90', 'val_2023_q90']
-    >>> q50_cols_rand = ['val_2021_q50', 'val_2022_q50', 'val_2023_q50']
-    >>> ax_rand_ic = plot_interval_consistency(
-    ...     df=df_rand_interval,
-    ...     qlow_cols=q10_cols_rand,
-    ...     qup_cols=q90_cols_rand,
-    ...     q50_cols=q50_cols_rand,
-    ...     theta_col='lat',      # Note: Ignored for positioning
-    ...     use_cv=True,          # Use CV for radial axis
-    ...     cmap='viridis',
-    ...     acov='half_circle',
-    ...     title='Random Interval Width Consistency (CV)',
-    ...     s=35
-    ... )
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Data - adapted from docstring):**
-
-    >>> # Assume zhongshan_pred_2023_2026 is loaded DataFrame like:
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    zhongshan_pred_2023_2026
-    ... except NameError:
-    ...    print("Creating dummy subsidence data for example...")
-    ...    N_sub = 150
-    ...    zhongshan_pred_2023_2026 = pd.DataFrame({
-    ...       'latitude': np.linspace(22.2, 22.8, N_sub),
-    ...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2020)+1
-    ...          for yr in range(2023, 2027)},
-    ...       **{f'subsidence_{yr}_q50': np.random.rand(N_sub)*(yr-2019)+5
-    ...          + np.linspace(0, (yr-2022)*2, N_sub)
-    ...          for yr in range(2023, 2027)},
-    ...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2018)+10
-    ...          + np.linspace(0, (yr-2022)*4, N_sub)
-    ...          for yr in range(2023, 2027)},
-    ...     })
-    >>> qlow_sub = [f'subsidence_{yr}_q10' for yr in range(2023, 2027)]
-    >>> qup_sub = [f'subsidence_{yr}_q90' for yr in range(2023, 2027)]
-    >>> q50_sub = [f'subsidence_{yr}_q50' for yr in range(2023, 2027)]
-    >>> ax_sub_ic = plot_interval_consistency(
-    ...     df=zhongshan_pred_2023_2026,
-    ...     qlow_cols=qlow_sub,
-    ...     qup_cols=qup_sub,
-    ...     q50_cols=q50_sub,
-    ...     theta_col='latitude',    # Ignored for pos, triggers warning
-    ...     acov='default',
-    ...     title='Subsidence Uncertainty Consistency (20232026)',
-    ...     use_cv=False,            # Use Std Dev for radius
-    ...     cmap='coolwarm',
-    ...     s=28,
-    ...     alpha=0.8,
-    ...     mask_angle=True
-    ... )
-    >>> # plt.show() called internally
-
-    """
     # --- Input Validation ---
     # Basic DataFrame checks handled by decorators @isdf @check_non_emptiness
     if len(qlow_cols) != len(qup_cols):
@@ -1803,6 +1511,296 @@ def plot_interval_consistency(
 
     return ax
 
+plot_interval_consistency.__doc__ = r"""
+Polar plot showing consistency of prediction interval widths.
+
+This function generates a polar scatter plot to visualize the
+temporal consistency (or variability) of prediction interval
+widths (e.g., Q90 - Q10) across different locations over multiple
+time steps or forecast horizons:
+
+- The **angular position (`theta`)** represents each location,
+  currently derived from the DataFrame index and mapped onto the
+  specified angular coverage (`acov`).
+- The **radial distance (`r`)** quantifies the inconsistency or
+  variability of the interval width over time for each location. It
+  is calculated as either the standard deviation (absolute
+  variability) or the coefficient of variation (CV, relative
+  variability) of the interval widths (Upper Quantile - Lower
+  Quantile) across the specified time steps. Higher `r` values
+  indicate locations where the predicted uncertainty range
+  fluctuates more significantly over time.
+- The **color** of each point typically represents the average
+  median prediction (Q50) across the time steps (if `q50_cols`
+  are provided). This adds context, helping to identify if interval
+  inconsistency occurs in regions of high or low average predictions.
+  If `q50_cols` are not provided, color defaults to representing the
+  inconsistency measure `r`.
+
+This plot is useful for diagnosing model reliability, identifying
+locations or conditions where the model's uncertainty estimates
+are unstable or vary considerably across different forecast
+horizons.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing the data. Must include columns
+    specified in `qlow_cols` and `qup_cols`. Decorator `@isdf`
+    ensures this is a pandas DataFrame. Decorator
+    `@check_non_emptiness` ensures it's not empty.
+
+qlow_cols : list of str
+    List of column names representing the lower quantile (e.g., Q10)
+    predictions for consecutive time steps (e.g., years). Order
+    should correspond to the time steps. Example:
+    ``['subsidence_2023_q10', 'subsidence_2024_q10', ...]``.
+
+qup_cols : list of str
+    List of column names representing the upper quantile (e.g., Q90)
+    predictions for the same consecutive time steps as `qlow_cols`.
+    Must be the same length as `qlow_cols`. Example:
+    ``['subsidence_2023_q90', 'subsidence_2024_q90', ...]``.
+
+q50_cols : list of str, optional
+    List of column names representing the median quantile (Q50)
+    predictions for the same time steps. If provided, the average
+    Q50 value across these columns will be used to color the points.
+    Must be the same length as `qlow_cols` if provided. If ``None``,
+    the color will represent the radial value `r` (the inconsistency
+    measure). Default is ``None``.
+
+theta_col : str, optional
+    *Intended* column name to determine the angular position (`theta`)
+    for each location (e.g., 'latitude', 'longitude', or a spatial
+    index). If ``None``, the DataFrame index is conceptually used.
+    *Note: The current implementation maps the DataFrame row index
+    to the angular range specified by `acov`, regardless of whether
+    `theta_col` is provided. Providing `theta_col` will currently
+    trigger a warning but will not affect the plot's angular axis.*
+    Default is ``None``.
+
+use_cv : bool, default=True
+    Determines the measure of interval width variability used for the
+    radial coordinate `r`:
+
+    - If ``True``, `r` is the Coefficient of Variation (CV) of the
+      interval widths (Std Dev / Mean). CV measures relative
+      variability, useful when mean widths differ substantially.
+    - If ``False``, `r` is the Standard Deviation (Std Dev) of the
+      interval widths. Std Dev measures absolute variability.
+
+cmap : str, default='coolwarm'
+    The name of the Matplotlib colormap used to color the scatter
+    points based on the average Q50 value (or `r` if `q50_cols` is
+    ``None``).
+
+acov : str, default='default'
+    Angular coverage defining the span of the polar plot's theta
+    axis. Options: ``'default'`` (360°), ``'half_circle'`` (180°),
+    ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°). Invalid
+    options default to ``'default'``.
+
+title : str, optional
+    The title displayed above the polar plot. If ``None``, a default
+    title like "Prediction Interval Consistency (Q90Q10)" is used.
+    Default is ``None``.
+
+figsize : tuple of (float, float), default=(9, 9)
+    The width and height of the figure in inches.
+
+s : float or int, default=30
+    The marker size for the scatter points.
+
+alpha : float, default=0.85
+    The transparency level of the scatter points (0=transparent,
+    1=opaque).
+
+show_grid : bool, default=True
+    If ``True``, display the polar grid lines.
+
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels. Useful if the index-
+    based angle is not directly interpretable.
+
+savefig : str, optional
+    File path to save the plot image. If ``None``, displays the plot
+    interactively. Default is ``None``.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar scatter plot.
+
+Raises
+------
+AssertionError
+    If `qlow_cols` and `qup_cols` have different lengths.
+ValueError
+    If specified columns in `qlow_cols`, `qup_cols`, or `q50_cols`
+    are not found in the DataFrame.
+
+See Also
+--------
+plot_velocity : Plot average velocity in polar coordinates.
+numpy.std : Compute the standard deviation.
+numpy.mean : Compute the arithmetic mean.
+matplotlib.pyplot.scatter : Create scatter plots.
+
+Notes
+-------
+
+Interval-width consistency is assessed from paired lower/upper quantiles
+for multiple time steps. For each location and time step, the width is
+computed as upper minus lower. The radial value encodes either the
+standard deviation of these widths (absolute variability) or their
+coefficient of variation (relative variability), with safe handling of
+zero means by setting the CV to zero when the average width is
+numerically indistinguishable from zero. Angles are derived from the row
+index and mapped linearly across the angular span determined by
+:py:data:`acov`; the current implementation does not use
+:py:data:`theta_col` for positioning. Rows containing missing values in
+any required column are dropped prior to computation. These diagnostics
+relate to standard notions of predictive-interval calibration and
+stability; see :footcite:t:`Gneiting2007b, Jolliffe2012`.
+
+**Interval widths.** Let :math:`\mathbf L` and :math:`\mathbf U` be
+matrices extracted from :py:data:`df` using :py:data:`qlow_cols` and
+:py:data:`qup_cols`, respectively, both of shape :math:`(N,M)`, with
+:math:`N` locations and :math:`M` time steps. Define the width matrix
+:math:`\mathbf W` by
+
+.. math::
+    W_{j,i} = U_{j,i} - L_{j,i}
+    
+where :math:`j` indexes locations (:math:`0` to :math:`N-1`) and
+:math:`i` indexes time steps (:math:`0` to :math:`M-1`).
+
+**Radial Coordinate Calculation (`r`)**: Let :math:`\mathbf{w}_j =
+(W_{j,0}, \dots, W_{j,M-1})` be the vector of widths over time
+for location :math:`j`. Let :math:`\bar{w}_j = \text{mean}(\mathbf{w}_j)`
+and :math:`\sigma_{w_j} = \text{std}(\mathbf{w}_j)`.
+
+- If `use_cv=False` (Standard Deviation):
+
+  .. math::
+      r_j = \sigma_{w_j}
+
+- If `use_cv=True` (Coefficient of Variation):
+
+  .. math::
+      r_j = \begin{cases} \frac{\sigma_{w_j}}{\bar{w}_j} &\\
+          \text{if } |\bar{w}_j| > \epsilon \\ 0 & \text{if }\\
+              |\bar{w}_j| \le \epsilon \end{cases}
+              
+  where :math:`\epsilon` is a small threshold to prevent division
+  by zero.
+
+**Color Value Calculation (`c`)**: Let :math:`\mathbf{Q50}` be the
+data matrix (shape :math:`(N, M)`) from `q50_cols`.
+
+- If `q50_cols` is provided: Let :math:`\mathbf{q50}_j =
+  (Q50_{j,0}, \dots, Q50_{j,M-1})`.
+
+  .. math::
+      c_j = \text{mean}(\mathbf{q50}_j) = \frac{1}{M} \sum_{i=0}^{M-1} Q50_{j,i}
+      
+- If `q50_cols` is ``None``:
+    
+  :math:`c_j = r_j`
+
+**Angular Coordinate Calculation (`theta`)**:
+Same index-based calculation as `plot_velocity`. Let :math:`S` be
+the angular span from `acov`.
+
+.. math::
+     \theta_j = \frac{j}{N} \times S
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_interval_consistency
+
+**1. Random Example:**
+
+>>> np.random.seed(1)
+>>> N_points = 120
+>>> df_rand_interval = pd.DataFrame({
+...     'id': range(N_points),
+...     'lat': np.linspace(30, 31, N_points),
+...     'val_2021_q10': np.random.rand(N_points) * 5,
+...     'val_2021_q50': np.random.rand(N_points) * 5 + 5,
+...     'val_2021_q90': np.random.rand(N_points) * 5 + 10,
+...     'val_2022_q10': np.random.rand(N_points) * 6, # Slightly wider
+...     'val_2022_q50': np.random.rand(N_points) * 6 + 6,
+...     'val_2022_q90': np.random.rand(N_points) * 6 + 12,
+...     'val_2023_q10': np.random.rand(N_points) * 4, # Narrower
+...     'val_2023_q50': np.random.rand(N_points) * 4 + 7,
+...     'val_2023_q90': np.random.rand(N_points) * 4 + 11,
+... })
+>>> q10_cols_rand = ['val_2021_q10', 'val_2022_q10', 'val_2023_q10']
+>>> q90_cols_rand = ['val_2021_q90', 'val_2022_q90', 'val_2023_q90']
+>>> q50_cols_rand = ['val_2021_q50', 'val_2022_q50', 'val_2023_q50']
+>>> ax_rand_ic = plot_interval_consistency(
+...     df=df_rand_interval,
+...     qlow_cols=q10_cols_rand,
+...     qup_cols=q90_cols_rand,
+...     q50_cols=q50_cols_rand,
+...     theta_col='lat',      # Note: Ignored for positioning
+...     use_cv=True,          # Use CV for radial axis
+...     cmap='viridis',
+...     acov='half_circle',
+...     title='Random Interval Width Consistency (CV)',
+...     s=35
+... )
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Data - adapted from docstring):**
+
+>>> # Assume zhongshan_pred_2023_2026 is loaded DataFrame like:
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    zhongshan_pred_2023_2026
+... except NameError:
+...    print("Creating dummy subsidence data for example...")
+...    N_sub = 150
+...    zhongshan_pred_2023_2026 = pd.DataFrame({
+...       'latitude': np.linspace(22.2, 22.8, N_sub),
+...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2020)+1
+...          for yr in range(2023, 2027)},
+...       **{f'subsidence_{yr}_q50': np.random.rand(N_sub)*(yr-2019)+5
+...          + np.linspace(0, (yr-2022)*2, N_sub)
+...          for yr in range(2023, 2027)},
+...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2018)+10
+...          + np.linspace(0, (yr-2022)*4, N_sub)
+...          for yr in range(2023, 2027)},
+...     })
+>>> qlow_sub = [f'subsidence_{yr}_q10' for yr in range(2023, 2027)]
+>>> qup_sub = [f'subsidence_{yr}_q90' for yr in range(2023, 2027)]
+>>> q50_sub = [f'subsidence_{yr}_q50' for yr in range(2023, 2027)]
+>>> ax_sub_ic = plot_interval_consistency(
+...     df=zhongshan_pred_2023_2026,
+...     qlow_cols=qlow_sub,
+...     qup_cols=qup_sub,
+...     q50_cols=q50_sub,
+...     theta_col='latitude',    # Ignored for pos, triggers warning
+...     acov='default',
+...     title='Subsidence Uncertainty Consistency (20232026)',
+...     use_cv=False,            # Use Std Dev for radius
+...     cmap='coolwarm',
+...     s=28,
+...     alpha=0.8,
+...     mask_angle=True
+... )
+>>> 
+
+References
+----------
+.. footbibliography::
+    
+"""
+
 
 @check_non_emptiness
 @isdf
@@ -1824,299 +1822,6 @@ def plot_anomaly_magnitude(
     savefig: str | None = None,
     mask_angle: bool = False,
 ):
-    r"""
-    Visualize magnitude and type of prediction anomalies polar plot.
-
-    This function generates a polar scatter plot designed to highlight
-    prediction anomalies  instances where the actual ground truth value
-    falls outside a specified prediction interval (defined by a lower
-    and an upper quantile, e.g., Q10 and Q90). It visually maps the
-    location, magnitude, and type of these anomalies [1]_.
-
-    - **Angular Position (`theta`)**: Represents each data point
-      (location). If `theta_col` is provided and valid, points are
-      ordered angularly based on the values in that column (e.g.,
-      latitude, longitude, station index). Otherwise, points are
-      plotted in their original DataFrame order. The angles are mapped
-      linearly onto the specified angular coverage (`acov`).
-    - **Radial Distance (`r`)**: Represents the *magnitude* of the
-      anomaly for points falling outside the prediction interval. It's
-      calculated as the absolute difference between the actual value and
-      the nearest violated interval bound (:math:`|y_{actual} - y_{bound}|`).
-      Points *within* the interval are not plotted.
-
-    - **Color**: Distinguishes the *type* of anomaly and indicates its
-      magnitude. Separate colormaps are used:
-
-      - `cmap_under` (default: Blues) for under-predictions
-        (:math:`y_{actual} < y_{lower\_bound}`).
-      - `cmap_over` (default: Reds) for over-predictions
-        (:math:`y_{actual} > y_{upper\_bound}`).
-
-      The color intensity within each map corresponds to the anomaly
-      magnitude `r`, based on a shared normalization scale.
-
-    This plot serves as a powerful diagnostic tool for evaluating
-    prediction models, especially those providing uncertainty estimates.
-    It helps to:
-
-    - Identify specific locations or regions where the model
-      significantly misestimates outcomes (under or over).
-    - Assess the severity (magnitude) of these prediction errors.
-    - Guide post-hoc analysis, model calibration checks, or targeted
-      field validation efforts.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the actual values and the quantile
-        prediction columns. Decorators ensure it's a valid, non-empty
-        pandas DataFrame.
-
-    actual_col : str
-        The name of the column containing the true observed or actual
-        values (ground truth) against which predictions are compared.
-
-    q_cols : list or tuple of str
-        A sequence containing exactly two string elements: the column
-        name for the lower quantile bound (e.g., 'prediction_q10') and
-        the column name for the upper quantile bound (e.g.,
-        'prediction_q90'). The order must be [lower, upper].
-
-    theta_col : str, optional
-        The name of a column in `df` whose values determine the angular
-        ordering of the points. Useful for arranging points spatially
-        (e.g., using 'latitude' or 'longitude') or by some other
-        meaningful index. If ``None`` or the column is not found, points
-        are plotted in their original DataFrame row order. Default is
-        ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, default='default'
-        Specifies the angular coverage (span) of the polar plot. Maps
-        the ordered points onto the specified fraction of a circle:
-        - ``'default'``: Full circle (360° or 2p radians).
-        - ``'half_circle'``: 180° or p radians.
-        - ``'quarter_circle'``: 90° or p/2 radians.
-        - ``'eighth_circle'``: 45° or p/4 radians.
-
-    title : str, default='Anomaly Magnitude Polar Plot'
-        The title displayed above the polar plot.
-
-    figsize : tuple of (float, float), default=(8.0, 8.0)
-        The width and height of the figure in inches.
-
-    cmap_under : str, default='Blues'
-        The name of the Matplotlib colormap used for points representing
-        under-predictions (actual < lower bound).
-
-    cmap_over : str, default='Reds'
-        The name of the Matplotlib colormap used for points representing
-        over-predictions (actual > upper bound).
-
-    s : int, default=30
-        The marker size for the scatter points representing anomalies.
-
-    alpha : float, default=0.8
-        The transparency level for the scatter points (0=transparent,
-        1=opaque). Useful if points overlap.
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines (radial and angular).
-
-    verbose : int, default=1
-        Controls the level of printed output. If > 0, prints summary
-        statistics about the detected anomalies (total count, count of
-        under- and over-predictions).
-
-    cbar : bool, default=False
-        If ``True``, adds a color bar to the plot representing the
-        anomaly magnitude scale. *Note: While the normalization scale
-        is consistent for both under- and over-predictions, the
-        colorbar itself visually uses the `cmap_over` colormap in the
-        current implementation.*
-
-    savefig : str, optional
-        The file path (e.g., 'anomaly_plot.png') where the plot image
-        should be saved. If ``None``, the plot is displayed interactively.
-        Default is ``None``.
-
-    mask_angle : bool, default=False
-        If ``True``, hides the angular tick labels (degrees/radians).
-        Useful if the angular order is based on index or is not easily
-        interpretable.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the polar scatter plot.
-
-    Raises
-    ------
-    ValueError
-        If `q_cols` does not contain exactly two column names.
-        If any columns specified in `actual_col`, `q_cols`, or
-        `theta_col` are not found in the DataFrame `df`.
-    TypeError
-        If data in the required columns is not numeric after handling
-        NaNs.
-
-    See Also
-    --------
-    kdiagram.plot.uncertainty.plot_velocity :
-        Visualize average velocity in polar coordinates.
-    plot_interval_consistency : Visualize consistency of interval widths.
-    validate_qcols : Helper function for validating quantile columns.
-    matplotlib.pyplot.scatter : Function used for plotting points.
-    matplotlib.colors.Normalize : Used for scaling magnitude to color.
-
-    Notes
-    -----
-    - The function first identifies anomalies by comparing `actual_col`
-      values against the bounds defined by `q_cols`.
-    - Rows containing NaN values in any of the essential columns
-      (`actual_col`, `q_cols`, `theta_col` if provided) are dropped
-      before analysis.
-    - The anomaly magnitude `r` is always non-negative, representing the
-      distance to the exceeded bound.
-    - The `theta_col` parameter provides *ordering*, not direct angle
-      mapping. The angles are still linearly spaced within the `acov`
-      range but assigned according to the sorted order of `theta_col`.
-    - The color intensity for both under- and over-predictions reflects
-      the anomaly magnitude based on a shared normalization scale derived
-      from the maximum observed anomaly magnitude.
-    - Helper function `validate_qcols` (assumed from `gofast`) is used
-      for initial validation of `q_cols`.
-
-    Let :math:`y_j` be the actual value, :math:`L_j` the lower quantile
-    bound, and :math:`U_j` the upper quantile bound for data point
-    (location) :math:`j`.
-
-    1. **Anomaly Masks**:
-       - Under-prediction: :math:`M_{under, j} = (y_j < L_j)`
-       - Over-prediction: :math:`M_{over, j} = (y_j > U_j)`
-
-    2. **Anomaly Magnitude (Radial Coordinate `r`)**:
-
-       .. math::
-           r_j = \begin{cases} L_j - y_j & \text{if }\\
-               M_{under, j} \\ y_j - U_j & \text{if } M_{over, j} \\ 0 & \text{otherwise} \end{cases}
-       Only points where :math:`r_j > 0` are plotted.
-
-    3. **Angular Coordinate (`theta`)**:
-
-       - Generate base angles for :math:`N` points (after NaN removal):
-         :math:`\theta'_{k} = \frac{k}{N} \times S`, where :math:`S` is
-         the angular span from `acov`, :math:`k=0, ..., N-1`.
-       - If `theta_col` (:math:`\mathbf{t}`) is provided: Find the
-         permutation :math:`\pi` such that :math:`t_{\pi(0)} \le
-         t_{\pi(1)} \le \dots \le t_{\pi(N-1)}`.
-       - The final angle for the original point :math:`j` (which is now
-         at sorted position :math:`k = \pi^{-1}(j)`) is :math:`\theta_k =
-         \theta'_k`. The data (:math:`r_j`, masks) is reordered using
-         :math:`\pi` before plotting against :math:`\theta_k`.
-       - If no `theta_col`, :math:`\theta_j = \theta'_j`.
-
-    4. **Color Mapping**:
-
-       - Normalize magnitudes: :math:`\text{norm}(r_j) =
-         \frac{r_j}{\max(r_1, \dots, r_N)}`.
-       - Apply colormaps: `cmap_under(norm(r_j))` for under-predictions,
-         `cmap_over(norm(r_j))` for over-predictions.
-
-    References
-    ----------
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., 
-           & Liu, W. (2025). Analytics Framework for Interpreting 
-           Spatiotemporal Probabilistic Forecasts. 
-           *International Journal of Forecasting*. Manuscript submitted.
-       
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_anomaly_magnitude
-
-    **1. Random Example:**
-
-    >>> np.random.seed(42)
-    >>> N_points = 150
-    >>> df_anomaly_rand = pd.DataFrame({
-    ...     'id': range(N_points),
-    ...     'actual': np.random.randn(N_points) * 5 + 10,
-    ...     'pred_q10': np.random.randn(N_points) * 1 + 7, # Interval around 10
-    ...     'pred_q90': np.random.randn(N_points) * 1 + 13,
-    ...     'feature_order': np.random.rand(N_points) * 100 # For ordering
-    ... })
-    >>> # Introduce some anomalies
-    >>> df_anomaly_rand.loc[5:15, 'actual'] = 0 # Under-predictions
-    >>> df_anomaly_rand.loc[100:110, 'actual'] = 25 # Over-predictions
-    >>>
-    >>> ax_rand_anomaly = plot_anomaly_magnitude(
-    ...     df=df_anomaly_rand,
-    ...     actual_col='actual',
-    ...     q_cols=['pred_q10', 'pred_q90'],
-    ...     theta_col='feature_order', # Order by this feature
-    ...     acov='default',
-    ...     title='Random Anomaly Distribution',
-    ...     cmap_under='GnBu',
-    ...     cmap_over='OrRd',
-    ...     s=40,
-    ...     cbar=True,
-    ...     verbose=1
-    ... )
-    >>> # Output will show anomaly counts...
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Data - adapted from docstring):**
-
-    >>> # Assume small_sample_pred is a loaded DataFrame like:
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    small_sample_pred
-    ... except NameError:
-    ...    print("Creating dummy small sample prediction data...")
-    ...    N_small = 200
-    ...    small_sample_pred = pd.DataFrame({
-    ...        'subsidence_2023': np.random.rand(N_small)*15 + np.linspace(0, 5, N_small),
-    ...        'subsidence_2023_q10': np.random.rand(N_small)*10,
-    ...        'subsidence_2023_q90': np.random.rand(N_small)*10 + 10,
-    ...        'latitude': np.linspace(22.3, 22.7, N_small) + np.random.randn(N_small)*0.01
-    ...     })
-    ...     # Ensure some anomalies exist in dummy data
-    ...     anom_indices_under = np.random.choice(N_small, 15, replace=False)
-    ...     anom_indices_over = np.random.choice(
-    ...         list(set(range(N_small)) - set(anom_indices_under)), 20, replace=False
-    ...     )
-    ...     small_sample_pred.loc[anom_indices_under, 'subsidence_2023'] = (
-    ...         small_sample_pred.loc[anom_indices_under, 'subsidence_2023_q10']
-    ...         - np.random.rand(15)*5 - 1
-    ...         )
-    ...     small_sample_pred.loc[anom_indices_over, 'subsidence_2023'] = (
-    ...         small_sample_pred.loc[anom_indices_over, 'subsidence_2023_q90']
-    ...         + np.random.rand(20)*5 + 1
-    ...         )
-
-    >>> ax_sub_anomaly = plot_anomaly_magnitude(
-    ...     df=small_sample_pred,
-    ...     actual_col='subsidence_2023',
-    ...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q90'],
-    ...     theta_col='latitude',      # Order points by latitude
-    ...     acov='quarter_circle',   # Use only 90 degrees
-    ...     title='Anomaly Magnitude (2023)  Zhongshan',
-    ...     figsize=(9, 9),
-    ...     s=35,
-    ...     cbar=True,               # Show colorbar
-    ...     mask_angle=True,         # Hide angle labels
-    ...     verbose=1                # Print anomaly counts
-    ... )
-    >>> # Output will show anomaly counts...
-    >>> # plt.show() called internally
-
-    """
-    # --- Input Validation ---
-    # Decorators handle basic df checks
-    # Validate quantile columns using helper function
     try:
         qlow_col, qup_col = validate_qcols(
             q_cols=q_cols,
@@ -2380,6 +2085,312 @@ def plot_anomaly_magnitude(
 
     return ax
 
+plot_anomaly_magnitude.__doc__ = r"""
+Visualize magnitude and type of prediction-interval anomalies.
+
+This function draws a polar scatter plot to highlight prediction-interval
+failures—cases where the observed value lies outside a user-specified
+interval (e.g., :math:`[Q_{0.10}, Q_{0.90}]`). It encodes the anomaly’s
+**order/location** (angle), **magnitude** (radius), and **type** (color).
+See :footcite:t:`kouadiob2025`; background on coverage and calibration in
+:footcite:p:`Gneiting2007b, Jolliffe2012`.
+
+- **Angular position (:math:`\theta`)**: maps each row to an angle over the
+  chosen span (``acov``). If ``theta_col`` is provided, rows are *ordered*
+  by that column before angles are assigned; otherwise the original row
+  order is used. Angles are spaced linearly across the selected coverage.
+
+- **Radial distance (:math:`r`)**: the anomaly magnitude for interval
+  violations, computed as :math:`r=\lvert y - B\rvert`, where
+  :math:`B\in\{L,U\}` is the violated bound (lower :math:`L` or upper
+  :math:`U`). Points satisfying :math:`L\le y\le U` are omitted.
+
+- **Color**: indicates anomaly type and scales with magnitude on a shared
+  normalization. ``cmap_under`` colors under-predictions
+  (:math:`y<L`); ``cmap_over`` colors over-predictions (:math:`y>U`).
+
+This diagnostic helps to (i) localize clusters of failures along the
+ordering induced by ``theta_col`` (or row index), (ii) assess how severe
+misses are via larger radii, and (iii) support calibration checks and
+targeted model refinement, alongside coverage and reliability analyses,
+see :footcite:p:`Gneiting2007b, Jolliffe2012`.
+
+Parameters
+----------
+df : pandas.DataFrame
+    Input table containing the actual values and the two quantile
+    (interval) columns. Must be non-empty after NaN removal in the
+    required columns (see below).
+
+actual_col : str
+    Name of the column with the observed/ground-truth values used to
+    check interval coverage.
+
+q_cols : list[str] or tuple[str, str]
+    Two-element sequence with the **lower** and **upper** quantile
+    column names, in that order: ``[q_low, q_up]``. Each referenced
+    column must exist in ``df`` and be numeric. Semantically, rows are
+    expected to satisfy :math:`q_\text{low} \le q_\text{up}`.
+
+theta_col : str, optional
+    Column used **only to order points** angularly before mapping them
+    into the selected coverage span. Useful for spatial or categorical
+    ordering (e.g., ``'latitude'``, ``'station_id'``). If omitted or
+    non-numeric after NaN filtering, the original row order is used.
+
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'}, \
+    default='default'
+    Angular **coverage** of the plot:
+        
+    - ``'default'``: full circle, :math:`2\pi`
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\pi/2`
+    - ``'eighth_circle'``: :math:`\pi/4`
+    
+    (Value is case-insensitive; invalid values fall back to full circle
+    with a warning.)
+
+title : str, default='Anomaly Magnitude Polar Plot'
+    Figure title.
+
+figsize : tuple[float, float], default=(8.0, 8.0)
+    Figure size in inches; each dimension must be positive.
+
+cmap_under : str, default='Blues'
+    Matplotlib colormap **name** used for *under-predictions*
+    (:math:`y<q_\text{low}`). If invalid, a warning is issued and a
+    default is used.
+
+cmap_over : str, default='Reds'
+    Matplotlib colormap **name** used for *over-predictions*
+    (:math:`y>q_\text{up}`). If invalid, a warning is issued and a
+    default is used.
+
+s : int, default=30
+    Marker size for anomaly points (points with interval failure);
+    must be positive.
+
+alpha : float, default=0.8
+    Point transparency in :math:`[0,1]`.
+
+show_grid : bool, default=True
+    Whether to draw polar grid lines.
+
+verbose : int, default=1
+    Verbosity level. If :math:`>0`, prints a short anomaly summary
+    (counts of under-/over-predictions).
+
+cbar : bool, default=False
+    If ``True``, draw a colorbar for the **shared** magnitude
+    normalization. The bar uses the ``cmap_over`` colormap for display,
+    but its scale matches both under/over magnitudes.
+
+savefig : str, optional
+    Path to save the figure (e.g., ``'anomaly_plot.png'``). If omitted,
+    the figure is shown interactively. Errors during saving are reported
+    via a printed message.
+
+mask_angle : bool, default=False
+    If ``True``, hide angular tick labels (useful when the angle order
+    is arbitrary or index-based).
+
+Returns
+-------
+ax : matplotlib.axes.Axes or None
+    The polar ``Axes`` containing the scatter plot. Returns ``None`` if
+    the DataFrame becomes empty **after** dropping NaNs in the required
+    columns and no plot can be produced. If no anomalies are found, an
+    empty polar frame is returned with a notice text, not ``None``.
+
+Raises
+------
+ValueError
+    - ``q_cols`` is not a 2-item sequence.
+    - Any of ``actual_col``, the two ``q_cols``, or the provided
+      ``theta_col`` (when used) is missing from ``df``.
+
+TypeError
+    Required columns exist but cannot be coerced to numeric dtype after
+    NaN handling.
+
+See Also
+--------
+kdiagram.plot.uncertainty.plot_coverage :
+    Aggregate empirical coverage comparison.
+kdiagram.plot.uncertainty.plot_coverage_diagnostic :
+    Point-wise coverage successes/failures.
+kdiagram.plot.uncertainty.plot_interval_width :
+    Magnitude of prediction-interval widths.
+kdiagram.plot.uncertainty.plot_interval_consistency :
+    Stability of interval widths over time/steps.
+validate_qcols :
+    Helper for validating the lower/upper quantile columns.
+
+Notes
+-----
+- Anomalies are detected by comparing ``actual_col`` to the bounds
+  in ``q_cols`` for each row.
+
+- Rows with NaNs in any required column (``actual_col``, the two
+  quantile columns, and ``theta_col`` if provided) are dropped
+  before analysis.
+
+- The anomaly magnitude :math:`r` is non-negative and measures the
+  distance to the **exceeded** bound.
+
+- ``theta_col`` controls **ordering only**, not spacing. Angles are
+  always linearly spaced within the selected coverage (:py:data:`acov`)
+  and then assigned according to the sort order of ``theta_col``.
+
+- Color intensity for both under- and over-predictions reflects the
+  shared normalization of magnitudes, based on the maximum observed
+  :math:`r`.
+
+- The helper ``validate_qcols`` (from your utilities, e.g. *gofast*)
+  performs initial structure checks on ``q_cols``.
+
+Let :math:`y_j` be the actual value, :math:`L_j` the lower bound,
+and :math:`U_j` the upper bound for location :math:`j`.
+
+1. **Anomaly masks**
+
+   - Under-prediction:
+     :math:`M_{\text{under},j} = (y_j < L_j)`
+
+   - Over-prediction:
+     :math:`M_{\text{over},j} = (y_j > U_j)`
+
+2. **Anomaly magnitude (radial coordinate :math:`r`)**
+
+   .. math::
+
+      r_j =
+      \begin{cases}
+      L_j - y_j, & \text{if } y_j < L_j,\\
+      y_j - U_j, & \text{if } y_j > U_j,\\
+      0,         & \text{otherwise.}
+      \end{cases}
+
+   Only points with :math:`r_j > 0` are plotted.
+
+3. **Angular coordinate (:math:`\theta`)**
+
+   - For :math:`N` retained rows, define base angles
+
+     .. math::
+
+        \theta'_k \;=\; \frac{k}{N}\,S, \qquad k=0,\ldots,N-1,
+
+     where :math:`S \in \{2\pi, \pi, \pi/2, \pi/4\}` is the span
+     implied by :py:data:`acov`.
+
+   - If ``theta_col`` exists, sort by that column to obtain a
+     permutation :math:`\pi`. The plotted angle for original row
+     :math:`j` is :math:`\theta_{\pi^{-1}(j)}=\theta'_{\pi^{-1}(j)}`.
+     If ``theta_col`` is absent, use the original row order:
+     :math:`\theta_j=\theta'_j`.
+
+4. **Color mapping**
+
+   - Normalize magnitudes
+
+     .. math::
+
+        \text{norm}(r_j) \;=\;
+        \frac{r_j}{\max(r_1,\ldots,r_N) + \varepsilon},
+
+     with a small :math:`\varepsilon>0` for numerical safety.
+
+   - Apply colormaps: ``cmap_under(norm(r_j))`` for under-predictions
+     and ``cmap_over(norm(r_j))`` for over-predictions.
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_anomaly_magnitude
+
+**1. Random Example:**
+
+>>> np.random.seed(42)
+>>> N_points = 150
+>>> df_anomaly_rand = pd.DataFrame({
+...     'id': range(N_points),
+...     'actual': np.random.randn(N_points) * 5 + 10,
+...     'pred_q10': np.random.randn(N_points) * 1 + 7, # Interval around 10
+...     'pred_q90': np.random.randn(N_points) * 1 + 13,
+...     'feature_order': np.random.rand(N_points) * 100 # For ordering
+... })
+>>> # Introduce some anomalies
+>>> df_anomaly_rand.loc[5:15, 'actual'] = 0 # Under-predictions
+>>> df_anomaly_rand.loc[100:110, 'actual'] = 25 # Over-predictions
+>>>
+>>> ax_rand_anomaly = plot_anomaly_magnitude(
+...     df=df_anomaly_rand,
+...     actual_col='actual',
+...     q_cols=['pred_q10', 'pred_q90'],
+...     theta_col='feature_order', # Order by this feature
+...     acov='default',
+...     title='Random Anomaly Distribution',
+...     cmap_under='GnBu',
+...     cmap_over='OrRd',
+...     s=40,
+...     cbar=True,
+...     verbose=1
+... )
+>>> # Output will show anomaly counts...
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Data - adapted from docstring):**
+
+>>> # Assume small_sample_pred is a loaded DataFrame like:
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    small_sample_pred
+... except NameError:
+...    print("Creating dummy small sample prediction data...")
+...    N_small = 200
+...    small_sample_pred = pd.DataFrame({
+...        'subsidence_2023': np.random.rand(N_small)*15 + np.linspace(0, 5, N_small),
+...        'subsidence_2023_q10': np.random.rand(N_small)*10,
+...        'subsidence_2023_q90': np.random.rand(N_small)*10 + 10,
+...        'latitude': np.linspace(22.3, 22.7, N_small) + np.random.randn(N_small)*0.01
+...     })
+...     # Ensure some anomalies exist in dummy data
+...     anom_indices_under = np.random.choice(N_small, 15, replace=False)
+...     anom_indices_over = np.random.choice(
+...         list(set(range(N_small)) - set(anom_indices_under)), 20, replace=False
+...     )
+...     small_sample_pred.loc[anom_indices_under, 'subsidence_2023'] = (
+...         small_sample_pred.loc[anom_indices_under, 'subsidence_2023_q10']
+...         - np.random.rand(15)*5 - 1
+...         )
+...     small_sample_pred.loc[anom_indices_over, 'subsidence_2023'] = (
+...         small_sample_pred.loc[anom_indices_over, 'subsidence_2023_q90']
+...         + np.random.rand(20)*5 + 1
+...         )
+
+>>> ax_sub_anomaly = plot_anomaly_magnitude(
+...     df=small_sample_pred,
+...     actual_col='subsidence_2023',
+...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q90'],
+...     theta_col='latitude',      # Order points by latitude
+...     acov='quarter_circle',   # Use only 90 degrees
+...     title='Anomaly Magnitude (2023)  Zhongshan',
+...     figsize=(9, 9),
+...     s=35,
+...     cbar=True,               # Show colorbar
+...     mask_angle=True,         # Hide angle labels
+...     verbose=1                # Print anomaly counts
+... )
+>>> # Output will show anomaly counts...
+>>> # plt.show() called internally
+
+References
+----------
+.. footbibliography::
+"""
+
 
 @check_non_emptiness
 @isdf
@@ -2402,286 +2413,6 @@ def plot_uncertainty_drift(
     mask_angle: bool = True,
     savefig: str | None = None,
 ):
-    r"""Polar plot visualizing temporal drift of uncertainty width.
-
-    This function creates a polar line plot showing how the width of
-    the prediction interval (e.g., Q90 - Q10), representing model
-    uncertainty, evolves over multiple time steps (e.g., years) across
-    different locations. Each time step is depicted as a distinct
-    concentric ring [1]_.
-
-    - **Angular Position (`theta`)**: Represents each location or data
-      point. Currently derived from the DataFrame index, mapped
-      linearly onto the angular range specified by `acov`. The optional
-      `theta_col` parameter is intended for future use in ordering but
-      is currently ignored for positioning.
-
-    - **Radial Rings (`r`)**: Each ring corresponds to a specific time
-      step provided via `qlow_cols`/`qup_cols`. The position of the
-      ring (distance from the center) indicates the time step (later
-      times are further out). The radius of the line at a specific angle
-      (location) on a given ring is determined by a base offset for that
-      year plus a component proportional to the *globally normalized*
-      interval width at that location and time. Thus, the 'thickness' or
-      deviation of a ring from a perfect circle reflects the magnitude
-      of uncertainty (interval width) relative to the maximum width
-      observed across all locations and times.
-
-    - **Color**: Each ring (time step) is assigned a unique color based
-      on the specified `cmap`, aiding in distinguishing and tracking
-      changes across time steps.
-
-    This visualization is particularly useful for:
-
-    - Identifying locations where prediction uncertainty grows or shrinks
-      significantly over the forecast horizon.
-    - Monitoring the overall trend (drift) of uncertainty as forecasts
-      extend further into the future.
-    - Highlighting areas with consistently high or low uncertainty across
-      all time steps.
-    - Comparing the spatial patterns of uncertainty at different forecast
-      lead times.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the quantile prediction columns.
-        Decorators ensure it's a valid, non-empty pandas DataFrame.
-
-    qlow_cols : list of str
-        List of column names for the lower quantile bound (e.g., Q10)
-        for consecutive time steps. Example: ``['pred_2023_q10',
-        'pred_2024_q10', ...]``.
-
-    qup_cols : list of str
-        List of column names for the upper quantile bound (e.g., Q90)
-        for the same time steps as `qlow_cols`. Must be the same length.
-        Example: ``['pred_2023_q90', 'pred_2024_q90', ...]``.
-
-    dt_labels : list of str, optional
-        List of labels for each time step, used in the legend to identify
-        the rings. Must match the length of `qlow_cols`. If ``None``,
-        generic labels like 'Time_1', 'Time_2', ... are generated based
-        on the `label` parameter. Default is ``None``.
-
-    theta_col : str, optional
-        *Intended* column name for ordering points angularly. *Note: This
-        parameter is currently ignored in the positioning logic; angles
-        are based on the DataFrame index.* A warning is issued if provided.
-        Default is ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, default='default'
-
-        Specifies the angular coverage (span) of the plot: ``'default'``
-        (360°), ``'half_circle'`` (180°), ``'quarter_circle'`` (90°),
-        ``'eighth_circle'`` (45°).
-
-    base_radius : float, default=0.15
-        Determines the spacing between the base circles of consecutive
-        time step rings. The base radial offset for the ring representing
-        time step `i` (0-indexed) is calculated as ``base_radius * (i+1)``.
-        A larger value increases the separation between rings.
-
-    band_height : float, default=0.15
-        Scaling factor applied to the *normalized* interval width. This
-        controls how much the radius deviates from the base circle for
-        each ring, visually representing the uncertainty magnitude.
-        Effectively, it's the maximum radial 'height' allocated to
-        represent uncertainty on each ring.
-
-    cmap : str, default='tab10'
-        Name of the Matplotlib colormap used to assign distinct colors
-        to the rings representing different time steps.
-
-    label : str, default='Year'
-        Base name used for generating default `dt_labels` if they are
-        not provided (e.g., 'Year_1', 'Year_2', ...). *Note: This
-        parameter is currently *not* used for the legend title itself.*
-
-    alpha : float, default=0.85
-        Transparency level for the plotted lines (rings).
-
-    figsize : tuple of (float, float), default=(9, 9)
-        Width and height of the figure in inches.
-
-    title : str, optional
-        Title displayed above the polar plot. If ``None``, a default
-        title is used. Default is ``None``.
-
-    show_grid : bool, default=True
-        If ``True``, display polar grid lines.
-
-    show_legend : bool, default=True
-        If ``True``, display a legend identifying the time step for
-        each colored ring, using `dt_labels`.
-
-    mask_angle : bool, default=True
-        If ``True``, hide the angular tick labels (degrees). Recommended
-        if the angular position is based on index.
-
-    savefig : str, optional
-        File path to save the plot image. If ``None``, displays the plot
-        interactively. Default is ``None``.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the polar line plot.
-
-    Raises
-    ------
-    AssertionError
-        If `qlow_cols` and `qup_cols` lists have different lengths.
-    ValueError
-        If specified quantile columns are not found in the DataFrame.
-        If data in quantile columns is not numeric.
-
-    See Also
-    --------
-    plot_interval_consistency : Plot consistency of interval widths using
-                                scatter points.
-    plot_polar_uncertainty_spread : Plot uncertainty ranges for a single
-                                    year.
-    numpy.linspace : Generate evenly spaced numbers.
-    matplotlib.pyplot.plot : Plot lines.
-
-    Notes
-    -------
-
-    - Interval widths (:math:`W = Q_{upper} - Q_{lower}`) are calculated
-      for each location and time step.
-    - These widths are then *globally normalized* by dividing by the
-      maximum width observed across all locations and all time steps.
-      This ensures that the radial deviations are comparable across rings.
-    - The radius for a point on ring `i` (0-indexed time step) is
-      :math:`r = (\text{base}_{radius} \times (i+1)) + (\text{band}_{height}
-      \times w_{normalized})`.
-    - The angular coordinate `theta` is currently based on the DataFrame
-      index, not influenced by `theta_col`.
-    - Radial axis ticks and labels are hidden by default (`set_yticks([])`)
-      as the radial dimension primarily separates the time steps.
-
-    Let :math:`\mathbf{L}_i` and :math:`\mathbf{U}_i` be the lower and
-    upper quantile bound vectors (length :math:`N`, number of locations)
-    for time step :math:`i` (:math:`i = 0, \dots, M-1`).
-
-    1. **Interval Width Calculation**: For each time step :math:`i`,
-       calculate the width vector:
-
-       :math:`\mathbf{W}_i = \mathbf{U}_i - \mathbf{L}_i`.
-
-    2. **Global Normalization**: Find the maximum width across all
-       locations and time steps:
-
-       :math:`W_{max} = \max_{i,j} (\mathbf{W}_i)_j`.
-
-       Normalize each width vector :math:`\mathbf{W}_i`:
-
-       .. math::
-           \mathbf{w}_i = \frac{\mathbf{W}_i}{W_{max}} \quad (\text{element-wise})
-       If :math:`W_{max} = 0`, :math:`\mathbf{w}_i` will be all zeros.
-
-    3. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
-       and :math:`\theta_{min}` the start angle from `acov`. For location
-       index :math:`j` (:math:`j=0, ..., N-1`):
-
-       .. math::
-           \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
-
-    4. **Radial Coordinate (`r`)**: For time step :math:`i` and location
-       :math:`j`:
-
-       .. math::
-           r_{i,j} = (\text{base}_{radius} \times (i+1)) + \\
-               (\text{band}_{height} \times (\mathbf{w}_i)_j)
-
-    5. **Plotting**: For each time step :math:`i`, plot a line
-       connecting points :math:`(r_{i,j}, \theta_j)` for
-       :math:`j = 0, \dots, N-1`.
-
-    References
-    ----------
-    
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_uncertainty_drift
-
-    **1. Random Example:**
-
-    >>> np.random.seed(2)
-    >>> N_points = 100
-    >>> df_drift_rand = pd.DataFrame({'location_id': range(N_points)})
-    >>> years = range(2020, 2024)
-    >>> q10_drift_cols = []
-    >>> q90_drift_cols = []
-    >>> for i, year in enumerate(years):
-    ...     q10_col = f'q10_{year}'
-    ...     q90_col = f'q90_{year}'
-    ...     base_val = np.random.rand(N_points) * 10
-    ...     width = (np.random.rand(N_points) + 0.5) * (2 + i) # Increasing width
-    ...     df_drift_rand[q10_col] = base_val - width / 2
-    ...     df_drift_rand[q90_col] = base_val + width / 2
-    ...     q10_drift_cols.append(q10_col)
-    ...     q90_drift_cols.append(q90_col)
-    >>> ax_drift_rand = plot_uncertainty_drift(
-    ...     df=df_drift_rand,
-    ...     qlow_cols=q10_drift_cols,
-    ...     qup_cols=q90_drift_cols,
-    ...     dt_labels=[str(y) for y in years],
-    ...     theta_col='location_id', # Ignored for positioning
-    ...     acov='default',
-    ...     base_radius=0.1,      # Smaller spacing
-    ...     band_height=0.1,      # Smaller uncertainty scaling
-    ...     cmap='viridis',
-    ...     title='Random Uncertainty Drift Example',
-    ...     mute_angle=False      # Show angle labels
-    ... )
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Data - adapted):**
-
-    >>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame like:
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    zhongshan_pred_2023_2026
-    ... except NameError:
-    ...    print("Creating dummy subsidence data for example...")
-    ...    N_sub = 150
-    ...    zhongshan_pred_2023_2026 = pd.DataFrame({
-    ...       'latitude': np.linspace(22.2, 22.8, N_sub),
-    ...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2022)*2 + 1
-    ...          for yr in range(2023, 2027)},
-    ...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2022)*2 + 5
-    ...          + np.linspace(0, (yr-2022)*3, N_sub) # Increasing width trend
-    ...          for yr in range(2023, 2027)},
-    ...     })
-    >>> qlow_sub_drift = [f'subsidence_{yr}_q10' for yr in range(2023, 2027)]
-    >>> qup_sub_drift = [f'subsidence_{yr}_q90' for yr in range(2023, 2027)]
-    >>> year_labels_sub = [str(yr) for yr in range(2023, 2027)]
-    >>> ax_sub_drift = plot_uncertainty_drift(
-    ...     df=zhongshan_pred_2023_2026,
-    ...     qlow_cols=qlow_sub_drift,
-    ...     qup_cols=qup_sub_drift,
-    ...     dt_labels=year_labels_sub,
-    ...     theta_col='latitude',     # Ignored for positioning
-    ...     acov='half_circle',     # Use 180 degrees
-    ...     title='Uncertainty Drift Over Time (Zhongshan)',
-    ...     cmap='tab10',
-    ...     band_height=0.1,        # Controls visual width effect
-    ...     base_radius=0.2,        # Controls spacing between years
-    ...     show_legend=True,
-    ...     mute_degree=True
-    ... )
-    >>> # plt.show() called internally
-
-    """
     # --- Input Validation ---
     if len(qlow_cols) != len(qup_cols):
         raise ValueError(
@@ -2907,6 +2638,286 @@ def plot_uncertainty_drift(
 
     return ax
 
+plot_uncertainty_drift.__doc__=r"""
+Polar plot visualizing temporal drift of uncertainty width.
+
+This function creates a polar line plot showing how the width of
+the prediction interval (e.g., Q90 - Q10), representing model
+uncertainty, evolves over multiple time steps (e.g., years) across
+different locations. Each time step is depicted as a distinct
+concentric ring [1]_.
+
+- **Angular Position (`theta`)**: Represents each location or data
+  point. Currently derived from the DataFrame index, mapped
+  linearly onto the angular range specified by `acov`. The optional
+  `theta_col` parameter is intended for future use in ordering but
+  is currently ignored for positioning.
+
+- **Radial Rings (`r`)**: Each ring corresponds to a specific time
+  step provided via `qlow_cols`/`qup_cols`. The position of the
+  ring (distance from the center) indicates the time step (later
+  times are further out). The radius of the line at a specific angle
+  (location) on a given ring is determined by a base offset for that
+  year plus a component proportional to the *globally normalized*
+  interval width at that location and time. Thus, the 'thickness' or
+  deviation of a ring from a perfect circle reflects the magnitude
+  of uncertainty (interval width) relative to the maximum width
+  observed across all locations and times.
+
+- **Color**: Each ring (time step) is assigned a unique color based
+  on the specified `cmap`, aiding in distinguishing and tracking
+  changes across time steps.
+
+This visualization is particularly useful for:
+
+- Identifying locations where prediction uncertainty grows or shrinks
+  significantly over the forecast horizon.
+- Monitoring the overall trend (drift) of uncertainty as forecasts
+  extend further into the future.
+- Highlighting areas with consistently high or low uncertainty across
+  all time steps.
+- Comparing the spatial patterns of uncertainty at different forecast
+  lead times.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing the quantile prediction columns.
+    Decorators ensure it's a valid, non-empty pandas DataFrame.
+
+qlow_cols : list of str
+    List of column names for the lower quantile bound (e.g., Q10)
+    for consecutive time steps. Example: ``['pred_2023_q10',
+    'pred_2024_q10', ...]``.
+
+qup_cols : list of str
+    List of column names for the upper quantile bound (e.g., Q90)
+    for the same time steps as `qlow_cols`. Must be the same length.
+    Example: ``['pred_2023_q90', 'pred_2024_q90', ...]``.
+
+dt_labels : list of str, optional
+    List of labels for each time step, used in the legend to identify
+    the rings. Must match the length of `qlow_cols`. If ``None``,
+    generic labels like 'Time_1', 'Time_2', ... are generated based
+    on the `label` parameter. Default is ``None``.
+
+theta_col : str, optional
+    *Intended* column name for ordering points angularly. *Note: This
+    parameter is currently ignored in the positioning logic; angles
+    are based on the DataFrame index.* A warning is issued if provided.
+    Default is ``None``.
+
+acov : {'default', 'half_circle', 'quarter_circle', \
+    'eighth_circle'}, default='default'
+
+    Specifies the angular coverage (span) of the plot: ``'default'``
+    (360°), ``'half_circle'`` (180°), ``'quarter_circle'`` (90°),
+    ``'eighth_circle'`` (45°).
+
+base_radius : float, default=0.15
+    Determines the spacing between the base circles of consecutive
+    time step rings. The base radial offset for the ring representing
+    time step `i` (0-indexed) is calculated as ``base_radius * (i+1)``.
+    A larger value increases the separation between rings.
+
+band_height : float, default=0.15
+    Scaling factor applied to the *normalized* interval width. This
+    controls how much the radius deviates from the base circle for
+    each ring, visually representing the uncertainty magnitude.
+    Effectively, it's the maximum radial 'height' allocated to
+    represent uncertainty on each ring.
+
+cmap : str, default='tab10'
+    Name of the Matplotlib colormap used to assign distinct colors
+    to the rings representing different time steps.
+
+label : str, default='Year'
+    Base name used for generating default `dt_labels` if they are
+    not provided (e.g., 'Year_1', 'Year_2', ...). *Note: This
+    parameter is currently *not* used for the legend title itself.*
+
+alpha : float, default=0.85
+    Transparency level for the plotted lines (rings).
+
+figsize : tuple of (float, float), default=(9, 9)
+    Width and height of the figure in inches.
+
+title : str, optional
+    Title displayed above the polar plot. If ``None``, a default
+    title is used. Default is ``None``.
+
+show_grid : bool, default=True
+    If ``True``, display polar grid lines.
+
+show_legend : bool, default=True
+    If ``True``, display a legend identifying the time step for
+    each colored ring, using `dt_labels`.
+
+mask_angle : bool, default=True
+    If ``True``, hide the angular tick labels (degrees). Recommended
+    if the angular position is based on index.
+
+savefig : str, optional
+    File path to save the plot image. If ``None``, displays the plot
+    interactively. Default is ``None``.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar line plot.
+
+Raises
+------
+AssertionError
+    If `qlow_cols` and `qup_cols` lists have different lengths.
+ValueError
+    If specified quantile columns are not found in the DataFrame.
+    If data in quantile columns is not numeric.
+
+See Also
+--------
+plot_interval_consistency : Plot consistency of interval widths using
+                            scatter points.
+numpy.linspace : Generate evenly spaced numbers.
+matplotlib.pyplot.plot : Plot lines.
+
+Notes
+-------
+
+- Interval widths (:math:`W = Q_{upper} - Q_{lower}`) are calculated
+  for each location and time step.
+- These widths are then *globally normalized* by dividing by the
+  maximum width observed across all locations and all time steps.
+  This ensures that the radial deviations are comparable across rings.
+- The radius for a point on ring `i` (0-indexed time step) is
+  :math:`r = (\text{base}_{radius} \times (i+1)) + (\text{band}_{height}
+  \times w_{normalized})`.
+- The angular coordinate `theta` is currently based on the DataFrame
+  index, not influenced by `theta_col`.
+- Radial axis ticks and labels are hidden by default (`set_yticks([])`)
+  as the radial dimension primarily separates the time steps.
+
+Let :math:`\mathbf{L}_i` and :math:`\mathbf{U}_i` be the lower and
+upper quantile bound vectors (length :math:`N`, number of locations)
+for time step :math:`i` (:math:`i = 0, \dots, M-1`).
+
+1. **Interval Width Calculation**: For each time step :math:`i`,
+   calculate the width vector:
+
+   :math:`\mathbf{W}_i = \mathbf{U}_i - \mathbf{L}_i`.
+
+2. **Global Normalization**: Find the maximum width across all
+   locations and time steps:
+
+   :math:`W_{max} = \max_{i,j} (\mathbf{W}_i)_j`.
+
+   Normalize each width vector :math:`\mathbf{W}_i`:
+
+   .. math::
+       \mathbf{w}_i = \frac{\mathbf{W}_i}{W_{max}} \quad (\text{element-wise})
+       
+   If :math:`W_{max} = 0`, :math:`\mathbf{w}_i` will be all zeros.
+
+3. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
+   and :math:`\theta_{min}` the start angle from `acov`. For location
+   index :math:`j` (:math:`j=0, ..., N-1`):
+
+   .. math::
+       \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
+
+4. **Radial Coordinate (`r`)**: For time step :math:`i` and location
+   :math:`j`:
+
+   .. math::
+       r_{i,j} = (\text{base}_{radius} \times (i+1)) + \\
+           (\text{band}_{height} \times (\mathbf{w}_i)_j)
+
+5. **Plotting**: For each time step :math:`i`, plot a line
+   connecting points :math:`(r_{i,j}, \theta_j)` for
+   :math:`j = 0, \dots, N-1`.
+
+References
+----------
+
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+   *International Journal of Forecasting*. Manuscript submitted.
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_uncertainty_drift
+
+**1. Random Example:**
+
+>>> np.random.seed(2)
+>>> N_points = 100
+>>> df_drift_rand = pd.DataFrame({'location_id': range(N_points)})
+>>> years = range(2020, 2024)
+>>> q10_drift_cols = []
+>>> q90_drift_cols = []
+>>> for i, year in enumerate(years):
+...     q10_col = f'q10_{year}'
+...     q90_col = f'q90_{year}'
+...     base_val = np.random.rand(N_points) * 10
+...     width = (np.random.rand(N_points) + 0.5) * (2 + i) # Increasing width
+...     df_drift_rand[q10_col] = base_val - width / 2
+...     df_drift_rand[q90_col] = base_val + width / 2
+...     q10_drift_cols.append(q10_col)
+...     q90_drift_cols.append(q90_col)
+>>> ax_drift_rand = plot_uncertainty_drift(
+...     df=df_drift_rand,
+...     qlow_cols=q10_drift_cols,
+...     qup_cols=q90_drift_cols,
+...     dt_labels=[str(y) for y in years],
+...     theta_col='location_id', # Ignored for positioning
+...     acov='default',
+...     base_radius=0.1,      # Smaller spacing
+...     band_height=0.1,      # Smaller uncertainty scaling
+...     cmap='viridis',
+...     title='Random Uncertainty Drift Example',
+...     mute_angle=False      # Show angle labels
+... )
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Data - adapted):**
+
+>>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame like:
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    zhongshan_pred_2023_2026
+... except NameError:
+...    print("Creating dummy subsidence data for example...")
+...    N_sub = 150
+...    zhongshan_pred_2023_2026 = pd.DataFrame({
+...       'latitude': np.linspace(22.2, 22.8, N_sub),
+...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2022)*2 + 1
+...          for yr in range(2023, 2027)},
+...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2022)*2 + 5
+...          + np.linspace(0, (yr-2022)*3, N_sub) # Increasing width trend
+...          for yr in range(2023, 2027)},
+...     })
+>>> qlow_sub_drift = [f'subsidence_{yr}_q10' for yr in range(2023, 2027)]
+>>> qup_sub_drift = [f'subsidence_{yr}_q90' for yr in range(2023, 2027)]
+>>> year_labels_sub = [str(yr) for yr in range(2023, 2027)]
+>>> ax_sub_drift = plot_uncertainty_drift(
+...     df=zhongshan_pred_2023_2026,
+...     qlow_cols=qlow_sub_drift,
+...     qup_cols=qup_sub_drift,
+...     dt_labels=year_labels_sub,
+...     theta_col='latitude',     # Ignored for positioning
+...     acov='half_circle',     # Use 180 degrees
+...     title='Uncertainty Drift Over Time (Zhongshan)',
+...     cmap='tab10',
+...     band_height=0.1,        # Controls visual width effect
+...     base_radius=0.2,        # Controls spacing between years
+...     show_legend=True,
+...     mute_degree=True
+... )
+>>> # plt.show() called internally
+
+"""
 
 @check_non_emptiness
 @isdf
@@ -3878,270 +3889,6 @@ def plot_coverage_diagnostic(
     savefig: str | None = None,
     verbose: int = 0,
 ):
-    r"""Diagnose prediction interval coverage using a polar plot.
-
-    This function generates a polar plot to visually assess whether
-    actual observed values fall within their corresponding prediction
-    intervals (defined by a lower and upper quantile). It helps diagnose
-    the calibration of uncertainty estimates [1]_.
-
-    - **Angular Position (`theta`)**: Represents each data point or
-      location, ordered by DataFrame index and mapped linearly onto the
-      specified angular coverage (`acov`). `theta_col` is currently ignored.
-    - **Radial Position (`r`)**: Binary indicator of coverage. Points are
-      plotted at radius 1 if the actual value is within the interval
-      (:math:`Q_{lower} \le y_{actual} \le Q_{upper}`), and at radius 0
-      otherwise.
-    - **Color (Points/Bars)**: Indicates coverage status using `cmap`
-      (default 'RdYlGn'), typically green for covered (1) and red for
-      uncovered (0).
-    - **Reference Lines**: Concentric dashed lines can be drawn at
-      specified `gradient_levels` (e.g., 0.2, 0.4, ...) for reference.
-    - **Average Coverage Line**: A prominent solid line is drawn at a
-      radius equal to the overall coverage rate (proportion of points
-      covered), providing a benchmark against the expected coverage level
-      (e.g., for a 90% interval [Q5-Q95], the line should ideally be near 0.9).
-    - **Background Gradient (Optional)**: A radial gradient fills the
-      background from the center up to the average coverage rate, using
-      `gradient_cmap`. This visually emphasizes the overall coverage level.
-
-    This plot is essential for evaluating if the model's uncertainty
-    quantification is reliable (i.e., if a 90% prediction interval truly
-    covers about 90% of the actual outcomes) [2]_.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame with actual values and quantile bounds. Decorators
-        ensure it's a valid, non-empty pandas DataFrame.
-
-    actual_col : str
-        Name of the column containing the true observed (actual) values.
-
-    q_cols : list or tuple of str
-        Sequence of exactly two column names: [lower_quantile_col,
-        upper_quantile_col] defining the prediction interval.
-
-    theta_col : str, optional
-        *Intended* column for ordering points angularly. *Note: Currently
-        ignored; uses DataFrame index order.* A warning is issued if provided.
-        Default is ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, default='default'
-
-        Specifies the angular coverage (span) of the plot: ``'default'``
-        (360°), ``'half_circle'`` (180°), ``'quarter_circle'`` (90°),
-        ``'eighth_circle'`` (45°).
-
-    figsize : tuple of (float, float), default=(8.0, 8.0)
-        Width and height of the figure in inches.
-
-    title : str, optional
-        Custom plot title. If ``None``, a default title is used.
-
-    show_grid : bool, default=True
-        If ``True``, display polar grid lines.
-
-    cmap : str, default='RdYlGn'
-        Colormap for coloring the coverage points or bars. Should ideally
-        be a diverging map where one end represents covered (1) and the
-        other represents uncovered (0).
-
-    alpha : float, default=0.85
-        Transparency level for the scatter points or bars.
-
-    s : int, default=35
-        Marker size for scatter points (used if `as_bars` is ``False``).
-
-    as_bars : bool, default=False
-        If ``True``, plot coverage status as bars radiating from the center
-        (height 0 or 1). If ``False``, plot as scatter points at radius 0 or 1.
-
-    coverage_line_color : str, default='r'
-        Color of the solid line indicating the average coverage rate.
-
-    buffer_pts : int, default=500
-        Number of points used to draw smooth circular lines for average
-        coverage and gradient levels.
-
-    fill_gradient : bool, default=True
-        If ``True``, fill the background with a radial gradient up to the
-        average coverage rate using `gradient_cmap`.
-
-    gradient_size : int, default=300
-        Resolution (number of steps) for the background gradient meshgrid.
-
-    gradient_cmap : str, default='Greens'
-        Colormap used for the optional background gradient fill.
-
-    gradient_levels : list of float, optional
-        List of radial values (between 0 and 1) at which to draw dashed
-        concentric reference lines. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``.
-
-    gradient_props : dict, optional
-        Dictionary of keyword arguments to customize the appearance of the
-        dashed `gradient_levels` reference lines (e.g., ``{'linestyle': '--',
-        'color': 'blue'}``). Defaults to gray dotted lines.
-
-    mask_angle : bool, default=True
-        If ``True``, hide the angular tick labels (degrees).
-
-    savefig : str, optional
-        File path to save the plot image. If ``None``, displays interactively.
-
-    verbose : int, default=0
-        Controls printing the calculated overall coverage rate. If > 0,
-        the rate is printed.
-
-    Returns
-    -------
-    ax : matplotlib.axes._axes.Axes
-        The Matplotlib Axes object (PolarAxesSubplot) containing the plot.
-
-    Raises
-    ------
-    TypeError
-        If `q_cols` does not contain exactly two elements.
-    ValueError
-        If required columns are missing or data is non-numeric.
-        If `acov` value is invalid.
-
-    See Also
-    --------
-    plot_anomaly_magnitude : Visualize magnitude of interval failures.
-    calibration_curve : (If available) Plot reliability diagrams for
-                       probabilistic forecasts.
-
-    Notes
-    -------
-
-    - Coverage is defined as :math:`L_j \le y_j \le U_j`.
-    - The radial axis is fixed between 0 and 1, representing the binary
-      coverage outcome for individual points/bars.
-    - The average coverage line provides a single summary statistic, which
-      should be compared to the nominal coverage level of the interval
-      (e.g., 80% for a Q10-Q90 interval, 90% for Q5-Q95).
-    - The `theta_col` parameter is currently ignored for positioning.
-    - NaN values in essential columns are dropped before analysis.
-
-    Let :math:`y_j` (actual), :math:`L_j` (lower bound), :math:`U_j`
-    (upper bound) for data point :math:`j` (:math:`j=0, \dots, N-1`
-    after NaN removal).
-
-    1. **Coverage Indicator (Radial Coordinate `r`)**:
-
-       .. math::
-           r_j = \begin{cases} 1 & \text{if } L_j \le y_j\\
-               \le U_j \\ 0 & \text{otherwise} \end{cases}
-
-    2. **Overall Coverage Rate**:
-
-       .. math::
-           \bar{C} = \frac{1}{N} \sum_{j=0}^{N-1} r_j
-
-    3. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
-       and :math:`\theta_{min}` the start angle from `acov`.
-
-       .. math::
-           \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
-
-    4. **Plotting**:
-
-       - Plot points/bars at :math:`(r_j, \theta_j)`, colored based on
-         :math:`r_j` using `cmap`.
-       - Plot a solid line at constant radius :math:`\bar{C}`.
-       - Optionally, plot dashed lines at constant radii specified by
-         `gradient_levels`.
-       - Optionally, fill background up to radius :math:`\bar{C}` using
-         `gradient_cmap`.
-
-    References
-    ----------
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-       
-    .. [1] Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring
-           rules, prediction, and estimation. Journal of the American
-           Statistical Association, 102(477), 359-378. (Discusses
-           calibration of probabilistic forecasts).
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_coverage_diagnostic
-
-    **1. Random Example (Well-calibrated 80% interval):**
-
-    >>> np.random.seed(0)
-    >>> N = 200
-    >>> df_cov_rand = pd.DataFrame({'id': range(N)})
-    >>> df_cov_rand['actual'] = np.random.normal(loc=10, scale=2, size=N)
-    >>> # Simulate an ~80% interval (e.g., +/- 1.28 std devs for Normal)
-    >>> std_dev_pred = 2.0
-    >>> df_cov_rand['q10_pred'] = 10 - 1.28 * std_dev_pred
-    >>> df_cov_rand['q90_pred'] = 10 + 1.28 * std_dev_pred
-    >>> # Add some noise to interval bounds
-    >>> df_cov_rand['q10_pred'] += np.random.randn(N) * 0.2
-    >>> df_cov_rand['q90_pred'] += np.random.randn(N) * 0.2
-    >>> ax_cov_rand = plot_coverage_diagnostic(
-    ...     df=df_cov_rand,
-    ...     actual_col='actual',
-    ...     q_cols=['q10_pred', 'q90_pred'], # [lower, upper]
-    ...     theta_col='id',           # Ignored for positioning
-    ...     acov='default',
-    ...     title='Coverage Diagnostic (Simulated 80% Interval)',
-    ...     as_bars=False,           # Use scatter points
-    ...     coverage_line_color='blue', # Color for avg coverage line
-    ...     gradient_cmap='Blues',    # Background gradient color
-    ...     verbose=1                # Print coverage rate
-    ... )
-    >>> # Expected coverage rate near 80%
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Data):**
-
-    >>> # Assume small_sample_pred is a loaded DataFrame
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    small_sample_pred
-    ... except NameError:
-    ...    print("Creating dummy small sample prediction data...")
-    ...    N_small = 200
-    ...    small_sample_pred = pd.DataFrame({
-    ...        'subsidence_2023': np.random.rand(N_small)*15 + np.linspace(0, 5, N_small),
-    ...        'subsidence_2023_q10': np.random.rand(N_small)*10,
-    ...        'subsidence_2023_q90': np.random.rand(N_small)*10 + 10,
-    ...        'latitude': np.linspace(22.3, 22.7, N_small) + np.random.randn(N_small)*0.01
-    ...     })
-    >>> # Ensure Q90 > Q10
-    >>> small_sample_pred['subsidence_2023_q90'] = (
-    ...     small_sample_pred['subsidence_2023_q10'] +
-    ...     np.abs(small_sample_pred['subsidence_2023_q90'] -
-    ...            small_sample_pred['subsidence_2023_q10']) + 0.1
-    ...     )
-    >>> ax_cov_sub = plot_coverage_diagnostic(
-    ...     df=small_sample_pred,
-    ...     actual_col='subsidence_2023',
-    ...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q90'],
-    ...     theta_col=None,            # Use index order
-    ...     acov='half_circle',      # Use 180 degrees
-    ...     as_bars=True,            # Use bars instead of scatter
-    ...     coverage_line_color='darkgreen',
-    ...     title='Coverage Evaluation for 2023 (Q10Q90)',
-    ...     mask_angle=False,         # Show angle labels if meaningful
-    ...     fill_gradient=False,     # Turn off background gradient
-    ...     gradient_levels=[0.5, 0.8, 0.9], # Custom reference lines
-    ...     verbose=1
-    ... )
-    >>> # plt.show() called internally
-
-    """
-    # --- Input Validation ---
-    # Basic checks by decorators
-    # Validate q_cols format
     q_cols_processed = columns_manager(q_cols, empty_as_none=False)
     if len(q_cols_processed) != 2:
         raise TypeError(
@@ -4170,9 +3917,7 @@ def plot_coverage_diagnostic(
                 UserWarning,
                 stacklevel=2,
             )
-        # Add only if present, for potential NaN check (though unused)
-        # cols_needed.append(theta_col) # Decided against adding if unused
-
+ 
     missing_essential = [
         col for col in [actual_col, qlow_col, qup_col] if col not in df.columns
     ]
@@ -4414,6 +4159,257 @@ def plot_coverage_diagnostic(
         plt.show()
 
     return ax
+
+plot_coverage_diagnostic.__doc__ = r"""
+Diagnose prediction-interval coverage on a polar plot.
+
+This visualization checks whether observed values fall within their
+predicted intervals and summarizes the **empirical coverage rate**
+against the nominal level. It is a compact diagnostic for calibration
+of quantile/interval forecasts; foundational background on forecast
+verification and calibration appears in :footcite:p:`Gneiting2007b,
+Jolliffe2012`. See :footcite:t:`Gneiting2007b` for a discussion of
+calibration vs. sharpness.
+
+The plot maps samples around a circle (angular coordinate) and encodes
+**covered** vs **not covered** on the radial axis. A solid reference
+ring marks the overall coverage rate, and optional concentric guides
+and background gradients aid interpretation.
+
+Parameters
+----------
+df : pandas.DataFrame
+    Input table containing the observed target and the two quantile
+    bounds. Decorators ensure a valid, non-empty DataFrame.
+
+actual_col : str
+    Column name of the observed (ground-truth) values.
+
+q_cols : list of str or tuple of str
+    Exactly two names ``[lower_quantile_col, upper_quantile_col]``
+    that define the prediction interval. The order must be
+    *[lower, upper]*.
+
+theta_col : str, optional
+    Intended column for angular ordering. **Currently ignored**; the
+    plot uses the DataFrame index order. A warning is issued if
+    provided. Default is ``None``.
+
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'}, \
+default='default'
+    Angular coverage (span) of the plot:
+
+    - ``'default'``: full circle :math:`2\pi`
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\pi/2`
+    - ``'eighth_circle'``: :math:`\pi/4`
+
+figsize : tuple of (float, float), default=(8.0, 8.0)
+    Figure size in inches.
+
+title : str, optional
+    Custom title. If ``None``, a default title is used.
+
+show_grid : bool, default=True
+    If ``True``, show polar grid lines.
+
+grid_props : dict, optional
+    Keyword arguments passed to your grid helper for customizing the
+    grid (e.g., ``{'linestyle': '--', 'alpha': 0.6}``).
+
+cmap : str, default='RdYlGn'
+    Colormap for per-point coverage (0 or 1). Diverging maps work well
+    (e.g., red for uncovered, green for covered).
+
+alpha : float, default=0.85
+    Transparency for scatter points or bars.
+
+s : int, default=35
+    Marker size for scatter points (ignored when ``as_bars=True``).
+
+as_bars : bool, default=False
+    If ``True``, draw radial bars (height 0/1) instead of points.
+
+coverage_line_color : str, default='r'
+    Color of the solid ring at the average coverage rate.
+
+buffer_pts : int, default=500
+    Number of samples used to draw smooth circular lines (average rate
+    and guide rings).
+
+fill_gradient : bool, default=True
+    If ``True``, fill the background radially up to the average
+    coverage with a subtle gradient.
+
+gradient_size : int, default=300
+    Resolution of the background gradient mesh.
+
+gradient_cmap : str, default='Greens'
+    Colormap used for the optional background gradient.
+
+gradient_levels : list of float, optional
+    Radii in :math:`[0,1]` for dashed concentric reference rings.
+    Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``.
+
+gradient_props : dict, optional
+    Style for the concentric guide rings (e.g., ``{'linestyle': ':',
+    'color': 'gray', 'linewidth': 0.8}``).
+
+mask_angle : bool, default=True
+    If ``True``, hide angular tick labels.
+
+savefig : str, optional
+    File path to save the figure. If ``None``, the figure is shown.
+
+verbose : int, default=0
+    If ``> 0``, print the computed overall coverage rate.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The polar Axes containing the coverage diagnostic.
+
+Raises
+------
+TypeError
+    If ``q_cols`` does not contain exactly two names.
+
+ValueError
+    If required columns are missing or cannot be coerced to numeric,
+    or if ``acov`` is invalid.
+
+See Also
+--------
+plot_anomaly_magnitude:
+    Polar diagnostic for the *magnitude* and *type* of interval
+    failures (under/over).
+plot_reliability_diagram:
+    Calibration (reliability) curves for probabilistic classifiers.
+
+Notes
+-----
+Coverage for row :math:`j` is defined by the closed interval test
+:math:`L_j \le y_j \le U_j`. Rows with missing values in essential
+columns are removed prior to computation, so all symbols below refer
+to the filtered data. The radial axis is fixed to :math:`[0,1]` and
+encodes a binary outcome per sample, while a solid reference ring at
+radius :math:`\bar{C}` summarizes the empirical coverage rate. Compare
+:math:`\bar{C}` to the nominal level implied by your interval (e.g.,
+:math:`0.8` for Q10–Q90, :math:`0.9` for Q5–Q95) to assess
+calibration. Angular positions follow index order over the chosen span;
+``theta_col`` is currently ignored for positioning.
+
+Let :math:`y_j` denote the actual value, :math:`L_j` the lower bound,
+and :math:`U_j` the upper bound for sample :math:`j`, with
+:math:`j=0,\dots,N-1` after NaN removal. The per-sample coverage
+indicator (radial coordinate :math:`r_j`) is
+
+.. math::
+
+   r_j \;=\;
+   \begin{cases}
+     1, & L_j \le y_j \le U_j, \\\\
+     0, & \text{otherwise.}
+   \end{cases}
+
+The overall coverage rate drawn as a ring is
+
+.. math::
+
+   \bar{C} \;=\; \frac{1}{N} \sum_{j=0}^{N-1} r_j.
+
+Let :math:`S \in \{2\pi,\;\pi,\;\pi/2,\;\pi/4\}` be the angular span
+set by ``acov`` and let :math:`\theta_{\min}` be the start angle. The
+angular coordinate for sample :math:`j` is
+
+.. math::
+
+   \theta_j \;=\; \frac{j}{N}\,S \;+\; \theta_{\min}.
+
+Plotting semantics: each sample is placed at
+:math:`(\theta_j, r_j)` and colored via ``cmap`` according to
+:math:`r_j`; a solid ring at :math:`\bar{C}` is overlaid as a global
+summary; optional concentric guides at user-specified radii and an
+optional radial background gradient up to :math:`\bar{C}` provide
+additional visual context.
+Rows with NaNs in essential columns are dropped before computation. 
+``theta_col`` is currently ignored (index order is used).
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_coverage_diagnostic
+
+**1. Random Example (Well-calibrated 80% interval):**
+
+>>> np.random.seed(0)
+>>> N = 200
+>>> df_cov_rand = pd.DataFrame({'id': range(N)})
+>>> df_cov_rand['actual'] = np.random.normal(loc=10, scale=2, size=N)
+>>> # Simulate an ~80% interval (e.g., +/- 1.28 std devs for Normal)
+>>> std_dev_pred = 2.0
+>>> df_cov_rand['q10_pred'] = 10 - 1.28 * std_dev_pred
+>>> df_cov_rand['q90_pred'] = 10 + 1.28 * std_dev_pred
+>>> # Add some noise to interval bounds
+>>> df_cov_rand['q10_pred'] += np.random.randn(N) * 0.2
+>>> df_cov_rand['q90_pred'] += np.random.randn(N) * 0.2
+>>> ax_cov_rand = plot_coverage_diagnostic(
+...     df=df_cov_rand,
+...     actual_col='actual',
+...     q_cols=['q10_pred', 'q90_pred'], # [lower, upper]
+...     theta_col='id',           # Ignored for positioning
+...     acov='default',
+...     title='Coverage Diagnostic (Simulated 80% Interval)',
+...     as_bars=False,           # Use scatter points
+...     coverage_line_color='blue', # Color for avg coverage line
+...     gradient_cmap='Blues',    # Background gradient color
+...     verbose=1                # Print coverage rate
+... )
+>>> # Expected coverage rate near 80%
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Data):**
+
+>>> # Assume small_sample_pred is a loaded DataFrame
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    small_sample_pred
+... except NameError:
+...    print("Creating dummy small sample prediction data...")
+...    N_small = 200
+...    small_sample_pred = pd.DataFrame({
+...        'subsidence_2023': np.random.rand(N_small)*15 + np.linspace(0, 5, N_small),
+...        'subsidence_2023_q10': np.random.rand(N_small)*10,
+...        'subsidence_2023_q90': np.random.rand(N_small)*10 + 10,
+...        'latitude': np.linspace(22.3, 22.7, N_small) + np.random.randn(N_small)*0.01
+...     })
+>>> # Ensure Q90 > Q10
+>>> small_sample_pred['subsidence_2023_q90'] = (
+...     small_sample_pred['subsidence_2023_q10'] +
+...     np.abs(small_sample_pred['subsidence_2023_q90'] -
+...            small_sample_pred['subsidence_2023_q10']) + 0.1
+...     )
+>>> ax_cov_sub = plot_coverage_diagnostic(
+...     df=small_sample_pred,
+...     actual_col='subsidence_2023',
+...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q90'],
+...     theta_col=None,            # Use index order
+...     acov='half_circle',      # Use 180 degrees
+...     as_bars=True,            # Use bars instead of scatter
+...     coverage_line_color='darkgreen',
+...     title='Coverage Evaluation for 2023 (Q10Q90)',
+...     mask_angle=False,         # Show angle labels if meaningful
+...     fill_gradient=False,     # Turn off background gradient
+...     gradient_levels=[0.5, 0.8, 0.9], # Custom reference lines
+...     verbose=1
+... )
+>>> 
+
+References
+----------
+.. footbibliography::
+"""
 
 
 @check_non_emptiness
@@ -5302,7 +5298,7 @@ Plot a polar quiver plot to visualize vector data.
 This function draws arrows (vectors) on a polar grid. Each arrow's
 origin, direction, and magnitude are determined by the data. This is
 highly effective for visualizing dynamic phenomena like forecast
-revisions, error vectors, or flow fields.
+revisions, error vectors, or flow fields footcite:p:`Brewer2003`.
 
 Parameters
 ----------
@@ -5377,14 +5373,15 @@ ax : matplotlib.axes.Axes or None
 Notes
 -----
 The plot visualizes a vector field on a polar coordinate system. For
-each data point :math:`i`, a vector is drawn.
+each data point :math:`i`, a vector is drawn footcite:p:`Hunter2007`.
 
 1.  **Vector Origin**: The tail of the vector is positioned at the
     polar coordinates :math:`(r_i, \theta_i)` specified by ``r_col``
     and ``theta_col``.
 
 2.  **Vector Components**: The vector itself is defined by its
-    components in the radial and tangential directions.
+    components in the radial and tangential directions:
+        
     - :math:`u_i` (from ``u_col``) is the component in the radial
       direction (pointing away from the center).
     - :math:`v_i` (from ``v_col``) is the component in the tangential
@@ -5438,6 +5435,12 @@ Examples
 ...     cmap='coolwarm',
 ...     scale=25  # Adjusts arrow size for better visibility
 ... )
+
+References
+----------
+
+.. footbibliography::
+    
 """
 
 
@@ -5640,6 +5643,7 @@ The heatmap is constructed by binning the 2D polar space and
 counting the number of data points that fall into each bin.
 
 1.  **Coordinate Mapping**:
+    
     - The radial data from ``r_col`` is used directly.
     - The angular data from ``theta_col``, :math:`\theta_{data}`, is
       converted to radians in the range :math:`[0, 2\pi]`. If
@@ -5659,6 +5663,14 @@ counting the number of data points that fall into each bin.
 3.  **Visualization**: The resulting count matrix :math:`\mathbf{C}`
     is visualized using ``pcolormesh``, where the color of each
     cell corresponds to its count, creating the heatmap effect.
+    See :footcite:p:`Hunter:2007` for Matplotlib details.
+
+See Also
+--------
+matplotlib.pyplot.pcolormesh :
+    Draw a pseudocolor plot with a nonregular rectangular grid.
+numpy.histogram2d :
+    Compute the bi-dimensional histogram of two data samples.
 
 Examples
 --------
@@ -5692,6 +5704,12 @@ Examples
 ...     title='Rainfall Intensity vs. Hour of Day',
 ...     cbar_label='Event Count'
 ... )
+
+References
+----------
+
+.. footbibliography::
+    
 """
 
 
