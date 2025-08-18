@@ -177,7 +177,7 @@ quantiles become columns (e.g., ``prefix_qX.X``).
 
 ---------------------------------------
 Melting Quantile Data (Wide to Long)
---------------------------------------
+---------------------------------------
 
 Uses :func:`~kdiagram.utils.melt_q_data` to convert a wide-format
 DataFrame into a fully long ("tidy") format with separate columns for

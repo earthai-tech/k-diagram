@@ -9,8 +9,8 @@ requires considering multiple aspects simultaneously. How well does the
 model capture the overall variability (standard deviation) of the observed
 phenomenon? How well does the pattern of the model's output correlate
 with the observed pattern? A Taylor Diagram, developed by Karl E. Taylor
-:cite:t:`Taylor2001`, provides an elegant solution by graphically summarizing these
-key statistics in a single, concise plot.
+:footcite:p:`Taylor2001`, provides an elegant solution by graphically 
+summarizing these key statistics in a single, concise plot.
 
 Taylor diagrams are widely used, particularly in climate science and
 meteorology, but are applicable to any field where model outputs need
@@ -19,7 +19,7 @@ allow for the simultaneous assessment of correlation, standard
 deviation, and (implicitly) the centered root-mean-square difference
 (RMSD) between different models and the reference.
 
-`k-diagram` provides flexible functions to generate these informative
+``k-diagram`` provides flexible functions to generate these informative
 diagrams.
 
 Summary of Evaluation Functions
@@ -111,9 +111,9 @@ On the diagram:
 **Interpretation:**
 
 * Evaluate model points based on their proximity to the reference point
-    (lower RMSD is better), their angular position (lower angle means
-    higher correlation), and their radial position relative to the
-    reference arc/point (matching standard deviation is often desired).
+  (lower RMSD is better), their angular position (lower angle means
+  higher correlation), and their radial position relative to the
+  reference arc/point (matching standard deviation is often desired).
 * If `cmap` is used, the background shading provides additional context
   based on the `radial_strategy`:
     
@@ -244,6 +244,4 @@ and correlation (:math:`\rho`) to the angular coordinate
    
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

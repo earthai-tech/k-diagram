@@ -140,7 +140,7 @@ Reliability Diagram (:func:`~kdiagram.plot.comparison.plot_reliability_diagram`)
 
 **Purpose:**
 This function draws a **reliability (calibration) diagram**, a standard
-method in forecast verification :cite:t:`Jolliffe2012`, to assess how
+method in forecast verification :footcite:p:`Jolliffe2012`, to assess how
 well **predicted probabilities** match **observed frequencies**. It supports
 one or many models on the same figure, multiple binning strategies, optional
 error bars (e.g., Wilson intervals), and a counts panel for diagnosing data
@@ -274,7 +274,7 @@ Comparing Metrics Across Horizons (:func:`~kdiagram.plot.comparison.plot_horizon
 
 **Purpose:**
 This function creates a polar bar chart, a novel visualization
-developed as part of the analytics framework in :cite:t:`kouadiob2025`,
+developed as part of the analytics framework in :footcite:t:`kouadiob2025`,
 to visually compare key metrics across a set of distinct categories,
 most commonly different forecast horizons (e.g., H+1, H+2, etc.).
 It is designed to answer questions like: "How does my model's
@@ -368,6 +368,4 @@ in the Gallery)
 
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

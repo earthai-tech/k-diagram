@@ -19,7 +19,7 @@ illuminate various facets of forecast uncertainty.
    forecasts. For a detailed case study demonstrating how these plots
    are used to analyze the spatiotemporal uncertainty of a deep
    learning model for land subsidence forecasting, please refer to our
-   research paper, :cite:t:`kouadiob2025`. The paper showcases how
+   research paper :footcite:p:`kouadiob2025`. The paper showcases how
    these diagnostics can reveal critical trade-offs between models that
    are often invisible to standard aggregate metrics.
    
@@ -91,7 +91,8 @@ This plot provides a direct visual comparison between the actual
 observed ground truth values and the model's point predictions
 (typically the median forecast, Q50) for each sample or location.
 It's a fundamental diagnostic for assessing basic model accuracy and
-identifying systematic biases.
+identifying systematic biases (see general discussion of “good” forecasts
+and verification practice, :footcite:p:`Murphy1993What, Jolliffe2012`)
 
 **Mathematical Concept:**
 For each data point :math:`i`, we have an actual value :math:`y_i` and a
@@ -152,8 +153,13 @@ This diagnostic specifically focuses on **prediction interval failures**.
 It identifies instances where the actual observed value falls *outside*
 the predicted range [Qlow, Qup] and visualizes the **location**, **type**
 (under- or over-prediction), and **severity** (magnitude) of these
-anomalies. It answers: "When my model's uncertainty bounds are wrong,
-*how wrong* are they, and where?"
+anomalies. It answers: “When my model’s uncertainty bounds are wrong,
+*how wrong* are they, and where?” This aligns with the calibration–sharpness
+principle in probabilistic forecasting :footcite:p:`Gneiting2007b` and
+with practical verification guidance :footcite:p:`Jolliffe2012`; related
+uncertainty display ideas in time-series (e.g., fan charts) provide
+useful context :footcite:p:`Sokol2025`. Our framework operationalizes
+these ideas in polar form for high-dimensional settings :footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 An anomaly exists if the actual value :math:`y_i` is outside the
@@ -232,9 +238,13 @@ This function calculates and visualizes the **overall empirical
 coverage rate** for one or more sets of predictions. It answers the
 fundamental question: "Across the entire dataset, what fraction of the
 time did the true observed values fall within the specified prediction
-interval bounds (e.g., Q10 to Q90)?" It allows for comparing this
-aggregate performance across different models or prediction sets using
-various chart types.
+interval bounds (e.g., Q10 to Q90)?" The notion links directly to
+**calibration** in probabilistic forecasting and its complement,
+**sharpness** :footcite:p:`Gneiting2007b`, and standard verification
+practice :footcite:p:`Jolliffe2012`. For practical verification tooling
+in the climate/weather community, see :footcite:t:`Brady2021`.
+It allows comparing aggregate performance across models using various
+chart types.
 
 **Mathematical Concept:**
 The empirical coverage for a given prediction interval
@@ -309,9 +319,12 @@ Point-wise Coverage Diagnostic (:func:`~kdiagram.plot.uncertainty.plot_coverage_
 **Purpose:**
 While :func:`~kdiagram.plot.uncertainty.plot_coverage` gives an overall
 average, this function provides a **granular, point-by-point diagnostic**
-of prediction interval coverage on a polar plot. It visualizes *where*
-(at which specific sample, location, or time, represented angularly)
-the prediction intervals succeeded or failed to capture the actual value.
+of prediction interval coverage on a polar plot. It reveals *where*
+(at which sample, location, or time, represented angularly) the intervals
+succeeded or failed to capture the actual value—an operational view of
+calibration beyond global scores :footcite:p:`Jolliffe2012, Gneiting2007b`.
+The polar diagnostic follows our framework for high-dimensional settings
+:footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 For each data point :math:`i`, a binary coverage indicator :math:`c_i` is
@@ -391,9 +404,12 @@ Interval Width Consistency (:func:`~kdiagram.plot.uncertainty.plot_interval_cons
 This plot analyzes the **temporal stability** of the predicted
 uncertainty range. It visualizes how much the **width** of the
 prediction interval (:math:`Q_{up} - Q_{low}`) fluctuates for each
-location or sample across multiple time steps or forecast horizons.
-It answers: "Are the model's uncertainty estimates stable over time for
-a given location, or do they vary wildly?"
+location or sample across multiple time steps or horizons. Consistent
+widths relate to **sharpness** (narrow, informative intervals) but must
+not come at the expense of calibration :footcite:p:`Gneiting2007b`.
+For broader context on depicting evolving forecast distributions,
+see fan-chart practice :footcite:p:`Sokol2025`. The polar stability
+diagnostic is part of our analytics framework :footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 For each location/sample :math:`j`, the interval width is calculated
@@ -477,12 +493,15 @@ Prediction Interval Width Visualization (:func:`~kdiagram.plot.uncertainty.plot_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This function creates a polar scatter plot focused solely on the
-**magnitude of predicted uncertainty**. It visualizes the **width** of
-the prediction interval (:math:`Q_{up} - Q_{low}`) for each individual
-sample or location, typically at a single snapshot in time or for a
-specific forecast horizon. It answers: "How wide is the predicted
-uncertainty range for each point in my dataset?"
+This function creates a polar scatter focused on the **magnitude of
+predicted uncertainty**, visualizing the **width** (:math:`Q_{up}-Q_{low}`)
+for each point at a given snapshot or horizon. Width is a proxy for
+**sharpness**—useful only when paired with good calibration
+:footcite:p:`Gneiting2007b`. As a complementary display to time-series
+fan charts :footcite:p:`Sokol2025`, our polar view highlights spatial/
+cross-sectional structure in uncertainty :footcite:p:`kouadiob2025`.
+It answers: "How wide is the predicted uncertainty range for  
+each point in my dataset?"
 
 **Mathematical Concept:**
 For each data point :math:`i`, the interval width is calculated:
@@ -552,8 +571,12 @@ This visualization focuses on **model degradation over forecast
 horizons**. It creates a polar *bar* chart to show how the *average*
 prediction uncertainty (specifically, the mean interval width
 :math:`\mathbb{E}[Q_{up} - Q_{low}]`) changes as the forecast lead time
-increases. It helps diagnose *concept drift* or *model aging* effects
-related to uncertainty.
+increases—useful for diagnosing lead-time skill decay and concept/model
+aging effects (see lead-time verification practice and tooling,
+:footcite:p:`Brady2021`; general verification principles, :footcite:p:`Jolliffe2012`;
+spatiotemporal forecasters where horizon behavior matters,
+:footcite:p:`Hong2025`). It helps diagnose *concept drift* or *model aging* 
+effects related to uncertainty.
 
 **Mathematical Concept:**
 For each distinct forecast horizon :math:`h` (e.g., 1-step ahead, 2-steps
@@ -617,13 +640,14 @@ General Polar Series Visualization (:func:`~kdiagram.plot.uncertainty.plot_tempo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This is a **general-purpose** polar scatter plot utility within the
-uncertainty module, designed for visualizing and comparing **multiple
-data series** (columns from a DataFrame) simultaneously. While flexible,
-a common application in uncertainty analysis is to plot different quantile
-predictions (e.g., Q10, Q50, Q90) for the *same* forecast horizon to
-visualize the **uncertainty spread** at that specific point in time across
-all samples.
+This is a **general-purpose** polar scatter utility for visualizing and
+comparing **multiple data series** (columns from a DataFrame) simultaneously.
+A common uncertainty use is plotting Q10/Q50/Q90 for the *same* horizon to
+show the **spread** at that time—contextualized by calibration–sharpness
+principles :footcite:p:`Gneiting2007b` and by conventional distribution
+displays like fan charts :footcite:p:`Sokol2025`. Quantile-based multi-horizon
+forecasting models (e.g., TFT) naturally produce such series
+:footcite:p:`Lim2021`.
 
 **Mathematical Concept:**
 For each data series :math:`k` (corresponding to a column in ``q_cols``)
@@ -689,13 +713,17 @@ Multi-Time Uncertainty Drift Rings (:func:`~kdiagram.plot.uncertainty.plot_uncer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This plot offers a dynamic view of how the **spatial pattern of
-prediction uncertainty** (interval width) evolves across **multiple time
-steps** (e.g., years) for all locations simultaneously. Unlike
-:func:`~kdiagram.plot.uncertainty.plot_model_drift`, which averages
-across locations for each horizon, this function plots each time step
-as a distinct **concentric ring**, allowing direct comparison of the
-uncertainty "map" at different times.
+This plot shows how the **spatial pattern of prediction uncertainty**
+(interval width) evolves across **multiple time steps** (e.g., years) for
+all locations simultaneously. Unlike
+:func:`~kdiagram.plot.uncertainty.plot_model_drift` (which averages
+across space per horizon), each time step is a **concentric ring** so you
+can compare uncertainty “maps” over time—useful in spatiotemporal settings
+and environmental applications :footcite:p:`Liu2024, Hong2025` and aligned
+with our polar analytics framework :footcite:p:`kouadiob2025`. For lead-time
+skill context and evaluation workflows, see :footcite:t:`Brady2021`; for
+discussion of evolving forecast distributions, see fan-chart literature
+:footcite:p:`Sokol2025`.
 
 **Mathematical Concept:**
 For each location :math:`j` and time step :math:`t`, the interval width
@@ -772,9 +800,13 @@ Prediction Velocity Visualization (:func:`~kdiagram.plot.uncertainty.plot_veloci
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This plot visualizes the **rate of change**, or **velocity**, of the
-central forecast prediction (typically the median, Q50) over consecutive
-time periods for each individual location or sample. It helps understand
+This plot visualizes the **rate of change** (velocity) of the central
+forecast (typically Q50) across consecutive periods for each location—
+useful for spotting regime shifts and horizon-dependent behavior in
+spatiotemporal settings :footcite:p:`Hong2025, Liu2024, kouadiob2025`. Typical
+implementations compute finite differences over arrays/data frames
+:footcite:p:`harris2020array, reback2020pandas`, then render with
+standard plotting backends :footcite:p:`Hunter:2007`. It helps understand
 the predicted dynamics of the phenomenon being forecast, answering: "How
 fast is the predicted median value changing from one period to the next
 at each location?"
@@ -859,9 +891,11 @@ Radial Density Ring (:func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`
 This plot provides a unique visualization of the **one-dimensional
 probability distribution** of a continuous variable. It uses Kernel
 Density Estimation (KDE), a standard non-parametric method for density
-estimation :cite:t:`Silverman1986`, to create a smooth representation of the data's
-distribution, answering the question: "What is the shape of this
+estimation :footcite:p:`Silverman1986`, to create a smooth representation 
+of the data's distribution, answering the question: "What is the shape of this
 data's distribution, and where are its most common values?
+In practice, density estimates and numerics rely on SciPy/NumPy 
+:footcite:p:`2020SciPy-NMeth, harris2020array`. 
 
 **Mathematical Concept:**
 The function first derives a one-dimensional data vector :math:`\mathbf{x}`
@@ -934,12 +968,12 @@ value :math:`x`, and the color at that radius is determined by
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This function creates a **polar heatmap**, a novel visualization method
-developed as part of the analytics framework in :cite:t:`kouadiob2025`,
-to visualize the two-dimensional density distribution of data points. It is
-particularly powerful for uncovering relationships between a linear
-variable (mapped to the radius) and a cyclical or ordered variable
-(mapped to the angle). It answers the question: "Do high or low values
+This function creates a **polar heatmap**, —part of our analytics framework
+:footcite:p:`kouadiob2025`—to visualize the two-dimensional density 
+distribution of data points. It is particularly powerful for uncovering  
+relationships between a linear variable (mapped to the radius) and a cyclical 
+or ordered variable (mapped to the angle). Depending on the dataset, a 2D KDE 
+may be used :footcite:p:`Silverman1986`,It answers the question: "Do high or low values
 of one metric tend to concentrate at specific times, seasons, or categories?"
 
 **Mathematical Concept:**
@@ -1000,11 +1034,14 @@ Visualizing Vector Fields (:func:`~kdiagram.plot.uncertainty.plot_polar_quiver`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This function creates a **polar quiver plot**, another novel visualization
-from the framework in :cite:t:`kouadiob2025`, to visualize vector data.
-Each arrow on the plot represents a vector, showing both its **magnitude**
-and **direction**. It is an excellent tool for understanding dynamic
-processes like forecast revisions, error vectors, or physical flows.
+This function produces a **polar quiver plot** to visualize vector data
+(magnitude + direction)—handy for forecast revisions, error vectors, or
+physical flows within verification workflows (see tooling context,
+:footcite:p:`Brady2021`) and rendered with Matplotlib primitives
+:footcite:p:`Hunter:2007`. It complements scalar uncertainty views by
+showing directional structure in model dynamics :footcite:p:`kouadiob2025`.
+It is a resonable tool for understanding dynamic processes like forecast  
+revisions, error vectors, or physical flows.
 
 **Mathematical Concept:**
 Each arrow is a vector defined at an origin point in polar coordinates.
@@ -1065,6 +1102,4 @@ Each arrow is a vector defined at an origin point in polar coordinates.
 
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

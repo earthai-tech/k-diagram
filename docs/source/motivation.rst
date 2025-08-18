@@ -14,7 +14,7 @@ In an era of increasingly complex systems and high-dimensional data,
 the demands on forecasting have grown immensely. Fields ranging from
 energy and finance to climatology and supply chain management now rely
 on sophisticated models, including deep learning approaches like
-Temporal Fusion Transformers (:cite:t:`Lim2021, Kouadio2025`), 
+Temporal Fusion Transformers :footcite:p:`Lim2021, Kouadio2025`, 
 to make predictions. However, the power of these models brings a new challenge:
 understanding and evaluating their performance in a way that is both
 comprehensive and actionable.
@@ -27,9 +27,9 @@ poorly, or how the reliability of its predictions changes across
 different conditions. This overlooks the fundamental principle that
 the "goodness" of a forecast is multifaceted, encompassing qualities
 like reliability and sharpness, not just accuracy alone
-(:cite:t:`Gneiting2007b`). This challenge is particularly acute in
+:footcite:p:`Gneiting2007b`. This challenge is particularly acute in
 spatiotemporal forecasting, where performance can vary dramatically
-across locations and time horizons (:cite:t:`Hong2025`). A prime example of 
+across locations and time horizons :footcite:p:`Hong2025`. A prime example of 
 this challenge can be found in the domain of urban geohazards. 
 
 
@@ -41,7 +41,7 @@ often exacerbated by rapid urbanization and climate stress. **Land
 subsidence**, the gradual sinking of the ground surface, is a prime
 example, posing significant threats to infrastructure stability,
 groundwater resources, and the resilience of coastal and low-lying
-cities (:cite:t:`Liu2024`).
+cities :footcite:p:`Liu2024`.
 
 Forecasting the evolution of such phenomena is notoriously challenging.
 It involves understanding the complex, often non-linear interplay
@@ -57,7 +57,7 @@ evaluation often focuses on point forecast accuracy, neglecting the
 inherent variability and potential unreliability of predictions. This
 overlooks the fundamental principle that the "goodness" of a forecast
 is multifaceted, encompassing qualities like reliability and sharpness,
-not just accuracy alone (:cite:t:`Gneiting2007b`).
+not just accuracy alone.
 
 
 The Need for Uncertainty-Aware Diagnostics
@@ -71,13 +71,13 @@ outcomes**. Standard metrics and plots often fail to provide intuitive
 insights into the structure, consistency, and potential failures of
 predictive uncertainty. Even established visualizations like fan charts
 are primarily designed for single time series and do not scale well to
-high-dimensional problems (:cite:t:`Sokol2025,Hong2025`).
+high-dimensional problems :footcite:p:`Sokol2025`.
 
 During research focused on forecasting land subsidence in rapidly
 developing areas like Nansha and particularly the complex urban setting
-of **Zhongshan, China** (:cite:t:`kouadiob2025`), this challenge became
+of **Zhongshan, China** :footcite:p:`kouadiob2025`, this challenge became
 acutely apparent. For instance advanced models like the Extreme Temporal Fusion
-Transformer (:cite:t:`Kouadio2025`) could generate multi-horizon quantile
+Transformer :footcite:p:`Kouadio2025` could generate multi-horizon quantile
 forecasts, however, interpreting the reliability and spatiotemporal patterns of
 the predicted uncertainty bounds proved difficult with conventional
 tools. How could we effectively diagnose if intervals were
@@ -105,10 +105,10 @@ model behavior and uncertainty:
 * Tracking how uncertainty magnitude changes across samples or evolves
   over forecast horizons (``Interval Width``, ``Uncertainty Drift``).
 * Comparing overall model skill using established metrics, like the
-  Taylor Diagram (:cite:t:`Taylor2001`), in a polar layout.
+  Taylor Diagram (:footcite:t:`Taylor2001`), in a polar layout.
 
 These visualization methods, developed during the course of land
-subsidence research (:cite:t:`kouadiob2025`), aim to provide more intuitive,
+subsidence research, aim to provide more intuitive,
 spatially explicit (when angle represents location or index), and
 diagnostically rich insights than standard Cartesian plots alone.
 
@@ -145,6 +145,4 @@ verification and uncertainty quantification.
    
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

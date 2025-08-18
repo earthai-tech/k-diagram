@@ -9,8 +9,10 @@ data analysis and forecast evaluation. Before applying complex
 visualizations, it's often crucial to inspect the fundamental
 characteristics of key metrics, such as prediction errors or the
 width of uncertainty intervals. The histogram and its smoothed
-counterpart, the Kernel Density Estimate (KDE), are primary tools
-for this task.
+counterpart, the Kernel Density Estimate (KDE) ():footcite:t:`Silverman1986`),
+are primary tools for this task. In practice, these visualizations are
+computed with array and scientific routines (:footcite:t:`harris2020array, 2020SciPy-NMeth`)
+and rendered with common plotting libraries (:footcite:t:`Hunter:2007, Waskom2021`).
 
 The :mod:`kdiagram.utils.hist` module provides straightforward functions
 for creating these essential distribution plots.
@@ -39,7 +41,6 @@ Histogram and KDE (:func:`~kdiagram.utils.plot_hist_kde`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-
 This function provides a comprehensive visualization of a one-dimensional
 data distribution. It combines a **histogram**, which groups data into
 bins, with a **Kernel Density Estimate (KDE)**, which provides a smooth,
@@ -58,9 +59,9 @@ spread of a variable.
 2. **Kernel Density Estimate (KDE)**: The KDE is a non-parametric way
    to estimate the probability density function of a random variable. It
    creates a smooth curve by placing a kernel function (typically a
-   Gaussian, or "bell curve") on each data point, and then summing all
-   these kernels. The resulting curve, :math:`\hat{f}_h(x)`, is a smooth
-   estimate of the data's distribution.
+   Gaussian) on each data point, and then summing all these kernels.
+   The resulting curve, :math:`\hat{f}_h(x)`, is a smooth estimate of the
+   data's distribution :footcite:t:`Silverman1986`.
 
    .. math::
 
@@ -68,6 +69,10 @@ spread of a variable.
 
    Here, :math:`K` is the kernel function, :math:`h` is the bandwidth
    (a smoothing parameter), and :math:`n` is the number of data points.
+   Typical implementations rely on numerical routines and array ops
+   from SciPy/NumPy (:footcite:t:`2020SciPy-NMeth, harris2020array`), while
+   the visualization itself is commonly produced with Matplotlib/Seaborn
+   (:footcite:t:`Hunter:2007, Waskom2021`).
 
 **Interpretation:**
 
@@ -103,6 +108,4 @@ in the Gallery for code and a plot example)
 
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

@@ -9,9 +9,9 @@ predictions is crucial for interpretation, debugging, and building
 trust in forecasting models. While overall importance scores are useful,
 visualizing how these importances compare across different contexts
 (e.g., different models, time periods, spatial regions) can reveal
-deeper insights.
+deeper insights :footcite:p:`Lim2021, scikit-learn`.
 
-`k-diagram` provides a specialized radar chart, the "Feature
+``k-diagram`` provides a specialized radar chart, the "Feature
 Fingerprint," to effectively visualize and compare these multi-
 dimensional feature importance profiles.
 
@@ -47,9 +47,13 @@ This function generates a polar radar chart designed to visually
 compare the importance or contribution profiles of multiple features
 across different groups, conditions, or models (referred to as "layers").
 Each layer is represented by a distinct colored polygon on the chart,
-creating a unique "fingerprint" of feature influence for that layer :cite:t:`kouadiob2025`. 
-allows for easy identification of dominant features, relative importance
-It patterns, and shifts in influence across the layers being compared.
+creating a unique "fingerprint" of feature influence for that layer
+:footcite:p:`kouadiob2025`. It allows for easy identification of dominant
+features, relative-importance patterns, and shifts in influence across
+the layers being compared. When feature scores originate from model-
+agnostic tools (e.g., permutation importance) or model-specific methods
+(e.g., gradient/attention based for TFT), the fingerprint helps synthesize
+those signals into a single comparative view :footcite:p:`Lim2021, scikit-learn`.
 
 **Mathematical Concept:**
 Let :math:`\mathbf{R}` be the input `importances` matrix of shape
@@ -138,6 +142,4 @@ is the number of features.
 
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

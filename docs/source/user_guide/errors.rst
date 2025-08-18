@@ -48,7 +48,7 @@ This plot is designed to decompose a model's error into two components:
 **systemic error (bias)** and **random error (variance)**. It achieves
 this by aggregating errors across bins of an angular variable (like
 the month of the year or hour of the day) and displaying the mean and
-standard deviation of the errors in each bin (:cite:t:`kouadiob2025`).
+standard deviation of the errors in each bin (:footcite:t:`kouadiob2025`).
 
 **Mathematical Concept:**
 The function first partitions the dataset into :math:`K` bins,
@@ -116,8 +116,8 @@ Comparing Error Distributions (:func:`~kdiagram.plot.errors.plot_error_violins`)
 
 **Purpose:**
 This function provides a direct visual comparison of the **full error
-distributions** for multiple models on a single polar plot. It adapts the 
-traditional violin plot (:cite:t:`Hintze1998`) to a polar coordinate system, 
+distributions** for multiple models on a single polar plot. It adapts the
+traditional violin plot (:footcite:t:`Hintze1998`) to a polar coordinate system,
 to show the shape, bias, and variance of each model's errors, making it an
 excellent tool for model selection.
 
@@ -171,9 +171,9 @@ Visualizing 2D Uncertainty (:func:`~kdiagram.plot.errors.plot_error_ellipses`)
 
 **Purpose:**
 This function is designed for visualizing **two-dimensional uncertainty**,
-a concept explored in (:cite:t:`kouadiob2025`),  which is common in spatial
-or positional forecasting. It draws an ellipse for each data point, where 
-the ellipse's size and orientation represent the uncertainty in both the 
+a concept explored in (:footcite:t:`kouadiob2025`), which is common in spatial
+or positional forecasting. It draws an ellipse for each data point, where
+the ellipse's size and orientation represent the uncertainty in both the
 radial and angular directions.
 
 **Mathematical Concept:**
@@ -223,6 +223,4 @@ approximates a 95% confidence region).
     
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

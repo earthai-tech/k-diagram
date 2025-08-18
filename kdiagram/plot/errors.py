@@ -1,36 +1,34 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
-import warnings 
+import warnings
+from typing import Any, Optional
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
-from typing import Optional, Tuple, Dict, Any, List
 from scipy.stats import gaussian_kde
 
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
-from ..utils.validator import exist_features
 from ..utils.plot import set_axis_grid
+from ..utils.validator import exist_features
 
-__all__ = [
-    "plot_error_ellipses",
-    "plot_error_bands" , 
-    "plot_error_violins"
-  ]
+__all__ = ["plot_error_ellipses", "plot_error_bands", "plot_error_violins"]
+
 
 @check_non_emptiness
 @isdf
 def plot_error_violins(
     df: pd.DataFrame,
     *error_cols: str,
-    names: Optional[List[str]] = None,
+    names: Optional[list[str]] = None,
     title: Optional[str] = None,
-    figsize: Tuple[float, float] = (9, 9),
+    figsize: tuple[float, float] = (9, 9),
     cmap: str = "viridis",
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
+    grid_props: Optional[dict[str, Any]] = None,
     savefig: Optional[str] = None,
     dpi: int = 300,
     **violin_kws,
@@ -52,59 +50,64 @@ def plot_error_violins(
 
     # Prepare data and KDEs for each model
     violin_data = []
-    all_errors = np.concatenate(
-        [df[col].dropna().to_numpy() for col in error_cols]
-    )
+    all_errors = np.concatenate([df[col].dropna().to_numpy() for col in error_cols])
     r_min, r_max = all_errors.min(), all_errors.max()
     grid = np.linspace(r_min, r_max, 200)
 
     for col in error_cols:
         errors = df[col].dropna().to_numpy()
         if len(errors) < 2:
-            violin_data.append(None) # Cannot compute KDE
+            violin_data.append(None)  # Cannot compute KDE
             continue
-        
+
         kde = gaussian_kde(errors)
         density = kde(grid)
-        violin_data.append(density / density.max()) # Normalize density
+        violin_data.append(density / density.max())  # Normalize density
 
     # Plot setup
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     num_violins = len(error_cols)
     angles = np.linspace(0, 2 * np.pi, num_violins, endpoint=False)
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(np.linspace(0, 1, num_violins))
-    
+
     # Draw violins
     for i, (angle, density) in enumerate(zip(angles, violin_data)):
         if density is None:
             continue
-            
+
         # Width of the violin slice
         width = (2 * np.pi / num_violins) * 0.8
-        
+
         # Create the path for the violin polygon
-        x = np.concatenate([
-            -density * width / 2,
-            np.flip(density * width / 2)
-        ])
+        x = np.concatenate([-density * width / 2, np.flip(density * width / 2)])
         y = np.concatenate([grid, np.flip(grid)])
-        
+
         # Rotate and translate path to the correct angle
         theta = x + angle
         r = y
-        
-        ax.fill(theta, r, color=colors[i], label=names[i],
-                alpha=violin_kws.pop('alpha', 0.6), **violin_kws)
+
+        ax.fill(
+            theta,
+            r,
+            color=colors[i],
+            label=names[i],
+            alpha=violin_kws.pop("alpha", 0.6),
+            **violin_kws,
+        )
 
     # Add zero-error reference line
-    ax.plot(np.linspace(0, 2 * np.pi, 100), np.zeros(100),
-            color='black', linestyle='--', lw=1.5, label='Zero Error')
+    ax.plot(
+        np.linspace(0, 2 * np.pi, 100),
+        np.zeros(100),
+        color="black",
+        linestyle="--",
+        lw=1.5,
+        label="Zero Error",
+    )
 
     ax.set_title(title or "Comparison of Error Distributions")
-    ax.set_yticklabels([]) # Hide radial ticks for clarity
+    ax.set_yticklabels([])  # Hide radial ticks for clarity
     ax.set_xticks(angles)
     ax.set_xticklabels(names)
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1))
@@ -118,6 +121,7 @@ def plot_error_violins(
         plt.show()
 
     return ax
+
 
 plot_error_violins.__doc__ = r"""
 Plot polar violin plots to compare multiple error distributions.
@@ -245,6 +249,7 @@ References
 
 """
 
+
 @check_non_emptiness
 @isdf
 def plot_error_bands(
@@ -256,10 +261,10 @@ def plot_error_bands(
     theta_bins: int = 24,
     n_std: float = 1.0,
     title: Optional[str] = None,
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
+    grid_props: Optional[dict[str, Any]] = None,
     mask_angle: bool = False,
     savefig: Optional[str] = None,
     dpi: int = 300,
@@ -277,54 +282,47 @@ def plot_error_bands(
         return None
 
     if theta_period:
-        data['theta_rad'] = (
-            (data[theta_col] % theta_period) / theta_period
-        ) * 2 * np.pi
+        data["theta_rad"] = (
+            ((data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+        )
     else:
         min_theta, max_theta = data[theta_col].min(), data[theta_col].max()
         if (max_theta - min_theta) > 1e-9:
-            data['theta_rad'] = (
-                (data[theta_col] - min_theta) / (max_theta - min_theta)
-            ) * 2 * np.pi
+            data["theta_rad"] = (
+                ((data[theta_col] - min_theta) / (max_theta - min_theta)) * 2 * np.pi
+            )
         else:
-            data['theta_rad'] = 0
+            data["theta_rad"] = 0
 
     # Bin the data by angle
     theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
     theta_labels = (theta_edges[:-1] + theta_edges[1:]) / 2
-    data['theta_bin'] = pd.cut(
-        data['theta_rad'], bins=theta_edges, labels=theta_labels,
-        include_lowest=True
+    data["theta_bin"] = pd.cut(
+        data["theta_rad"], bins=theta_edges, labels=theta_labels, include_lowest=True
     )
 
     # Calculate stats per bin
-    stats = data.groupby('theta_bin')[error_col].agg(
-        ['mean', 'std']
-    ).reset_index()
-    stats['std'] = stats['std'].fillna(0) # Handle bins with one sample
+    stats = data.groupby("theta_bin")[error_col].agg(["mean", "std"]).reset_index()
+    stats["std"] = stats["std"].fillna(0)  # Handle bins with one sample
 
     # Create the plot
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
-    
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+
     # Plot the mean error line
-    ax.plot(stats['theta_bin'], stats['mean'], color='black', lw=2,
-            label='Mean Error')
+    ax.plot(stats["theta_bin"], stats["mean"], color="black", lw=2, label="Mean Error")
 
     # Create and plot the uncertainty band
     ax.fill_between(
-        stats['theta_bin'],
-        stats['mean'] - n_std * stats['std'],
-        stats['mean'] + n_std * stats['std'],
-        alpha=fill_kws.pop('alpha', 0.3),
-        label=f'{n_std} Std. Dev. Band',
-        **fill_kws
+        stats["theta_bin"],
+        stats["mean"] - n_std * stats["std"],
+        stats["mean"] + n_std * stats["std"],
+        alpha=fill_kws.pop("alpha", 0.3),
+        label=f"{n_std} Std. Dev. Band",
+        **fill_kws,
     )
-    
+
     # Add a zero-error reference line
-    ax.axhline(0, color='red', linestyle='--', lw=1.5,
-               label='Zero Error')
+    ax.axhline(0, color="red", linestyle="--", lw=1.5, label="Zero Error")
 
     ax.set_title(title or f"Error Distribution vs. {theta_col}")
     ax.set_ylabel(f"Forecast Error ({error_col})")
@@ -341,6 +339,7 @@ def plot_error_bands(
     else:
         plt.show()
     return ax
+
 
 plot_error_bands.__doc__ = r"""
 Plot polar error bands to visualize systemic vs. random error.
@@ -488,6 +487,7 @@ Examples
 ... )
 """
 
+
 @check_non_emptiness
 @isdf
 def plot_error_ellipses(
@@ -500,12 +500,12 @@ def plot_error_ellipses(
     color_col: Optional[str] = None,
     n_std: float = 2.0,
     title: Optional[str] = None,
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     mask_angle: bool = False,
     mask_radius: bool = False,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
+    grid_props: Optional[dict[str, Any]] = None,
     savefig: Optional[str] = None,
     dpi: int = 300,
     **ellipse_kws,
@@ -533,15 +533,11 @@ def plot_error_ellipses(
         color_data = data[r_std_col].to_numpy()
         cbar_label = f"Uncertainty ({r_std_col})"
 
-    norm = Normalize(
-        vmin=np.min(color_data), vmax=np.max(color_data)
-    )
+    norm = Normalize(vmin=np.min(color_data), vmax=np.max(color_data))
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(norm(color_data))
 
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
 
     # Plot each ellipse as a filled path
     for i, row in data.iterrows():
@@ -552,26 +548,21 @@ def plot_error_ellipses(
             theta_std=row[theta_std_col],
             n_std=n_std,
         )
-        ax.fill(
-            theta_path, r_path, color=colors[i], **ellipse_kws
-        )
+        ax.fill(theta_path, r_path, color=colors[i], **ellipse_kws)
 
     cbar = plt.colorbar(
-        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj),
-        ax=ax, pad=0.1, shrink=0.75
+        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj), ax=ax, pad=0.1, shrink=0.75
     )
     cbar.set_label(cbar_label, fontsize=10)
 
-    ax.set_title(
-        title or f"Error Ellipses ({n_std:.1f} std. dev.)"
-    )
+    ax.set_title(title or f"Error Ellipses ({n_std:.1f} std. dev.)")
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
     if mask_angle:
-        ax.set_xticklabels([])  
+        ax.set_xticklabels([])
 
     if mask_radius:
-        ax.set_yticklabels([])  
-        
+        ax.set_yticklabels([])
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -582,9 +573,7 @@ def plot_error_ellipses(
     return ax
 
 
-def _get_ellipse_path(
-    r_mean, theta_mean, r_std, theta_std, n_std=2.0
-):
+def _get_ellipse_path(r_mean, theta_mean, r_std, theta_std, n_std=2.0):
     """
     Helper to calculate the path of an ellipse in polar coordinates.
     The ellipse is defined in a local Cartesian frame and then
@@ -604,10 +593,12 @@ def _get_ellipse_path(
     y_local = (height / 2) * np.sin(t)
 
     # Rotation matrix to align ellipse with the radial direction
-    R = np.array([
-        [np.cos(theta_mean), -np.sin(theta_mean)],
-        [np.sin(theta_mean), np.cos(theta_mean)],
-    ])
+    R = np.array(
+        [
+            [np.cos(theta_mean), -np.sin(theta_mean)],
+            [np.sin(theta_mean), np.cos(theta_mean)],
+        ]
+    )
 
     # Rotate and translate local points
     x_rotated, y_rotated = np.dot(R, [x_local, y_local])
@@ -619,6 +610,7 @@ def _get_ellipse_path(
     theta_path = np.arctan2(y_final, x_final)
 
     return theta_path, r_path
+
 
 plot_error_ellipses.__doc__ = r"""
 Plot polar error ellipses to visualize two-dimensional uncertainty.

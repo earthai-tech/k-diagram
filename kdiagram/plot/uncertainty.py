@@ -12,15 +12,7 @@ related diagnostics using polar coordinates.
 from __future__ import annotations
 
 import warnings
-from typing import (
-    Any,
-    Optional, 
-    Union, 
-    List, 
-    Literal, 
-    Dict, 
-    Tuple
-)
+from typing import Any, Literal
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -31,19 +23,15 @@ from scipy.stats import gaussian_kde
 
 from ..api.summary import ResultSummary
 from ..compat.matplotlib import get_cmap
+from ..compat.sklearn import validate_params
 from ..decorators import check_non_emptiness, isdf
-from ..utils.diagnose_q import ( 
-    build_qcols_multiple,
-    detect_quantiles_in, 
-    validate_qcols
-)
+from ..utils.diagnose_q import build_qcols_multiple, detect_quantiles_in, validate_qcols
 from ..utils.handlers import columns_manager
 from ..utils.plot import set_axis_grid
 from ..utils.validator import (
     _assert_all_types,
     exist_features,
 )
-
 
 __all__ = [
     "plot_actual_vs_predicted",
@@ -56,29 +44,30 @@ __all__ = [
     "plot_temporal_uncertainty",
     "plot_uncertainty_drift",
     "plot_velocity",
-    "plot_radial_density_ring", 
-    "plot_polar_heatmap", 
-    "plot_polar_quiver"
+    "plot_radial_density_ring",
+    "plot_polar_heatmap",
+    "plot_polar_quiver",
 ]
 
 
+@validate_params({"y_true": ["array-like"]})
 def plot_coverage(
     y_true,
     *y_preds,
-    names=None,
-    q=None,
-    kind="line",
-    cmap="viridis",
-    pie_startangle=140,
-    pie_autopct="%1.1f%%",
-    radar_color="tab:blue",
-    radar_fill_alpha=0.25,
-    radar_line_style="o-",
-    cov_fill=False,
-    figsize=None,
-    title=None,
-    savefig=None,
-    verbose=1,
+    names: str | list[str] | None = None,
+    q: str | list[str] | None = None,
+    kind: str = "line",
+    cmap: str = "viridis",
+    pie_startangle: int | float = 140,
+    pie_autopct: str = "%1.1f%%",
+    radar_color: str = "tab:blue",
+    radar_fill_alpha: float = 0.25,
+    radar_line_style: str = "o-",
+    cov_fill: bool = False,
+    figsize: tuple[str, str] = None,
+    title: str | None = None,
+    savefig: str | None = None,
+    verbose: int = 1,
 ):
     # Convert the true values to a numpy array for consistency
     y_true = np.array(y_true)
@@ -104,7 +93,7 @@ def plot_coverage(
         q = np.array(q)
         if q.ndim != 1:
             raise ValueError(
-                "Parameter 'q' must be a 1D list or" " array of quantile levels."
+                "Parameter 'q' must be a 1D list or array of quantile levels."
             )
 
         if not np.all((0 < q) & (q < 1)):
@@ -518,6 +507,7 @@ Examples
 ...               cov_fill=True, cmap='Set2')
 
 """
+
 
 @check_non_emptiness
 @isdf
@@ -1045,7 +1035,7 @@ def plot_velocity(
     .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
        Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
        *International Journal of Forecasting*. Manuscript submitted.
-       
+
     .. [2] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
            Computing in Science & Engineering, 9(3), 90-95.
 
@@ -4937,37 +4927,37 @@ def plot_radial_density_ring(
     df: pd.DataFrame,
     *,
     kind: Literal["width", "velocity", "direct"] = "direct",
-    target_cols: Union[str, List[str]],
-    title: Optional[str] = None,
-    r_label: Optional[str] = None,
-    figsize: Tuple[float, float] = (8, 8),
+    target_cols: str | list[str],
+    title: str | None = None,
+    r_label: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     alpha: float = 0.8,
     cbar: bool = True,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, any]] = None,
-    mask_angle: bool=True, 
-    bandwidth: Optional[float] = None,
-    savefig: Optional[str] = None,
+    grid_props: dict[str, any] | None = None,
+    mask_angle: bool = True,
+    bandwidth: float | None = None,
+    savefig: str | None = None,
     dpi: int = 300,
-    show_yticklabels: bool = False, 
+    show_yticklabels: bool = False,
 ):
     if show_yticklabels:
         warnings.warn(
             'Parameter "show_yticklabels" is deprecated as of v1.2.0'
-            ' and will be removed in a future release. '
+            " and will be removed in a future release. "
             'Use "mask_angle" instead '
-            '(set mask_angle=False to show angular labels, '
-            'mask_angle=True to hide).',
+            "(set mask_angle=False to show angular labels, "
+            "mask_angle=True to hide).",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         # delegate to mask angle
         mask_angle = False
 
     cols = columns_manager(target_cols)
     exist_features(df, features=cols)
-  
+
     if kind == "direct":
         if len(cols) != 1:
             raise ValueError(
@@ -4989,23 +4979,19 @@ def plot_radial_density_ring(
         title = title or f"Distribution of {kind.title()}"
     else:
         raise ValueError(
-            f"Invalid `kind`: '{kind}'. Use 'width', "
-            "'velocity', or 'direct'."
+            f"Invalid `kind`: '{kind}'. Use 'width', " "'velocity', or 'direct'."
         )
 
     data_1d = data_1d.dropna()
     if data_1d.empty:
         warnings.warn(
-            "Derived data is empty after dropping NaNs. "
-            "Cannot generate plot.",
+            "Derived data is empty after dropping NaNs. " "Cannot generate plot.",
             UserWarning,
             stacklevel=2,
         )
         return None
 
-    grid, pdf = _calculate_kde_for_ring(
-        data_1d.to_numpy(), bandwidth=bandwidth
-    )
+    grid, pdf = _calculate_kde_for_ring(data_1d.to_numpy(), bandwidth=bandwidth)
     if grid.size == 0:
         warnings.warn(
             "Could not compute KDE. Cannot generate plot.",
@@ -5023,9 +5009,7 @@ def plot_radial_density_ring(
     T, R = np.meshgrid(thetas, grid)
     C = np.tile(pdf_norm, (len(thetas), 1)).T
 
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     cmap_obj = get_cmap(cmap, default="viridis")
 
     pcm = ax.pcolormesh(
@@ -5051,9 +5035,7 @@ def plot_radial_density_ring(
         ax.set_yticklabels([])
 
     if cbar:
-        cbar_obj = plt.colorbar(
-            pcm, ax=ax, pad=0.1, shrink=0.7
-        )
+        cbar_obj = plt.colorbar(pcm, ax=ax, pad=0.1, shrink=0.7)
         cbar_obj.set_label(
             "Normalized Density",
             rotation=270,
@@ -5069,6 +5051,7 @@ def plot_radial_density_ring(
         plt.show()
 
     return ax
+
 
 plot_radial_density_ring.__doc__ = r"""
 Plot a radial density ring to visualize a 1D distribution.
@@ -5229,25 +5212,25 @@ def plot_polar_quiver(
     u_col: str,
     v_col: str,
     *,
-    color_col: Optional[str] = None,
-    theta_period: Optional[float] = None,
-    title: Optional[str] = None,
-    figsize: Tuple[float, float] = (8, 8),
+    color_col: str | None = None,
+    theta_period: float | None = None,
+    title: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     mask_angle: bool = False,
     mask_radius: bool = False,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
     dpi: int = 300,
     **quiver_kws,
 ):
-    
+
     required_cols = [r_col, theta_col, u_col, v_col]
     if color_col:
         required_cols.append(color_col)
     exist_features(df, features=required_cols)
-    
+
     data = df[required_cols].dropna()
     if data.empty:
         warnings.warn(
@@ -5264,15 +5247,11 @@ def plot_polar_quiver(
     v_data = data[v_col].to_numpy()  # Angular component
 
     if theta_period:
-        theta_rad = (theta_data % theta_period) / theta_period * (
-            2 * np.pi
-        )
+        theta_rad = (theta_data % theta_period) / theta_period * (2 * np.pi)
     else:
         min_theta, max_theta = theta_data.min(), theta_data.max()
         if (max_theta - min_theta) > 1e-9:
-            theta_rad = (
-                (theta_data - min_theta) / (max_theta - min_theta)
-            ) * 2 * np.pi
+            theta_rad = ((theta_data - min_theta) / (max_theta - min_theta)) * 2 * np.pi
         else:
             theta_rad = np.zeros_like(theta_data)
 
@@ -5284,39 +5263,29 @@ def plot_polar_quiver(
         color_data = np.sqrt(u_data**2 + v_data**2)
         cbar_label = "Vector Magnitude"
 
-    norm = Normalize(
-        vmin=np.min(color_data), vmax=np.max(color_data)
-    )
+    norm = Normalize(vmin=np.min(color_data), vmax=np.max(color_data))
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(norm(color_data))
 
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
-    
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+
     # Matplotlib's quiver on a polar axis expects:
     # (theta, r, angular_change, radial_change)
-    ax.quiver(
-        theta_rad, r_data, v_data, u_data,
-        color=colors, **quiver_kws
-    )
+    ax.quiver(theta_rad, r_data, v_data, u_data, color=colors, **quiver_kws)
 
     cbar = plt.colorbar(
-        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj),
-        ax=ax, pad=0.1, shrink=0.75
+        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj), ax=ax, pad=0.1, shrink=0.75
     )
     cbar.set_label(cbar_label, fontsize=10)
 
-    ax.set_title(
-        title or f"Quiver Plot of ({u_col}, {v_col})"
-    )
+    ax.set_title(title or f"Quiver Plot of ({u_col}, {v_col})")
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
     if mask_angle:
-        ax.set_xticklabels([])  
+        ax.set_xticklabels([])
 
     if mask_radius:
-        ax.set_yticklabels([])  
-        
+        ax.set_yticklabels([])
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -5325,6 +5294,7 @@ def plot_polar_quiver(
         plt.show()
 
     return ax
+
 
 plot_polar_quiver.__doc__ = r"""
 Plot a polar quiver plot to visualize vector data.
@@ -5470,6 +5440,7 @@ Examples
 ... )
 """
 
+
 @check_non_emptiness
 @isdf
 def plot_polar_heatmap(
@@ -5477,23 +5448,23 @@ def plot_polar_heatmap(
     r_col: str,
     theta_col: str,
     *,
-    theta_period: Optional[float] = None,
+    theta_period: float | None = None,
     r_bins: int = 20,
     theta_bins: int = 36,
     statistic: str = "count",
-    cbar_label: Optional[str] = None,
-    title: Optional[str] = None,
-    figsize: Tuple[float, float] = (8, 8),
+    cbar_label: str | None = None,
+    title: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     mask_angle: bool = False,
     mask_radius: bool = False,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
     exist_features(df, features=[r_col, theta_col])
-    
+
     data = df[[r_col, theta_col]].dropna()
     if data.empty:
         warnings.warn(
@@ -5509,37 +5480,27 @@ def plot_polar_heatmap(
 
     if theta_period:
         # Map to [0, 2*pi] based on a known cycle
-        theta_rad = (theta_data % theta_period) / theta_period * (
-            2 * np.pi
-        )
+        theta_rad = (theta_data % theta_period) / theta_period * (2 * np.pi)
     else:
         # Min-max scale to [0, 2*pi]
         min_theta, max_theta = theta_data.min(), theta_data.max()
         if (max_theta - min_theta) > 1e-9:
-            theta_rad = (
-                (theta_data - min_theta) / (max_theta - min_theta)
-            ) * 2 * np.pi
+            theta_rad = ((theta_data - min_theta) / (max_theta - min_theta)) * 2 * np.pi
         else:
             theta_rad = np.zeros_like(theta_data)
 
     # Define bins for the 2D histogram
-    r_edges = np.linspace(
-        r_data.min(), r_data.max(), r_bins + 1
-    )
+    r_edges = np.linspace(r_data.min(), r_data.max(), r_bins + 1)
     theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
 
     # Use np.histogram2d to get counts in each polar bin
-    counts, _, _ = np.histogram2d(
-        x=r_data, y=theta_rad, bins=[r_edges, theta_edges]
-    )
+    counts, _, _ = np.histogram2d(x=r_data, y=theta_rad, bins=[r_edges, theta_edges])
 
     # Transpose counts to match pcolormesh expectations
     # counts = counts.T
 
     # Create the polar plot
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     cmap_obj = get_cmap(cmap, default="viridis")
 
     # Use pcolormesh to draw the heatmap
@@ -5548,32 +5509,29 @@ def plot_polar_heatmap(
 
     # Add a color bar
     cbar = plt.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
-    cbar.set_label(
-        cbar_label or statistic.capitalize(),
-        fontsize=10
-    )
+    cbar.set_label(cbar_label or statistic.capitalize(), fontsize=10)
 
     ax.set_title(title or f"Density of {r_col} vs. {theta_col}")
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
     if mask_angle:
-        ax.set_xticklabels([])  
-    
+        ax.set_xticklabels([])
+
     if mask_radius:
-        ax.set_yticklabels([]) 
-        
+        ax.set_yticklabels([])
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
- 
+
     return ax
 
 
 def _calculate_kde_for_ring(
-    data: np.ndarray, bandwidth: Optional[float] = None
-) -> Tuple[np.ndarray, np.ndarray]:
+    data: np.ndarray, bandwidth: float | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Internal helper to compute KDE. In a package, this
     should be a shared utility.
@@ -5589,9 +5547,7 @@ def _calculate_kde_for_ring(
     if bandwidth is None:
         std = np.std(data, ddof=1) if data.size > 1 else 1.0
         # Silverman's rule of thumb
-        bw_val = (
-            1.06 * std * (data.size ** (-1 / 5)) if std > 0 else 1.0
-        )
+        bw_val = 1.06 * std * (data.size ** (-1 / 5)) if std > 0 else 1.0
     else:
         bw_val = bandwidth
 
@@ -5600,6 +5556,7 @@ def _calculate_kde_for_ring(
     kde = gaussian_kde(data, bw_method=bw_method)
     pdf = kde(grid)
     return grid, pdf
+
 
 plot_polar_heatmap.__doc__ = r"""
 Plot a polar heatmap to visualize a 2D density distribution.
@@ -5736,6 +5693,7 @@ Examples
 ...     cbar_label='Event Count'
 ... )
 """
+
 
 class PerformanceWarning(Warning):
     pass

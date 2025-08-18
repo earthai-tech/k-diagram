@@ -5,38 +5,28 @@ from __future__ import annotations
 
 import warnings
 from numbers import Real
-from typing import ( 
-    Any, Callable, Literal, 
-    Dict, List, Optional, Tuple
+from typing import (
+    Any,
+    Callable,
+    Literal,
 )
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from matplotlib import cm
 from matplotlib.colors import Normalize
 
-import numpy as np
-import pandas as pd
-
 from ..compat.matplotlib import get_cmap
-from ..compat.sklearn import ( 
-    StrOptions, 
-    type_of_target, 
-    validate_params
-)
+from ..compat.sklearn import StrOptions, type_of_target, validate_params
 from ..decorators import check_non_emptiness, isdf
 from ..utils.generic_utils import drop_nan_in
 from ..utils.handlers import columns_manager
 from ..utils.metric_utils import get_scorer
 from ..utils.plot import set_axis_grid
-from ..utils.validator import ( 
-    _assert_all_types,
-    is_iterable, 
-    validate_yy
-)
+from ..utils.validator import _assert_all_types, is_iterable, validate_yy
 
-__all__ = [
-    "plot_reliability_diagram", "plot_model_comparison", 
-    "plot_horizon_metrics"
-    ]
+__all__ = ["plot_reliability_diagram", "plot_model_comparison", "plot_horizon_metrics"]
 
 
 @validate_params(
@@ -91,8 +81,7 @@ def plot_reliability_diagram(
 ):
     # -------------- input handling -------------- #
     if len(y_preds) == 0:
-        raise ValueError(
-            "Provide at least one prediction array via *y_preds.")
+        raise ValueError("Provide at least one prediction array via *y_preds.")
 
     names = columns_manager(names, to_string=True) or []
     if len(names) < len(y_preds):
@@ -1254,24 +1243,24 @@ def plot_model_comparison(
 @isdf
 def plot_horizon_metrics(
     df: pd.DataFrame,
-    qlow_cols: List[str],
-    qup_cols: List[str],
+    qlow_cols: list[str],
+    qup_cols: list[str],
     *,
-    q50_cols: Optional[List[str]] = None,
-    xtick_labels: Optional[List[str]] = None,
+    q50_cols: list[str] | None = None,
+    xtick_labels: list[str] | None = None,
     normalize_radius: bool = False,
     show_value_labels: bool = True,
-    cbar_label: Optional[str] = None,
-    r_label: Optional[str] = None,
+    cbar_label: str | None = None,
+    r_label: str | None = None,
     cmap: str = "coolwarm",
     acov: str = "default",
-    title: Optional[str] = None,
-    figsize: Tuple[float, float] = (8, 8),
+    title: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
     alpha: float = 0.85,
     show_grid: bool = True,
-    grid_props: Optional[Dict] = None,
+    grid_props: dict | None = None,
     mask_angle: bool = False,
-    savefig: Optional[str] = None,
+    savefig: str | None = None,
     dpi: int = 300,
     cbar: bool = True,
 ):
@@ -1283,15 +1272,14 @@ def plot_horizon_metrics(
         )
     if q50_cols and len(qlow_cols) != len(q50_cols):
         raise ValueError(
-            "Mismatch in length: `q50_cols` must match other "
-            "quantile column lists."
+            "Mismatch in length: `q50_cols` must match other " "quantile column lists."
         )
 
     # --- Data Calculation ---
     qlow_data = df[qlow_cols].values
     qup_data = df[qup_cols].values
     interval_widths = qup_data - qlow_data
-    
+
     # Radial values are the mean width for each category/row
     radial_values = np.mean(interval_widths, axis=1)
 
@@ -1308,16 +1296,16 @@ def plot_horizon_metrics(
 
     # --- Plot Setup ---
     angular_map = {
-        "default": 2 * np.pi, "half_circle": np.pi,
-        "quarter_circle": np.pi / 2, "eighth_circle": np.pi/4
+        "default": 2 * np.pi,
+        "half_circle": np.pi,
+        "quarter_circle": np.pi / 2,
+        "eighth_circle": np.pi / 4,
     }
     span = angular_map.get(acov.lower(), 2 * np.pi)
     num_bars = len(df)
     theta = np.linspace(0, span, num_bars, endpoint=False)
-    
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
     ax.set_thetamin(0)
@@ -1330,39 +1318,45 @@ def plot_horizon_metrics(
     bar_width = (span / num_bars) * 0.9
 
     ax.bar(
-        theta, radial_values, width=bar_width, color=colors,
-        edgecolor="k", alpha=alpha, linewidth=0.5
+        theta,
+        radial_values,
+        width=bar_width,
+        color=colors,
+        edgecolor="k",
+        alpha=alpha,
+        linewidth=0.5,
     )
 
     # --- Annotations and Labels (Now Controllable) ---
     if show_value_labels:
         for angle, radius in zip(theta, radial_values):
             ax.text(
-                angle, radius + 0.03 * radial_values.max(),
-                f"{radius:.2f}", ha="center", va="bottom",
-                fontsize=8
+                angle,
+                radius + 0.03 * radial_values.max(),
+                f"{radius:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
             )
-            
+
     if xtick_labels:
         ax.set_xticks(theta)
         ax.set_xticklabels(xtick_labels)
     elif mask_angle:
         ax.set_xticklabels([])
-    
-    ax.set_yticklabels([]) # Hide radial value ticks
+
+    ax.set_yticklabels([])  # Hide radial value ticks
     ax.set_title(title or "Polar Bar Comparison", fontsize=14)
     if r_label:
         ax.set_ylabel(r_label, fontsize=12, labelpad=20)
-    
+
     set_axis_grid(ax, show_grid, grid_props=grid_props)
 
     if cbar:
         sm = cm.ScalarMappable(cmap=cmap_obj, norm=norm)
         cbar_obj = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
-        cbar_obj.set_label(
-            cbar_label or "Color Metric", fontsize=10
-        )
-        
+        cbar_obj.set_label(cbar_label or "Color Metric", fontsize=10)
+
     # --- Output ---
     plt.tight_layout()
     if savefig:
@@ -1372,6 +1366,7 @@ def plot_horizon_metrics(
         plt.show()
 
     return ax
+
 
 plot_horizon_metrics.__doc__ = r"""
 Plot a polar bar chart comparing metrics across different horizons.

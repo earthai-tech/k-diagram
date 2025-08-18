@@ -5,14 +5,17 @@ Visualizing Relationships
 =============================
 
 Understanding the relationship between observed (true) values and model
-predictions is fundamental to evaluation. While standard scatter plots
-are common, visualizing this relationship in a polar context can
-sometimes reveal different patterns or allow for comparing multiple
-prediction series against the true values in a compact format.
+predictions is fundamental to evaluation (see :footcite:t:`Murphy1993What, Jolliffe2012`).
+While standard scatter plots are common, visualizing this relationship in a polar
+context can sometimes reveal different patterns or allow for comparing multiple
+prediction series against the true values in a compact format (see also the wider
+discussion on calibration and sharpness in probabilistic evaluation,
+:footcite:p:`Gneiting2007b`).
 
-`k-diagram` provides the `plot_relationship` function to explore these
+`k-diagram` provides the ``plot_relationship`` function to explore these
 connections using a flexible polar scatter plot where the angle is
-derived from the true values and the radius from the predicted values.
+derived from the true values and the radius from the predicted values
+(:footcite:p:`kouadiob2025`).
 
 Summary of Relationship Functions
 ---------------------------------
@@ -47,7 +50,8 @@ relationship between a single set of true (observed) values and one or
 more sets of corresponding predicted values. It maps the true values to
 the angular position and the predicted values (normalized) to the radial
 position, allowing comparison of how different predictions behave across
-the range of true values :cite:t:`kouadiob2025`. 
+the range of true values :footcite:p:`kouadiob2025` ( see foundational ideas
+on forecast evaluation and reliability :footcite:p:`Murphy1993What, Jolliffe2012`).
 
 **Mathematical Concept:**
 
@@ -144,6 +148,4 @@ the range of true values :cite:t:`kouadiob2025`.
 
 .. rubric:: References
 
-.. bibliography::
-   :style: plain
-   :filter: cited
+.. footbibliography::

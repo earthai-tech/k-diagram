@@ -1,30 +1,32 @@
+from typing import Optional, Union
+
 import matplotlib.pyplot as plt
-from typing import Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
 from .handlers import columns_manager
 from .plot import (
-    prepare_data_for_kde,
-    setup_plot_axes,
-    add_kde_to_plot,
     add_histogram_to_plot,
+    add_kde_to_plot,
     normalize_pdf,
+    prepare_data_for_kde,
     set_axis_grid,
+    setup_plot_axes,
 )
+
 
 def plot_hist_kde(
     data: Union[np.ndarray, pd.Series, pd.DataFrame],
     column: Optional[str] = None,
     *,
     bins: int = 50,
-    x_label: Optional[str] = None, 
+    x_label: Optional[str] = None,
     title: str = "Distribution (Histogram + KDE)",
     bandwidth: Optional[float] = None,
     show_kde: bool = True,
     savefig: Optional[str] = None,
     dpi: int = 300,
-    figsize: Tuple[float, float] = (8, 6),
+    figsize: tuple[float, float] = (8, 6),
     kde_color: str = "orange",
     hist_color: str = "skyblue",
     hist_edge_color: str = "white",
@@ -33,10 +35,10 @@ def plot_hist_kde(
     normalize_kde: bool = False,
     show_grid: bool = True,
     grid_props: Optional[dict] = None,
-    **hist_kws, # Pass extra keywords to the histogram
-) -> Tuple[np.ndarray, np.ndarray]:
+    **hist_kws,  # Pass extra keywords to the histogram
+) -> tuple[np.ndarray, np.ndarray]:
     # Ensure the data is a valid type and convert it to np.ndarray
-    if isinstance(data, ( pd.DataFrame, pd.Series)):
+    if isinstance(data, (pd.DataFrame, pd.Series)):
         if isinstance(data, pd.DataFrame):
             columns = columns_manager(column, empty_as_none=True)
             if columns is None:
@@ -46,19 +48,19 @@ def plot_hist_kde(
                 )
             column = columns[0]
             series_data = data[column]
-        else: 
+        else:
             series_data = data
 
         # Auto-set x_label from series name if not provided by user
         if x_label is None and series_data.name:
             x_label = str(series_data.name)
-            
+
         data = series_data.values
-      
+
     # Default x_label if still not set
     if x_label is None:
         x_label = "Value"
-        
+
     data = np.asarray(data)
 
     # Prepare the data for KDE
@@ -68,7 +70,7 @@ def plot_hist_kde(
         pdf = normalize_pdf(pdf)
 
     # Create the plot axes
-    ax = setup_plot_axes(figsize=figsize, title=title, x_label= x_label)
+    ax = setup_plot_axes(figsize=figsize, title=title, x_label=x_label)
 
     # Set grid properties
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
@@ -80,7 +82,7 @@ def plot_hist_kde(
         hist_color=hist_color,
         hist_edge_color=hist_edge_color,
         hist_alpha=hist_alpha,
-        **hist_kws
+        **hist_kws,
     )
 
     # Add KDE to the plot if requested
@@ -96,7 +98,7 @@ def plot_hist_kde(
     # Customize axis labels and title
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel("Density", fontsize=12)
-    
+
     # Let legend be added after all elements are plotted
     ax.legend()
 
@@ -110,7 +112,7 @@ def plot_hist_kde(
     return grid, pdf
 
 
-plot_hist_kde.__doc__=r"""
+plot_hist_kde.__doc__ = r"""
 Plot histogram and Kernel Density Estimate (KDE) for uncertainty 
 evaluation.
 
@@ -242,4 +244,3 @@ References
 .. [2] Scott, D. W. (2015). *Multivariate Density Estimation: 
        Theory, Practice, and Visualization*. Wiley-Interscience.
 """
-

@@ -2,10 +2,10 @@
 # Author: L. Kouadio <etanoyau@gmail.com>
 
 """
-K-Diagram: Polar Diagnostics for Forecast Uncertainty 
+K-Diagram: Polar Diagnostics for Forecast Uncertainty
 =======================================================
-`k-diagram` is a Python package designed to provide 
-specialized diagnostic polar plots, called "k-diagrams, 
+`k-diagram` is a Python package designed to provide
+specialized diagnostic polar plots, called "k-diagrams,
 for comprehensive model evaluation and forecast analysis.
 """
 import importlib
@@ -28,6 +28,7 @@ def _lazy_import(module_name, alias=None):
         globals()[alias] = _lazy_loader
     else:
         globals()[module_name] = _lazy_loader
+
 
 # Version (single source)
 try:
@@ -70,34 +71,31 @@ if _missing_dependencies:
 
 # Re-export config helpers
 from .config import configure_warnings, warnings_config  # noqa: F401, E402
-
 from .plot import (  # noqa: E402
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,
     plot_coverage,
     plot_coverage_diagnostic,
+    plot_error_bands,
+    plot_error_ellipses,
+    plot_error_violins,
     plot_feature_fingerprint,
+    plot_horizon_metrics,
     plot_interval_consistency,
     plot_interval_width,
     plot_model_comparison,
     plot_model_drift,
+    plot_polar_heatmap,
+    plot_polar_quiver,
+    plot_radial_density_ring,
     plot_relationship,
+    plot_reliability_diagram,
     plot_taylor_diagram,
     plot_taylor_diagram_in,
     plot_temporal_uncertainty,
     plot_uncertainty_drift,
     plot_velocity,
     taylor_diagram,
-    plot_radial_density_ring, 
-    plot_reliability_diagram, 
-    plot_horizon_metrics, 
-    plot_polar_heatmap, 
-    plot_polar_quiver, 
-    plot_error_bands, 
-    plot_error_ellipses, 
-    plot_error_violins, 
-    plot_radial_density_ring, 
-    
 )
 
 __all__ = [
@@ -120,13 +118,13 @@ __all__ = [
     "plot_feature_fingerprint",
     "plot_relationship",
     "plot_model_comparison",
-    "plot_radial_density_ring", 
-    "plot_reliability_diagram", 
-    "plot_horizon_metrics", 
-    "plot_horizon_metrics",  
-    "plot_polar_heatmap", 
-    "plot_polar_quiver", 
-    "plot_error_bands", 
-    "plot_error_ellipses", 
-    "plot_error_violins"
+    "plot_radial_density_ring",
+    "plot_reliability_diagram",
+    "plot_horizon_metrics",
+    "plot_horizon_metrics",
+    "plot_polar_heatmap",
+    "plot_polar_quiver",
+    "plot_error_bands",
+    "plot_error_ellipses",
+    "plot_error_violins",
 ]

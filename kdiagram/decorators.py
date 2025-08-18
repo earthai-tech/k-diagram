@@ -1,8 +1,8 @@
 import inspect
 import os
 import warnings
-from typing import Dict, Any
 from functools import wraps
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -33,7 +33,7 @@ def check_non_emptiness(
     a list of parameter names in ``params``.
 
     Parameters
-    ----------
+    -------------
     params : list of str, optional
         Names of arguments whose emptiness will be
         checked. If None and the decorator is used
@@ -366,7 +366,7 @@ class SaveFile:
     the original result.
 
     Parameters
-    ----------
+    ------------
     savefile : str, optional
         The file path where the DataFrame should be saved. If `None`, no file
         is saved.
@@ -626,7 +626,7 @@ def save_file(func=None, *, data_index=0, dout=".csv"):
     Both save_file (function-based) and SaveFile (class-based) decorators
     are designed to allow users to save the returned DataFrame(s) from a
     decorated function to a file, if needed. For more details and advanced
-    usage, please refer to the documentation 
+    usage, please refer to the documentation
     of :class:`kdiagram.decorators.SaveFile`,
     as both operate in a similar manner.
 
@@ -672,8 +672,7 @@ def save_file(func=None, *, data_index=0, dout=".csv"):
             result = func(*args, **kwargs)
             savefile = kwargs.get("savefile", None)
             if savefile is not None:
-                df_to_save, ext = _get_df_to_save(
-                    savefile, dout, result, data_index)
+                df_to_save, ext = _get_df_to_save(savefile, dout, result, data_index)
                 if df_to_save is None:
                     return result
                 _perform_save(df_to_save, savefile, ext)
@@ -706,8 +705,7 @@ def _extract_dataframe(result, data_index):
             df = result[data_index]
         except IndexError:
             warnings.warn(
-                f"`data_index` {data_index} is out of range "
-                "for the returned tuple.",
+                f"`data_index` {data_index} is out of range " "for the returned tuple.",
                 stacklevel=2,
             )
             return None
@@ -720,8 +718,7 @@ def _extract_dataframe(result, data_index):
         return df
     else:
         warnings.warn(
-            f"Return type '{type(result)}' is not a DataFrame or tuple.",
-            stacklevel=2
+            f"Return type '{type(result)}' is not a DataFrame or tuple.", stacklevel=2
         )
         return None
 
@@ -749,21 +746,19 @@ def _perform_save(df_to_save, savefile, ext):
 save_file.__doc__ = SaveFile.__doc__
 
 
-def _get_valid_kwargs(
-    callable_obj: Any, kwargs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+def _get_valid_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
     r"""
     Filter and return only the valid keyword arguments for a given
     callable object, while warning about any invalid kwargs.
 
     Parameters
-    ----------
+    ------------
     callable_obj : callable
         The callable object (function, lambda function, method, or class)
         for which the keyword arguments need to be validated.
 
     kwargs : dict
-        Dictionary of keyword arguments to be validated against 
+        Dictionary of keyword arguments to be validated against
         the callable object.
 
     Returns
