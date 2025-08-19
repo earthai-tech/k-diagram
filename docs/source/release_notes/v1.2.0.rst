@@ -4,46 +4,20 @@
 Version 1.2.0
 ----------------
 
-*(Released: 2025-08-16)*
+*(Released: 2025-08-20)*
 
-This is a major feature release that significantly expands the `k-diagram`
-library's capabilities for error analysis and distribution visualization.
-It introduces a new `errors` module with advanced polar plots for
-diagnosing systemic vs. random errors, comparing multiple models, and
+This is a major feature release that expands the ``k-diagram``
+library's capabilities for **error analysis** and **distribution visualization**.
+It introduces a new `error analysis module <https://k-diagram.readthedocs.io/en/latest/user_guide/errors.html>`_ 
+with advanced polar plots for diagnosing systemic vs. random errors, comparing multiple models, and
 visualizing 2D uncertainty. Additionally, histogram and density
 plotting utilities have been centralized and enhanced.
-
-Highlights
-~~~~~~~~~~~~~
-
-* |Feature| **New Error Analysis Module** (``kdiagram.plot.errors``):
-  A dedicated suite of plots for deep error diagnostics.
-  
-  - :func:`~kdiagram.plot.errors.plot_error_bands` to separate
-    systemic bias from random error.
-  - :func:`~kdiagram.plot.errors.plot_error_violins` to compare
-    full error distributions of multiple models.
-  - :func:`~kdiagram.plot.errors.plot_error_ellipses` for
-    visualizing 2D positional uncertainty.
-
-* |Feature| **New Advanced Uncertainty Plots**:
-
-  - :func:`~kdiagram.plot.uncertainty.plot_polar_heatmap` to find
-    correlations between cyclical features and magnitudes.
-  - :func:`~kdiagram.plot.uncertainty.plot_polar_quiver` to visualize
-    vector fields like forecast revisions.
-
-* |Feature| **New Histogram & Density Utilities**:
-
-  - Centralized :func:`~kdiagram.utils.plot_hist_kde` for
-    robust 1D distribution plotting.
-  - New :func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`
-    for visualizing 1D distributions in a polar format.
 
 New Features
 ~~~~~~~~~~~~~
 
-* |New| New module ``kdiagram.plot.errors`` with three powerful plots:
+* |Feature| **Error Analysis Module** (``kdiagram.plot.errors``):
+  A dedicated suite of plots for deep error diagnostics.
 
   - :func:`~kdiagram.plot.errors.plot_error_bands`: Aggregates errors
     into angular bins to plot mean error (bias) and a standard
@@ -55,7 +29,7 @@ New Features
     2D uncertainty by drawing confidence ellipses based on radial and
     angular standard deviations.
 
-* |New| New plots added to ``kdiagram.plot.uncertainty``:
+* |Feature| **Advanced Uncertainty Plots** (``kdiagram.plot.uncertainty``):
 
   - :func:`~kdiagram.plot.uncertainty.plot_polar_heatmap`: Creates a
     2D density plot on a polar grid to identify "hot spots" where
@@ -64,19 +38,22 @@ New Features
     arrows on a polar grid to show magnitude and direction, ideal for
     visualizing forecast updates or error vectors.
 
-* |New| New utility module ``kdiagram.utils.hist``:
-  :func:`~kdiagram.utils.plot_hist_kde`: A robust, standalone
-  function for plotting histograms with optional KDE overlays,
-  supporting pandas DataFrames, Series, and NumPy arrays.
+* |Feature| **Model Comparison Plot** (``kdiagram.plot.comparison``):
 
-API Changes
-~~~~~~~~~~~~~
+  - :func:`~kdiagram.plot.comparison.plot_horizon_metrics`: Creates a polar 
+    bar chart to compare key metrics (like interval width and median value) 
+    across different forecast horizons.
+    
+* |Feature| **New Histogram & Density Utilities** (``kdiagram.utils.hist``):
 
-* |API Change| None (backward compatible). All new functions are
-  additive. The new modules (`errors.py`, `hist.py`) are new additions
-  and do not alter existing namespaces.
+  - :func:`~kdiagram.utils.plot_hist_kde`: A robust, standalone
+    function for plotting histograms with optional KDE overlays,
+    supporting pandas DataFrames, Series, and NumPy arrays.
+  - :func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`: A novel
+    plot for visualizing 1D distributions in a polar format.
+    
 
-Enhancements
+Improvements
 ~~~~~~~~~~~~~
 
 * |Enhancement| All new polar plots (`heatmap`, `quiver`, `ellipses`,
@@ -89,7 +66,9 @@ Enhancements
 * |Enhancement| Integrated scientific citations throughout the
   documentation using ``sphinxcontrib-bibtex`` to provide clear context
   for established and novel visualization methods.
-  
+* |Enhancement| The test suite is now fully compatible with Python 
+  versions 3.9 through 3.13, including environments using NumPy 2.0. 
+  Version-dependent warnings are now handled conditionally within the tests.
 
 Bug Fixes
 ~~~~~~~~~~~
@@ -107,6 +86,12 @@ Bug Fixes
   ``bibtex.duplicate_citation`` warnings by correcting syntax errors in
   the ``references.bib`` file and adding local filters to the
   ``bibliography`` directive.
+* |Fix| Corrected a ``FutureWarning`` in the test suite related to positional 
+  indexing of pandas Series by updating to the recommended .iloc accessor.
+
+* |Fix| Resolved ``IndexError`` in :func:`~kdiagram.plot.errors.plot_error_ellipses` 
+  that occurred when processing data with NaN values by switching to 
+  enumerate for safe iteration.
   
 Documentation
 ~~~~~~~~~~~~~~~
@@ -134,7 +119,7 @@ Documentation
   docstrings for all new functions, including mathematical notes, 
   parameter descriptions, and runnable examples.
 * |Docs| Updated the documentation to remove duplicated citations and 
-  correct issues related to `:footcite:`.
+  correct issues related to ``:footcite:``.
 * |Docs| Reworked and enhanced the documentation for various plot functions
   like `plot_polar_heatmap`, `plot_polar_quiver`, and `plot_anomaly_magnitude`.
 * |Docs| Replaced the previous citation format with more consistent usage 
@@ -143,7 +128,17 @@ Documentation
   ensuring compliance with the linting rules (max 62 characters per line).
 * |Docs| Updated all citations in the documentation to follow the correct 
   reStructuredText formatting with `footcite` for scientific accuracy.
-  
+* |Docs| Created a new ``relationship.rst`` gallery page with a runnable 
+  example and interpretation guide for the :func:`~kdiagram.plot.relationship.plot_relationship` 
+  function.
+* |Docs| Established a single, central ``references.rst`` page with an alphabetically 
+  sorted bibliography to resolve all citation issues and improve organization.
+* |Docs| Implemented a custom CSS theme to enhance the visual presentation and 
+  readability of the bibliography page.
+* |Docs| Added a detailed "Building Documentation" section to the 
+  :ref:`installation guide <lab_installation>` guide to assist contributors 
+  and advanced users.
+
 Testing & QA
 ~~~~~~~~~~~~~~~
 
@@ -153,12 +148,25 @@ Testing & QA
   - `plot_error_violins`: Correct rendering for single vs. multiple models.
   - `plot_error_ellipses`: Correct ellipse shape and orientation.
   - Validation of masking parameters (`mask_angle`, `mask_radius`).
+  
 * |Tests| New test suite `tests/test_plot_uncertainty_advanced.py` covering:
 
   - `plot_polar_heatmap`: Correct binning and color mapping.
   - `plot_polar_quiver`: Correct vector placement and orientation.
   - Handling of `theta_period` for cyclical data.
+  
 * |Tests| New test suite `tests/test_hist.py` covering:
 
   - `plot_hist_kde`: Correct rendering from DataFrame, Series, and NumPy array.
   - Proper handling of `show_kde=False`.
+
+* |Tests| Removed all global warning filters from ``pyproject.toml``. All test 
+  warnings are now explicitly and correctly handled within the specific tests 
+  that produce them using pytest.warns.
+* |Tests| Eliminated all ``PytestUnknownMarkWarnings`` by registering custom 
+  markers (e.g., ``network``) in the ``pyproject.toml`` configuration.
+* |Tests| Removed all ``@pytest.mark.skip`` decorators. The entire test suite 
+  now runs without skips, ensuring all functionality is actively tested.
+* |Tests| Corrected CLI tests to properly distinguish between ``argparse``  
+  validation errors (e.g., wrong number of arguments) and the package's 
+  custom validation logic.

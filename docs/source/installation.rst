@@ -18,6 +18,8 @@ Before installing, ensure you have the following prerequisites:
   ``numpy``, ``pandas``, ``scipy``, ``matplotlib``, ``seaborn``,
   and ``scikit-learn``.
 
+.. _installing:
+
 Install from PyPI (recommended)
 -------------------------------
 
