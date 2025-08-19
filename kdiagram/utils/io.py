@@ -169,11 +169,14 @@ def fancier_downloader(
 
     if not HAS_REQUESTS:
         raise ImportError(
-            "Requests is not installed. Please use 'pip' or 'conda'" " to install it!."
+            "Requests is not installed. Please use 'pip' or 'conda'"
+            " to install it!."
         )
 
     if error not in ["ignore", "warn", "raise"]:
-        raise ValueError("`error` parameter must be 'raise', 'warn', or 'ignore'.")
+        raise ValueError(
+            "`error` parameter must be 'raise', 'warn', or 'ignore'."
+        )
 
     try:
         from tqdm import tqdm  # Import tqdm for progress bar visualization
@@ -193,7 +196,9 @@ def fancier_downloader(
             response.raise_for_status()  # Raise an error for bad status codes
 
             # Retrieve the total size of the file from the 'Content-Length' header
-            total_size_in_bytes = int(response.headers.get("content-length", 0))
+            total_size_in_bytes = int(
+                response.headers.get("content-length", 0)
+            )
             block_size = 1024  # Define the chunk size (1 Kibibyte)
 
             # Initialize the progress bar with the total file size
@@ -265,9 +270,7 @@ def fancier_downloader(
                     print(f"File '{filename}' moved to '{destination_file}'.")
             except Exception as move_error:
                 # Handle any errors that occur during the file move
-                move_error_msg = (
-                    f"Failed to move '{filename}' to '{dstpath}'. Error: {move_error}"
-                )
+                move_error_msg = f"Failed to move '{filename}' to '{dstpath}'. Error: {move_error}"
                 if error == "raise":
                     raise RuntimeError(move_error_msg) from move_error
                 elif error == "warn":
@@ -283,9 +286,7 @@ def fancier_downloader(
 
     except Exception as download_error:
         # Handle any exceptions that occur during the download process
-        download_error_msg = (
-            f"Failed to download '{filename}' from '{url}'. Error: {download_error}"
-        )
+        download_error_msg = f"Failed to download '{filename}' from '{url}'. Error: {download_error}"
         if error == "raise":
             raise RuntimeError(download_error_msg) from download_error
         elif error == "warn":
@@ -327,7 +328,8 @@ def download_file(url, filename, dstpath=None):
 
     print(
         "{:-^70}".format(
-            f" Please, Wait while {os.path.basename(filename)}" " is downloading. "
+            f" Please, Wait while {os.path.basename(filename)}"
+            " is downloading. "
         )
     )
     with requests.get(url, stream=True) as r:
@@ -401,4 +403,6 @@ def move_file(file_path, directory):
         os.makedirs(directory)
 
     # Move the file to the directory
-    shutil.move(file_path, os.path.join(directory, os.path.basename(file_path)))
+    shutil.move(
+        file_path, os.path.join(directory, os.path.basename(file_path))
+    )

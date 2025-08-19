@@ -133,10 +133,14 @@ def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
             figsize=(6, 6),
         )
 
-        assert len(plt.get_fignums()) > 0, f"Plot should be created for kind='{kind}'"
+        assert (
+            len(plt.get_fignums()) > 0
+        ), f"Plot should be created for kind='{kind}'"
 
     except Exception as e:
-        pytest.fail(f"plot_coverage raised an exception for kind='{kind}': {e}")
+        pytest.fail(
+            f"plot_coverage raised an exception for kind='{kind}': {e}"
+        )
 
     finally:
         plt.close("all")
@@ -259,7 +263,8 @@ def test_plot_model_drift_mismatched_lengths(sample_data_drift):
 
     # q10_cols list is shorter than q90_cols list
     with pytest.raises(
-        ValueError, match=("`qlow_cols` and `qup_cols` must be the same length")
+        ValueError,
+        match=("`qlow_cols` and `qup_cols` must be the same length"),
     ):
         plot_model_drift(
             df=data["df"],
@@ -307,7 +312,9 @@ def test_plot_velocity_too_few_q50_cols(sample_data_velocity):
     """Test plot_velocity raises error if < 2 q50 columns provided."""
     data = sample_data_velocity
     with pytest.raises(ValueError, match="At least two Q50 columns"):
-        plot_velocity(df=data["df"], q50_cols=data["q50_cols"][:1])  # Only one
+        plot_velocity(
+            df=data["df"], q50_cols=data["q50_cols"][:1]
+        )  # Only one
 
 
 def test_plot_velocity_theta_col_warning(sample_data_velocity):
@@ -388,7 +395,9 @@ def sample_data_consistency():
     }
 
 
-@pytest.fixture(params=[True, False])  # Run anomaly tests with/without anomalies
+@pytest.fixture(
+    params=[True, False]
+)  # Run anomaly tests with/without anomalies
 def sample_data_anomaly(request):
     """Provides sample DataFrame for plot_anomaly_magnitude."""
     generate_anomalies = request.param
@@ -575,11 +584,15 @@ def test_plot_anomaly_magnitude_invalid_qcols(sample_data_anomaly):
     data = sample_data_anomaly
     with pytest.raises(ValueError, match="exactly two column names"):
         plot_anomaly_magnitude(
-            df=data["df"], actual_col=data["actual_col"], q_cols=["q10"]  # Only one
+            df=data["df"],
+            actual_col=data["actual_col"],
+            q_cols=["q10"],  # Only one
         )
     with pytest.raises(ValueError, match="exactly two column names"):
         plot_anomaly_magnitude(
-            df=data["df"], actual_col=data["actual_col"], q_cols="q10"  # String
+            df=data["df"],
+            actual_col=data["actual_col"],
+            q_cols="q10",  # String
         )
     with pytest.raises(ValueError, match="exactly two column names"):
         plot_anomaly_magnitude(
@@ -597,11 +610,15 @@ def test_plot_anomaly_magnitude_missing_cols(sample_data_anomaly):
 
     with pytest.raises(ValueError, match="essential columns are missing"):
         plot_anomaly_magnitude(
-            df=df_missing_actual, actual_col=data["actual_col"], q_cols=data["q_cols"]
+            df=df_missing_actual,
+            actual_col=data["actual_col"],
+            q_cols=data["q_cols"],
         )
     with pytest.raises(ValueError, match="essential columns are missing"):
         plot_anomaly_magnitude(
-            df=df_missing_q10, actual_col=data["actual_col"], q_cols=data["q_cols"]
+            df=df_missing_q10,
+            actual_col=data["actual_col"],
+            q_cols=data["q_cols"],
         )
 
 
@@ -624,7 +641,9 @@ def test_plot_anomaly_magnitude_non_numeric_essential(sample_data_anomaly):
     df_mod = data["df"].copy()
     df_mod[data["actual_col"]] = "string_value"  # Make actual non-numeric
 
-    with pytest.raises(TypeError, match="Failed to convert essential columns"):
+    with pytest.raises(
+        TypeError, match="Failed to convert essential columns"
+    ):
         plot_anomaly_magnitude(
             df=df_mod, actual_col=data["actual_col"], q_cols=data["q_cols"]
         )
@@ -693,7 +712,9 @@ def sample_data_iw():
     data["elevation"] = np.linspace(100, 500, n_points)  # For z_col
     data["q10_val"] = np.random.rand(n_points) * 20
     # Width depends on elevation
-    width = 5 + (data["elevation"] / 100) * np.random.uniform(0.5, 2, n_points)
+    width = 5 + (data["elevation"] / 100) * np.random.uniform(
+        0.5, 2, n_points
+    )
     data["q90_val"] = data["q10_val"] + width
     data["q50_val"] = data["q10_val"] + width / 2  # Add potential z_col
     df = pd.DataFrame(data)
@@ -781,7 +802,9 @@ def test_plot_uncertainty_drift_runs_ok(
         pytest.fail(f"plot_uncertainty_drift raised exception: {e}")
 
 
-def test_plot_uncertainty_drift_mismatched_cols(sample_data_drift_uncertainty):
+def test_plot_uncertainty_drift_mismatched_cols(
+    sample_data_drift_uncertainty,
+):
     """Test errors for mismatched column/label list lengths."""
     data = sample_data_drift_uncertainty
     with pytest.raises(ValueError):
@@ -815,7 +838,9 @@ def test_plot_uncertainty_drift_missing_cols(sample_data_drift_uncertainty):
         )
 
 
-def test_plot_uncertainty_drift_theta_col_warning(sample_data_drift_uncertainty):
+def test_plot_uncertainty_drift_theta_col_warning(
+    sample_data_drift_uncertainty,
+):
     """Test warning when theta_col is provided."""
     data = sample_data_drift_uncertainty
     with pytest.warns(UserWarning, match="ignored for positioning"):
@@ -840,7 +865,9 @@ def test_plot_uncertainty_drift_width_warnings(sample_data_drift_uncertainty):
     df_mod = data["df"].copy()
 
     # Case 1: Negative width
-    df_mod[data["qup_cols"][0]] = df_mod[data["qlow_cols"][0]] - 1  # Force neg
+    df_mod[data["qup_cols"][0]] = (
+        df_mod[data["qlow_cols"][0]] - 1
+    )  # Force neg
     with pytest.warns(UserWarning, match="Negative interval widths detected"):
         plot_uncertainty_drift(
             df=df_mod, qlow_cols=data["qlow_cols"], qup_cols=data["qup_cols"]
@@ -891,7 +918,9 @@ def sample_data_avp():
 @pytest.mark.parametrize("line", [True, False])
 @pytest.mark.parametrize("acov", ["default", "half_circle"])
 @pytest.mark.parametrize("show_legend", [True, False])
-def test_plot_actual_vs_predicted_runs_ok(sample_data_avp, line, acov, show_legend):
+def test_plot_actual_vs_predicted_runs_ok(
+    sample_data_avp, line, acov, show_legend
+):
     """Test plot_actual_vs_predicted runs okay with standard-sized data."""
     data = sample_data_avp
     props = {"linestyle": "--", "marker": "x"} if not line else {}
@@ -911,7 +940,9 @@ def test_plot_actual_vs_predicted_runs_ok(sample_data_avp, line, acov, show_lege
         # Ensure a figure was created
         assert plt.gcf().number > 0
     except (Exception, OverflowError) as e:
-        pytest.fail(f"plot_actual_vs_predicted raised an unexpected exception: {e}")
+        pytest.fail(
+            f"plot_actual_vs_predicted raised an unexpected exception: {e}"
+        )
     finally:
         plt.close("all")  # Clean up figures after each test run
 
@@ -933,7 +964,9 @@ def test_plot_actual_vs_predicted_missing_cols(sample_data_avp):
 @pytest.mark.parametrize("z_col_option", [None, "q50_col", "z_col"])
 @pytest.mark.parametrize("acov", ["default", "eighth_circle"])
 @pytest.mark.parametrize("cbar", [True, False])
-def test_plot_interval_width_runs_ok(sample_data_iw, z_col_option, acov, cbar):
+def test_plot_interval_width_runs_ok(
+    sample_data_iw, z_col_option, acov, cbar
+):
     """Test plot_interval_width runs okay."""
     data = sample_data_iw
     z_col = data[z_col_option] if z_col_option else None
@@ -968,11 +1001,15 @@ def test_plot_interval_width_missing_cols(sample_data_iw):
     df_missing_q = data["df"].drop(columns=[data["q_cols"][0]])
     df_missing_z = data["df"].drop(columns=[data["z_col"]])
 
-    with pytest.raises(ValueError, match="Essential quantile columns missing"):
+    with pytest.raises(
+        ValueError, match="Essential quantile columns missing"
+    ):
         plot_interval_width(df=df_missing_q, q_cols=data["q_cols"])
 
     with pytest.raises(ValueError, match="`z_col`.*?not found"):
-        plot_interval_width(df=df_missing_z, q_cols=data["q_cols"], z_col=data["z_col"])
+        plot_interval_width(
+            df=df_missing_z, q_cols=data["q_cols"], z_col=data["z_col"]
+        )
 
 
 def test_plot_interval_width_negative_width_warning(sample_data_iw):
@@ -980,7 +1017,9 @@ def test_plot_interval_width_negative_width_warning(sample_data_iw):
     data = sample_data_iw
     df_neg = data["df"].copy()
     # Force negative width for some points
-    df_neg.loc[0:10, data["q_cols"][1]] = df_neg.loc[0:10, data["q_cols"][0]] - 1
+    df_neg.loc[0:10, data["q_cols"][1]] = (
+        df_neg.loc[0:10, data["q_cols"][0]] - 1
+    )
     with pytest.warns(UserWarning, match="negative interval width"):
         plot_interval_width(df=df_neg, q_cols=data["q_cols"])
 
@@ -1026,7 +1065,9 @@ def test_plot_coverage_diagnostic_missing_cols(sample_data_coverage_diag):
     df_missing = data["df"].drop(columns=[data["actual_col"]])
     with pytest.raises(ValueError, match="Essential columns missing"):
         plot_coverage_diagnostic(
-            df=df_missing, actual_col=data["actual_col"], q_cols=data["q_cols"]
+            df=df_missing,
+            actual_col=data["actual_col"],
+            q_cols=data["q_cols"],
         )
 
 
@@ -1056,7 +1097,10 @@ MOCK_DETECTED_COLS = ["val_q10", "val_q50", "val_q90"]
 )
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("acov", ["default", "eighth_circle"])
-@patch("kdiagram.plot.uncertainty.detect_quantiles_in", return_value=MOCK_DETECTED_COLS)
+@patch(
+    "kdiagram.plot.uncertainty.detect_quantiles_in",
+    return_value=MOCK_DETECTED_COLS,
+)
 def test_plot_temporal_uncertainty_runs_ok(
     mock_detect, sample_data_temporal, q_cols_option, normalize, acov
 ):
@@ -1141,7 +1185,3 @@ def test_plot_temporal_uncertainty_theta_col_warning(sample_data_temporal):
             q_cols=data["q_cols_list"],
             theta_col=data["theta_col"],  # Exists
         )
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

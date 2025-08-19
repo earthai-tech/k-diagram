@@ -184,7 +184,9 @@ def make_cyclical_data(
         # Build arrays with a uniform dtype to avoid pandas -> np.find_common_type
         num_cols = feature_names + prediction_cols_list
 
-        target_array = df[target_name[0]].to_numpy(dtype=np.float64, copy=True)
+        target_array = df[target_name[0]].to_numpy(
+            dtype=np.float64, copy=True
+        )
         data_array = df[num_cols].to_numpy(dtype=np.float64, copy=True)
 
         return Bunch(
@@ -406,7 +408,9 @@ def make_fingerprint_data(
         and len(value_range) == 2
         and value_range[0] <= value_range[1]
     ):
-        raise ValueError("value_range must be a tuple (min, max)" " with min <= max.")
+        raise ValueError(
+            "value_range must be a tuple (min, max)" " with min <= max."
+        )
 
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -455,7 +459,9 @@ def make_fingerprint_data(
 
     # Introduce sparsity
     if sparsity > 0:
-        mask = rng.choice([0, 1], size=importances.shape, p=[sparsity, 1 - sparsity])
+        mask = rng.choice(
+            [0, 1], size=importances.shape, p=[sparsity, 1 - sparsity]
+        )
         importances *= mask
 
     # --- Assemble DataFrame ---
@@ -675,7 +681,9 @@ def make_uncertainty_data(
         + np.sin(np.linspace(0, 3 * np.pi, n_samples)) * 5
         + rng.normal(0, noise_level / 2, n_samples)
     )
-    actual_first_period = base_signal + rng.normal(0, noise_level / 2, n_samples)
+    actual_first_period = base_signal + rng.normal(
+        0, noise_level / 2, n_samples
+    )
 
     data_dict = {
         "location_id": location_id,
@@ -703,7 +711,11 @@ def make_uncertainty_data(
         quantile_cols_dict["q0.9"].append(q90_col)
 
         current_trend = trend_strength * i
-        q50 = base_signal + current_trend + rng.normal(0, noise_level / 3, n_samples)
+        q50 = (
+            base_signal
+            + current_trend
+            + rng.normal(0, noise_level / 3, n_samples)
+        )
 
         current_interval_width = (
             interval_width_base
@@ -727,7 +739,9 @@ def make_uncertainty_data(
     if anomaly_frac > 0 and n_samples > 0:
         n_anomalies = int(anomaly_frac * n_samples)
         if n_anomalies > 0 and all_q10_cols and all_q90_cols:
-            anomaly_indices = rng.choice(n_samples, size=n_anomalies, replace=False)
+            anomaly_indices = rng.choice(
+                n_samples, size=n_anomalies, replace=False
+            )
             n_under = n_anomalies // 2
             under_indices = anomaly_indices[:n_under]
             over_indices = anomaly_indices[n_under:]
@@ -747,7 +761,9 @@ def make_uncertainty_data(
     feature_names = ["location_id", "longitude", "latitude", "elevation"]
     target_names = [actual_col_name]
     pred_cols_sorted = [
-        col for pair in zip(all_q10_cols, all_q50_cols, all_q90_cols) for col in pair
+        col
+        for pair in zip(all_q10_cols, all_q50_cols, all_q90_cols)
+        for col in pair
     ]
     ordered_cols = feature_names + target_names + pred_cols_sorted
     df = df[ordered_cols]
@@ -760,7 +776,9 @@ def make_uncertainty_data(
         numeric_cols = feature_names + target_names + pred_cols_sorted
         # data_array = df[numeric_cols].values # Data array (optional)
         # target_array = df[target_names[0]].values
-        target_array = df[target_names[0]].to_numpy(dtype=np.float64, copy=True)
+        target_array = df[target_names[0]].to_numpy(
+            dtype=np.float64, copy=True
+        )
         data_array = df[numeric_cols].to_numpy(dtype=np.float64, copy=True)
 
         # Create detailed description string
@@ -1151,7 +1169,8 @@ def make_taylor_data(
     else:
         # Assemble stats DataFrame
         stats_df = pd.DataFrame(
-            {"stddev": calculated_stds, "corrcoef": calculated_corrs}, index=model_names
+            {"stddev": calculated_stds, "corrcoef": calculated_corrs},
+            index=model_names,
         )
 
         # Assemble description
@@ -1370,7 +1389,9 @@ def make_multi_model_quantile_data(
         rng = np.random.default_rng()
 
     if not width_range[0] <= width_range[1] or width_range[0] < 0:
-        raise ValueError("width_range must be (min, max) with min >= 0 and min <= max.")
+        raise ValueError(
+            "width_range must be (min, max) with min >= 0 and min <= max."
+        )
     if not bias_range[0] <= bias_range[1]:
         raise ValueError("bias_range must be (min, max) with min <= max.")
 
@@ -1391,7 +1412,9 @@ def make_multi_model_quantile_data(
     if len(quantiles_sorted) > 1 and abs(width_numerator) > 1e-9:
         width_scale_factor = width_numerator / width_denominator
     else:
-        width_scale_factor = 1.0  # No scaling needed if range is zero/single q
+        width_scale_factor = (
+            1.0  # No scaling needed if range is zero/single q
+        )
 
     # --- Data Generation ---
     y_true = rng.normal(true_mean, true_std, n_samples)
@@ -1450,7 +1473,10 @@ def make_multi_model_quantile_data(
 
             if abs(q_range) > 1e-9 and abs(width_scale_factor) > 1e-9:
                 quantile_offset = (
-                    (model_width / width_scale_factor) * (q - q_median) / q_range * 2
+                    (model_width / width_scale_factor)
+                    * (q - q_median)
+                    / q_range
+                    * 2
                 )
             else:  # Handle single quantile or zero range
                 quantile_offset = 0
@@ -1459,7 +1485,9 @@ def make_multi_model_quantile_data(
                 q50_pred
                 + quantile_offset
                 + rng.normal(
-                    0, noise_level / 2, n_samples  # Slightly less noise for bounds
+                    0,
+                    noise_level / 2,
+                    n_samples,  # Slightly less noise for bounds
                 )
             )
             temp_model_quantiles[q] = q_pred
@@ -1471,7 +1499,9 @@ def make_multi_model_quantile_data(
         sorted_data = np.sort(model_data_temp.values, axis=1)
         # Assign sorted values back, creating final column names
         for k, q in enumerate(quantiles_sorted):
-            col_name = f"{prefix}_{model_name}_q{q:.2f}".rstrip("0").rstrip(".")
+            col_name = f"{prefix}_{model_name}_q{q:.2f}".rstrip("0").rstrip(
+                "."
+            )
             data_dict[col_name] = sorted_data[:, k]
             # Add to tracking dict if not already added (handles Q50 case)
             if col_name not in prediction_columns_dict[model_name]:
@@ -1483,7 +1513,9 @@ def make_multi_model_quantile_data(
     # Order columns somewhat logically
     feature_names = ["feature_1", "feature_2"]
     target_name = ["y_true"]
-    pred_cols_sorted = sorted([col for col in df.columns if col.startswith(prefix)])
+    pred_cols_sorted = sorted(
+        [col for col in df.columns if col.startswith(prefix)]
+    )
     ordered_cols = target_name + feature_names + pred_cols_sorted
     df = df[ordered_cols]
 

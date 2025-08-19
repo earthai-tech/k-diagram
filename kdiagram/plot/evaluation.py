@@ -237,12 +237,16 @@ def taylor_diagram(
     if stddev is None or corrcoef is None:
         if y_preds is None or reference is None:
             raise ValueError(
-                "Provide either stddev and corrcoef, " "or y_preds and reference."
+                "Provide either stddev and corrcoef, "
+                "or y_preds and reference."
             )
         if not contains_nested_objects(y_preds, strict=True):
             y_preds = [y_preds]
 
-        y_preds = [validate_yy(reference, pred, flatten="auto")[1] for pred in y_preds]
+        y_preds = [
+            validate_yy(reference, pred, flatten="auto")[1]
+            for pred in y_preds
+        ]
 
         stddev = [np.std(pred) for pred in y_preds]
         corrcoef = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]
@@ -255,7 +259,9 @@ def taylor_diagram(
     if names is not None:
         names = columns_manager(names)
         if len(names) < len(stddev):
-            additional = [f"Model_{i + 1}" for i in range(len(stddev) - len(names))]
+            additional = [
+                f"Model_{i + 1}" for i in range(len(stddev) - len(names))
+            ]
             names = names + additional
     else:
         names = [f"Model_{i + 1}" for i in range(len(stddev))]
@@ -263,7 +269,8 @@ def taylor_diagram(
     # Generate background if cmap is provided
     if cmap:
         theta_bg, r_bg = np.meshgrid(
-            np.linspace(0, np.pi / 2, 500), np.linspace(0, max(stddev) + 0.5, 500)
+            np.linspace(0, np.pi / 2, 500),
+            np.linspace(0, max(stddev) + 0.5, 500),
         )
 
         # Compute background based on strategy
@@ -297,13 +304,19 @@ def taylor_diagram(
             background = background**power_scaling
 
         # Plot the colored contour
-        ax.contourf(theta_bg, r_bg, background, levels=100, cmap=cmap, alpha=0.8)
+        ax.contourf(
+            theta_bg, r_bg, background, levels=100, cmap=cmap, alpha=0.8
+        )
 
     # Draw reference point or arc
     if draw_ref_arc:
         t_arc = np.linspace(0, np.pi / 2, 500)
         ax.plot(
-            t_arc, [ref_std] * len(t_arc), ref_color, linewidth=ref_lw, label=ref_label
+            t_arc,
+            [ref_std] * len(t_arc),
+            ref_color,
+            linewidth=ref_lw,
+            label=ref_label,
         )
     else:
         ax.plot(0, ref_std, ref_point, markersize=12, label=ref_label)
@@ -320,7 +333,9 @@ def taylor_diagram(
 
     # Add standard deviation circles
     for r_circ in np.linspace(0, max(stddev) + 0.5, 5):
-        ax.plot(np.linspace(0, np.pi / 2, 100), [r_circ] * 100, "k--", alpha=0.3)
+        ax.plot(
+            np.linspace(0, np.pi / 2, 100), [r_circ] * 100, "k--", alpha=0.3
+        )
 
     # Set axis limits
     ax.set_xlim(0, np.pi / 2)
@@ -371,7 +386,9 @@ def taylor_diagram(
         "reference": ["array-like"],
         "names": [str, "array-like", None],
         "acov": [StrOptions({"default", "half_circle"}), None],
-        "zero_location": [StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})],
+        "zero_location": [
+            StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})
+        ],
         "direction": [Integral],
     }
 )
@@ -597,7 +614,9 @@ def plot_taylor_diagram_in(
     n = reference.size
     for p in y_preds:
         if p.size != n:
-            raise ValueError("All predictions and reference must be the same length.")
+            raise ValueError(
+                "All predictions and reference must be the same length."
+            )
 
     # correlation & stdev
     corrs = [np.corrcoef(p, reference)[0, 1] for p in y_preds]
@@ -655,7 +674,9 @@ def plot_taylor_diagram_in(
     if norm_c:
         if norm_range is None:
             norm_range = (0, 1)
-        norm_range = validate_length_range(norm_range, param_name="Normalized Range")
+        norm_range = validate_length_range(
+            norm_range, param_name="Normalized Range"
+        )
         CC = minmax_scaler(CC, feature_range=norm_range)
 
     # plot background
@@ -688,9 +709,13 @@ def plot_taylor_diagram_in(
     # reference arc
     if draw_ref_arc:
         arc_t = np.linspace(0, angle_max, 300)
-        ax.plot(arc_t, [ref_std] * 300, color=ref_color, lw=2, label="Reference")
+        ax.plot(
+            arc_t, [ref_std] * 300, color=ref_color, lw=2, label="Reference"
+        )
     else:
-        ax.plot([0, 0], [0, ref_std], color=ref_color, lw=2, label="Reference")
+        ax.plot(
+            [0, 0], [0, ref_std], color=ref_color, lw=2, label="Reference"
+        )
         ax.plot(0, ref_std, marker=marker, color=ref_color)
 
     # set coverage
@@ -716,7 +741,9 @@ def plot_taylor_diagram_in(
     if angle_to_corr:
         corr_ticks = np.linspace(0, 1, corr_steps)
         angles_deg = np.degrees(np.arccos(corr_ticks))
-        ax.set_thetagrids(angles_deg, labels=[f"{ct:.2f}" for ct in corr_ticks])
+        ax.set_thetagrids(
+            angles_deg, labels=[f"{ct:.2f}" for ct in corr_ticks]
+        )
         ax.text(
             *corr_pos,
             "Correlation",
@@ -772,7 +799,9 @@ def plot_taylor_diagram_in(
         "reference": ["array-like"],
         "names": [str, "array-like", None],
         "acov": [StrOptions({"default", "half_circle"})],
-        "zero_location": [StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})],
+        "zero_location": [
+            StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})
+        ],
         "direction": [Integral],
     }
 )
@@ -1004,10 +1033,14 @@ def plot_taylor_diagram(
     # Use a color cycle so lines/points are more distinguishable
     colors = plt.cm.Set1(np.linspace(0, 1, len(y_preds)))
     for i, (angle, radius) in enumerate(zip(angles, radii)):
-        label = names[i] if (names and i < len(names)) else f"Prediction {i+1}"
+        label = (
+            names[i] if (names and i < len(names)) else f"Prediction {i+1}"
+        )
         if not only_points:
             # Draw the radial line from origin to the point
-            ax.plot([angle, angle], [0, radius], color=colors[i], lw=2, alpha=0.8)
+            ax.plot(
+                [angle, angle], [0, radius], color=colors[i], lw=2, alpha=0.8
+            )
         ax.plot(angle, radius, marker, color=colors[i], label=label)
 
     # Draw the reference as a red arc if requested
@@ -1027,7 +1060,13 @@ def plot_taylor_diagram(
         )
     else:
         # If not drawing the arc, revert to a radial line as fallback
-        ax.plot([0, 0], [0, reference_std], color=ref_color, lw=2, label="Reference")
+        ax.plot(
+            [0, 0],
+            [0, reference_std],
+            color=ref_color,
+            lw=2,
+            label="Reference",
+        )
         ax.plot(0, reference_std, marker, color=ref_color)
 
     # Set coverage (max angle)
@@ -1064,7 +1103,9 @@ def plot_taylor_diagram(
         angle_ticks = np.degrees(np.arccos(corr_ticks))
         # In half-circle mode, correlation from 0..1 fits in 0..pi/2,
         # in default mode, 0..1 fits in 0..pi. This still works generally.
-        ax.set_thetagrids(angle_ticks, labels=[f"{ct:.2f}" for ct in corr_ticks])
+        ax.set_thetagrids(
+            angle_ticks, labels=[f"{ct:.2f}" for ct in corr_ticks]
+        )
         # We can label this dimension as 'Correlation'
         ax.set_ylabel("")  # remove default 0.5, 1.06
 

@@ -84,7 +84,9 @@ def minmax_scaler(
     if X_arr.ndim == 1:
         X_arr = X_arr.reshape(-1, 1)
     # range min & max
-    feature_range = validate_length_range(feature_range, param_name="Feature range")
+    feature_range = validate_length_range(
+        feature_range, param_name="Feature range"
+    )
     min_val, max_val = feature_range
     if min_val >= max_val:
         raise ValueError("feature_range must be (min, max) with min < max.")
@@ -99,7 +101,11 @@ def minmax_scaler(
     X_scaled = min_val + (max_val - min_val) * (num / denom)
 
     # reshape back if 1D
-    if (len(X_shape) == 1) or (X_arr.ndim == 1) or (X_arr.ndim > 1 and X_shape[1] == 1):
+    if (
+        (len(X_shape) == 1)
+        or (X_arr.ndim == 1)
+        or (X_arr.ndim > 1 and X_shape[1] == 1)
+    ):
         X_scaled = X_scaled.ravel()
 
     # if y is provided

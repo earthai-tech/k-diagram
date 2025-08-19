@@ -63,7 +63,9 @@ def test_parse_qcols_dict_and_list_and_fallback_and_warnings():
 
     # fallback when nothing valid + warning
     with pytest.warns(UserWarning):
-        out4 = dq.parse_qcols({"bad": "x"}, fallback_cols=("a", "b", "c"), error="warn")
+        out4 = dq.parse_qcols(
+            {"bad": "x"}, fallback_cols=("a", "b", "c"), error="warn"
+        )
     assert out4["valid"] is False
     assert (out4["lowest_col"], out4["median_col"], out4["highest_col"]) == (
         "a",
@@ -107,12 +109,17 @@ def test_check_forecast_mode_variants():
     assert [round(q, 1) for q in q2] == [0.1, 0.5, 0.9]
 
     # quantile mode with provided quantiles validated
-    q3 = dq.check_forecast_mode("quantile", q=[10, "20%"], error="warn", q_mode="soft")
+    q3 = dq.check_forecast_mode(
+        "quantile", q=[10, "20%"], error="warn", q_mode="soft"
+    )
     # 10 -> 0.1 (individual scaling), "20%" -> 0.2
     assert pytest.approx(q3, rel=1e-6) == [0.1, 0.2]
 
     # check_only returns None
-    assert dq.check_forecast_mode("quantile", q=[0.1, 0.5], ops="check_only") is None
+    assert (
+        dq.check_forecast_mode("quantile", q=[0.1, 0.5], ops="check_only")
+        is None
+    )
 
 
 # -----------------
@@ -153,7 +160,9 @@ def test_validate_quantiles_strict_and_soft_and_dtype_and_rounding():
         dq.validate_quantiles([1.2])
 
     # soft: integers and percentages
-    soft = dq.validate_quantiles(["20%", 5, 150], mode="soft", dtype="float64")
+    soft = dq.validate_quantiles(
+        ["20%", 5, 150], mode="soft", dtype="float64"
+    )
     # 20% -> 0.2; 5 -> 0.05 (individual
     # scaling default inside helper for integers);
     # 150 -> 0.15
@@ -169,11 +178,15 @@ def test_validate_quantiles_strict_and_soft_and_dtype_and_rounding():
 # -----------------
 def test_validate_quantiles_in_paths():
     # list -> list
-    out = dq.validate_quantiles_in([0.10000000149, 0.5, 0.8999999761], round_digits=1)
+    out = dq.validate_quantiles_in(
+        [0.10000000149, 0.5, 0.8999999761], round_digits=1
+    )
     assert [round(q, 1) for q in out] == [0.1, 0.5, 0.9]
 
     # array -> array with dtype
-    arr = dq.validate_quantiles_in(np.array([0.3, 0.7]), asarray=True, dtype="float32")
+    arr = dq.validate_quantiles_in(
+        np.array([0.3, 0.7]), asarray=True, dtype="float32"
+    )
     assert isinstance(arr, np.ndarray) and arr.dtype == np.float32
 
     # bad type
@@ -204,19 +217,27 @@ def test_detect_quantiles_in_columns_qvals_values_frame_and_modes():
     )
 
     # default (columns), with prefix filter
-    cols = dq.detect_quantiles_in(df, col_prefix="sales", return_types="columns")
+    cols = dq.detect_quantiles_in(
+        df, col_prefix="sales", return_types="columns"
+    )
     assert cols == ["sales_2023_q0.5", "sales_q0.25", "sales_q0.75"]
 
     # q_val from all (soft) -> includes 0.25, 0.5 (from 2023 col), and 0.15 from q150
-    qvals = dq.detect_quantiles_in(df, col_prefix="", return_types="q_val", mode="soft")
+    qvals = dq.detect_quantiles_in(
+        df, col_prefix="", return_types="q_val", mode="soft"
+    )
     assert set(qvals) >= {0.25, 0.5, 0.15}
 
     # strict mode excludes invalid (q150)
-    qvals_strict = dq.detect_quantiles_in(df, return_types="q_val", mode="strict")
+    qvals_strict = dq.detect_quantiles_in(
+        df, return_types="q_val", mode="strict"
+    )
     assert 0.15 not in qvals_strict and 0.5 in qvals_strict
 
     # values (np.vstack with rows per column)
-    values = dq.detect_quantiles_in(df, col_prefix="sales", return_types="values")
+    values = dq.detect_quantiles_in(
+        df, col_prefix="sales", return_types="values"
+    )
     assert isinstance(values, np.ndarray) and values.shape == (3, 2)
 
     # frame subset
@@ -250,11 +271,15 @@ def test_build_q_column_names_strict_and_flexible():
     )
 
     # strict exact candidates (decimal and percent forms)
-    out_strict = dq.build_q_column_names(df, [0.25, 0.5], "price", strict_match=True)
+    out_strict = dq.build_q_column_names(
+        df, [0.25, 0.5], "price", strict_match=True
+    )
     assert set(out_strict) == {"price_q0.25", "price_q25"}
 
     # flexible regex should catch both decimal and percentage variants
-    out_flex = dq.build_q_column_names(df, [0.25], "price", strict_match=False)
+    out_flex = dq.build_q_column_names(
+        df, [0.25], "price", strict_match=False
+    )
     assert "price_q0.25" in out_flex or "price_q25" in out_flex
 
     # no prefix, pick unprefixed columns too
@@ -328,7 +353,10 @@ def test__verify_identical_items_unique_and_ascending_and_errors():
     ) == [1, 2]
 
     # ascending mode ok
-    assert dq._verify_identical_items([0.1, 0.5], [0.1, 0.5], mode="ascending") is True
+    assert (
+        dq._verify_identical_items([0.1, 0.5], [0.1, 0.5], mode="ascending")
+        is True
+    )
 
     # ascending length mismatch -> raise
     with pytest.raises(ValueError):
@@ -368,7 +396,9 @@ def test_validate_qcols_variants_and_expectations():
 
     # custom error message
     with pytest.raises(ValueError, match="Need exactly 3"):
-        dq.validate_qcols(["a", "b"], ncols_exp="==3", err_msg="Need exactly 3")
+        dq.validate_qcols(
+            ["a", "b"], ncols_exp="==3", err_msg="Need exactly 3"
+        )
 
 
 # -----------------
@@ -412,8 +442,6 @@ def test_build_qcols_multiple_paths():
 
     # enforce_triplet without median -> error
     with pytest.raises(ValueError):
-        dq.build_qcols_multiple(qlow_cols=lows, qup_cols=ups, enforce_triplet=True)
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])
+        dq.build_qcols_multiple(
+            qlow_cols=lows, qup_cols=ups, enforce_triplet=True
+        )

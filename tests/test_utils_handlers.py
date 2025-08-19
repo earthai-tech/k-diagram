@@ -95,7 +95,3 @@ def test_error_ignore_on_bad_iterable():
     # No warning, just wraps it later as a non-iterable fallback
     out = columns_manager(bad, error="ignore")
     assert out == [bad]
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

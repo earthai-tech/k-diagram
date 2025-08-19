@@ -140,7 +140,3 @@ def test_error_policy_policy_none_uses_base_and_validates():
     # Invalid base should raise
     with pytest.raises(ValueError):
         error_policy(None, policy=None, base="whatever")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

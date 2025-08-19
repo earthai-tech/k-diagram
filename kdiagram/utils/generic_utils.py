@@ -335,14 +335,17 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     elif np.any(np.isnan(y_true)) and error == "warn":
 
         warnings.warn(
-            "NaN values found in y_true," " they will be ignored.", stacklevel=2
+            "NaN values found in y_true," " they will be ignored.",
+            stacklevel=2,
         )
     elif np.any(np.isnan(y_true)) and error == "ignore":
         pass  # Silently ignore NaNs in y_true
 
     # Apply nan_policy if set
     if nan_policy == "raise" and np.any(np.isnan(y_true)):
-        raise ValueError("NaN values found in y_true with nan_policy='raise'.")
+        raise ValueError(
+            "NaN values found in y_true with nan_policy='raise'."
+        )
     elif nan_policy == "omit":
         not_nan_indices = ~np.isnan(y_true)  # Continue to omit NaNs
 
@@ -353,7 +356,9 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     return y_true, *y_preds
 
 
-def get_valid_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
+def get_valid_kwargs(
+    callable_obj: Any, kwargs: dict[str, Any]
+) -> dict[str, Any]:
     r"""
     Filter and return only the valid keyword arguments for a given
     callable object, while warning about any invalid kwargs.
@@ -523,7 +528,8 @@ def error_policy(
 
     # Default message if none is provided.
     default_msg = (
-        "Invalid error policy: '{error}'. Valid options are " f"{valid_policies}."
+        "Invalid error policy: '{error}'. Valid options are "
+        f"{valid_policies}."
     )
     if exception is None:
         exception = ValueError

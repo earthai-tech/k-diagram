@@ -377,7 +377,9 @@ def to_iterable(
     ['a', 'b']
     """
     if parse_string and not transform:
-        raise ValueError("Set 'transform=True' when using 'parse_string=True'.")
+        raise ValueError(
+            "Set 'transform=True' when using 'parse_string=True'."
+        )
 
     # Check if object is iterable (excluding strings if specified)
     is_iterable = hasattr(obj, "__iter__") and not (
@@ -402,7 +404,9 @@ def to_iterable(
 
     # Apply unique filtering if requested
     if unique:
-        obj = list(dict.fromkeys(obj))  # Preserves order while ensuring uniqueness
+        obj = list(
+            dict.fromkeys(obj)
+        )  # Preserves order while ensuring uniqueness
 
     return obj
 
@@ -631,7 +635,9 @@ def validate_quantiles(
     quantiles = to_iterable(quantiles, transform=True, flatten=True)
 
     if mode == "soft":
-        quantiles = _process_soft_quantiles(quantiles, scale_method=scale_method)
+        quantiles = _process_soft_quantiles(
+            quantiles, scale_method=scale_method
+        )
 
     if not isinstance(quantiles, (list, np.ndarray)):
         raise TypeError(
@@ -676,7 +682,8 @@ def _process_single_quantile(q):
 
     if not isinstance(q, (int, float)):
         raise TypeError(
-            f"Quantile {original} must be numeric. " f"Received {type(q).__name__}."
+            f"Quantile {original} must be numeric. "
+            f"Received {type(q).__name__}."
         )
 
     if q < 0:
@@ -701,7 +708,9 @@ def _convert_string_quantile(q):
                 value /= 100.0
             return value
         except ValueError:
-            raise ValueError(f"Could not convert string quantile: {q}") from None
+            raise ValueError(
+                f"Could not convert string quantile: {q}"
+            ) from None
     return q
 
 
@@ -716,7 +725,8 @@ def _apply_scaling(scale_candidates, scale_method):
         return [q / (10 ** len(str(q))) for q in scale_candidates]
 
     raise ValueError(
-        f"Invalid scale_method: {scale_method}. " "Choose 'uniform' or 'individual'."
+        f"Invalid scale_method: {scale_method}. "
+        "Choose 'uniform' or 'individual'."
     )
 
 
@@ -1018,14 +1028,18 @@ def detect_quantiles_in(
     quantile_columns = []
     found_quantiles = set()
 
-    _log_verbose(f"Scanning DataFrame columns with prefix: {col_prefix}", verbose, 1)
+    _log_verbose(
+        f"Scanning DataFrame columns with prefix: {col_prefix}", verbose, 1
+    )
 
     for col in df.columns:
         result = _process_column(col, df, col_prefix, dt_value, mode, verbose)
         if result:
             q_val, col_data = result
             found_quantiles.add(q_val)
-            _store_results(q_val, col_data, quantile_columns, return_types, col)
+            _store_results(
+                q_val, col_data, quantile_columns, return_types, col
+            )
 
     _log_verbose(f"Quantiles detected: {sorted(found_quantiles)}", verbose, 3)
 
@@ -1047,7 +1061,9 @@ def _process_column(
         if col.startswith(f"{prefix}_"):
             col_match = col[len(prefix) + 1 :]  # Remove prefix and underscore
         else:
-            return None  # If the column does not start with the prefix, skip it
+            return (
+                None  # If the column does not start with the prefix, skip it
+            )
     else:
         col_match = col  # No prefix, use the column name directly
 
@@ -1061,12 +1077,16 @@ def _process_column(
         _log_verbose(f"Invalid quantile value in {col}: {e}", verbose, 2)
         return None
 
-    _log_verbose(f"Found quantile match: {col} with value: {q_val}", verbose, 2)
+    _log_verbose(
+        f"Found quantile match: {col} with value: {q_val}", verbose, 2
+    )
     return q_val, df[col].values
 
 
 def _check_column_match(
-    remainder: str, dt_values: Optional[list[str]], prefix: Optional[str] = None
+    remainder: str,
+    dt_values: Optional[list[str]],
+    prefix: Optional[str] = None,
 ) -> tuple:
     """Check if column remainder matches date and quantile patterns."""
     # Match quantile pattern like q0.25
@@ -1128,7 +1148,10 @@ def _store_results(
 
 
 def _format_output(
-    quantile_columns: list, found_quantiles: set, return_types: str, df: pd.DataFrame
+    quantile_columns: list,
+    found_quantiles: set,
+    return_types: str,
+    df: pd.DataFrame,
 ) -> Union[list, pd.DataFrame, None]:
     """Format final output based on return_types."""
     if not quantile_columns:
@@ -1143,7 +1166,9 @@ def _format_output(
     return sorted(quantile_columns)
 
 
-def _log_verbose(message: str, verbose_level: int, required_level: int) -> None:
+def _log_verbose(
+    message: str, verbose_level: int, required_level: int
+) -> None:
     """Centralized verbose logging control."""
     if verbose_level >= required_level:
         print(message)
@@ -1241,7 +1266,9 @@ def build_q_column_names(
         return [col for col in candidates if col in df.columns]
 
     # Flexible pattern matching
-    pattern = _build_flexible_pattern(valid_quantiles, value_prefix, date_strings)
+    pattern = _build_flexible_pattern(
+        valid_quantiles, value_prefix, date_strings
+    )
     return [col for col in df.columns if pattern.search(col)]
 
 
@@ -1260,7 +1287,8 @@ def _generate_strict_candidates(
             # Temporal candidates
             if dates:
                 candidates.extend(
-                    f"{prefix}_{d}_{fmt}" if prefix else f"{d}_{fmt}" for d in dates
+                    f"{prefix}_{d}_{fmt}" if prefix else f"{d}_{fmt}"
+                    for d in dates
                 )
             # Non-temporal candidates
             candidates.append(f"{prefix}_{fmt}" if prefix else fmt)
@@ -1281,14 +1309,19 @@ def _build_flexible_pattern(
     prefix_part = f"{re.escape(prefix)}_?" if prefix else ""
 
     # Date component
-    date_part = f"({'|'.join(map(re.escape, dates))})_+" if dates else r"\d{4}_?|"
+    date_part = (
+        f"({'|'.join(map(re.escape, dates))})_+" if dates else r"\d{4}_?|"
+    )
 
     return re.compile(
-        rf"^{prefix_part}(?:{date_part})?q({q_alternatives})\b", flags=re.IGNORECASE
+        rf"^{prefix_part}(?:{date_part})?q({q_alternatives})\b",
+        flags=re.IGNORECASE,
     )
 
 
-def _process_dt_values(dt_values: Optional[list[Union[str, int]]]) -> list[str]:
+def _process_dt_values(
+    dt_values: Optional[list[Union[str, int]]],
+) -> list[str]:
     """Normalize temporal values to standardized strings."""
     return [str(v).strip() for v in dt_values] if dt_values else []
 
@@ -1429,10 +1462,14 @@ def detect_digits(
                 digits.append(num)
             except ValueError as exc:
                 if error == "raise":
-                    raise ValueError(f"Could not convert '{match}' to float.") from exc
+                    raise ValueError(
+                        f"Could not convert '{match}' to float."
+                    ) from exc
                 elif error == "warn":
                     if verbose >= 1:
-                        print(f"[WARN] Skipping value '{match}': conversion failed.")
+                        print(
+                            f"[WARN] Skipping value '{match}': conversion failed."
+                        )
                 # If error is "ignore", continue without appending.
                 continue
 
@@ -1559,7 +1596,9 @@ def validate_consistency_q(
         q_items = q_items.columns
 
     # Detect quantile values from q_items using detect_digits in quantile mode.
-    detected_q_values = detect_digits(q_items, as_q=True, sort=True, return_unique=True)
+    detected_q_values = detect_digits(
+        q_items, as_q=True, sort=True, return_unique=True
+    )
     if verbose >= 5:
         print(f"[DEBUG] Detected quantile values: {detected_q_values}")
 
@@ -1568,7 +1607,9 @@ def validate_consistency_q(
         sorted(user_q), detected_q_values, error=error, return_intersect=True
     )
     if verbose >= 5:
-        print(f"[DEBUG] Valid quantiles after intersection: {valid_quantiles}")
+        print(
+            f"[DEBUG] Valid quantiles after intersection: {valid_quantiles}"
+        )
 
     # If valid_quantiles is not empty, sort it; otherwise, handle error.
 
@@ -1717,7 +1758,9 @@ def _verify_identical_items(
             if a != b:
                 differences.append((idx, a, b))
         if differences:
-            msg = f"Differences in {objname or 'object lists'}: {differences}."
+            msg = (
+                f"Differences in {objname or 'object lists'}: {differences}."
+            )
             if error == "raise":
                 raise ValueError(msg)
             elif error == "warn":
@@ -1841,7 +1884,9 @@ def validate_qcols(
     elif isinstance(q_cols, (tuple, set, list)):
         q_cols = [str(col) for col in q_cols]
     else:
-        raise TypeError("`q_cols` must be a list, tuple, set or " "single string.")
+        raise TypeError(
+            "`q_cols` must be a list, tuple, set or " "single string."
+        )
 
     # Remove blanks and strip white‑space
     q_cols = [col.strip() for col in q_cols if col.strip()]
@@ -1866,12 +1911,15 @@ def validate_qcols(
             if ncols_exp.startswith(sym):
                 num_str = ncols_exp[len(sym) :].strip()
                 if not num_str.isdigit():
-                    raise ValueError(f"Invalid expectation syntax " f"'{ncols_exp}'.")
+                    raise ValueError(
+                        f"Invalid expectation syntax " f"'{ncols_exp}'."
+                    )
                 expected = int(num_str)
                 if not _ops[sym](len(q_cols), expected):
                     raise ValueError(
                         err_msg
-                        or f"Expected {ncols_exp}, got " f"{len(q_cols)}: {q_cols}"
+                        or f"Expected {ncols_exp}, got "
+                        f"{len(q_cols)}: {q_cols}"
                     )
                 break
         else:
@@ -1983,7 +2031,11 @@ def build_qcols_multiple(
                 "`enforce_triplet=True` requires every "
                 "tuple in `q_cols` to have three items."
             )
-        if (not enforce_triplet) and (sizes == {3}) and allow_pair_when_median:
+        if (
+            (not enforce_triplet)
+            and (sizes == {3})
+            and allow_pair_when_median
+        ):
             # convert triplets to pairs (low, up)
             q_cols = [(t[0], t[-1]) for t in q_cols]
         return [tuple(t) for t in q_cols]
@@ -1997,19 +2049,23 @@ def build_qcols_multiple(
             "`qlow_cols` and `qup_cols` must be given."
         )
     if len(qlow_cols) != len(qup_cols):
-        raise ValueError("`qlow_cols` and `qup_cols` must be the same " "length.")
+        raise ValueError(
+            "`qlow_cols` and `qup_cols` must be the same " "length."
+        )
 
     # -- median logic
     if qmed_cols is not None and not allow_pair_when_median:
         if len(qmed_cols) != len(qlow_cols):
             raise ValueError(
-                "`qmed_cols` must be the same length as " "`qlow_cols` and `qup_cols`."
+                "`qmed_cols` must be the same length as "
+                "`qlow_cols` and `qup_cols`."
             )
         tuples = list(zip(qlow_cols, qmed_cols, qup_cols))
     else:
         if enforce_triplet:
             raise ValueError(
-                "`enforce_triplet=True` but no median " "columns were supplied."
+                "`enforce_triplet=True` but no median "
+                "columns were supplied."
             )
         tuples = list(zip(qlow_cols, qup_cols))
 

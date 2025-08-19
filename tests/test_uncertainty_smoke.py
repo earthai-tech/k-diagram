@@ -15,7 +15,12 @@ def mpl_agg(monkeypatch):
 
 def test_interval_width_basic(tmp_path):
     df = pd.DataFrame(
-        {"low": [0, 1, 1], "up": [1, 2, 2], "theta": [0, 1, 2], "z": [0.2, 0.5, 0.7]}
+        {
+            "low": [0, 1, 1],
+            "up": [1, 2, 2],
+            "theta": [0, 1, 2],
+            "z": [0.2, 0.5, 0.7],
+        }
     )
 
     pattern = r"currently ignored for positioning/ordering"
@@ -30,7 +35,3 @@ def test_interval_width_basic(tmp_path):
             cbar=True,
             show_grid=True,
         )
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

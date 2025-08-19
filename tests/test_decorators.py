@@ -85,7 +85,8 @@ def test_check_non_emptiness_named_kwarg_warn(always_catch_warnings):
     out = bar(1, df=pd.DataFrame())
     assert out is None
     assert any(
-        "Argument 'df' is empty" in str(w.message) for w in always_catch_warnings
+        "Argument 'df' is empty" in str(w.message)
+        for w in always_catch_warnings
     )
 
 
@@ -199,7 +200,9 @@ def test_SaveFile_with_parens_tuple_data_index(tmp_path):
     assert isinstance(res, tuple)
 
 
-def test_SaveFile_series_to_frame_and_default_ext(tmp_path, always_catch_warnings):
+def test_SaveFile_series_to_frame_and_default_ext(
+    tmp_path, always_catch_warnings
+):
     @SaveFile(dout=".csv")
     def get_series(savefile=None):
         return pd.Series([1, 2], name="s")
@@ -211,13 +214,17 @@ def test_SaveFile_series_to_frame_and_default_ext(tmp_path, always_catch_warning
     ).exists()
 
 
-def test_SaveFile_bad_index_and_non_df_element_warns(tmp_path, always_catch_warnings):
+def test_SaveFile_bad_index_and_non_df_element_warns(
+    tmp_path, always_catch_warnings
+):
     @SaveFile(data_index=5)
     def tup(savefile=None):
         return (pd.DataFrame({"a": [1]}),)
 
     tup(savefile=str(tmp_path / "a.csv"))
-    assert any("out of range" in str(w.message) for w in always_catch_warnings)
+    assert any(
+        "out of range" in str(w.message) for w in always_catch_warnings
+    )
 
     @SaveFile(data_index=0)
     def notdf(savefile=None):
@@ -249,7 +256,8 @@ def test_SaveFile_unsupported_ext_and_missing_ext_warning(
 
     mk2(savefile=str(tmp_path / "noext"))
     assert any(
-        "No file extension provided" in str(w.message) for w in always_catch_warnings
+        "No file extension provided" in str(w.message)
+        for w in always_catch_warnings
     )
 
 
@@ -313,7 +321,8 @@ def test_save_file_function_based_tuple_and_unsupported(
 
     nope(savefile=str(tmp_path / "z.csv"))
     assert any(
-        "not a DataFrame or tuple" in str(w.message) for w in always_catch_warnings
+        "not a DataFrame or tuple" in str(w.message)
+        for w in always_catch_warnings
     )
 
     @save_file
@@ -325,7 +334,3 @@ def test_save_file_function_based_tuple_and_unsupported(
         "Unsupported file extension '.xyz'" in str(w.message)
         for w in always_catch_warnings
     )
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

@@ -48,7 +48,9 @@ def test_validate_yy_shapes_types_and_expected_type():
 
     # expected_type mismatch -> error
     with pytest.raises(ValueError):
-        V.validate_yy([0.1, 0.2], [0.1, 0.3], expected_type="binary", flatten=True)
+        V.validate_yy(
+            [0.1, 0.2], [0.1, 0.3], expected_type="binary", flatten=True
+        )
 
     # expected_type correct (continuous)
     yt3, yp3 = V.validate_yy(
@@ -185,7 +187,9 @@ def test_is_frame_detects_df_or_series_and_modes_and_deprecation_bridge():
     # deprecated raise_exception=True flips to raise even if error!='raise'
     with pytest.warns(DeprecationWarning):
         with pytest.raises(TypeError):
-            V.is_frame(123, df_only=True, error="ignore", raise_exception=True)
+            V.is_frame(
+                123, df_only=True, error="ignore", raise_exception=True
+            )
 
 
 # -------------
@@ -259,7 +263,10 @@ def test_recheck_data_types_handles_mixed_types_and_warns():
     # Expect the warning from the mixed-type 'b' column
     with pytest.warns(UserWarning, match="Could not infer format"):
         out = V.recheck_data_types(
-            df, coerce_numeric=True, coerce_datetime=True, return_as_numpy=False
+            df,
+            coerce_numeric=True,
+            coerce_datetime=True,
+            return_as_numpy=False,
         )
 
     # Assert that types were coerced correctly where possible
@@ -292,8 +299,13 @@ def test_array_to_frame_paths_and_warnings_and_sparse_passthrough():
     X = np.array([[1, 2], [3, 4]])
 
     # generate columns with force
-    out = V.array_to_frame(X, to_frame=True, columns=None, input_name="X", force=True)
-    assert isinstance(out, pd.DataFrame) and list(out.columns) == ["X_0", "X_1"]
+    out = V.array_to_frame(
+        X, to_frame=True, columns=None, input_name="X", force=True
+    )
+    assert isinstance(out, pd.DataFrame) and list(out.columns) == [
+        "X_0",
+        "X_1",
+    ]
 
     # raising when to_frame and columns None and not forced
     with pytest.raises(ValueError):
@@ -345,11 +357,15 @@ def test_convert_array_to_pandas_all_branches():
     class NotArrayLike: ...
 
     with pytest.raises(TypeError):
-        V.convert_array_to_pandas(NotArrayLike(), to_frame=True, columns=["a"])
+        V.convert_array_to_pandas(
+            NotArrayLike(), to_frame=True, columns=["a"]
+        )
 
     # to_frame True without columns -> ValueError
     with pytest.raises(ValueError):
-        V.convert_array_to_pandas(np.array([[1, 2]]), to_frame=True, columns=None)
+        V.convert_array_to_pandas(
+            np.array([[1, 2]]), to_frame=True, columns=None
+        )
 
     # 1D -> Series
     ser, cols = V.convert_array_to_pandas(
@@ -417,7 +433,10 @@ def test_parameter_validator_contains_and_exact_and_no_raise():
         validate_exact("tra")
 
     validate_no_raise = V.parameter_validator(
-        "fill", ["median", "mean"], match_method="contains", raise_exception=False
+        "fill",
+        ["median", "mean"],
+        match_method="contains",
+        raise_exception=False,
     )
     assert validate_no_raise("average") is None
 
@@ -431,18 +450,24 @@ def test_normalize_string_modes_and_targets_and_errors():
 
     # exact match
     assert (
-        V.normalize_string("train", ["train", "test"], match_method="exact") == "train"
+        V.normalize_string("train", ["train", "test"], match_method="exact")
+        == "train"
     )
 
     # contains
     assert (
-        V.normalize_string("this-is-iqr", ["z_score", "iqr"], match_method="contains")
+        V.normalize_string(
+            "this-is-iqr", ["z_score", "iqr"], match_method="contains"
+        )
         == "this-is-iqr"
     )
 
     # startswith
     norm, target = V.normalize_string(
-        "Goodbye World", ["hello", "goodbye"], num_chars_check=7, return_target_str=True
+        "Goodbye World",
+        ["hello", "goodbye"],
+        num_chars_check=7,
+        return_target_str=True,
     )
     assert norm.startswith("goodbye") and target == "goodbye"
 
@@ -450,7 +475,10 @@ def test_normalize_string_modes_and_targets_and_errors():
     assert V.normalize_string("abc", ["xyzabc123"], deep=True) == "abc"
 
     # return_target_only matched
-    assert V.normalize_string("MODE", ["mode"], return_target_only=True) == "mode"
+    assert (
+        V.normalize_string("MODE", ["mode"], return_target_only=True)
+        == "mode"
+    )
 
     # not found + raise
     with pytest.raises(ValueError):
@@ -500,7 +528,3 @@ def test_check_spatial_columns_paths():
     # missing columns
     with pytest.raises(ValueError):
         V.check_spatial_columns(df, spatial_cols=("lon", "lat"))
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

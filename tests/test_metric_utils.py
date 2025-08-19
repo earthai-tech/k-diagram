@@ -17,7 +17,10 @@ from kdiagram.compat.sklearn import (  # noqa : E402
     mean_squared_error,
     root_mean_squared_error,
 )
-from kdiagram.utils.metric_utils import available_scorers, get_scorer  # noqa : E402
+from kdiagram.utils.metric_utils import (  # noqa : E402
+    available_scorers,
+    get_scorer,
+)
 
 
 def test_available_scorers_contains_core_aliases():
@@ -62,7 +65,9 @@ def test_regression_mae_and_r2():
     mae = get_scorer("mae")
     r2 = get_scorer("r2")
 
-    assert mae(y_true, y_pred) == pytest.approx(mean_absolute_error(y_true, y_pred))
+    assert mae(y_true, y_pred) == pytest.approx(
+        mean_absolute_error(y_true, y_pred)
+    )
     assert r2(y_true, y_pred) == pytest.approx(r2_score(y_true, y_pred))
 
 
@@ -78,8 +83,12 @@ def test_classification_weighted_defaults_precision_recall_f1():
     rec = get_scorer("recall")
     f1w = get_scorer("f1")
 
-    exp_prec = precision_score(y_true, y_pred, average="weighted", zero_division=0)
-    exp_rec = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+    exp_prec = precision_score(
+        y_true, y_pred, average="weighted", zero_division=0
+    )
+    exp_rec = recall_score(
+        y_true, y_pred, average="weighted", zero_division=0
+    )
     exp_f1 = f1_score(y_true, y_pred, average="weighted", zero_division=0)
 
     assert prec(y_true, y_pred) == pytest.approx(exp_prec)
@@ -107,7 +116,3 @@ def test_fallback_to_sklearn_metric_by_name():
     exp_val = explained_variance_score(y_true, y_pred)
 
     assert expl_var(y_true, y_pred) == pytest.approx(exp_val)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

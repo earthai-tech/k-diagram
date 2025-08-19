@@ -33,19 +33,25 @@ sys.path.insert(0, str(ROOT))
 try:
     import kdiagram as kd
 
-    version = ".".join(kd.__version__.split(".")[:2])  # Use the major.minor version
+    version = ".".join(
+        kd.__version__.split(".")[:2]
+    )  # Use the major.minor version
     release = kd.__version__
 except Exception:
     # Fallback: package not importable (e.g., building docs from source)
     version = "0.0"
     release = "0+unknown"
-    warnings.warn("kdiagram not importable in docs environment; using 0+unknown")
+    warnings.warn(
+        "kdiagram not importable in docs environment; using 0+unknown"
+    )
 
 # -- Silence SyntaxWarnings during docs build --------------------------------
 if "kd" not in globals():
     # If package is not importable, apply warning filters manually
     warnings.filterwarnings(
-        "ignore", category=SyntaxWarning, module=r"^(numpy|matplotlib|pandas)\."
+        "ignore",
+        category=SyntaxWarning,
+        module=r"^(numpy|matplotlib|pandas)\.",
     )
 else:
     # If package is importable, configure warnings for specific packages
@@ -88,9 +94,13 @@ extensions = [
 # Configure Napoleon settings (for parsing NumPy/Google docstrings)
 napoleon_google_docstring = False  # We are using NumPy style
 napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False  # Doc __init__ under the class docstring
+napoleon_include_init_with_doc = (
+    False  # Doc __init__ under the class docstring
+)
 napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = True  # Include special methods like __len__
+napoleon_include_special_with_doc = (
+    True  # Include special methods like __len__
+)
 napoleon_use_admonition_for_examples = True  # Use .. admonition:: Example
 napoleon_use_admonition_for_notes = True  # Use .. admonition:: Note
 napoleon_use_admonition_for_references = True  # Use .. admonition:: Reference
@@ -102,7 +112,9 @@ napoleon_type_aliases = None
 napoleon_attr_annotations = True
 math_number_all = True
 # numpydoc configuration
-numpydoc_show_class_members = False  # don't duplicate __init__ params under the class
+numpydoc_show_class_members = (
+    False  # don't duplicate __init__ params under the class
+)
 numpydoc_class_members_toctree = False  # keep methods out of the class TOC
 numpydoc_xref_param_type = True  # auto-link types in parameter lists
 
@@ -117,7 +129,9 @@ autodoc_default_options = {
     "show-inheritance": True,  # Show base classes
     # 'exclude-members': '__weakref__' # Exclude specific members
 }
-autodoc_typehints = "description"  # Show typehints in description, not signature
+autodoc_typehints = (
+    "description"  # Show typehints in description, not signature
+)
 autoclass_content = "class"  # Include docstrings from class and __init__
 
 # Configure Autosummary settings
@@ -254,5 +268,7 @@ html_show_sphinx = True
 html_show_copyright = True
 
 # -- Options for sphinx-copybutton ------------------------------------------
-copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_text = (
+    r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+)
 copybutton_prompt_is_regexp = True

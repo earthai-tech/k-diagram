@@ -176,7 +176,8 @@ def test_clipping_and_weights_and_palette(tmp_path, rng):
         )
     # confirm we warned about clipping or normalization
     assert any(
-        "clip" in str(w.message).lower() or "normaliz" in str(w.message).lower()
+        "clip" in str(w.message).lower()
+        or "normaliz" in str(w.message).lower()
         for w in rec
     )
     assert out.exists()
@@ -214,7 +215,3 @@ def test_pandas_inputs_and_diagonal_kwargs(rng):
     assert len(lines) >= 1
 
     _close(ax)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

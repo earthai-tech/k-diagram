@@ -42,7 +42,8 @@ def beautify_dict(d, space=4, key=None, max_char=None):
 
     if not isinstance(d, dict):
         raise TypeError(
-            "Expected input to be a 'dict'," f" received '{type(d).__name__}' instead."
+            "Expected input to be a 'dict',"
+            f" received '{type(d).__name__}' instead."
         )
 
     if max_char is None:
@@ -198,7 +199,9 @@ def to_snake_case(name, mode="standard"):
     if mode == "soft":
         # Convert to lowercase and replace multiple spaces
         # or non-word characters with a single underscore
-        name = re.sub(r"\W+", " ", name)  # Replace non-word characters with spaces
+        name = re.sub(
+            r"\W+", " ", name
+        )  # Replace non-word characters with spaces
         name = re.sub(r"\s+", " ", name).strip()  # Normalize whitespace
         name = name.lower().replace(" ", "_")  # Convert spaces to underscores
 
@@ -207,7 +210,9 @@ def to_snake_case(name, mode="standard"):
         name = re.sub(
             r"(?<!^)(?=[A-Z])", "_", name
         ).lower()  # Convert CamelCase to snake_case
-        name = re.sub(r"\W+", "_", name)  # Replace non-word characters with '_'
+        name = re.sub(
+            r"\W+", "_", name
+        )  # Replace non-word characters with '_'
         name = re.sub(
             r"_+", "_", name
         )  # Replace multiple underscores with a single '_'

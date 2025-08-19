@@ -40,7 +40,9 @@ try:
 except ImportError:
     # Handle case where utils might not be structured like this yet
     # Or raise a more specific error if these are essential internal deps
-    warnings.warn("Could not import IO utilities from kdiagram.utils.io", stacklevel=2)
+    warnings.warn(
+        "Could not import IO utilities from kdiagram.utils.io", stacklevel=2
+    )
 
     # Define dummy functions if needed for static analysis, but runtime will fail
     def check_file_exists(*args, **kwargs):
@@ -52,7 +54,9 @@ except ImportError:
 
 # TODO: Update if k-diagram will host data/descriptions
 KD_DMODULE = "kdiagram.datasets.data"  # Path for potential packaged data
-KD_DESCR = "kdiagram.datasets.descr"  # Path for potential packaged descriptions
+KD_DESCR = (
+    "kdiagram.datasets.descr"  # Path for potential packaged descriptions
+)
 KD_REMOTE_DATA_URL = (  # Example URL if k-diagram hosts data samples
     "https://raw.githubusercontent.com/earthai-tech/k-diagram/main/"
     "kdiagram/datasets/data/"
@@ -60,7 +64,8 @@ KD_REMOTE_DATA_URL = (  # Example URL if k-diagram hosts data samples
 
 # Define structure for remote dataset metadata
 RemoteMetadata = namedtuple(
-    "RemoteMetadata", ["file", "url", "checksum", "descr_module", "data_module"]
+    "RemoteMetadata",
+    ["file", "url", "checksum", "descr_module", "data_module"],
 )
 
 
@@ -107,7 +112,9 @@ def get_data(data_home: str | None = None) -> str:
     """
     if data_home is None:
         # Check environment variable first
-        data_home = os.environ.get("KDIAGRAM_DATA", os.path.join("~", "kdiagram_data"))
+        data_home = os.environ.get(
+            "KDIAGRAM_DATA", os.path.join("~", "kdiagram_data")
+        )
     # Expand user path (~ character)
     data_home = os.path.expanduser(data_home)
     # Create directory if it doesn't exist
@@ -115,7 +122,9 @@ def get_data(data_home: str | None = None) -> str:
         os.makedirs(data_home, exist_ok=True)
     except OSError as e:
         # Handle potential permission errors, etc.
-        warnings.warn(f"Could not create data directory {data_home}: {e}", stacklevel=2)
+        warnings.warn(
+            f"Could not create data directory {data_home}: {e}", stacklevel=2
+        )
         # Optionally raise or return a default path if creation fails
     return data_home
 
@@ -229,7 +238,9 @@ def download_file_if(
     """
     # 1. Validate inputs and resolve metadata
     if error not in ["warn", "raise", "ignore"]:
-        raise ValueError("`error` parameter must be 'raise', 'warn', or 'ignore'.")
+        raise ValueError(
+            "`error` parameter must be 'raise', 'warn', or 'ignore'."
+        )
 
     if isinstance(metadata, str):
         if not KD_REMOTE_DATA_URL or not KD_DMODULE:
@@ -255,11 +266,15 @@ def download_file_if(
         meta = metadata
         filename = meta.file
         if not hasattr(meta, "data_module") or not meta.data_module:
-            raise ValueError("RemoteMetadata must include 'data_module' path.")
+            raise ValueError(
+                "RemoteMetadata must include 'data_module' path."
+            )
         if not hasattr(meta, "url") or not meta.url:
             raise ValueError("RemoteMetadata must include 'url'.")
     else:
-        raise TypeError("`metadata` must be a string (filename) or RemoteMetadata.")
+        raise TypeError(
+            "`metadata` must be a string (filename) or RemoteMetadata."
+        )
 
     # 2. Determine Cache Path
     data_dir = get_data(data_home)  # User cache directory
@@ -269,11 +284,15 @@ def download_file_if(
     if force_download:
         if download_if_missing:
             if verbose:
-                print(f"Forcing download attempt for '{filename}' to {data_dir}...")
+                print(
+                    f"Forcing download attempt for '{filename}' to {data_dir}..."
+                )
             dl_success = False
             try:
                 # Construct full URL (ensure trailing slash on base URL)
-                base_url = meta.url if meta.url.endswith("/") else meta.url + "/"
+                base_url = (
+                    meta.url if meta.url.endswith("/") else meta.url + "/"
+                )
                 file_url = urljoin(base_url, filename)
                 # Use fancier_downloader to download/move to cache
                 fancier_downloader(
@@ -288,7 +307,9 @@ def download_file_if(
                 if os.path.exists(cache_filepath):
                     dl_success = True  # noqa
                     if verbose:
-                        print(f"Forced download successful: '{cache_filepath}'")
+                        print(
+                            f"Forced download successful: '{cache_filepath}'"
+                        )
                     return cache_filepath  # Success!
                 else:
                     # Should not happen if downloader worked & error!='raise'
@@ -305,7 +326,9 @@ def download_file_if(
 
             except Exception as e:
                 # Handle exceptions from fancier_downloader
-                dl_error_msg = f"Forced download failed for '{filename}'. Error: {e}"
+                dl_error_msg = (
+                    f"Forced download failed for '{filename}'. Error: {e}"
+                )
                 if error == "raise":
                     raise RuntimeError(dl_error_msg) from e
                 elif error == "warn":
@@ -363,13 +386,17 @@ def download_file_if(
             #  if copy fails but file exists in package
             # return package_filepath # Use with caution if cache is preferred
             return (
-                cache_filepath if os.path.exists(cache_filepath) else package_filepath
+                cache_filepath
+                if os.path.exists(cache_filepath)
+                else package_filepath
             )
 
     # If file was found in package AND already exists in cache, use cache path
     if package_filepath and os.path.exists(cache_filepath):
         if verbose:
-            print(f"Using cached version (also found in package): {cache_filepath}")
+            print(
+                f"Using cached version (also found in package): {cache_filepath}"
+            )
         return cache_filepath
 
     # 5. Check Cache Directory (if not found in package)
@@ -407,7 +434,8 @@ def download_file_if(
                 return None  # Return None as download wasn't successful
         except Exception as e:
             download_error_msg = (
-                f"Failed to download '{filename}' from " f"'{file_url}'. Error: {e}"
+                f"Failed to download '{filename}' from "
+                f"'{file_url}'. Error: {e}"
             )
             if error == "raise":
                 raise RuntimeError(download_error_msg) from e

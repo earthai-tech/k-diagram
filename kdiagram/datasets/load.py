@@ -67,7 +67,9 @@ def load_zhongshan_subsidence(
         try:
             # Construct the full path to the file within the package
             # using importlib.resources
-            local_filepath = str(resources.files(KD_DMODULE).joinpath(filename))
+            local_filepath = str(
+                resources.files(KD_DMODULE).joinpath(filename)
+            )
             data_dir = os.path.dirname(local_filepath)
             # took only the file in data path
         except Exception as e:
@@ -95,7 +97,9 @@ def load_zhongshan_subsidence(
             else:
                 # Error handled by download func based on 'error' flag
                 # We might still try package resource below if download fails
-                warnings.warn(f"Forced download failed for {filename}.", stacklevel=2)
+                warnings.warn(
+                    f"Forced download failed for {filename}.", stacklevel=2
+                )
                 pass  # Continue to check package resource
         else:
             warnings.warn(
@@ -115,18 +119,24 @@ def load_zhongshan_subsidence(
         try:
             if resources.is_resource(package_module_path, filename):
                 print(
-                    f"Loading dataset from installed package:" f" {package_module_path}"
+                    f"Loading dataset from installed package:"
+                    f" {package_module_path}"
                 )
                 with resources.path(package_module_path, filename) as rpath:
-                    filepath_to_load = str(rpath)  # Path to file within package
+                    filepath_to_load = str(
+                        rpath
+                    )  # Path to file within package
                     # Copy to cache for future use if not already there
                     if not os.path.exists(local_filepath):
                         try:
                             shutil.copyfile(filepath_to_load, local_filepath)
-                            print(f"Copied dataset to cache: {local_filepath}")
+                            print(
+                                f"Copied dataset to cache: {local_filepath}"
+                            )
                         except Exception as copy_err:
                             warnings.warn(
-                                f"Could not copy dataset to cache:" f" {copy_err}",
+                                f"Could not copy dataset to cache:"
+                                f" {copy_err}",
                                 stacklevel=2,
                             )
             else:
@@ -137,7 +147,9 @@ def load_zhongshan_subsidence(
         except ModuleNotFoundError:
             print(f"Package data module not found: {package_module_path}")
         except Exception as res_err:
-            warnings.warn(f"Error accessing package resources: {res_err}", stacklevel=2)
+            warnings.warn(
+                f"Error accessing package resources: {res_err}", stacklevel=2
+            )
 
     # Attempt download if still not found and allowed
     if filepath_to_load is None and download_if_missing:
@@ -163,7 +175,9 @@ def load_zhongshan_subsidence(
     try:
         df = pd.read_csv(filepath_to_load)
     except Exception as e:
-        raise OSError(f"Error reading dataset file at {filepath_to_load}: {e}") from e
+        raise OSError(
+            f"Error reading dataset file at {filepath_to_load}: {e}"
+        ) from e
 
     # --- Step 3: Subsetting / Column Selection ---
     cols_to_keep = []
@@ -180,7 +194,9 @@ def load_zhongshan_subsidence(
             available_years.add(int(q_match.group(1)))
             available_quantiles.add(float(q_match.group(2)))
         elif (
-            t_match and col.endswith(t_match.group(1)) and col.startswith("subsidence")
+            t_match
+            and col.endswith(t_match.group(1))
+            and col.startswith("subsidence")
         ):  # Be specific for target
             available_years.add(int(t_match.group(1)))
 
@@ -188,7 +204,9 @@ def load_zhongshan_subsidence(
     available_quantiles = sorted(list(available_quantiles))
 
     # Validate requested years and quantiles
-    requested_years = set(years) if years is not None else set(available_years)
+    requested_years = (
+        set(years) if years is not None else set(available_years)
+    )
     requested_quantiles = (
         set(quantiles) if quantiles is not None else set(available_quantiles)
     )
@@ -211,7 +229,9 @@ def load_zhongshan_subsidence(
             UserWarning,
             stacklevel=2,
         )
-        requested_quantiles &= set(available_quantiles)  # Keep only valid ones
+        requested_quantiles &= set(
+            available_quantiles
+        )  # Keep only valid ones
 
     # Select columns based on flags and validated requests
     if include_coords:
@@ -221,7 +241,9 @@ def load_zhongshan_subsidence(
             cols_to_keep.append("latitude")
 
     target_cols_found = []
-    q_cols_found = {"q" + f"{q:.1f}".replace("0.", ""): [] for q in requested_quantiles}
+    q_cols_found = {
+        "q" + f"{q:.1f}".replace("0.", ""): [] for q in requested_quantiles
+    }
     all_q_cols_found = []
 
     for col in df.columns:
@@ -248,7 +270,8 @@ def load_zhongshan_subsidence(
     cols_to_keep = sorted(
         list(set(cols_to_keep)),
         key=lambda x: (
-            not x.startswith("lon") and not x.startswith("lat"),  # Coords first
+            not x.startswith("lon")
+            and not x.startswith("lat"),  # Coords first
             not x.startswith("subsidence_")
             or q_pattern.search(x) is None,  # Base target next
             x,  # Then sort alphabetically/numerically
@@ -268,7 +291,9 @@ def load_zhongshan_subsidence(
             if "latitude" in df_subset.columns:
                 feature_names.append("latitude")
         target_names = target_cols_found
-        target_array = df_subset[target_names].values if target_names else None
+        target_array = (
+            df_subset[target_names].values if target_names else None
+        )
 
         # Initialize dict for quantile columns dynamically
         q_cols_found = {}  # Start empty
@@ -283,7 +308,9 @@ def load_zhongshan_subsidence(
             q_match = q_pattern.search(col)
             # Skip target columns here, handled above by target_cols_found
             if q_match:
-                year = int(q_match.group(1))  # Already filtered by requested_years
+                year = int(
+                    q_match.group(1)
+                )  # Already filtered by requested_years
                 q_val_str = q_match.group(2)
                 try:
                     q_val = float(q_val_str)
@@ -295,7 +322,9 @@ def load_zhongshan_subsidence(
                     if q_key not in q_cols_found:
                         q_cols_found[q_key] = []
                     q_cols_found[q_key].append(col)
-                    all_q_cols_found.append(col)  # Keep track of all q cols found
+                    all_q_cols_found.append(
+                        col
+                    )  # Keep track of all q cols found
                 except ValueError:
                     warnings.warn(
                         f"Could not parse quantile value '{q_val_str}'"
@@ -592,7 +621,9 @@ def load_uncertainty_data(
         + np.sin(np.linspace(0, 3 * np.pi, n_samples)) * 5
         + rng.normal(0, noise_level / 2, n_samples)
     )
-    actual_first_period = base_signal + rng.normal(0, noise_level / 2, n_samples)
+    actual_first_period = base_signal + rng.normal(
+        0, noise_level / 2, n_samples
+    )
 
     data_dict = {
         "location_id": location_id,
@@ -619,7 +650,11 @@ def load_uncertainty_data(
         quantile_cols_dict["q0.9"].append(q90_col)
 
         current_trend = trend_strength * i
-        q50 = base_signal + current_trend + rng.normal(0, noise_level / 3, n_samples)
+        q50 = (
+            base_signal
+            + current_trend
+            + rng.normal(0, noise_level / 3, n_samples)
+        )
 
         current_interval_width = (
             interval_width_base
@@ -643,7 +678,9 @@ def load_uncertainty_data(
     if anomaly_frac > 0 and n_samples > 0:
         n_anomalies = int(anomaly_frac * n_samples)
         if n_anomalies > 0 and all_q10_cols and all_q90_cols:
-            anomaly_indices = rng.choice(n_samples, size=n_anomalies, replace=False)
+            anomaly_indices = rng.choice(
+                n_samples, size=n_anomalies, replace=False
+            )
             n_under = n_anomalies // 2
             under_indices = anomaly_indices[:n_under]
             over_indices = anomaly_indices[n_under:]
@@ -662,7 +699,9 @@ def load_uncertainty_data(
     feature_names = ["location_id", "longitude", "latitude", "elevation"]
     target_names = [actual_col_name]
     pred_cols_sorted = [
-        col for pair in zip(all_q10_cols, all_q50_cols, all_q90_cols) for col in pair
+        col
+        for pair in zip(all_q10_cols, all_q50_cols, all_q90_cols)
+        for col in pair
     ]
     ordered_cols = feature_names + target_names + pred_cols_sorted
     df = df[ordered_cols]

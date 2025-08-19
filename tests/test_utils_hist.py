@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytest
 
 from kdiagram.utils.hist import plot_hist_kde
 
@@ -19,7 +18,9 @@ def test_plot_hist_kde_with_numpy_array():
     assert isinstance(pdf, np.ndarray), "PDF should be of type np.ndarray"
 
     # Check the shape of the returned arrays (should match the number of grid points)
-    assert grid.shape[0] == pdf.shape[0], "Grid and PDF should have the same length"
+    assert (
+        grid.shape[0] == pdf.shape[0]
+    ), "Grid and PDF should have the same length"
 
 
 def test_plot_hist_kde_with_pandas_series():
@@ -29,7 +30,9 @@ def test_plot_hist_kde_with_pandas_series():
 
     assert isinstance(grid, np.ndarray), "Grid should be of type np.ndarray"
     assert isinstance(pdf, np.ndarray), "PDF should be of type np.ndarray"
-    assert grid.shape[0] == pdf.shape[0], "Grid and PDF should have the same length"
+    assert (
+        grid.shape[0] == pdf.shape[0]
+    ), "Grid and PDF should have the same length"
 
 
 def test_plot_hist_kde_with_pandas_dataframe():
@@ -39,7 +42,9 @@ def test_plot_hist_kde_with_pandas_dataframe():
 
     assert isinstance(grid, np.ndarray), "Grid should be of type np.ndarray"
     assert isinstance(pdf, np.ndarray), "PDF should be of type np.ndarray"
-    assert grid.shape[0] == pdf.shape[0], "Grid and PDF should have the same length"
+    assert (
+        grid.shape[0] == pdf.shape[0]
+    ), "Grid and PDF should have the same length"
 
 
 def test_plot_hist_kde_savefig():
@@ -62,12 +67,10 @@ def test_plot_hist_kde_savefig():
 def test_plot_hist_kde_with_normalize_kde():
     # Test normalization of KDE
     data = np.random.normal(0, 1, 1000)
-    grid, pdf = plot_hist_kde(data, bins=30, show_kde=True, normalize_kde=True)
+    grid, pdf = plot_hist_kde(
+        data, bins=30, show_kde=True, normalize_kde=True
+    )
 
     # Check if the PDF is normalized between 0 and 1
     assert pdf.max() <= 1.0, "PDF values should be normalized to [0, 1]"
     assert pdf.min() >= 0.0, "PDF values should be non-negative"
-
-
-if __name__ == "__main__":  # pragma : no-cover
-    pytest.main([__file__])

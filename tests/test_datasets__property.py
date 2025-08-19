@@ -67,15 +67,22 @@ def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
     monkeypatch.setattr(
         prop.resources, "is_resource", lambda mod, name: name == filename
     )
-    monkeypatch.setattr(prop.resources, "path", lambda mod, name: _PathCtx(pkg_file))
+    monkeypatch.setattr(
+        prop.resources, "path", lambda mod, name: _PathCtx(pkg_file)
+    )
 
     # Ensure downloader is never called in this path
     monkeypatch.setattr(
-        prop, "fancier_downloader", lambda **k: pytest.fail("downloader should not run")
+        prop,
+        "fancier_downloader",
+        lambda **k: pytest.fail("downloader should not run"),
     )
 
     out = prop.download_file_if(
-        filename, data_home=str(cache_dir), download_if_missing=False, verbose=False
+        filename,
+        data_home=str(cache_dir),
+        download_if_missing=False,
+        verbose=False,
     )
     assert out is not None
     out_path = Path(out)
@@ -92,11 +99,16 @@ def test_download_uses_cache_if_already_present(tmp_path, monkeypatch):
     # Pretend package also has it; function should still return cache path
     monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: True)
     monkeypatch.setattr(
-        prop.resources, "path", lambda mod, name: _PathCtx(tmp_path / "other" / name)
+        prop.resources,
+        "path",
+        lambda mod, name: _PathCtx(tmp_path / "other" / name),
     )
 
     out = prop.download_file_if(
-        filename, data_home=str(cache_dir), download_if_missing=False, verbose=False
+        filename,
+        data_home=str(cache_dir),
+        download_if_missing=False,
+        verbose=False,
     )
     assert Path(out) == cached
     assert Path(out).read_bytes() == b"cached"
@@ -105,12 +117,16 @@ def test_download_uses_cache_if_already_present(tmp_path, monkeypatch):
 # ---------- download_file_if : forced download ----------
 
 
-def test_force_download_calls_downloader_and_writes_file(tmp_path, monkeypatch):
+def test_force_download_calls_downloader_and_writes_file(
+    tmp_path, monkeypatch
+):
     cache_dir = tmp_path / "cache"
     filename = "force.txt"
 
     # No package resource
-    monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: False)
+    monkeypatch.setattr(
+        prop.resources, "is_resource", lambda mod, name: False
+    )
 
     # Stub downloader: create the file in the cache dir
     def fake_downloader(url, filename, dstpath, **kw):
@@ -135,9 +151,13 @@ def test_force_download_warns_when_disabled(tmp_path, monkeypatch):
     filename = "force_disabled.txt"
 
     # No package, no cache, downloader should not be called
-    monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: False)
     monkeypatch.setattr(
-        prop, "fancier_downloader", lambda **k: pytest.fail("should not be called")
+        prop.resources, "is_resource", lambda mod, name: False
+    )
+    monkeypatch.setattr(
+        prop,
+        "fancier_downloader",
+        lambda **k: pytest.fail("should not be called"),
     )
 
     with pytest.warns(UserWarning):
@@ -156,7 +176,9 @@ def test_download_if_missing_success(tmp_path, monkeypatch):
     cache_dir = tmp_path / "cache"
     filename = "flow.txt"
 
-    monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: False)
+    monkeypatch.setattr(
+        prop.resources, "is_resource", lambda mod, name: False
+    )
 
     def fake_downloader(url, filename, dstpath, **kw):
         Path(dstpath).mkdir(parents=True, exist_ok=True)
@@ -165,7 +187,10 @@ def test_download_if_missing_success(tmp_path, monkeypatch):
     monkeypatch.setattr(prop, "fancier_downloader", fake_downloader)
 
     out = prop.download_file_if(
-        filename, data_home=str(cache_dir), download_if_missing=True, verbose=False
+        filename,
+        data_home=str(cache_dir),
+        download_if_missing=True,
+        verbose=False,
     )
     assert Path(out) == cache_dir / filename
     assert Path(out).read_text() == "ok"
@@ -175,13 +200,20 @@ def test_download_if_missing_disabled_returns_none(tmp_path, monkeypatch):
     cache_dir = tmp_path / "cache"
     filename = "nomiss.txt"
 
-    monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: False)
     monkeypatch.setattr(
-        prop, "fancier_downloader", lambda **k: pytest.fail("should not be called")
+        prop.resources, "is_resource", lambda mod, name: False
+    )
+    monkeypatch.setattr(
+        prop,
+        "fancier_downloader",
+        lambda **k: pytest.fail("should not be called"),
     )
 
     out = prop.download_file_if(
-        filename, data_home=str(cache_dir), download_if_missing=False, verbose=False
+        filename,
+        data_home=str(cache_dir),
+        download_if_missing=False,
+        verbose=False,
     )
     assert out is None
 
@@ -223,11 +255,15 @@ def test_remote_metadata_missing_fields_raise(tmp_path):
         prop.download_file_if(meta2, verbose=False)
 
 
-def test_download_returns_none_when_downloader_silent_failure(tmp_path, monkeypatch):
+def test_download_returns_none_when_downloader_silent_failure(
+    tmp_path, monkeypatch
+):
     cache_dir = tmp_path / "cache"
     filename = "silent.txt"
 
-    monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: False)
+    monkeypatch.setattr(
+        prop.resources, "is_resource", lambda mod, name: False
+    )
 
     # Downloader does NOT create the file (e.g., error='ignore' path)
     def fake_downloader(url, filename, dstpath, **kw):
@@ -256,7 +292,9 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
 
     # Mock resource present
     monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: True)
-    monkeypatch.setattr(prop.resources, "path", lambda mod, name: _PathCtx(pkg_file))
+    monkeypatch.setattr(
+        prop.resources, "path", lambda mod, name: _PathCtx(pkg_file)
+    )
 
     # Force copyfile to fail to hit the warning branch
     def bad_copy(src, dst):
@@ -267,13 +305,12 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
     # Wrap the function call to catch the expected UserWarning
     with pytest.warns(UserWarning, match="Could not copy dataset"):
         out = prop.download_file_if(
-            filename, data_home=str(cache_dir), download_if_missing=False, verbose=False
+            filename,
+            data_home=str(cache_dir),
+            download_if_missing=False,
+            verbose=False,
         )
 
     # Function returns cache path if exists, else package path.
     # Here cache doesn't exist, so it should return package or cache per code.
     assert out in {str(cache_dir / filename), str(pkg_file)}
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

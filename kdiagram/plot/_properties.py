@@ -40,7 +40,10 @@ TDG_DIRECTIONS = {
                 (0.75, 0.25),
                 {"rotation_mode": "anchor", "rotation": 45},
             ],
-            "SE": [(0.75, 0.70), {"rotation_mode": "anchor", "rotation": -45}],
+            "SE": [
+                (0.75, 0.70),
+                {"rotation_mode": "anchor", "rotation": -45},
+            ],
             "NW": [
                 (0.15, 0.35),
                 {"rotation_mode": "anchor", "rotation": -45},

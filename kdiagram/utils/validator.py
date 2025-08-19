@@ -61,7 +61,8 @@ def validate_length_range(length_range, sorted_values=True, param_name=None):
     min_length, max_length = length_range
 
     if not all(
-        isinstance(x, (float, int, np.integer, np.floating)) for x in length_range
+        isinstance(x, (float, int, np.integer, np.floating))
+        for x in length_range
     ):
         raise ValueError(f"Both elements in {param_name} must be numeric.")
 
@@ -78,7 +79,12 @@ def validate_length_range(length_range, sorted_values=True, param_name=None):
 
 
 def validate_yy(
-    y_true, y_pred, expected_type=None, *, validation_mode="strict", flatten=False
+    y_true,
+    y_pred,
+    expected_type=None,
+    *,
+    validation_mode="strict",
+    flatten=False,
 ):
     r"""
     Validates the shapes and types of actual and predicted target arrays,
@@ -140,7 +146,8 @@ def validate_yy(
         actual_type_y_true = type_of_target(y_true)
         actual_type_y_pred = type_of_target(y_pred)
         if validation_mode == "strict" and (
-            actual_type_y_true != expected_type or actual_type_y_pred != expected_type
+            actual_type_y_true != expected_type
+            or actual_type_y_pred != expected_type
         ):
             msg = (
                 f"Validation failed in strict mode. Expected type '{expected_type}'"
@@ -441,7 +448,9 @@ def is_in_if(
     return None
 
 
-def exist_features(df: pd.DataFrame, features, error="raise", name="Feature") -> bool:
+def exist_features(
+    df: pd.DataFrame, features, error="raise", name="Feature"
+) -> bool:
     r"""
     Check whether the specified features exist in the dataframe.
 
@@ -524,7 +533,8 @@ def exist_features(df: pd.DataFrame, features, error="raise", name="Feature") ->
     # Validate the 'error' parameter
     if error not in ["raise", "ignore", "warn"]:
         raise ValueError(
-            "Invalid value for 'error'. Expected" " one of ['raise', 'ignore', 'warn']."
+            "Invalid value for 'error'. Expected"
+            " one of ['raise', 'ignore', 'warn']."
         )
 
     # Ensure 'features' is a list-like structure
@@ -550,7 +560,8 @@ def exist_features(df: pd.DataFrame, features, error="raise", name="Feature") ->
 
         if error == "raise":
             raise ValueError(
-                f"{msg} {smart_format(missing_features)}" " not found in the dataframe."
+                f"{msg} {smart_format(missing_features)}"
+                " not found in the dataframe."
             )
 
         elif error == "warn":
@@ -744,7 +755,9 @@ def is_frame(
             objname = objname or "Input"
             objname = f"{objname!r} parameter expects"
             expected = "a DataFrame" if df_only else "a DataFrame or Series"
-            raise TypeError(f"{objname} {expected}. Got {type(arr).__name__!r}")
+            raise TypeError(
+                f"{objname} {expected}. Got {type(arr).__name__!r}"
+            )
         elif error == "warn":
             warning_msg = (
                 f"Warning: {objname or 'Input'} expects "
@@ -839,7 +852,10 @@ def build_data_if(
 
         # If forced, generate column names automatically if not given
         if force and columns is None:
-            columns = [f"{col_prefix}{i + start_incr_at}" for i in range(data.shape[1])]
+            columns = [
+                f"{col_prefix}{i + start_incr_at}"
+                for i in range(data.shape[1])
+            ]
 
         # Perform final DataFrame conversion
         data = pd.DataFrame(data, columns=columns)
@@ -847,7 +863,11 @@ def build_data_if(
     # Perform an array-to-frame conversion with potential
     # re-checking of columns
     data = array_to_frame(
-        data, columns=columns, to_frame=to_frame, input_name=input_name, force=force
+        data,
+        columns=columns,
+        to_frame=to_frame,
+        input_name=input_name,
+        force=force,
     )
 
     # Optionally apply data-type checks or conversions, like
@@ -948,7 +968,8 @@ def recheck_data_types(
         is_frame = False
         try:
             data = pd.DataFrame(
-                data, columns=[column_prefix + str(i) for i in range(len(data))]
+                data,
+                columns=[column_prefix + str(i) for i in range(len(data))],
             )
         except Exception as e:
             raise ValueError(
@@ -1045,7 +1066,11 @@ def array_to_frame(
             )
             if raise_exception:
                 raise ValueError(msg)
-            if raise_warning and raise_warning not in ("silence", "ignore", "mute"):
+            if raise_warning and raise_warning not in (
+                "silence",
+                "ignore",
+                "mute",
+            ):
                 warnings.warn(msg, stacklevel=2)
             return X  # Early return if no columns and not forcing
 
@@ -1057,7 +1082,9 @@ def array_to_frame(
     return X
 
 
-def convert_array_to_pandas(X, *, to_frame=False, columns=None, input_name="X"):
+def convert_array_to_pandas(
+    X, *, to_frame=False, columns=None, input_name="X"
+):
     r"""
     Converts an array-like object to a pandas DataFrame or Series, applying
     provided column names or series name.
@@ -1114,7 +1141,9 @@ def convert_array_to_pandas(X, *, to_frame=False, columns=None, input_name="X"):
 
     if to_frame and not sp.issparse(X):
         if columns is None:
-            raise ValueError("Columns must be provided for DataFrame conversion.")
+            raise ValueError(
+                "Columns must be provided for DataFrame conversion."
+            )
 
         # Ensure columns is list-like for DataFrame conversion, single string for Series
         if isinstance(columns, str):
@@ -1218,7 +1247,11 @@ def ensure_2d(X, output_format="auto"):
 
 
 def parameter_validator(
-    param_name, target_strs, match_method="contains", raise_exception=True, **kws
+    param_name,
+    target_strs,
+    match_method="contains",
+    raise_exception=True,
+    **kws,
 ):
     r"""
     Creates a validator function for ensuring a parameter's value matches one
@@ -1374,7 +1407,9 @@ def normalize_string(
 
     if not target_strs:
         return normalized_str
-    target_strs = is_iterable(target_strs, exclude_string=True, transform=True)
+    target_strs = is_iterable(
+        target_strs, exclude_string=True, transform=True
+    )
     normalized_targets = (
         [str(t).lower() for t in target_strs] if ignore_case else target_strs
     )
@@ -1382,7 +1417,9 @@ def normalize_string(
 
     for target in normalized_targets:
         if num_chars_check is not None:
-            condition = normalized_str[:num_chars_check] == target[:num_chars_check]
+            condition = (
+                normalized_str[:num_chars_check] == target[:num_chars_check]
+            )
         elif deep:
             condition = normalized_str in target
         elif match_method == "contains":
@@ -1399,7 +1436,11 @@ def normalize_string(
     if matched_target is not None:
         if return_target_only:
             return matched_target
-        return (normalized_str, matched_target) if return_target_str else normalized_str
+        return (
+            (normalized_str, matched_target)
+            if return_target_str
+            else normalized_str
+        )
 
     if raise_exception:
         error_msg = error_msg or (
@@ -1486,7 +1527,9 @@ def is_iterable(
 
     # Check iterability, but optionally treat string
     # objects as non-iterable
-    is_iter = not (exclude_string and isinstance(y, str)) and hasattr(y, "__iter__")
+    is_iter = not (exclude_string and isinstance(y, str)) and hasattr(
+        y, "__iter__"
+    )
 
     # If transform is True, return y as-is if it is
     # iterable, otherwise wrap it in a list.

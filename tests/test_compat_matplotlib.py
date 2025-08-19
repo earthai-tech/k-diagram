@@ -40,25 +40,33 @@ def test_get_cmap_invalid_name_falls_back_to_valid_default_with_warning():
 def test_get_cmap_invalid_name_and_default_uses_failsafe_continuous():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        cmap = mpl_compat.get_cmap("nope", default="also_nope", failsafe="continuous")
+        cmap = mpl_compat.get_cmap(
+            "nope", default="also_nope", failsafe="continuous"
+        )
     # Current implementation falls back to viridis
     assert cmap.name.lower() == "viridis"
     # Two-step fallback: to default, then to failsafe
     msgs = [str(ww.message) for ww in w]
     assert any("Colormap 'nope' not found" in m for m in msgs)
-    assert any("Default colormap 'also_nope' also not found" in m for m in msgs)
+    assert any(
+        "Default colormap 'also_nope' also not found" in m for m in msgs
+    )
 
 
 def test_get_cmap_invalid_name_and_default_uses_failsafe_discrete():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        cmap = mpl_compat.get_cmap("nope", default="also_nope", failsafe="discrete")
+        cmap = mpl_compat.get_cmap(
+            "nope", default="also_nope", failsafe="discrete"
+        )
     # Implementation currently always returns viridis;
     # accept either viridis or tab10 to be forward-compatible.
     assert cmap.name.lower() in {"viridis", "tab10"}
     msgs = [str(ww.message) for ww in w]
     assert any("Colormap 'nope' not found" in m for m in msgs)
-    assert any("Default colormap 'also_nope' also not found" in m for m in msgs)
+    assert any(
+        "Default colormap 'also_nope' also not found" in m for m in msgs
+    )
 
 
 # def test_get_cmap_deprecated_error_param_emits_futurewarning():
@@ -130,10 +138,8 @@ def test_get_cmap_private_both_paths(monkeypatch):
     # Old path uses matplotlib.cm.get_cmap(name, lut)
     monkeypatch.setattr(mpl_compat, "_MPL_VERSION", parse("3.5"))
     sentinel = object()
-    monkeypatch.setattr(matplotlib.cm, "get_cmap", lambda n, lut=None: sentinel)
+    monkeypatch.setattr(
+        matplotlib.cm, "get_cmap", lambda n, lut=None: sentinel
+    )
     cm_old = mpl_compat.get_cmap("any", lut=None)
     assert cm_old is sentinel
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

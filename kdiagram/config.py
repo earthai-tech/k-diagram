@@ -28,10 +28,14 @@ def _resolve_category(cat: Union[str, type]) -> type:
         try:
             return _WARNING_NAME_MAP[cat]
         except KeyError as err:
-            raise ValueError(f"Unknown warning category name: {cat!r}") from err
+            raise ValueError(
+                f"Unknown warning category name: {cat!r}"
+            ) from err
     if isinstance(cat, type) and issubclass(cat, Warning):
         return cat
-    raise TypeError(f"Category must be a Warning subclass or name, got {cat!r}")
+    raise TypeError(
+        f"Category must be a Warning subclass or name, got {cat!r}"
+    )
 
 
 def configure_warnings(

@@ -63,7 +63,9 @@ def test_configure_warnings_module_regex_scoped():
     # Build a tiny module that emits a UserWarning
     m = types.ModuleType(mod_name)
     code = (
-        "import warnings\n" "def ping():\n" "    warnings.warn('scoped', UserWarning)\n"
+        "import warnings\n"
+        "def ping():\n"
+        "    warnings.warn('scoped', UserWarning)\n"
     )
     exec(code, m.__dict__)
 
@@ -135,7 +137,3 @@ def test_suppress_warnings_restore_default_for_syntaxwarning():
         warnings.warn("syntax visible", SyntaxWarning, stacklevel=2)
         # Should now be visible again (default, not ignored)
         assert len(rec) == 1
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

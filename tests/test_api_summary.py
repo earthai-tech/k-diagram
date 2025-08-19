@@ -22,7 +22,9 @@ def test_resultsummary_add_results_creates_snake_case_attrs_and_stores_copy():
 
 
 def test_resultsummary_str_truncates_and_adds_note_when_needed():
-    rs = ResultSummary(name="data check", max_char=10)  # very small to force '...'
+    rs = ResultSummary(
+        name="data check", max_char=10
+    )  # very small to force '...'
     rs.add_results({"very_long_value": "abcdefghijklmno"})  # > 10
     s = str(rs)
     # Name should be CamelCase in header
@@ -60,7 +62,11 @@ def test_resultsummary_pad_keys_auto_alignment_spaces():
     out = str(rs)
 
     # Find the lines with our keys
-    lines = [ln for ln in out.splitlines() if "short" in ln or "a_very_long_key" in ln]
+    lines = [
+        ln
+        for ln in out.splitlines()
+        if "short" in ln or "a_very_long_key" in ln
+    ]
     # Expect "short" line to have extra spaces before colon because of ljust
     short_line = next(ln for ln in lines if "short" in ln)
     # Match "short<spaces> :"
@@ -69,7 +75,9 @@ def test_resultsummary_pad_keys_auto_alignment_spaces():
 
 def test_resultsummary_flatten_nested_false_uses_beautify(monkeypatch):
     # Monkeypatch beautify_dict inside module to make assertion easy
-    monkeypatch.setattr(summary_mod, "beautify_dict", lambda d, **k: "<<pretty>>")
+    monkeypatch.setattr(
+        summary_mod, "beautify_dict", lambda d, **k: "<<pretty>>"
+    )
 
     rs = ResultSummary(
         name="X", pad_keys="auto", max_char=200, flatten_nested_dicts=False
@@ -87,7 +95,3 @@ def test_resultsummary_add_results_type_error():
     rs = ResultSummary()
     with pytest.raises(TypeError):
         rs.add_results(["not", "a", "dict"])  # type: ignore[arg-type]
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

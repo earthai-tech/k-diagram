@@ -35,7 +35,9 @@ def test_beautify_dict_basic_formatting(fixed_terminal):
     assert out.startswith("{\n")
     assert out.endswith("\n}")
     # ensure there are 5 formatted rows (keys sorted ascending)
-    rows = [line for line in out.splitlines() if re.match(r"\s*\d+:\s'", line)]
+    rows = [
+        line for line in out.splitlines() if re.match(r"\s*\d+:\s'", line)
+    ]
     assert len(rows) == len(d)
     # numeric keys should be sorted in the output
     keys_in_order = [int(re.findall(r"(\d+):\s'", line)[0]) for line in rows]
@@ -142,7 +144,3 @@ def test_get_table_size_warns_when_exceeds_terminal(fixed_terminal):
 def test_get_table_size_invalid_value_raises(fixed_terminal):
     with pytest.raises(ValueError):
         util.get_table_size("not-an-int")
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

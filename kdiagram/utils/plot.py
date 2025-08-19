@@ -11,7 +11,9 @@ from scipy.stats import gaussian_kde
 from .generic_utils import get_valid_kwargs
 
 
-def set_axis_grid(ax, show_grid: bool = True, grid_props: dict = None) -> None:
+def set_axis_grid(
+    ax, show_grid: bool = True, grid_props: dict = None
+) -> None:
     """Robustly set grid properties on one or more matplotlib axes."""
     # Ensure grid_props is a dictionary.
     grid_props = (
@@ -144,15 +146,18 @@ def is_valid_kind(
         # Check matches against original valid kinds or their normalized forms
         valid_match = False
         for valid_norm, orig_kind in valid_normalized.items():
-            if final_normalized == valid_norm or final_normalized == normalize(
-                orig_kind
+            if (
+                final_normalized == valid_norm
+                or final_normalized == normalize(orig_kind)
             ):
                 valid_match = True
                 break
 
         if not valid_match and error == "raise":
             allowed = ", ".join(f"'{k}'" for k in valid_kinds)
-            raise ValueError(f"Invalid plot type '{kind}'. Allowed: {allowed}")
+            raise ValueError(
+                f"Invalid plot type '{kind}'. Allowed: {allowed}"
+            )
 
     return final_kind
 
@@ -272,7 +277,10 @@ def _kde_pdf(
         bandwidth = 1.06 * std * (x.size ** (-1 / 5)) if std > 0 else 1.0
 
     kde = gaussian_kde(
-        x, bw_method=bandwidth / np.std(x, ddof=1) if np.std(x, ddof=1) > 0 else None
+        x,
+        bw_method=(
+            bandwidth / np.std(x, ddof=1) if np.std(x, ddof=1) > 0 else None
+        ),
     )
 
     return kde(grid)
@@ -439,7 +447,9 @@ def add_histogram_to_plot(
     >>> add_histogram_to_plot(data, ax, bins=40, hist_color='green')
     """
     label = hist_kws.pop("label", "Histogram")
-    zorder = hist_kws.pop("zorder", 2)  # Ensure histogram is drawn below the KDE line,
+    zorder = hist_kws.pop(
+        "zorder", 2
+    )  # Ensure histogram is drawn below the KDE line,
 
     hist_kws = get_valid_kwargs(ax.hist, hist_kws)
     ax.hist(
