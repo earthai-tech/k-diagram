@@ -14,6 +14,8 @@
     <a href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-Black-000000.svg?style=flat-square"></a>
     <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md"><img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square"></a>
     <a href="https://codecov.io/gh/earthai-tech/k-diagram"><img alt="Codecov" src="https://codecov.io/gh/earthai-tech/k-diagram/branch/main/graph/badge.svg"></a>
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/earthai-tech/k-diagram">
+
   </p>
   
   <!-- Centered Introduction -->

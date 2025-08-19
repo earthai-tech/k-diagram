@@ -43,7 +43,7 @@ jobs:
         run: |
           python -m pip install . --no-deps --force-reinstall
 
-      - name:Lint (ruff and black)
+      - name: Lint (ruff and black)
         run: |
           echo "Checking for linter issues with Ruff..."
           ruff check .  # Checks for linting issues
