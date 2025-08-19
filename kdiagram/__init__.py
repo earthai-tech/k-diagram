@@ -2,10 +2,11 @@
 # Author: L. Kouadio <etanoyau@gmail.com>
 
 """
-K-Diagram: Rethinking Forecasting Uncertainty via Polar-Based Visualization
-============================================================================
-`k-diagram` is a Python package designed to provide specialized diagnostic polar plots,
-called "k-diagrams," for comprehensive model evaluation and forecast analysis.
+K-Diagram: Polar Diagnostics for Forecast Uncertainty
+=======================================================
+`k-diagram` is a Python package designed to provide
+specialized diagnostic polar plots, called "k-diagrams,
+for comprehensive model evaluation and forecast analysis.
 """
 import importlib
 import logging
@@ -29,16 +30,11 @@ def _lazy_import(module_name, alias=None):
         globals()[module_name] = _lazy_loader
 
 
-# Version (single source)
 try:
-    from importlib.metadata import PackageNotFoundError, version  # Py ≥3.8
-except ImportError:  # pragma: no cover
-    from importlib_metadata import PackageNotFoundError, version  # backport
-
-try:
-    __version__ = version("k-diagram")  # distribution name from pyproject.toml
-except PackageNotFoundError:  # running from source without install
-    __version__ = "1.1.0"  # # same as pyproject.toml
+    from ._scm_version import version as __version__
+except Exception:
+    # Fallback version in case Git is not available
+    __version__ = "1+unknown"
 
 # Dependency check
 _required_dependencies = [
@@ -70,19 +66,25 @@ if _missing_dependencies:
 
 # Re-export config helpers
 from .config import configure_warnings, warnings_config  # noqa: F401, E402
-
-# from . import datasets
 from .plot import (  # noqa: E402
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,
     plot_coverage,
     plot_coverage_diagnostic,
+    plot_error_bands,
+    plot_error_ellipses,
+    plot_error_violins,
     plot_feature_fingerprint,
+    plot_horizon_metrics,
     plot_interval_consistency,
     plot_interval_width,
     plot_model_comparison,
     plot_model_drift,
+    plot_polar_heatmap,
+    plot_polar_quiver,
+    plot_radial_density_ring,
     plot_relationship,
+    plot_reliability_diagram,
     plot_taylor_diagram,
     plot_taylor_diagram_in,
     plot_temporal_uncertainty,
@@ -111,4 +113,13 @@ __all__ = [
     "plot_feature_fingerprint",
     "plot_relationship",
     "plot_model_comparison",
+    "plot_radial_density_ring",
+    "plot_reliability_diagram",
+    "plot_horizon_metrics",
+    "plot_horizon_metrics",
+    "plot_polar_heatmap",
+    "plot_polar_quiver",
+    "plot_error_bands",
+    "plot_error_ellipses",
+    "plot_error_violins",
 ]

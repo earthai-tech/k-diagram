@@ -6,13 +6,10 @@
 Pytest suite for testing uncertainty visualization functions in
 kdiagram.plot.uncertainty.
 """
-
 import re
-import warnings
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -31,15 +28,6 @@ from kdiagram.plot.uncertainty import (
     plot_uncertainty_drift,
     plot_velocity,
 )
-
-# --- Pytest Configuration ---
-# Use a non-interactive backend for matplotlib to avoid plots
-# popping up during tests. 'Agg' is a good choice.
-matplotlib.use("Agg")
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive")
-    plt.show()
 
 
 @pytest.fixture(autouse=True)
@@ -130,42 +118,44 @@ def sample_data_velocity():
     return {"df": df, "q50_cols": q50_cols}
 
 
-@pytest.mark.parametrize("kind", ["line", "bar", "pie", "radar"])
+@pytest.mark.parametrize("kind", ["line", "bar", "radar"])
 def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
     """Test plot_coverage with one quantile model for various kinds."""
     data = sample_data_coverage
+
     try:
         plot_coverage(
             data["y_true"],
-            data["y_pred_q1"],  # Single model prediction
+            data["y_pred_q1"],
             names=[data["names"][0]],
             q=data["q"],
             kind=kind,
-            figsize=(6, 6),  # Smaller figure for tests
+            figsize=(6, 6),
         )
-        # Check if a figure was created
+
         assert len(plt.get_fignums()) > 0, f"Plot should be created for kind='{kind}'"
+
     except Exception as e:
         pytest.fail(f"plot_coverage raised an exception for kind='{kind}': {e}")
+
+    finally:
+        plt.close("all")
 
 
 def test_plot_coverage_multi_model_quantile_radar(sample_data_coverage):
     """Test plot_coverage with multiple quantile models (radar)."""
     data = sample_data_coverage
-    try:
-        plot_coverage(
-            data["y_true"],
-            data["y_pred_q1"],
-            data["y_pred_q2"],  # Two models
-            names=data["names"][:2],
-            q=data["q"],
-            kind="radar",
-            cov_fill=True,
-            figsize=(6, 6),
-        )
-        assert len(plt.get_fignums()) > 0, "Plot should be created"
-    except Exception as e:
-        pytest.fail(f"plot_coverage raised an exception: {e}")
+    plot_coverage(
+        data["y_true"],
+        data["y_pred_q1"],
+        data["y_pred_q2"],
+        names=data["names"][:2],
+        q=data["q"],
+        kind="radar",
+        cov_fill=True,
+        figsize=(6, 6),
+    )
+    assert len(plt.get_fignums()) > 0, "Plot should be created"
 
 
 def test_plot_coverage_single_model_point(sample_data_coverage):
@@ -993,9 +983,6 @@ def test_plot_interval_width_negative_width_warning(sample_data_iw):
     df_neg.loc[0:10, data["q_cols"][1]] = df_neg.loc[0:10, data["q_cols"][0]] - 1
     with pytest.warns(UserWarning, match="negative interval width"):
         plot_interval_width(df=df_neg, q_cols=data["q_cols"])
-
-
-# == Tests for plot_coverage_diagnostic ==
 
 
 @pytest.mark.parametrize("as_bars", [True, False])

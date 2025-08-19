@@ -18,50 +18,54 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 # -- Path setup --------------------------------------------------------------
-import os, sys, datetime, warnings  # noqa
+import datetime
+import warnings
+import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]  # repo root
-sys.path.insert(0, str(ROOT))  # only needed for source builds
+# Repo root path
+ROOT = Path(__file__).resolve().parents[2]
 
-# Try to import package & version; otherwise read pyproject.toml
+# Add root to sys.path (only needed for source builds)
+sys.path.insert(0, str(ROOT))
+
+# -- Version Handling -------------------------------------------------------
 try:
     import kdiagram as kd
 
-    pkg_version = kd.__version__
+    version = ".".join(kd.__version__.split(".")[:2])  # Use the major.minor version
+    release = kd.__version__
 except Exception:
-    # Read version from pyproject.toml so the docs still show the real version
-    try:
-        import tomllib  # Py 3.11+
-    except ModuleNotFoundError:
-        import tomli as tomllib  # add to docs/dev deps for 3.9/3.10
-    data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    pkg_version = data["project"]["version"]
+    # Fallback: package not importable (e.g., building docs from source)
+    version = "0.0"
+    release = "0+unknown"
+    warnings.warn("kdiagram not importable in docs environment; using 0+unknown")
+
+# -- Silence SyntaxWarnings during docs build --------------------------------
+if "kd" not in globals():
+    # If package is not importable, apply warning filters manually
+    warnings.filterwarnings(
+        "ignore", category=SyntaxWarning, module=r"^(numpy|matplotlib|pandas)\."
+    )
 else:
-    # Silence only the noisy SyntaxWarnings during docs build
+    # If package is importable, configure warnings for specific packages
     kd.configure_warnings(
         "ignore",
         categories=["SyntaxWarning"],
         modules=[r"^(numpy|matplotlib|pandas)\."],
     )
 
-# Fallback: if kd wasn't importable, apply an equivalent filter directly
-if "kd" not in globals():
-    warnings.filterwarnings(
-        "ignore", category=SyntaxWarning, module=r"^(numpy|matplotlib|pandas)\."
-    )
+# -- Ensure versioning is always set correctly --------------------------------
+if release == "0+unknown":
+    # If version is "0+unknown", explicitly warn it's an unknown or dev version
+    warnings.warn(f"Using fallback version: {release}", stacklevel=2)
 
 # -- Project information -----------------------------------------------------
 
 project = "k-diagram"
-author = "Laurent Kouadio"  # From your setup.py
+author = "Laurent Kouadio"
 current_year = datetime.datetime.now().year
 copyright = f"{current_year}, {author}"
-
-# The short X.Y version
-version = ".".join(pkg_version.split(".")[:2])
-# The full version, including alpha/beta/rc tags
-release = pkg_version
 
 # -- General configuration ---------------------------------------------------
 # Add any Sphinx extension module names here, as strings. They can be
@@ -70,7 +74,6 @@ release = pkg_version
 extensions = [
     "numpydoc",
     "sphinx.ext.autodoc",  # Include documentation from docstrings
-    "sphinx.ext.autosummary",  # Generate summary tables for API docs
     "sphinx.ext.napoleon",  # Support NumPy and Google style docstrings
     "sphinx.ext.intersphinx",  # Link to other projects' documentation
     "sphinx.ext.viewcode",  # Add links to source code
@@ -79,6 +82,7 @@ extensions = [
     "sphinx_copybutton",  # Add a "copy" button to code blocks
     "myst_parser",  # Allow parsing Markdown files (like README.md)
     "sphinx_design",  # Enable design elements like cards, buttons, grids
+    "sphinxcontrib.bibtex",
 ]
 
 # Configure Napoleon settings (for parsing NumPy/Google docstrings)
@@ -96,11 +100,13 @@ napoleon_use_rtype = True  # Use :rtype: for return types
 napoleon_preprocess_types = True  # Process type strings into links
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
-
+math_number_all = True
 # numpydoc configuration
 numpydoc_show_class_members = False  # don't duplicate __init__ params under the class
 numpydoc_class_members_toctree = False  # keep methods out of the class TOC
 numpydoc_xref_param_type = True  # auto-link types in parameter lists
+
+bibtex_bibfiles = ["references.bib"]
 
 # Configure Autodoc settings
 autodoc_default_options = {
@@ -126,7 +132,6 @@ myst_enable_extensions = [
     # "replacements", # Apply replacements (optional)
 ]
 # myst_heading_anchors = 3 # Automatically add anchors to headings up to level 3
-
 
 # Configure Intersphinx settings
 intersphinx_mapping = {

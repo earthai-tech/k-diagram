@@ -249,27 +249,32 @@ def test_plot_anomaly_magnitude_under_over_and_cbar(tmp_path):
     df = pd.DataFrame(
         {
             "actual": np.linspace(0, 10, n),
-            "q10": np.linspace(-1, 2, n),  # some under-preds
-            "q90": np.linspace(8, 12, n),  # some over-preds
+            "q10": np.linspace(-1, 2, n),
+            "q90": np.linspace(8, 12, n),
             "order": np.linspace(100, 200, n),
         }
     )
 
-    # force clear anomalies at both ends
+    # Force clear anomalies at both ends
     df.loc[:5, "actual"] = -5  # under
-    df.tail(6)["actual"] = 20  # over
+    # FIX: Use .loc for safe assignment to avoid pandas warnings
+    df.loc[df.index[-6:], "actual"] = 20  # over
 
     out = tmp_path / "anom.png"
-    ax = plot_anomaly_magnitude(
-        df=df,
-        actual_col="actual",
-        q_cols=["q10", "q90"],
-        theta_col="order",
-        acov="eighth_circle",
-        cbar=True,
-        cmap_over="nope_over",  # invalid -> fallback warning
-        savefig=str(out),
-    )
+
+    # FIX: Wrap the call in pytest.warns to catch the expected warning
+    with pytest.warns(UserWarning, match="Colormap 'nope_over' not found"):
+        ax = plot_anomaly_magnitude(
+            df=df,
+            actual_col="actual",
+            q_cols=["q10", "q90"],
+            theta_col="order",
+            acov="eighth_circle",
+            cbar=True,
+            cmap_over="nope_over",  # invalid -> fallback warning
+            savefig=str(out),
+        )
+
     assert out.exists()
     assert ax.get_thetamax() == pytest.approx(45.0, rel=1e-3)
     _cleanup()

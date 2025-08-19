@@ -445,3 +445,106 @@ table.docutils tbody tr:hover {
 }
 
 
+
+/* ------------------------------
+   Footnote-style citations (footcite)
+   Works with Sphinx/Docutils output:
+   - footnote refs in-text
+   - footnote blocks at page end
+   ------------------------------ */
+.citation {
+    /* A colored accent bar on the left */
+    border-left: 3px solid var(--color-brand-primary);
+    /* Space between the bar and the text */
+    padding-left: 1.5em;
+    /* Space between each reference entry */
+    margin-bottom: 1.5em;
+}
+
+.citation .label {
+    /* Make the citation label (e.g., [Hin98]) bold */
+    font-weight: bold;
+}
+
+/* --- Elegant Card Reference Style --- */
+.citation:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* In-text footnote reference markers (the little superscripts) */
+a.footnote-reference,
+a[role="doc-noteref"] {
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0 .15em;
+  border-bottom: 1px dotted var(--color-brand-primary);
+}
+a.footnote-reference:hover,
+a[role="doc-noteref"]:hover {
+  color: var(--color-brand-primary);
+  border-bottom-style: solid;
+}
+a.footnote-reference:focus-visible,
+a[role="doc-noteref"]:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Container for the footnotes section */
+.footnotes {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-brand-primary);
+}
+
+/* Individual footnote blocks */
+.footnote,
+dl.footnote {
+  /* match your .citation accent card style */
+  border-left: 3px solid var(--color-brand-primary);
+  padding-left: 1.5em;
+  margin: 1.25em 0 1.5em;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.footnote:hover,
+dl.footnote:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+
+/* Footnote label [1], [2], ... */
+.footnote .label,
+dl.footnote > dt,
+.footnote dt .label {
+  font-weight: bold;
+}
+
+/* Footnote text body */
+.footnote p,
+dl.footnote > dd {
+  margin: .35em 0 0;
+}
+
+/* Back-reference links (the ↩ back-to-text link) */
+a.footnote-backref,
+a[role="doc-backlink"] {
+  font-size: .9em;
+  margin-left: .5em;
+  opacity: .75;
+}
+a.footnote-backref::before,
+a[role="doc-backlink"]::before {
+  content: "↩︎";
+  margin-right: .25em;
+}
+
+/* Print: remove hover lift/shadow */
+@media print {
+  .footnote,
+  dl.footnote {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}

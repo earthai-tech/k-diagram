@@ -15,14 +15,15 @@ Case Study: Zhongshan Land Subsidence Uncertainty
    and sustainable development. Accurately forecasting future
    subsidence is crucial for effective urban planning and hazard
    mitigation, but requires not only predicting the most likely outcome
-   but also understanding the associated **predictive uncertainty**.
+   but also understanding the associated **predictive uncertainty**
+   (:footcite:t:`Liu2024`).
 
 This case study demonstrates how various visualization tools within the
-`k-diagram` package can be applied to analyze and interpret the
+``k-diagram`` package can be applied to analyze and interpret the
 outputs of a land subsidence forecasting model, using a sample dataset
-derived from research focused on the Zhongshan area. We will explore
-how different polar plots help reveal patterns in uncertainty, model
-performance, and potential prediction anomalies.
+derived from research focused on the Zhongshan area (:footcite:t:`kouadiob2025`).
+We will explore how different polar plots help reveal patterns in uncertainty,
+model performance, and potential prediction anomalies.
 
 .. note::
    The dataset used in this case study (``min_zhongshan.csv``, accessed
@@ -31,6 +32,7 @@ performance, and potential prediction anomalies.
    provided for **educational and demonstration purposes only** to
    illustrate the use of `k-diagram` functions. It does not represent
    the complete, validated forecast results for the region.
+
 
 The Zhongshan Sample Dataset
 ------------------------------
@@ -41,14 +43,14 @@ subsidence uncertainty for 898 locations over multiple years.
 **Key Characteristics:**
 
 * **Spatial Coordinates:** Includes ``longitude`` and ``latitude`` for
-    each location.
+  each location.
 * **Target Values:** Contains columns ``subsidence_2022`` and
-    ``subsidence_2023`` representing reference or baseline subsidence
-    values for those years (useful for some diagnostics like coverage).
+  ``subsidence_2023`` representing reference or baseline subsidence
+  values for those years (useful for some diagnostics like coverage).
 * **Quantile Forecasts:** Provides predicted quantiles (Q10, Q50, Q90)
-    for the years 2022 through 2026 (e.g., ``subsidence_2024_q0.1``,
-    ``subsidence_2024_q0.5``, ``subsidence_2024_q0.9``). This allows
-    analysis of uncertainty intervals and their evolution over time.
+  for the years 2022 through 2026 (e.g., ``subsidence_2024_q0.1``,
+  ``subsidence_2024_q0.5``, ``subsidence_2024_q0.9``). This allows
+  analysis of uncertainty intervals and their evolution over time.
 
 **Loading the Data:**
 
@@ -104,7 +106,7 @@ of the forecast uncertainty and model behavior.
 Loading Zhongshan Data for Interval Consistency Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example demonstrates loading the packaged Zhongshan dataset using
-:func:`~kdiagram.datasets.load_zhongshan_subsidence` (as a Bunch object)
+:func:`~kdiagram.datasets.load.load_zhongshan_subsidence` (as a Bunch object)
 and analyzing the temporal consistency of its prediction interval widths
 using :func:`~kdiagram.plot.uncertainty.plot_interval_consistency`. Includes
 basic error handling in case the data cannot be loaded.
@@ -731,6 +733,15 @@ to a 90-degree view (`acov='quarter_circle'`).
    related research publications.
 
    For details on how to cite the `k-diagram` software and these
-   specific papers (including submissions to *Nature Sustainability*
+   specific papers (including submissions to *Nature Communications*
    and the *International Journal of Forecasting*), please refer to
    the :ref:`Citing k-diagram <citing>` page.
+
+
+.. raw:: html
+
+   <hr>
+   
+.. rubric:: References
+
+.. footbibliography::

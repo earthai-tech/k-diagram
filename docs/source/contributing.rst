@@ -27,7 +27,7 @@ Setting up for Development
 
 To make changes to the code or documentation, you'll need to set up
 a development environment. Please follow the instructions in the
-:ref:`installation guide <installation>` under the section
+:ref:`installation guide <lab_installation>` under the section
 **"Installation from Source (for Development)"**. This typically
 involves:
 

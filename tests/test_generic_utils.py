@@ -55,7 +55,6 @@ def test_smart_format_multiple_items_and_connector():
 # ---------------------------
 # count_functions
 # ---------------------------
-@pytest.mark.skip("tests done on the root of the project")
 def test_count_functions_returns_int_for_counts():
     # Don’t assert exact number (file may change). Just basic sanity.
     n = count_functions(
@@ -63,11 +62,6 @@ def test_count_functions_returns_int_for_counts():
     )
     assert isinstance(n, int)
     assert n > 0
-
-
-# ---------------------------
-# drop_nan_in
-# ---------------------------
 
 
 def test_drop_nan_in_raises_on_nan_with_error_raise():

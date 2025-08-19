@@ -217,7 +217,7 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
     assert list(out2.columns) == ["c_0", "c_1"]
     # dtype coercion: first col numeric, second stays
     # date/object depending on parse success
-    assert np.issubdtype(out2.dtypes[0], np.number)
+    assert np.issubdtype(out2.dtypes.iloc[0], np.number)
 
     # Series -> DataFrame
     ser = pd.Series([1, 2, 3], name="s")
@@ -245,7 +245,9 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
 # -------------------
 # recheck_data_types
 # -------------------
-def test_recheck_data_types_df_and_non_df_and_numpy_return():
+
+
+def test_recheck_data_types_handles_mixed_types_and_warns():
     df = pd.DataFrame(
         {
             "a": ["1", "2", "3"],
@@ -253,16 +255,34 @@ def test_recheck_data_types_df_and_non_df_and_numpy_return():
             "c": ["1.1", "2.2", "3.3"],
         }
     )
-    out = V.recheck_data_types(
-        df, coerce_numeric=True, coerce_datetime=True, return_as_numpy=False
-    )
-    # a -> numeric, c -> float, b stays object because of mixed validity
+
+    # Expect the warning from the mixed-type 'b' column
+    with pytest.warns(UserWarning, match="Could not infer format"):
+        out = V.recheck_data_types(
+            df, coerce_numeric=True, coerce_datetime=True, return_as_numpy=False
+        )
+
+    # Assert that types were coerced correctly where possible
     assert np.issubdtype(out["a"].dtype, np.number)
     assert np.issubdtype(out["c"].dtype, np.floating)
+    # Assert that the problematic column remains an object
+    assert pd.api.types.is_object_dtype(out["b"].dtype)
 
-    # non-DataFrame input -> converted and returned as numpy (auto)
-    out_np = V.recheck_data_types([["1", "2"], ["3", "4"]], return_as_numpy="auto")
+
+def test_recheck_data_types_handles_non_df_input():
+    # This input will produce a datetime warning because the function
+    # attempts to convert all object columns to datetime by default.
+    list_input = [["1", "2"], ["3", "4"]]
+
+    # FIX: Expect the UserWarning from pd.to_datetime
+    with pytest.warns(UserWarning, match="Could not infer format"):
+        out_np = V.recheck_data_types(list_input, return_as_numpy="auto")
+
+    # Assertions remain the same
     assert isinstance(out_np, np.ndarray)
+    # Check that the data was correctly converted to numeric
+    # after the datetime conversion failed.
+    assert np.issubdtype(out_np.dtype, np.number)
 
 
 # ---------------

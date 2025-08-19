@@ -2,12 +2,12 @@ import inspect
 import os
 import warnings
 from functools import wraps
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
 from .core.property import PandasDataHandlers
-from .utils.generic_utils import get_valid_kwargs
 
 __all__ = ["check_non_emptiness", "isdf", "SaveFile"]
 
@@ -33,7 +33,7 @@ def check_non_emptiness(
     a list of parameter names in ``params``.
 
     Parameters
-    ----------
+    -------------
     params : list of str, optional
         Names of arguments whose emptiness will be
         checked. If None and the decorator is used
@@ -366,7 +366,7 @@ class SaveFile:
     the original result.
 
     Parameters
-    ----------
+    ------------
     savefile : str, optional
         The file path where the DataFrame should be saved. If `None`, no file
         is saved.
@@ -572,7 +572,7 @@ class SaveFile:
                 # Get the appropriate writer based on file extension
                 writers_dict = self.data_handler.writers(df_to_save)
                 writer_func = writers_dict.get(ext.lower())
-                self.writer_kws = get_valid_kwargs(writer_func, self.writer_kws)
+                self.writer_kws = _get_valid_kwargs(writer_func, self.writer_kws)
 
                 if writer_func is None:
                     warnings.warn(
@@ -626,7 +626,8 @@ def save_file(func=None, *, data_index=0, dout=".csv"):
     Both save_file (function-based) and SaveFile (class-based) decorators
     are designed to allow users to save the returned DataFrame(s) from a
     decorated function to a file, if needed. For more details and advanced
-    usage, please refer to the documentation of :class:`kdiagram.decorators.SaveFile`,
+    usage, please refer to the documentation
+    of :class:`kdiagram.decorators.SaveFile`,
     as both operate in a similar manner.
 
     * When to Use SaveFile vs. save_file?
@@ -743,3 +744,64 @@ def _perform_save(df_to_save, savefile, ext):
 
 
 save_file.__doc__ = SaveFile.__doc__
+
+
+def _get_valid_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
+    r"""
+    Filter and return only the valid keyword arguments for a given
+    callable object, while warning about any invalid kwargs.
+
+    Parameters
+    ------------
+    callable_obj : callable
+        The callable object (function, lambda function, method, or class)
+        for which the keyword arguments need to be validated.
+
+    kwargs : dict
+        Dictionary of keyword arguments to be validated against
+        the callable object.
+
+    Returns
+    -------
+    valid_kwargs : dict
+        Dictionary containing only the valid keyword arguments
+        for the callable object.
+    """
+    # If the callable_obj is an instance, get its class
+    if not inspect.isclass(callable_obj) and not callable(callable_obj):
+        callable_obj = callable_obj.__class__
+
+    try:
+        # Retrieve the signature of the callable object
+        signature = inspect.signature(callable_obj)
+    except ValueError:
+        # If signature cannot be obtained, return empty kwargs and warn
+        warnings.warn(
+            "Unable to retrieve signature of the callable object. "
+            "No keyword arguments will be passed.",
+            stacklevel=2,
+        )
+        return {}
+
+    # Extract parameter names from the function signature
+    valid_params = set(signature.parameters.keys())
+
+    # Identify valid and invalid kwargs
+    valid_kwargs = {}
+    invalid_kwargs = {}
+    for k, v in kwargs.items():
+        if k in valid_params:
+            valid_kwargs[k] = v
+        else:
+            invalid_kwargs[k] = v
+
+    # Warn the user about invalid kwargs
+    if invalid_kwargs:
+        invalid_keys = ", ".join(invalid_kwargs.keys())
+        warnings.warn(
+            f"The following keyword arguments are invalid"
+            f" and will be ignored: {invalid_keys}",
+            stacklevel=2,
+        )
+
+    return valid_kwargs

@@ -1,5 +1,5 @@
-# tests/test_uncertainty_smoke.py
 import matplotlib.pyplot as plt
+import pandas as pd
 import pytest
 
 from kdiagram.plot.uncertainty import (
@@ -14,20 +14,22 @@ def mpl_agg(monkeypatch):
 
 
 def test_interval_width_basic(tmp_path):
-    import pandas as pd
-
     df = pd.DataFrame(
         {"low": [0, 1, 1], "up": [1, 2, 2], "theta": [0, 1, 2], "z": [0.2, 0.5, 0.7]}
     )
-    plot_interval_width(
-        df=df,
-        q_cols=["low", "up"],
-        theta_col="theta",
-        z_col="z",
-        acov="default",
-        cbar=True,
-        show_grid=True,
-    )
+
+    pattern = r"currently ignored for positioning/ordering"
+
+    with pytest.warns(UserWarning, match=pattern):
+        plot_interval_width(
+            df=df,
+            q_cols=["low", "up"],
+            theta_col="theta",
+            z_col="z",
+            acov="default",
+            cbar=True,
+            show_grid=True,
+        )
 
 
 if __name__ == "__main__":  # pragma: no cover

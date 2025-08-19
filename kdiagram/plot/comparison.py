@@ -5,21 +5,28 @@ from __future__ import annotations
 
 import warnings
 from numbers import Real
-from typing import Any, Callable, Literal
+from typing import (
+    Any,
+    Callable,
+    Literal,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import cm
+from matplotlib.colors import Normalize
 
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, type_of_target, validate_params
+from ..decorators import check_non_emptiness, isdf
 from ..utils.generic_utils import drop_nan_in
 from ..utils.handlers import columns_manager
 from ..utils.metric_utils import get_scorer
 from ..utils.plot import set_axis_grid
 from ..utils.validator import _assert_all_types, is_iterable, validate_yy
 
-__all__ = ["plot_reliability_diagram", "plot_model_comparison"]
+__all__ = ["plot_reliability_diagram", "plot_model_comparison", "plot_horizon_metrics"]
 
 
 @validate_params(
@@ -966,8 +973,6 @@ def plot_model_comparison(
     ...                        title="Classification Model Comparison",
     ...                        scale='norm')
     """
-    # Docstring omitted as requested
-    # --- Input Validation and Preparation ---
     try:
         # Remove NaN values and ensure consistency
         y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
@@ -1230,3 +1235,299 @@ def plot_model_comparison(
             )
 
     return ax
+
+
+@check_non_emptiness
+@isdf
+def plot_horizon_metrics(
+    df: pd.DataFrame,
+    qlow_cols: list[str],
+    qup_cols: list[str],
+    *,
+    q50_cols: list[str] | None = None,
+    xtick_labels: list[str] | None = None,
+    normalize_radius: bool = False,
+    show_value_labels: bool = True,
+    cbar_label: str | None = None,
+    r_label: str | None = None,
+    cmap: str = "coolwarm",
+    acov: str = "default",
+    title: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
+    alpha: float = 0.85,
+    show_grid: bool = True,
+    grid_props: dict | None = None,
+    mask_angle: bool = False,
+    savefig: str | None = None,
+    dpi: int = 300,
+    cbar: bool = True,
+):
+    # --- Input Validation ---
+    if len(qlow_cols) != len(qup_cols):
+        raise ValueError(
+            "Mismatch in length between `qlow_cols` "
+            f"({len(qlow_cols)}) and `qup_cols` ({len(qup_cols)})."
+        )
+    if q50_cols and len(qlow_cols) != len(q50_cols):
+        raise ValueError(
+            "Mismatch in length: `q50_cols` must match other " "quantile column lists."
+        )
+
+    # --- Data Calculation ---
+    qlow_data = df[qlow_cols].values
+    qup_data = df[qup_cols].values
+    interval_widths = qup_data - qlow_data
+
+    # Radial values are the mean width for each category/row
+    radial_values = np.mean(interval_widths, axis=1)
+
+    if q50_cols:
+        color_vals = np.mean(df[q50_cols].values, axis=1)
+    else:
+        # Default color to the radial value if no q50 provided
+        color_vals = radial_values
+
+    if normalize_radius:
+        min_r, max_r = radial_values.min(), radial_values.max()
+        if (max_r - min_r) > 1e-9:
+            radial_values = (radial_values - min_r) / (max_r - min_r)
+
+    # --- Plot Setup ---
+    angular_map = {
+        "default": 2 * np.pi,
+        "half_circle": np.pi,
+        "quarter_circle": np.pi / 2,
+        "eighth_circle": np.pi / 4,
+    }
+    span = angular_map.get(acov.lower(), 2 * np.pi)
+    num_bars = len(df)
+    theta = np.linspace(0, span, num_bars, endpoint=False)
+
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+    ax.set_thetamin(0)
+    ax.set_thetamax(np.degrees(span))
+
+    # --- Plot Bars ---
+    norm = Normalize(vmin=color_vals.min(), vmax=color_vals.max())
+    cmap_obj = get_cmap(cmap, default="coolwarm")
+    colors = cmap_obj(norm(color_vals))
+    bar_width = (span / num_bars) * 0.9
+
+    ax.bar(
+        theta,
+        radial_values,
+        width=bar_width,
+        color=colors,
+        edgecolor="k",
+        alpha=alpha,
+        linewidth=0.5,
+    )
+
+    # --- Annotations and Labels (Now Controllable) ---
+    if show_value_labels:
+        for angle, radius in zip(theta, radial_values):
+            ax.text(
+                angle,
+                radius + 0.03 * radial_values.max(),
+                f"{radius:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
+    if xtick_labels:
+        ax.set_xticks(theta)
+        ax.set_xticklabels(xtick_labels)
+    elif mask_angle:
+        ax.set_xticklabels([])
+
+    ax.set_yticklabels([])  # Hide radial value ticks
+    ax.set_title(title or "Polar Bar Comparison", fontsize=14)
+    if r_label:
+        ax.set_ylabel(r_label, fontsize=12, labelpad=20)
+
+    set_axis_grid(ax, show_grid, grid_props=grid_props)
+
+    if cbar:
+        sm = cm.ScalarMappable(cmap=cmap_obj, norm=norm)
+        cbar_obj = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
+        cbar_obj.set_label(cbar_label or "Color Metric", fontsize=10)
+
+    # --- Output ---
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_horizon_metrics.__doc__ = r"""
+Plot a polar bar chart comparing metrics across different horizons.
+
+This function visualizes a primary metric (typically **mean
+interval width**) as the height of bars arranged in a circle.
+Each bar represents a distinct category or forecast horizon. A
+secondary metric (typically the **mean Q50 value**) can be encoded
+as the color of the bars, providing a multi-faceted comparison.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame where each **row** represents a distinct
+    horizon or category to be compared.
+
+qlow_cols : list of str
+    List of column names containing lower quantile samples
+    (e.g., Q10) for each horizon.
+
+qup_cols : list of str
+    List of column names containing upper quantile samples
+    (e.g., Q90). Must have the same length as ``qlow_cols``.
+
+q50_cols : list of str, optional
+    List of column names for the median quantile (Q50). If
+    provided, the mean of these values determines the bar color.
+    If ``None``, bar color is determined by the bar height
+    (the mean interval width).
+
+xtick_labels : list of str, optional
+    Custom labels for each bar on the angular axis. The length
+    must match the number of rows in ``df``. If ``None``, no
+    angular labels are shown.
+
+normalize_radius : bool, default=False
+    If ``True``, the radial values (bar heights) are min-max
+    scaled to the range ``[0, 1]``.
+
+show_value_labels : bool, default=True
+    If ``True``, display the numeric value of the radial metric
+    on top of each bar.
+
+cbar_label : str, optional
+    Custom label for the color bar. If ``None``, a default
+    label is generated.
+
+r_label : str, optional
+    Custom label for the radial axis.
+
+cmap : str, default='coolwarm'
+    Matplotlib colormap name for coloring the bars.
+
+acov : {'default', 'half_circle', 'quarter_circle', \
+'eighth_circle'}, default='default'
+    Specifies the angular coverage of the plot: ``'default'``
+    (360°), ``'half_circle'`` (180°), etc.
+
+title : str, optional
+    Title for the plot. If ``None``, a default title is used.
+
+figsize : tuple of (float, float), default=(8, 8)
+    Figure size in inches.
+
+alpha : float, default=0.85
+    Transparency level for the bars.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization.
+
+mask_angle : bool, default=False
+    If ``True`` and ``xtick_labels`` is not provided, this will
+    hide any default angular tick labels.
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+dpi : int, default=300
+    Resolution for the saved figure.
+
+cbar : bool, default=True
+    If ``True``, display a color bar.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar bar plot.
+
+Notes
+-----
+The plot summarizes metrics for :math:`N` horizons (rows)
+using data from :math:`M` samples (columns). Let
+:math:`\mathbf{L}`, :math:`\mathbf{U}`, and :math:`\mathbf{Q50}`
+be data matrices of shape :math:`(N, M)` extracted from the
+corresponding columns.
+
+1.  **Interval Width Calculation**: For each horizon :math:`j`
+    and sample :math:`i`, the interval width is:
+
+    .. math::
+        W_{j,i} = U_{j,i} - L_{j,i}
+
+2.  **Radial Value (Bar Height)**: The radial value :math:`r_j`
+    for horizon :math:`j` is the mean interval width across
+    all :math:`M` samples.
+
+    .. math::
+        r_j = \frac{1}{M} \sum_{i=0}^{M-1} W_{j,i}
+
+3.  **Color Value**: The color value :math:`c_j` for horizon
+    :math:`j` is determined by the mean of the ``q50_cols`` values.
+
+    .. math::
+        c_j = \frac{1}{M} \sum_{i=0}^{M-1} Q50_{j,i}
+
+    If ``q50_cols`` is not provided, the color defaults to the
+    radial value, :math:`c_j = r_j`.
+
+4.  **Angular Position**: Horizons are spaced evenly around the
+    circle. For horizon :math:`j`, the angle is:
+
+    .. math::
+        \theta_j = \frac{j}{N} \times S
+
+    where :math:`S` is the angular span from ``acov``. The plot
+    starts at the top (12 o'clock) and proceeds clockwise.
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot import plot_horizon_metrics 
+>>>
+>>> # Create synthetic data for 6 horizons with 2 samples each
+>>> horizons = ["H+1", "H+2", "H+3", "H+4", "H+5", "H+6"]
+>>> df = pd.DataFrame({
+...     'q10_s1': [1, 2, 3, 4, 5, 6],
+...     'q10_s2': [1.2, 2.3, 3.4, 4.5, 5.6, 6.7],
+...     'q90_s1': [3, 4, 5.5, 7, 8, 9.5],
+...     'q90_s2': [3.1, 4.2, 5.7, 7.3, 8.4, 9.9],
+...     'q50_s1': [2, 3, 4.2, 5.7, 6.5, 8.2],
+...     'q50_s2': [2.1, 3.2, 4.4, 5.9, 6.9, 8.8],
+... })
+>>>
+>>> q10_cols = ['q10_s1', 'q10_s2']
+>>> q90_cols = ['q90_s1', 'q90_s2']
+>>> q50_cols = ['q50_s1', 'q50_s2']
+>>>
+>>> ax = plot_horizon_metrics(
+...     df=df,
+...     qlow_cols=q10_cols,
+...     qup_cols=q90_cols,
+...     q50_cols=q50_cols,
+...     title="Mean Interval Width Across Horizons",
+...     xtick_labels=horizons,
+...     show_value_labels=True,
+...     r_label="Mean Interval Width (Q90-Q10)",
+...     cbar_label="Mean Q50 Value",
+...     acov="default"
+... )
+"""

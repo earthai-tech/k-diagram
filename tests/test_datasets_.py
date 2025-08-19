@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -53,13 +54,19 @@ def test_load_zhongshan_subsidence_local():
 
 def test_load_zhongshan_subsidence_invalid_years():
     """Test loading Zhongshan subsidence dataset with invalid years."""
-    # Requesting invalid years (e.g., years not present in dataset)
-    result = load_zhongshan_subsidence(years=[2030, 2040], as_frame=True)
+    # This regex is more robust: it checks for the key phrases but ignores
+    # the exact content/order of the sets and minor whitespace differences.
+    match_pattern = r"Requested years not available: .* Available: .*"
 
-    # Ensure warning is raised, and the DataFrame is returned
+    with pytest.warns(UserWarning, match=match_pattern):
+        result = load_zhongshan_subsidence(years=[2030, 2040], as_frame=True)
+
+    # Assertions remain the same
     assert isinstance(result, pd.DataFrame)
-    # Check if the correct years are filtered in the dataset
-    assert not all(year in result.columns for year in [2022, 2023])
+    # The resulting dataframe should be empty of data columns since all
+    # requested years were invalid.
+    data_cols = [c for c in result.columns if c.startswith("subsidence")]
+    assert len(data_cols) == 0
 
 
 def test_load_zhongshan_subsidence_with_quantiles():
@@ -126,18 +133,28 @@ def test_load_zhongshan_subsidence_force_download(
     mock_load_zhongshan_subsidence,
 ):
     """
-    Force-download the Zhongshan subsidence dataset.
-
-    Skip gracefully if the dataset isn't reachable in the test
-    environment (e.g., CI without network/cache). This works
-    fine when the package is installed in a stable environment.
+    Force-download the Zhongshan subsidence dataset
+    and check for expected warnings.
     """
     try:
-        result = load_zhongshan_subsidence(force_download=True, as_frame=True)
-    except FileNotFoundError as e:
-        pytest.skip(f"Dataset unavailable in test env: {e}")
+        # Use the context manager to capture all warnings that occur
+        with pytest.warns(UserWarning) as record:
+            result = load_zhongshan_subsidence(force_download=True, as_frame=True)
 
-    assert isinstance(result, pd.DataFrame)
+            # If the function succeeds, it must have found a fallback resource.
+            assert isinstance(result, pd.DataFrame)
+
+        # Now, check the captured warnings
+        assert len(record) >= 1  # At least one warning was caught
+        # Check that the "download failed" message is in one of the warnings
+        assert any("Forced download failed" in str(w.message) for w in record)
+        # Optionally, check for the copy failure as well
+        assert any("Could not copy dataset" in str(w.message) for w in record)
+
+    except FileNotFoundError as e:
+        # This is the expected final outcome if all fallbacks fail.
+        # We skip the test as it confirms the dataset is truly unavailable.
+        pytest.skip(f"Dataset unavailable in test env, as expected: {e}")
 
 
 def test_load_uncertainty_data_bunch():

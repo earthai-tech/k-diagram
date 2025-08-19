@@ -38,14 +38,14 @@ else:
     from kdiagram.plot.feature_based import plot_feature_fingerprint
     from kdiagram.plot.relationship import plot_relationship
     from kdiagram.plot.uncertainty import (
-        plot_actual_vs_predicted,  # Added
+        plot_actual_vs_predicted,
         plot_anomaly_magnitude,
         plot_coverage,
-        plot_coverage_diagnostic,  # Added
+        plot_coverage_diagnostic,
         plot_interval_consistency,
-        plot_interval_width,  # Added
+        plot_interval_width,
         plot_model_drift,
-        plot_temporal_uncertainty,  # Added
+        plot_temporal_uncertainty,
         plot_uncertainty_drift,
         plot_velocity,
     )

@@ -13,13 +13,10 @@ import pytest
 from matplotlib.axes import Axes
 
 # --- Import function to test ---
-# Adjust the import path based on your project structure
 from kdiagram.plot.feature_based import plot_feature_fingerprint
 
 # --- Pytest Configuration ---
-matplotlib.use("Agg")  # Use Agg backend for non-interactive plotting
-
-# --- Fixtures ---
+matplotlib.use("Agg")
 
 
 @pytest.fixture(autouse=True)
@@ -51,8 +48,6 @@ def sample_data_fingerprint():
 
 
 # --- Test Functions ---
-
-
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("fill", [True, False])
 @pytest.mark.parametrize("input_type", ["numpy", "list"])
@@ -102,7 +97,6 @@ def test_plot_feature_fingerprint_defaults(
         pytest.fail(f"plot_feature_fingerprint with defaults failed: {e}")
 
 
-@pytest.mark.skip("Userwarning issue can bypassed instead.")
 @pytest.mark.parametrize("num_extra", [-1, 1])  # Test fewer and more names
 def test_plot_feature_fingerprint_name_label_mismatch(
     sample_data_fingerprint, num_extra
@@ -112,25 +106,46 @@ def test_plot_feature_fingerprint_name_label_mismatch(
     n_feat = len(data["features"])
     n_lab = len(data["labels"])
 
-    # Test mismatched features
-    if n_feat + num_extra > 0:  # Avoid creating empty list if num_extra=-1
-        with pytest.warns(UserWarning, match="More feature names|generic names"):
+    # --- Test mismatched features ---
+    if num_extra == 1:
+        # A warning SHOULD be issued for MORE feature names
+        longer_features = data["features"] + ["Extra Feature"]
+        with pytest.warns(UserWarning, match="More feature names"):
             plot_feature_fingerprint(
                 importances=data["importances"],
-                features=data["features"][: n_feat + num_extra],  # Wrong length
+                features=longer_features,
                 labels=data["labels"],
             )
-            plt.close()  # Close plot opened by warning test
+            plt.close()
+    elif num_extra == -1:
+        # No warning for FEWER features, function should just run
+        plot_feature_fingerprint(
+            importances=data["importances"],
+            features=data["features"][: n_feat + num_extra],
+            labels=data["labels"],
+        )
+        plt.close()
 
-    # Test mismatched labels
-    if n_lab + num_extra > 0:
-        with pytest.warns(UserWarning, match="More labels|Fewer labels"):
+    # --- Test mismatched labels ---
+    if num_extra == 1:
+        # A warning SHOULD be issued for MORE labels
+        longer_labels = data["labels"] + ["Extra Label"]
+        with pytest.warns(UserWarning, match="More labels"):
             plot_feature_fingerprint(
                 importances=data["importances"],
                 features=data["features"],
-                labels=data["labels"][: n_lab + num_extra],  # Wrong length
+                labels=longer_labels,
             )
-            plt.close()  # Close plot opened by warning test
+            plt.close()
+    elif num_extra == -1:
+        # A warning SHOULD be issued for FEWER labels
+        with pytest.warns(UserWarning, match="Fewer labels"):
+            plot_feature_fingerprint(
+                importances=data["importances"],
+                features=data["features"],
+                labels=data["labels"][: n_lab + num_extra],
+            )
+            plt.close()
 
 
 def test_plot_feature_fingerprint_empty_input():

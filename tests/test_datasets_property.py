@@ -20,9 +20,6 @@ def fake_dl(url, filename, dstpath, **kwargs):
     (dstpath / filename).write_bytes(b"ok")
 
 
-# ---------------------------
-# get_data / remove_data
-# ---------------------------
 def test_get_data_respects_env_and_creates(monkeypatch, tmp_path):
     target = tmp_path / "kd_data_env"
     monkeypatch.setenv("KDIAGRAM_DATA", str(target))
@@ -67,11 +64,6 @@ def test_download_file_if_creates_file_in_cache(monkeypatch, tmp_path):
     # assert file is "downloaded"
     assert out == str(cache_file)
     assert cache_file.exists() and cache_file.read_bytes() == b"ok"
-
-
-# ---------------------------
-# download_file_if
-# ---------------------------
 
 
 def _write_temp_file(dirpath, name, content=b"OK"):

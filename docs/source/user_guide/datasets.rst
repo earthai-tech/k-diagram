@@ -49,6 +49,43 @@ Function Summary
      - Generates a synthetic feature importance matrix for feature
        fingerprint (radar) plots.
 
+
+Quantile Naming & Basic Notation
+---------------------------------
+
+Synthetic quantile columns follow a consistent pattern:
+
+.. math::
+
+   \text{colname} \;=\;
+   \texttt{<prefix>}\_{\texttt{year}}\_\texttt{q}\alpha,
+   \qquad \alpha \in \{0.1, 0.5, 0.9\}.
+
+For an observation :math:`i` at period :math:`t`, the **interval width** and
+**pointwise coverage indicator** are
+
+.. math::
+
+   w_{i,t} \;=\; Q90_{i,t} - Q10_{i,t},
+   \qquad
+   \mathbb{1}\!\left\{ Q10_{i,t} \le y_{i} \le Q90_{i,t} \right\}.
+
+Aggregate empirical coverage across :math:`n` points is
+
+.. math::
+
+   \widehat{c}
+   \;=\;
+   \frac{1}{n}
+   \sum_{i=1}^n
+   \mathbb{1}\!\left\{ Q10_{i,t} \le y_i \le Q90_{i,t} \right\},
+   \qquad
+   \text{compare against the nominal level.}
+
+.. tip::
+   Keep seeds fixed (``seed=...``) to obtain **deterministic** examples in
+   documentation and tests.
+   
 .. raw:: html
 
     <hr>
@@ -58,56 +95,11 @@ Usage Examples
 
 Below are examples demonstrating how to use each function.
 
-Loading Synthetic Uncertainty Data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Generates multi-period quantile data, returned as a Bunch object
-by default.
-
-.. code-block:: python
-   :linenos:
-
-   from kdiagram.datasets import load_uncertainty_data
-
-   # Generate as Bunch (default)
-   data_bunch = load_uncertainty_data(
-       n_samples=10, n_periods=2, seed=1, prefix="flow"
-       )
-
-   print("--- Bunch Object ---")
-   print(f"Keys: {list(data_bunch.keys())}")
-   print(f"Description:\n{data_bunch.DESCR[:200]}...") # Print start of DESCR
-   print("\nDataFrame Head:")
-   print(data_bunch.frame.head(3))
-   print("\nQ10 Columns:")
-   print(data_bunch.q10_cols)
-
-.. code-block:: text
-   :caption: Example Output (Structure)
-
-   --- Bunch Object ---
-   Keys: ['frame', 'feature_names', 'target_names', 'target', 'quantile_cols', 'q10_cols', 'q50_cols', 'q90_cols', 'n_periods', 'prefix', 'start_year', 'DESCR']
-   Description:
-   Synthetic Multi-Period Uncertainty Dataset for k-diagram
-
-   **Description:**
-   Generates synthetic data simulating quantile forecasts (Q10,
-   Q50, Q90) for 'flow' over 2 periods starting
-   from 2022 across 10 samples/lo...
-
-   DataFrame Head:
-      location_id  longitude   latitude   elevation  flow_actual  ...
-   0            0 -116.8388    35.094262  366.807627    16.816179  ...
-   1            1 -117.8696    34.045590  247.216119     9.508103  ...
-   2            2 -119.749534  35.488999  353.628218     5.439137  ...
-
-   Q10 Columns:
-   ['flow_2022_q0.1', 'flow_2023_q0.1']
-
-
 Loading Zhongshan Subsidence Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Loads the packaged sample dataset. This example loads it as a
-DataFrame and selects only data for specific years and quantiles.
+:func:`~kdiagram.datasets.load_zhongshan_subsidence` loads the packaged
+sample (coordinates, targets for 2022/2023, quantiles 2022–2026). You can
+**subset by year and quantile** at load time.
 
 .. code-block:: python
    :linenos:
@@ -153,12 +145,111 @@ DataFrame and selects only data for specific years and quantiles.
           'subsidence_2023_q0.9', 'subsidence_2025_q0.1',
           'subsidence_2025_q0.9'], dtype='object')
 
+Loading Uncertainty Datasets (Synthetic vs Semi-Realistic)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are **two** uncertainty-oriented helpers with different purposes:
+
+**1) Fully synthetic generator —**
+:func:`~kdiagram.datasets.make_uncertainty_data`
+
+*What it is.* Programmatically **constructs** multi-period quantiles
+(Q10/Q50/Q90) with controllable median trend and interval-width dynamics,
+plus an optional fraction of **injected coverage failures** in the *first*
+period for testing diagnostics.
+
+*When to use.* Benchmarks, tutorials, and unit-style checks where you want
+repeatable behavior and knobs (``trend_strength``, ``interval_width_*``,
+``anomaly_frac``). Ideal for coverage summaries, pointwise diagnostics,
+and drift/consistency analyses :footcite:p:`Gneiting2007b, Jolliffe2012`.
+
+.. code-block:: python
+   :linenos:
+
+   from kdiagram.datasets import make_uncertainty_data
+   ds = make_uncertainty_data(
+       n_samples=200, n_periods=5,
+       trend_strength=1.2, interval_width_trend=0.4,
+       anomaly_frac=0.2, seed=7
+   )
+   df = ds.frame
+
+
+**2) Packaged semi-realistic sample —**
+:func:`~kdiagram.datasets.load_uncertainty_data`
+
+*What it is.* Loads a **compact, ready-to-use sample** that **mimics the
+schema** and “feel” of the Zhongshan-style quantile outputs (years as
+periods, Q10/Q50/Q90 columns, and a single “actual” baseline), but without
+having to fetch the full Zhongshan dataset. Think of it as a **toy clone**
+of the real structure for quick demos.
+
+*When to use.* You need data that “looks like” the Zhongshan project’s
+outputs (column naming and period layout) without network access or large
+files—e.g., to wire up gallery pages or quick API examples.
+
+.. code-block:: python
+   :linenos:
+   
+   from kdiagram.datasets import load_uncertainty_data
+   toy = load_uncertainty_data(as_frame=False)  # Bunch with metadata
+   toy.frame.head()
+
+   # Generate as Bunch (default)
+   data_bunch = load_uncertainty_data(
+       n_samples=10, n_periods=2, seed=1, prefix="flow"
+       )
+
+   print("--- Bunch Object ---")
+   print(f"Keys: {list(data_bunch.keys())}")
+   print(f"Description:\n{data_bunch.DESCR[:200]}...") # Print start of DESCR
+   print("\nDataFrame Head:")
+   print(data_bunch.frame.head(3))
+   print("\nQ10 Columns:")
+   print(data_bunch.q10_cols)
+
+.. code-block:: text
+   :caption: Example Output (Structure)
+
+   --- Bunch Object ---
+   Keys: ['frame', 'feature_names', 'target_names', 'target', 'quantile_cols', 'q10_cols', 'q50_cols', 'q90_cols', 'n_periods', 'prefix', 'start_year', 'DESCR']
+   Description:
+   Synthetic Multi-Period Uncertainty Dataset for k-diagram
+
+   **Description:**
+   Generates synthetic data simulating quantile forecasts (Q10,
+   Q50, Q90) for 'flow' over 2 periods starting
+   from 2022 across 10 samples/lo...
+
+   DataFrame Head:
+      location_id  longitude   latitude   elevation  flow_actual  ...
+   0            0 -116.8388    35.094262  366.807627    16.816179  ...
+   1            1 -117.8696    34.045590  247.216119     9.508103  ...
+   2            2 -119.749534  35.488999  353.628218     5.439137  ...
+
+   Q10 Columns:
+   ['flow_2022_q0.1', 'flow_2023_q0.1']
+
+
+Quantile naming and the empirical coverage definition follow the
+conventions in :footcite:p:`Gneiting2007b, Jolliffe2012`:
+
+.. math::
+
+   w_{i,t} = Q90_{i,t} - Q10_{i,t}, \qquad
+   \widehat{c} =
+   \frac{1}{n}\sum_{i=1}^n
+   \mathbb{1}\{Q10_{i,t} \le y_i \le Q90_{i,t}\}.
+
 
 Generating Taylor Diagram Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Uses :func:`~kdiagram.datasets.make_taylor_data` to generate a
-reference series and multiple prediction series suitable for Taylor
-diagrams. Returns a Bunch containing arrays and calculated stats.
+Taylor diagrams summarize **correlation** and **standard deviation** in a
+single polar plot :footcite:t:`Taylor2001`. Use
+:func:`~kdiagram.datasets.make_taylor_data` to synthesize a reference and
+several model series with controllable spread and correlation (bias added
+but irrelevant to centered Taylor metrics) :footcite:p:`Jolliffe2012`.
+
 
 .. code-block:: python
    :linenos:
@@ -193,9 +284,11 @@ diagrams. Returns a Bunch containing arrays and calculated stats.
 
 Generating Multi-Model Quantile Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Uses :func:`~kdiagram.datasets.make_multi_model_quantile_data` to
-simulate quantile predictions from different models for the same
-target variable.
+:func:`~kdiagram.datasets.make_multi_model_quantile_data` simulates **several
+models** producing quantiles for the **same horizon**. Each model gets its
+own median bias and overall interval width, supporting calibration/coverage
+comparisons across models :footcite:p:`Gneiting2007b, Jolliffe2012`.
+
 
 .. code-block:: python
    :linenos:
@@ -225,9 +318,10 @@ target variable.
 
 Generating Cyclical Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Uses :func:`~kdiagram.datasets.make_cyclical_data` to create time
-series with seasonal or cyclical patterns, useful for visualizing
-relationships where angle represents phase.
+:func:`~kdiagram.datasets.make_cyclical_data` produces a “true” sinusoid plus
+one or more **phase-shifted / amplitude-scaled** prediction series with noise,
+useful when **angle encodes phase** (e.g., seasonal cycle). This is convenient
+for relationship plots and multi-series polar overlays.
 
 .. code-block:: python
    :linenos:
@@ -261,9 +355,12 @@ relationships where angle represents phase.
 
 Generating Fingerprint Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Uses :func:`~kdiagram.datasets.make_fingerprint_data` to generate
-a matrix of feature importances across multiple layers, suitable
-for :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`.
+:func:`~kdiagram.datasets.make_fingerprint_data` creates a **layer × feature**
+matrix of importances with optional sparsity and structure, for
+:func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`. This supports
+comparisons of **feature influence profiles** across models or periods—an
+interpretability aid complementary to verification metrics
+:footcite:p:`Jolliffe2012`.
 
 .. code-block:: python
    :linenos:
@@ -443,18 +540,19 @@ plot function.
      The red arc represents the standard deviation of the reference
      data (which is approximately 1.0).
    * **Model Performance:** Each colored dot represents a model:
-      * **Model A (Red):** High correlation (~0.9) and standard
-        deviation slightly less than the reference (~0.9). It captures
-        the pattern well but slightly underestimates variability.
-      * **Model B (Purple):** Lower correlation (~0.7) and much higher
-        standard deviation (~1.3). It matches the pattern less well
-        and overestimates variability.
-      * **Model C (Brown):** Good correlation (~0.8) but lower
-        standard deviation (~0.8). Captures the pattern reasonably
-        but underestimates variability.
-      * **Model D (Grey):** Similar correlation to Model B (~0.75) but
-        lower standard deviation (~0.85), closer to Model A/C in
-        variability.
+   
+     * **Model A (Red):** High correlation (~0.9) and standard
+       deviation slightly less than the reference (~0.9). It captures
+       the pattern well but slightly underestimates variability.
+     * **Model B (Purple):** Lower correlation (~0.7) and much higher
+       standard deviation (~1.3). It matches the pattern less well
+       and overestimates variability.
+     * **Model C (Brown):** Good correlation (~0.8) but lower
+       standard deviation (~0.8). Captures the pattern reasonably
+       but underestimates variability.
+     * **Model D (Grey):** Similar correlation to Model B (~0.75) but
+       lower standard deviation (~0.85), closer to Model A/C in
+       variability.
    * **Overall Skill (RMSD):** The distance from each model point to
      the reference point on the arc (at Corr=1.0, StdDev=1.0)
      indicates the centered RMS difference. Model C appears closest,
@@ -473,10 +571,7 @@ plot function.
      scenarios for testing how different models might appear on a
      Taylor Diagram.
      
-.. raw:: html
 
-    <hr>
-        
 Generating Fingerprint Data and Plotting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example uses :func:`~kdiagram.datasets.make_fingerprint_data`
@@ -547,13 +642,15 @@ DataFrame using ``as_frame=True``) and visualizes it with
 
    * **Distinct Profiles:** Each model clearly relies on different
      features. For instance:
-        * **SVM (Green):** Primarily driven by F3, with some
-          contribution from F1 and F2.
-        * **RF (Orange):** Shows high relative importance for F1 and
-          F6, moderate for F2.
-        * **MLP (Blue):** Relies most heavily on F3 and F5.
-        * **XGB (Brown):** Dominated by F4, with moderate importance
-          for F2, F3, and F5.
+     
+     * **SVM (Green):** Primarily driven by F3, with some
+       contribution from F1 and F2.
+      
+     * **RF (Orange):** Shows high relative importance for F1 and
+       F6, moderate for F2.
+     * **MLP (Blue):** Relies most heavily on F3 and F5.
+     * **XGB (Brown):** Dominated by F4, with moderate importance
+       for F2, F3, and F5.
    * **Feature Comparison:** We can compare feature relevance *across*
      models. F3 is important for SVM, MLP, and XGB, but not RF. F7
      appears relatively unimportant for all models shown. F1 is crucial
@@ -572,9 +669,6 @@ DataFrame using ``as_frame=True``) and visualizes it with
    * The radius scaling to 1.0 for each polygon's maximum point is due
      to `normalize=True` being active.
 
-.. raw:: html
-
-    <hr>
 
 
 Generating Cyclical Data and Plotting Relationship
@@ -674,9 +768,6 @@ and the normalized predictions (mapped to radius) using
    * **Identify Lags/Leads:** Phase differences between prediction
      series become visually apparent as angular offsets.
 
-.. raw:: html
-
-    <hr>
 
 Loading Uncertainty Data for Model Drift Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -689,7 +780,7 @@ makes accessing the required column lists straightforward.
 .. code-block:: python
    :linenos:
 
-   import kdiagram as kd # Assuming plots and datasets accessible
+   import kdiagram as kd 
    import matplotlib.pyplot as plt
 
    # 1. Generate data as Bunch object
@@ -773,9 +864,6 @@ makes accessing the required column lists straightforward.
    * The use of the Bunch object simplified plotting by providing
      pre-parsed lists ``data.q10_cols`` and ``data.q90_cols``.
 
-.. raw:: html
-
-    <hr>
 
 Zhongshan Data: Interval Consistency Plot (Half Circle)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -888,3 +976,7 @@ coefficient of variation for radius) restricted to a 180-degree view.
 .. raw:: html
 
     <hr>
+
+.. rubric:: References
+
+.. footbibliography::

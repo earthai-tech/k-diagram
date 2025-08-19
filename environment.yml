@@ -1,12 +1,5 @@
 # environment.yml (for k-diagram)
-#
-# Create:
-#   conda env create -f environment.yml
-# Activate:
-#   conda activate k-diagram-dev
-# Update:
-#   conda env update -f environment.yml --prune
-#
+
 name: k-diagram-dev
 
 channels:
@@ -17,16 +10,16 @@ dependencies:
   # Core Python
   - python>=3.9
 
-  # Runtime (from pyproject [project].dependencies)
+  # Runtime dependencies (from pyproject [project].dependencies)
   - numpydoc>=1.6
-  - numpy>=1.25
+  - numpy>=1.22
   - pandas
   - scipy
   - matplotlib
   - seaborn
   - scikit-learn
 
-  # Testing / coverage
+  # Testing / coverage dependencies
   - pytest>=8.0
   - pytest-xdist
   - pytest-cov
@@ -36,21 +29,9 @@ dependencies:
   - ruff>=0.4
   - black>=24.0
 
-  # Misc / build helpers
-  - pip
-  - setuptools
-  - wheel
-
-  # Optional extras (nice-to-haves)
-  - joblib
+  # Optional extras (like tqdm)
   - tqdm
-  - pydantic
 
-  # If you need heavy ML backends, keep them optional/commented:
-  # - tensorflow
-  # - pytorch
-  # - jax
-  
   # Docs toolchain (from docs requirements + pyproject dev)
   # Pip-only packages (especially Sphinx extensions)
   - pip:
@@ -61,9 +42,6 @@ dependencies:
     - myst-parser
     - sphinx-design
     - sphinx-gallery
-    - sphinx-mathjax-offline  
+    - sphinx-mathjax-offline
     - sphinx-issues
     - sphinx-prompt
-    
-# (Intentionally NOT installing the package here via `pip -e .`;
-# the workflow does `pip install . --no-deps` after the env is created.)

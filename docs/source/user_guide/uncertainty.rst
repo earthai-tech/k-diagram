@@ -11,6 +11,18 @@ when making critical decisions based on them. `k-diagram` provides a
 suite of specialized polar visualizations designed to dissect and
 illuminate various facets of forecast uncertainty.
 
+.. admonition:: From Theory to Practice: A Real-World Case Study
+   :class: hint
+
+   The visualization methods described in this guide were developed to
+   solve practical challenges in interpreting complex, high-dimensional
+   forecasts. For a detailed case study demonstrating how these plots
+   are used to analyze the spatiotemporal uncertainty of a deep
+   learning model for land subsidence forecasting, please refer to our
+   research paper :footcite:p:`kouadiob2025`. The paper showcases how
+   these diagnostics can reveal critical trade-offs between models that
+   are often invisible to standard aggregate metrics.
+   
 Why Polar Plots for Uncertainty?
 ------------------------------------
 
@@ -19,11 +31,11 @@ multiple aspects of uncertainty across many data points or locations.
 `k-diagram` leverages the polar coordinate system to:
 
 * Provide a **compact overview** of uncertainty characteristics
-    across the entire dataset (represented angularly).
+  across the entire dataset (represented angularly).
 * Highlight **patterns** in uncertainty related to temporal or
-    spatial dimensions (if mapped to the angle).
+  spatial dimensions (if mapped to the angle).
 * Visually emphasize **drift**, **anomalies**, and **coverage**
-    in intuitive ways using radial distance and color.
+  in intuitive ways using radial distance and color.
 
 This page details the functions within `k-diagram` focused on
 evaluating prediction intervals, diagnosing coverage failures,
@@ -61,7 +73,8 @@ uncertainty and related diagnostics:
      - Visualizes drift of uncertainty using concentric rings over time.
    * - :func:`~kdiagram.plot.uncertainty.plot_velocity`
      - Shows the rate of change (velocity) of median predictions.
-
+   * - :func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`
+     - Shows a unique visualization of the probability distribution.
 
 Detailed Explanations
 ---------------------
@@ -78,7 +91,8 @@ This plot provides a direct visual comparison between the actual
 observed ground truth values and the model's point predictions
 (typically the median forecast, Q50) for each sample or location.
 It's a fundamental diagnostic for assessing basic model accuracy and
-identifying systematic biases.
+identifying systematic biases (see general discussion of “good” forecasts
+and verification practice, :footcite:p:`Murphy1993What, Jolliffe2012`)
 
 **Mathematical Concept:**
 For each data point :math:`i`, we have an actual value :math:`y_i` and a
@@ -92,39 +106,43 @@ emphasize the error magnitude and direction.
 **Interpretation:**
 
 * **Closeness:** How close are the points or lines representing actual
-    and predicted values? Closer alignment indicates better point-forecast
-    accuracy.
+  and predicted values? Closer alignment indicates better point-forecast
+  accuracy.
 * **Systematic Bias:** Does the prediction line/dots consistently sit
-    inside or outside the actual line/dots? This indicates a systematic
-    under- or over-prediction bias.
+  inside or outside the actual line/dots? This indicates a systematic
+  under- or over-prediction bias.
 * **Error Magnitude:** The length of the connecting gray lines (if shown)
-    or the radial distance between points directly shows the prediction
-    error for each sample. Large gaps indicate poor predictions for those
-    points.
+  or the radial distance between points directly shows the prediction
+  error for each sample. Large gaps indicate poor predictions for those
+  points.
 * **Angular Patterns:** If the angle :math:`\theta` represents a meaningful
-    dimension (like time index, season, or spatial grouping), look for
-    patterns in accuracy or bias around the circle. Does the model perform
-    better or worse at certain "angles"?
+  dimension (like time index, season, or spatial grouping), look for
+  patterns in accuracy or bias around the circle. Does the model perform
+  better or worse at certain "angles"?
 
 **Use Cases:**
 
 * **Initial Performance Check:** Get a quick overview of how well the
-    point forecast aligns with reality across the dataset.
+  point forecast aligns with reality across the dataset.
 * **Bias Detection:** Easily spot systematic over- or under-prediction.
 * **Identifying Problematic Regions:** If using angles meaningfully,
-    locate specific periods or areas where point predictions are poor.
+  locate specific periods or areas where point predictions are poor.
 * **Communicating Basic Accuracy:** Provides a simple visual for
-    stakeholders before diving into complex uncertainty measures.
+  stakeholders before diving into complex uncertainty measures.
 
 **Advantages of Polar View:**
 
 * Provides a compact, circular overview of performance across many samples.
 * Can make cyclical patterns (if angle relates to time, like month or
-    hour) more apparent than a standard time series plot.
+  hour) more apparent than a standard time series plot.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_actual_vs_predicted>` for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_anomaly_magnitude:
 
 Anomaly Magnitude Analysis (:func:`~kdiagram.plot.uncertainty.plot_anomaly_magnitude`)
@@ -135,8 +153,13 @@ This diagnostic specifically focuses on **prediction interval failures**.
 It identifies instances where the actual observed value falls *outside*
 the predicted range [Qlow, Qup] and visualizes the **location**, **type**
 (under- or over-prediction), and **severity** (magnitude) of these
-anomalies. It answers: "When my model's uncertainty bounds are wrong,
-*how wrong* are they, and where?"
+anomalies. It answers: “When my model’s uncertainty bounds are wrong,
+*how wrong* are they, and where?” This aligns with the calibration–sharpness
+principle in probabilistic forecasting :footcite:p:`Gneiting2007b` and
+with practical verification guidance :footcite:p:`Jolliffe2012`; related
+uncertainty display ideas in time-series (e.g., fan charts) provide
+useful context :footcite:p:`Sokol2025`. Our framework operationalizes
+these ideas in polar form for high-dimensional settings :footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 An anomaly exists if the actual value :math:`y_i` is outside the
@@ -164,30 +187,30 @@ a plotted point is :math:`r_i`.
 **Interpretation:**
 
 * **Presence/Absence:** Points only appear if an anomaly occurred. A sparse
-    plot indicates good interval coverage. Dense clusters indicate regions
-    of poor uncertainty estimation.
+  plot indicates good interval coverage. Dense clusters indicate regions
+  of poor uncertainty estimation.
 * **Radius:** The distance from the center directly represents the
-    **severity** of the anomaly. Points far from the center are large
-    errors relative to the predicted bounds.
+  **severity** of the anomaly. Points far from the center are large
+  errors relative to the predicted bounds.
 * **Color:** Distinct colors (e.g., blues for under-prediction, reds for
-    over-prediction) immediately classify the type of failure. Color
-    intensity often also maps to the magnitude :math:`r_i`.
+  over-prediction) immediately classify the type of failure. Color
+  intensity often also maps to the magnitude :math:`r_i`.
 * **Angular Position:** Shows *where* (which samples, locations, or times,
-    based on the angle representation) these failures occur. Look for
-    clustering at specific angles.
+  based on the angle representation) these failures occur. Look for
+  clustering at specific angles.
 
 **Use Cases:**
 
 * **Risk Assessment:** Identify predictions where the actual outcome might
-    be significantly worse than the uncertainty bounds suggested.
+  be significantly worse than the uncertainty bounds suggested.
 * **Model Calibration Check:** Assess if the prediction intervals are
-    meaningful. Frequent or large anomalies suggest poor calibration.
+  meaningful. Frequent or large anomalies suggest poor calibration.
 * **Pinpointing Failure Modes:** Determine if the model tends to fail more
-    by under-predicting or over-predicting, and under what conditions
-    (angles).
+  by under-predicting or over-predicting, and under what conditions
+  (angles).
 * **Targeting Investigation:** Guide further analysis or data collection
-    efforts towards the specific samples/locations exhibiting the most
-    severe anomalies.
+  efforts towards the specific samples/locations exhibiting the most
+  severe anomalies.
 
 **Advantages of Polar View:**
 
@@ -195,7 +218,7 @@ a plotted point is :math:`r_i`.
 * Radial distance intuitively maps to error magnitude/severity.
 * Color effectively separates under- vs. over-prediction types.
 * Circular layout helps identify patterns or concentrations of anomalies
-    across the angular dimension.
+  across the angular dimension.
 
 **Example:**
 (Refer to :ref:`Gallery <gallery_plot_anomaly_magnitude>` and runnable code examples)
@@ -204,7 +227,6 @@ a plotted point is :math:`r_i`.
 .. raw:: html
 
    <hr>
-
 
 .. _ug_coverage:
 
@@ -216,9 +238,13 @@ This function calculates and visualizes the **overall empirical
 coverage rate** for one or more sets of predictions. It answers the
 fundamental question: "Across the entire dataset, what fraction of the
 time did the true observed values fall within the specified prediction
-interval bounds (e.g., Q10 to Q90)?" It allows for comparing this
-aggregate performance across different models or prediction sets using
-various chart types.
+interval bounds (e.g., Q10 to Q90)?" The notion links directly to
+**calibration** in probabilistic forecasting and its complement,
+**sharpness** :footcite:p:`Gneiting2007b`, and standard verification
+practice :footcite:p:`Jolliffe2012`. For practical verification tooling
+in the climate/weather community, see :footcite:t:`Brady2021`.
+It allows comparing aggregate performance across models using various
+chart types.
 
 **Mathematical Concept:**
 The empirical coverage for a given prediction interval
@@ -226,6 +252,7 @@ The empirical coverage for a given prediction interval
 :math:`N` samples is calculated as:
 
 .. math::
+   :label: eq:coverage
 
    \text{Coverage} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{1}\{Q_{low,i} \le y_i \le Q_{up,i}\}
 
@@ -240,43 +267,50 @@ discrete): :math:`\text{Coverage} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{1}\{y_i =
 **Interpretation:**
 
 * **Compare to Nominal Rate:** The primary use is to compare the
-    calculated empirical coverage rate against the **nominal coverage rate**
-    implied by the quantiles used. For example, a Q10-Q90 interval has a
-    nominal coverage of 80% (0.8).
-    * If Empirical Coverage ≈ Nominal Coverage: The intervals are well-
-        calibrated on average.
-    * If Empirical Coverage > Nominal Coverage: The intervals are too wide
-        (conservative) on average.
-    * If Empirical Coverage < Nominal Coverage: The intervals are too narrow
-        (overconfident) on average.
+  calculated empirical coverage rate against the **nominal coverage rate**
+  implied by the quantiles used. For example, a Q10-Q90 interval has a
+  nominal coverage of 80% (0.8).
+  
+  * If Empirical Coverage ≈ Nominal Coverage: The intervals are well-
+    calibrated on average.
+  * If Empirical Coverage > Nominal Coverage: The intervals are too wide
+    (conservative) on average.
+  * If Empirical Coverage < Nominal Coverage: The intervals are too narrow
+    (overconfident) on average.
+    
 * **Model Comparison:** When plotting multiple models, directly compare
-    their coverage scores. A model closer to the nominal rate is generally
-    better calibrated in terms of its average interval performance.
+  their coverage scores. A model closer to the nominal rate is generally
+  better calibrated in terms of its average interval performance.
 * **Chart Type:**
-    * `bar` or `line`: Good for direct comparison of scores between models.
-    * `pie`: Shows the proportion of coverage relative to the sum (less common
-        for direct calibration assessment).
-    * `radar`: Provides a profile view comparing multiple models across the
-        same metric (coverage).
+
+  * `bar` or `line`: Good for direct comparison of scores between models.
+  * `pie`: Shows the proportion of coverage relative to the sum (less common
+    for direct calibration assessment).
+  * `radar`: Provides a profile view comparing multiple models across the
+    same metric (coverage).
 
 **Use Cases:**
 
 * Quickly assessing the average calibration of prediction intervals for
-    one or multiple models.
+  one or multiple models.
 * Comparing the overall reliability of uncertainty estimates from different
-    forecasting methods.
+  forecasting methods.
 * Summarizing interval performance for reporting.
 
 **Advantages:**
 
 * Provides a single, easily interpretable summary statistic for average
-    interval performance per model.
+  interval performance per model.
 * Offers multiple visualization options (`kind` parameter) for flexible
-    comparison.
+  comparison.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_overall_coverage>` for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_coverage_diagnostic:
 
 Point-wise Coverage Diagnostic (:func:`~kdiagram.plot.uncertainty.plot_coverage_diagnostic`)
@@ -285,9 +319,12 @@ Point-wise Coverage Diagnostic (:func:`~kdiagram.plot.uncertainty.plot_coverage_
 **Purpose:**
 While :func:`~kdiagram.plot.uncertainty.plot_coverage` gives an overall
 average, this function provides a **granular, point-by-point diagnostic**
-of prediction interval coverage on a polar plot. It visualizes *where*
-(at which specific sample, location, or time, represented angularly)
-the prediction intervals succeeded or failed to capture the actual value.
+of prediction interval coverage on a polar plot. It reveals *where*
+(at which sample, location, or time, represented angularly) the intervals
+succeeded or failed to capture the actual value—an operational view of
+calibration beyond global scores :footcite:p:`Jolliffe2012, Gneiting2007b`.
+The polar diagnostic follows our framework for high-dimensional settings
+:footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 For each data point :math:`i`, a binary coverage indicator :math:`c_i` is
@@ -310,48 +347,54 @@ The plot also typically shows the overall coverage rate
 **Interpretation:**
 
 * **Radial Position:** Instantly separates successes (radius 1) from
-    failures (radius 0).
+  failures (radius 0).
 * **Angular Clusters:** Look for clusters of points at radius 0. Such
-    clusters indicate specific regions, times, or conditions (depending on
-    what the angle represents) where the model's prediction intervals
-    systematically fail. Randomly scattered points at radius 0 suggest less
-    systematic issues.
+  clusters indicate specific regions, times, or conditions (depending on
+  what the angle represents) where the model's prediction intervals
+  systematically fail. Randomly scattered points at radius 0 suggest less
+  systematic issues.
 * **Average Coverage Line:** The solid circular line drawn at radius
-    :math:`\bar{c}` represents the overall empirical coverage rate. Compare
-    its position to:
-    * The nominal coverage rate (e.g., 0.8 for an 80% interval).
-    * Reference grid lines (often shown at 0.2, 0.4, 0.6, 0.8, 1.0).
+  :math:`\bar{c}` represents the overall empirical coverage rate. Compare
+  its position to:
+  
+  * The nominal coverage rate (e.g., 0.8 for an 80% interval).
+  * Reference grid lines (often shown at 0.2, 0.4, 0.6, 0.8, 1.0).
+  
 * **Background Gradient (Optional):** If enabled, the shaded gradient
-    extending from the center to the average coverage line provides a strong
-    visual cue for the overall performance level.
+  extending from the center to the average coverage line provides a strong
+  visual cue for the overall performance level.
 * **Point/Bar Color:** Color (e.g., green for covered, red for uncovered
-    using the default 'RdYlGn' cmap) reinforces the binary status.
+  using the default 'RdYlGn' cmap) reinforces the binary status.
 
 **Use Cases:**
 
 * **Diagnosing Coverage Failures:** Go beyond the average rate to see
-    *where* and *how often* intervals fail.
+  *where* and *how often* intervals fail.
 * **Identifying Systematic Issues:** Detect if failures are concentrated
-    in specific segments of the data (angles).
+  in specific segments of the data (angles).
 * **Visual Calibration Assessment:** Provides a more intuitive feel for
-    calibration than just a single number. Is the coverage rate met because
-    most points are covered, or are there many failures balanced by overly
-    wide intervals elsewhere?
+  calibration than just a single number. Is the coverage rate met because
+  most points are covered, or are there many failures balanced by overly
+  wide intervals elsewhere?
 * **Debugging Model Uncertainty:** Pinpoint areas needing improved
-    uncertainty quantification.
+  uncertainty quantification.
 
 **Advantages (Polar Context):**
 
 * Excellent for visualizing the status of many points compactly.
 * The radial mapping (0 or 1) provides a very clear visual separation
-    of coverage success/failure.
+  of coverage success/failure.
 * Angular clustering of failures is easily identifiable.
 * The average coverage line acts as an immediate visual benchmark against
-    the plot boundaries (0 and 1) and reference grid lines.
+  the plot boundaries (0 and 1) and reference grid lines.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_coverage_diagnostic>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_interval_consistency:
 
 Interval Width Consistency (:func:`~kdiagram.plot.uncertainty.plot_interval_consistency`)
@@ -361,9 +404,12 @@ Interval Width Consistency (:func:`~kdiagram.plot.uncertainty.plot_interval_cons
 This plot analyzes the **temporal stability** of the predicted
 uncertainty range. It visualizes how much the **width** of the
 prediction interval (:math:`Q_{up} - Q_{low}`) fluctuates for each
-location or sample across multiple time steps or forecast horizons.
-It answers: "Are the model's uncertainty estimates stable over time for
-a given location, or do they vary wildly?"
+location or sample across multiple time steps or horizons. Consistent
+widths relate to **sharpness** (narrow, informative intervals) but must
+not come at the expense of calibration :footcite:p:`Gneiting2007b`.
+For broader context on depicting evolving forecast distributions,
+see fan-chart practice :footcite:p:`Sokol2025`. The polar stability
+diagnostic is part of our analytics framework :footcite:p:`kouadiob2025`.
 
 **Mathematical Concept:**
 For each location/sample :math:`j`, the interval width is calculated
@@ -391,44 +437,48 @@ steps, providing context.
 **Interpretation:**
 
 * **Radius:** Points far from the center indicate locations where the
-    prediction interval width is **inconsistent** or varies significantly
-    across the different time steps/horizons considered. Points near the
-    center have stable interval width predictions over time.
+  prediction interval width is **inconsistent** or varies significantly
+  across the different time steps/horizons considered. Points near the
+  center have stable interval width predictions over time.
+  
 * **CV vs. Standard Deviation (`use_cv`):**
-    * If `use_cv=False` (default), radius shows *absolute* standard
-        deviation. A large radius means large absolute fluctuations in width.
-    * If `use_cv=True`, radius shows *relative* variability (CV). A large
-        radius means the width fluctuates significantly *compared to its
-        average width*. This helps compare consistency across locations that
-        might have very different average interval widths.
+
+  * If `use_cv=False` (default), radius shows *absolute* standard
+    deviation. A large radius means large absolute fluctuations in width.
+  * If `use_cv=True`, radius shows *relative* variability (CV). A large
+    radius means the width fluctuates significantly *compared to its
+    average width*. This helps compare consistency across locations that
+    might have very different average interval widths.
+    
 * **Color (Context):** If `q50_cols` are provided, color typically shows
-    the average Q50 value. This helps answer questions like: "Does high
-    inconsistency (large radius) tend to occur in locations with high or low
-    average predicted values?"
+  the average Q50 value. This helps answer questions like: "Does high
+  inconsistency (large radius) tend to occur in locations with high or low
+  average predicted values?"
+  
 * **Angular Clusters:** Clusters of points with high/low radius might indicate
-    spatial patterns in the stability of uncertainty predictions.
+  spatial patterns in the stability of uncertainty predictions.
 
 **Use Cases:**
 
 * **Assessing Model Reliability Over Time:** Identify locations where
-    uncertainty estimates are unstable across forecast horizons.
+  uncertainty estimates are unstable across forecast horizons.
 * **Diagnosing Temporal Effects:** Understand if interval predictions
-    become more or less variable further into the future.
+  become more or less variable further into the future.
 * **Comparing Relative vs. Absolute Stability:** Use `use_cv` to
-    distinguish between large absolute fluctuations and large relative
-    fluctuations.
+  distinguish between large absolute fluctuations and large relative
+  fluctuations.
 * **Identifying Locations for Scrutiny:** Points with high inconsistency
-    might warrant further investigation into why the uncertainty estimate
-    is so variable for those locations/conditions.
+  might warrant further investigation into why the uncertainty estimate
+  is so variable for those locations/conditions.
 
 **Advantages (Polar Context):**
 
 * Compactly displays the consistency profile across many locations.
 * Radial distance provides an intuitive measure of inconsistency
-    (variability).
+  (variability).
 * Allows visual identification of clusters based on consistency levels.
 * Color adds valuable context about the average prediction level associated
-    with different consistency levels.
+  with different consistency levels.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_interval_consistency>` or function docstring for code and plot examples)
@@ -443,12 +493,15 @@ Prediction Interval Width Visualization (:func:`~kdiagram.plot.uncertainty.plot_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This function creates a polar scatter plot focused solely on the
-**magnitude of predicted uncertainty**. It visualizes the **width** of
-the prediction interval (:math:`Q_{up} - Q_{low}`) for each individual
-sample or location, typically at a single snapshot in time or for a
-specific forecast horizon. It answers: "How wide is the predicted
-uncertainty range for each point in my dataset?"
+This function creates a polar scatter focused on the **magnitude of
+predicted uncertainty**, visualizing the **width** (:math:`Q_{up}-Q_{low}`)
+for each point at a given snapshot or horizon. Width is a proxy for
+**sharpness**—useful only when paired with good calibration
+:footcite:p:`Gneiting2007b`. As a complementary display to time-series
+fan charts :footcite:p:`Sokol2025`, our polar view highlights spatial/
+cross-sectional structure in uncertainty :footcite:p:`kouadiob2025`.
+It answers: "How wide is the predicted uncertainty range for  
+each point in my dataset?"
 
 **Mathematical Concept:**
 For each data point :math:`i`, the interval width is calculated:
@@ -465,45 +518,49 @@ the color typically represents the width :math:`w_i` itself.
 **Interpretation:**
 
 * **Radius:** The radial distance directly corresponds to the width of
-    the prediction interval. Points far from the center represent samples
-    with high predicted uncertainty (wide intervals). Points near the
-    center have low predicted uncertainty (narrow intervals).
+  the prediction interval. Points far from the center represent samples
+  with high predicted uncertainty (wide intervals). Points near the
+  center have low predicted uncertainty (narrow intervals).
 * **Color (with `z_col`):** If a ``z_col`` (e.g., the median prediction
-    Q50, or the actual value) is provided, the color allows you to see how
-    interval width relates to that variable. For example, are wider
-    intervals (larger radius) associated with higher or lower median
-    predictions (color)?
+  Q50, or the actual value) is provided, the color allows you to see how
+  interval width relates to that variable. For example, are wider
+  intervals (larger radius) associated with higher or lower median
+  predictions (color)?
 * **Color (without `z_col`):** If no ``z_col`` is given, color usually
-    maps to the width itself, reinforcing the radial information.
+  maps to the width itself, reinforcing the radial information.
 * **Angular Patterns:** Look for regions around the circle (representing
-    subsets of data based on index order or a future `theta_col`
-    implementation) that exhibit consistently high or low interval widths.
+  subsets of data based on index order or a future `theta_col`
+  implementation) that exhibit consistently high or low interval widths.
 
 **Use Cases:**
 
 * Identifying samples or locations with the largest/smallest predicted
-    uncertainty ranges at a specific time/horizon.
+  uncertainty ranges at a specific time/horizon.
 * Visualizing the overall distribution of uncertainty magnitudes across
-    the dataset.
+  the dataset.
 * Exploring potential relationships between uncertainty width and other
-    factors (e.g., input features, predicted value magnitude) by using
-    the ``z_col`` option.
+  factors (e.g., input features, predicted value magnitude) by using
+  the ``z_col`` option.
 * Assessing if uncertainty is relatively uniform or highly variable
-    across samples.
+  across samples.
 
 **Advantages (Polar Context):**
 
 * Provides a compact overview of uncertainty magnitude for many points.
 * The radial distance offers a direct, intuitive mapping for interval
-    width.
+  width.
 * Facilitates the visual identification of angular patterns or clusters
-    related to uncertainty levels.
+  related to uncertainty levels.
 * Allows simultaneous visualization of location (angle), uncertainty
-    width (radius), and a third variable (color via ``z_col``).
+  width (radius), and a third variable (color via ``z_col``).
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_interval_width>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_model_drift:
 
 Model Forecast Drift (:func:`~kdiagram.plot.uncertainty.plot_model_drift`)
@@ -514,8 +571,12 @@ This visualization focuses on **model degradation over forecast
 horizons**. It creates a polar *bar* chart to show how the *average*
 prediction uncertainty (specifically, the mean interval width
 :math:`\mathbb{E}[Q_{up} - Q_{low}]`) changes as the forecast lead time
-increases. It helps diagnose *concept drift* or *model aging* effects
-related to uncertainty.
+increases—useful for diagnosing lead-time skill decay and concept/model
+aging effects (see lead-time verification practice and tooling,
+:footcite:p:`Brady2021`; general verification principles, :footcite:p:`Jolliffe2012`;
+spatiotemporal forecasters where horizon behavior matters,
+:footcite:p:`Hong2025`). It helps diagnose *concept drift* or *model aging* 
+effects related to uncertainty.
 
 **Mathematical Concept:**
 For each distinct forecast horizon :math:`h` (e.g., 1-step ahead, 2-steps
@@ -535,53 +596,58 @@ aggregated metric for that horizon if ``color_metric_cols`` is used.
 **Interpretation:**
 
 * **Radial Growth:** The key aspect is the change in bar height (radius)
-    as the angle (horizon) progresses. A noticeable increase in radius for
-    later horizons indicates that, on average, the model's prediction
-    intervals widen significantly as it forecasts further into the future.
-    This signifies increasing uncertainty or *model drift*.
+  as the angle (horizon) progresses. A noticeable increase in radius for
+  later horizons indicates that, on average, the model's prediction
+  intervals widen significantly as it forecasts further into the future.
+  This signifies increasing uncertainty or *model drift*.
 * **Bar Height Comparison:** Directly compare the heights of bars for
-    different horizons to quantify the average increase in uncertainty.
-    Annotations usually display the exact average width :math:`\bar{w}_h`
-    for each horizon.
+  different horizons to quantify the average increase in uncertainty.
+  Annotations usually display the exact average width :math:`\bar{w}_h`
+  for each horizon.
 * **Stability:** Bars of relatively similar height across horizons suggest
-    that the model's average uncertainty level is stable over the forecast
-    lead times considered.
+  that the model's average uncertainty level is stable over the forecast
+  lead times considered.
 
 **Use Cases:**
 
 * **Detecting Model Degradation:** Identify if forecast uncertainty grows
-    unacceptably large at longer lead times.
+  unacceptably large at longer lead times.
 * **Assessing Forecast Reliability Horizon:** Determine the practical
-    limit of how far ahead the model provides reasonably certain forecasts.
+  limit of how far ahead the model provides reasonably certain forecasts.
 * **Informing Retraining Strategy:** Significant drift might indicate the
-    need for more frequent model retraining or incorporating features that
-    capture evolving dynamics.
+  need for more frequent model retraining or incorporating features that
+  capture evolving dynamics.
 * **Comparing Model Stability:** Generate plots for different models to
-    compare how their uncertainty characteristics drift over time.
+  compare how their uncertainty characteristics drift over time.
 
 **Advantages (Polar Context):**
 
 * The polar bar chart format makes the "outward drift" of average
-    uncertainty across increasing horizons (angles) very intuitive to grasp.
+  uncertainty across increasing horizons (angles) very intuitive to grasp.
 * Provides a concise summary comparing average uncertainty levels across
-    multiple forecast lead times.
+  multiple forecast lead times.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_model_drift>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_temporal_uncertainty:
 
 General Polar Series Visualization (:func:`~kdiagram.plot.uncertainty.plot_temporal_uncertainty`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This is a **general-purpose** polar scatter plot utility within the
-uncertainty module, designed for visualizing and comparing **multiple
-data series** (columns from a DataFrame) simultaneously. While flexible,
-a common application in uncertainty analysis is to plot different quantile
-predictions (e.g., Q10, Q50, Q90) for the *same* forecast horizon to
-visualize the **uncertainty spread** at that specific point in time across
-all samples.
+This is a **general-purpose** polar scatter utility for visualizing and
+comparing **multiple data series** (columns from a DataFrame) simultaneously.
+A common uncertainty use is plotting Q10/Q50/Q90 for the *same* horizon to
+show the **spread** at that time—contextualized by calibration–sharpness
+principles :footcite:p:`Gneiting2007b` and by conventional distribution
+displays like fan charts :footcite:p:`Sokol2025`. Quantile-based multi-horizon
+forecasting models (e.g., TFT) naturally produce such series
+:footcite:p:`Lim2021`.
 
 **Mathematical Concept:**
 For each data series :math:`k` (corresponding to a column in ``q_cols``)
@@ -596,39 +662,42 @@ Each series :math:`k` is assigned a distinct color.
 **Interpretation:**
 
 * **Series Comparison:** Observe the relative radial positions of points
-    belonging to different series (colors) at the same angle.
+  belonging to different series (colors) at the same angle.
 * **Uncertainty Spread (Quantile Use Case):** When plotting Q10, Q50,
-    and Q90 for a single horizon:
-    * The **radial distance** between the points for Q10 (e.g., blue) and
-        Q90 (e.g., red) at a specific angle represents the **interval width**
-        (uncertainty) for that sample.
-    * Look for how this spread varies around the circle (across samples).
-    * The position of the Q50 points (e.g., green) shows the central tendency
-        relative to the bounds.
+  and Q90 for a single horizon:
+  
+  * The **radial distance** between the points for Q10 (e.g., blue) and
+    Q90 (e.g., red) at a specific angle represents the **interval width**
+    (uncertainty) for that sample.
+  * Look for how this spread varies around the circle (across samples).
+  * The position of the Q50 points (e.g., green) shows the central tendency
+    relative to the bounds.
+    
 * **Normalization Effect:** If ``normalize=True``, the plot emphasizes the
-    *relative shapes* and *overlap* of the series, regardless of their
-    original scales. This is useful for comparing patterns but loses
-    information about absolute magnitudes. If ``normalize=False``, the
-    radial axis reflects the actual data values.
+  *relative shapes* and *overlap* of the series, regardless of their
+  original scales. This is useful for comparing patterns but loses
+  information about absolute magnitudes. If ``normalize=False``, the
+  radial axis reflects the actual data values.
+  
 * **Angular Patterns:** Observe if specific series tend to be higher or lower
-    at certain angles (samples/locations).
+  at certain angles (samples/locations).
 
 **Use Cases:**
 
 * **Visualizing Uncertainty Intervals:** Plot Qlow, Qmid, Qup for a *single*
-    time step/horizon to see the uncertainty band across samples.
+  time step/horizon to see the uncertainty band across samples.
 * **Comparing Multiple Models:** Plot the point predictions (e.g., Q50)
-    from several different models to compare their outputs side-by-side.
+  from several different models to compare their outputs side-by-side.
 * **Plotting Related Variables:** Visualize any set of related numerical
-    columns from your DataFrame in a polar layout.
+  columns from your DataFrame in a polar layout.
 
 **Advantages (Polar Context):**
 
 * Allows overlaying multiple related data series in a single, compact plot.
 * Effective for visualizing the *spread* or *range* between different
-    series (like quantiles) at each angular position.
+  series (like quantiles) at each angular position.
 * Normalization option facilitates shape comparison for series with
-    different scales.
+  different scales.
 * Can reveal shared cyclical patterns among the plotted series.
 
 **Example:**
@@ -638,20 +707,23 @@ Each series :math:`k` is assigned a distinct color.
 
    <hr>
 
-
 .. _ug_uncertainty_drift:
 
 Multi-Time Uncertainty Drift Rings (:func:`~kdiagram.plot.uncertainty.plot_uncertainty_drift`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This plot offers a dynamic view of how the **spatial pattern of
-prediction uncertainty** (interval width) evolves across **multiple time
-steps** (e.g., years) for all locations simultaneously. Unlike
-:func:`~kdiagram.plot.uncertainty.plot_model_drift`, which averages
-across locations for each horizon, this function plots each time step
-as a distinct **concentric ring**, allowing direct comparison of the
-uncertainty "map" at different times.
+This plot shows how the **spatial pattern of prediction uncertainty**
+(interval width) evolves across **multiple time steps** (e.g., years) for
+all locations simultaneously. Unlike
+:func:`~kdiagram.plot.uncertainty.plot_model_drift` (which averages
+across space per horizon), each time step is a **concentric ring** so you
+can compare uncertainty “maps” over time—useful in spatiotemporal settings
+and environmental applications :footcite:p:`Liu2024, Hong2025` and aligned
+with our polar analytics framework :footcite:p:`kouadiob2025`. For lead-time
+skill context and evaluation workflows, see :footcite:t:`Brady2021`; for
+discussion of evolving forecast distributions, see fan-chart literature
+:footcite:p:`Sokol2025`.
 
 **Mathematical Concept:**
 For each location :math:`j` and time step :math:`t`, the interval width
@@ -677,56 +749,64 @@ Each ring :math:`t` receives a distinct color from the specified
 **Interpretation:**
 
 * **Concentric Rings:** Each colored ring represents a specific time
-    step, with inner rings typically corresponding to earlier times and
-    outer rings to later times.
+  step, with inner rings typically corresponding to earlier times and
+  outer rings to later times.
 * **Ring Shape & Radius Variations:** The deviations of a single ring
-    from a perfect circle show the spatial variability of uncertainty
-    *at that specific time step*. Points on a ring that bulge outwards
-    represent locations with higher relative uncertainty (wider intervals)
-    at that time.
+  from a perfect circle show the spatial variability of uncertainty
+  *at that specific time step*. Points on a ring that bulge outwards
+  represent locations with higher relative uncertainty (wider intervals)
+  at that time.
 * **Comparing Rings:** Examine how the overall radius and "bumpiness"
-    change from inner rings (earlier times) to outer rings (later times).
-    If outer rings are consistently larger or more irregular, it suggests
-    that uncertainty generally increases and/or becomes more spatially
-    variable over time.
+  change from inner rings (earlier times) to outer rings (later times).
+  If outer rings are consistently larger or more irregular, it suggests
+  that uncertainty generally increases and/or becomes more spatially
+  variable over time.
 * **Angular Patterns:** Trace specific angles (locations) across multiple
-    rings. Does the radius consistently increase (growing uncertainty at
-    that location)? Is it consistently large or small (persistently
-    high/low uncertainty location)?
+  rings. Does the radius consistently increase (growing uncertainty at
+  that location)? Is it consistently large or small (persistently
+  high/low uncertainty location)?
 
 **Use Cases:**
 
 * Tracking the **full spatial pattern** of uncertainty as it evolves
-    over multiple forecast periods.
+  over multiple forecast periods.
 * Identifying specific locations where uncertainty grows or shrinks most
-    dramatically over time.
+  dramatically over time.
 * Comparing the uncertainty landscape between different forecast horizons
-    (e.g., visualizing the difference in uncertainty patterns between a
-    1-year and a 5-year forecast).
+  (e.g., visualizing the difference in uncertainty patterns between a
+  1-year and a 5-year forecast).
 * Complementing :func:`~kdiagram.plot.uncertainty.plot_model_drift` by
-    showing detailed spatial variations instead of just the average trend.
+  showing detailed spatial variations instead of just the average trend.
 
 **Advantages (Polar Context):**
 
 * Uniquely effective at overlaying multiple temporal snapshots of the
-    uncertainty field in a single, comparative view.
+  uncertainty field in a single, comparative view.
 * Concentric rings provide clear visual separation between time steps.
 * Radial variations within each ring clearly highlight spatial differences
-    in relative uncertainty at that time.
+  in relative uncertainty at that time.
 * Color coding aids in distinguishing and tracking specific time steps.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_uncertainty_drift>` or function docstring for code and plot examples)
 
+.. raw:: html
+
+   <hr>
+   
 .. _ug_velocity:
 
 Prediction Velocity Visualization (:func:`~kdiagram.plot.uncertainty.plot_velocity`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
-This plot visualizes the **rate of change**, or **velocity**, of the
-central forecast prediction (typically the median, Q50) over consecutive
-time periods for each individual location or sample. It helps understand
+This plot visualizes the **rate of change** (velocity) of the central
+forecast (typically Q50) across consecutive periods for each location—
+useful for spotting regime shifts and horizon-dependent behavior in
+spatiotemporal settings :footcite:p:`Hong2025, Liu2024, kouadiob2025`. Typical
+implementations compute finite differences over arrays/data frames
+:footcite:p:`harris2020array, reback2020pandas`, then render with
+standard plotting backends :footcite:p:`Hunter:2007`. It helps understand
 the predicted dynamics of the phenomenon being forecast, answering: "How
 fast is the predicted median value changing from one period to the next
 at each location?"
@@ -751,45 +831,49 @@ absolute magnitude of the Q50 predictions
 **Interpretation:**
 
 * **Radius:** Directly represents the average velocity (rate of change)
-    of the Q50 prediction.
-    * Points far from the center indicate locations with **high average
-        velocity** (rapidly changing predictions).
-    * Points near the center indicate locations with **low average
-        velocity** (stable predictions).
-    * If normalized, the radius shows relative velocity across locations.
+  of the Q50 prediction.
+  
+  * Points far from the center indicate locations with **high average
+    velocity** (rapidly changing predictions).
+  * Points near the center indicate locations with **low average
+    velocity** (stable predictions).
+  * If normalized, the radius shows relative velocity across locations.
+  
 * **Color (Mapped to Velocity):** If ``use_abs_color=False``, color
-    directly reflects the velocity value :math:`v_j`. Using a diverging
-    colormap (like 'coolwarm') helps distinguish between positive average
-    change (e.g., red/warm colors for increasing values) and negative
-    average change (e.g., blue/cool colors for decreasing values).
+  directly reflects the velocity value :math:`v_j`. Using a diverging
+  colormap (like 'coolwarm') helps distinguish between positive average
+  change (e.g., red/warm colors for increasing values) and negative
+  average change (e.g., blue/cool colors for decreasing values).
+    
 * **Color (Mapped to Q50 Magnitude):** If ``use_abs_color=True``, color
-    shows the average absolute value of the Q50 predictions themselves.
-    This provides context: Is high velocity (large radius) associated
-    with high or low absolute predicted values (color)?
+  shows the average absolute value of the Q50 predictions themselves.
+  This provides context: Is high velocity (large radius) associated
+  with high or low absolute predicted values (color)?
+    
 * **Angular Patterns:** Look for clusters of points with similar radius
-    (velocity) or color at specific angles, which might indicate spatial
-    patterns in the predicted dynamics.
+  (velocity) or color at specific angles, which might indicate spatial
+  patterns in the predicted dynamics.
 
 **Use Cases:**
 
 * Identifying spatial "hotspots" where the predicted phenomenon is changing
-    most rapidly.
+  most rapidly.
 * Locating areas of predicted stability or stagnation.
 * Analyzing and visualizing the spatial distribution of predicted trends or
-    rates of change.
+  rates of change.
 * Contextualizing velocity with the underlying magnitude of the prediction
-    (e.g., are flood level predictions rising faster in already high areas?).
+  (e.g., are flood level predictions rising faster in already high areas?).
 
 **Advantages (Polar Context):**
 
 * Provides a compact overview comparing the rate of change across many
-    locations or samples.
+  locations or samples.
 * Radial distance gives an intuitive sense of the magnitude of change
-    (velocity).
+  (velocity).
 * Color adds a critical second layer of information, either directional change
-    or contextual magnitude.
+  or contextual magnitude.
 * Facilitates spotting spatial patterns or clusters related to the dynamics
-    of the prediction.
+  of the prediction.
 
 **Example:**
 (See :ref:`Gallery <gallery_plot_prediction_velocity>` or function docstring for code and plot examples)
@@ -797,3 +881,225 @@ absolute magnitude of the Q50 predictions
 .. raw:: html
 
    <hr>
+
+.. _ug_radial_density_ring:
+
+Radial Density Ring (:func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+This plot provides a unique visualization of the **one-dimensional
+probability distribution** of a continuous variable. It uses Kernel
+Density Estimation (KDE), a standard non-parametric method for density
+estimation :footcite:p:`Silverman1986`, to create a smooth representation 
+of the data's distribution, answering the question: "What is the shape of this
+data's distribution, and where are its most common values?
+In practice, density estimates and numerics rely on SciPy/NumPy 
+:footcite:p:`2020SciPy-NMeth, harris2020array`. 
+
+**Mathematical Concept:**
+The function first derives a one-dimensional data vector :math:`\mathbf{x}`
+based on the ``kind`` and ``target_cols`` parameters. For instance, with
+``kind='width'``, :math:`x_i = Q_{up,i} - Q_{low,i}`.
+
+It then computes the Probability Density Function (PDF),
+:math:`\hat{f}_h(x)`, using a Gaussian kernel. This is an estimate of the
+true probability distribution from which the data samples are drawn.
+
+The calculated PDF is then normalized to the range ``[0, 1]`` for
+visual mapping to a color gradient:
+
+.. math::
+
+   \text{PDF}_{\text{norm}}(x) = \frac{\hat{f}_h(x)}{\max(\hat{f}_h)}
+
+In the plot, the radial distance from the center corresponds to the
+value :math:`x`, and the color at that radius is determined by
+:math:`\text{PDF}_{\text{norm}}(x)`.
+
+**Interpretation:**
+
+* **Radius:** The radial axis represents the **value** of the
+  metric being analyzed. The center corresponds to the minimum
+  value in the data range, and the outer edge to the maximum.
+* **Color:** The color at any given radius represents the
+  **probability density** for that value. Intense, saturated colors
+  indicate high density, corresponding to peaks (modes) in the
+  distribution where data is most concentrated. Faint, light colors
+  indicate low density, corresponding to the tails of the distribution.
+* **Angle:** The angular dimension is purely for aesthetic effect and
+  carries no information. The density is repeated around the
+  full circle to create the "ring" visual.
+
+**Use Cases:**
+
+* **Error Distribution Analysis:** Plot the distribution of forecast
+  errors (e.g., :math:`y_i - \hat{y}_i`). An ideal distribution is
+  often a sharp peak centered at zero.
+* **Uncertainty Characterization:** Visualize the distribution of
+  prediction interval widths. A narrow, single-peaked distribution
+  suggests the model produces consistent uncertainty estimates. A wide
+  or multi-modal distribution suggests variability.
+* **Velocity/Change Analysis:** Analyze the distribution of year-over-
+  year changes or other calculated velocities to understand the
+  typical magnitude and spread of change.
+* **General Distribution Inspection:** Quickly understand the shape
+  (e.g., normal, skewed, bimodal) of any continuous variable.
+
+**Advantages of Polar View:**
+
+* Provides a visually striking and compact representation of a 1D
+  distribution.
+* Avoids the binning choices and jagged appearance of a traditional
+  histogram.
+* The "ring" metaphor can be an intuitive way to view the entirety of a
+  distribution's shape at once.
+
+**Example:**
+(See :ref:`Gallery <gallery_plot_radial_density_ring>` for code and plot examples)
+
+.. raw:: html
+
+   <hr>
+
+.. _ug_plot_polar_heatmap:
+
+2D Density Analysis (:func:`~kdiagram.plot.uncertainty.plot_polar_heatmap`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+This function creates a **polar heatmap**, —part of our analytics framework
+:footcite:p:`kouadiob2025`—to visualize the two-dimensional density 
+distribution of data points. It is particularly powerful for uncovering  
+relationships between a linear variable (mapped to the radius) and a cyclical 
+or ordered variable (mapped to the angle). Depending on the dataset, a 2D KDE 
+may be used :footcite:p:`Silverman1986`,It answers the question: "Do high or low values
+of one metric tend to concentrate at specific times, seasons, or categories?"
+
+**Mathematical Concept:**
+The plot is a 2D histogram in polar coordinates.
+
+1. **Coordinate Mapping:** The data is mapped to polar coordinates. The
+   radial variable :math:`r` is taken from ``r_col``. The angular
+   variable :math:`\theta_{data}` from ``theta_col`` is converted to
+   radians :math:`[0, 2\pi]`. If a period :math:`P` is provided (e.g.,
+   24 for hours), the mapping is:
+
+   .. math::
+
+      \theta_{rad} = \left( \frac{\theta_{data} \pmod P}{P} \right) \cdot 2\pi
+
+2. **Binning and Counting:** The polar space is divided into a grid of
+   bins defined by ``r_bins`` and ``theta_bins``. The function then
+   counts the number of data points that fall into each polar sector
+   :math:`(r_j, \theta_k)`. The result is a count matrix :math:`\mathbf{C}`.
+
+**Interpretation:**
+
+* **Angle:** Represents the cyclical or ordered feature (e.g., hour of
+  the day, month of the year).
+* **Radius:** Represents the magnitude of the second variable (e.g.,
+  prediction error, rainfall amount).
+* **Color:** The color intensity of each polar bin corresponds to the
+  **count** or density of data points within it. "Hot" or bright
+  colors indicate a high concentration of data, revealing a strong
+  relationship between the radial and angular variables in that region.
+
+**Use Cases:**
+
+* **Error Analysis:** Identify if large forecast errors (radius) are
+  more frequent at certain times of the day (angle).
+* **Feature Correlation:** Discover patterns between a cyclical feature
+  and a measurement, like finding the time of day when wind speeds
+  are highest.
+* **Identifying "Hot Spots":** Pinpoint specific conditions where events
+  of a certain magnitude are most likely to occur.
+
+**Advantages of Polar View:**
+
+* Makes cyclical patterns immediately obvious, which can be harder to
+  spot in a standard Cartesian heatmap.
+* Provides a compact and intuitive overview of a 2D distribution.
+
+**Example:**
+(See :ref:`Gallery <gallery_plot_polar_heatmap>` for code and plot examples)
+
+.. raw:: html
+
+    <hr>
+
+.. _ug_plot_polar_quiver:
+
+Visualizing Vector Fields (:func:`~kdiagram.plot.uncertainty.plot_polar_quiver`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+This function produces a **polar quiver plot** to visualize vector data
+(magnitude + direction)—handy for forecast revisions, error vectors, or
+physical flows within verification workflows (see tooling context,
+:footcite:p:`Brady2021`) and rendered with Matplotlib primitives
+:footcite:p:`Hunter:2007`. It complements scalar uncertainty views by
+showing directional structure in model dynamics :footcite:p:`kouadiob2025`.
+It is a resonable tool for understanding dynamic processes like forecast  
+revisions, error vectors, or physical flows.
+
+**Mathematical Concept:**
+Each arrow is a vector defined at an origin point in polar coordinates.
+
+1. **Vector Origin:** The tail of each vector :math:`i` is placed at the
+   polar coordinate :math:`(r_i, \theta_i)`, determined by the `r_col`
+   and `theta_col`.
+
+2. **Vector Components:** The vector itself is defined by its components
+   in the local radial and tangential directions.
+
+   * :math:`u_i` (from `u_col`) is the vector's component in the
+     **radial** direction (pointing away from the center).
+   * :math:`v_i` (from `v_col`) is the vector's component in the
+     **tangential** direction (perpendicular to the radial line).
+
+3. **Magnitude:** The color and/or length of the arrow typically
+   represents the vector's Euclidean magnitude, :math:`M_i`.
+
+   .. math::
+
+      M_i = \sqrt{u_i^2 + v_i^2}
+
+**Interpretation:**
+
+* **Arrow Position:** The base of the arrow shows the location where the
+  vector originates.
+* **Arrow Direction:** The arrow points in the direction of the vector.
+  For forecast revisions, an arrow pointing outward means the forecast
+  was revised upward; an inward arrow means a downward revision.
+* **Arrow Length & Color:** The size and color of the arrow represent
+  the magnitude of the vector. Longer, more intense arrows indicate
+  stronger flows or larger changes.
+
+**Use Cases:**
+
+* **Forecast Stability:** Visualize how much forecasts change between
+  updates. Small, randomly oriented arrows suggest a stable model.
+  Large, consistently oriented arrows might indicate model drift.
+* **Error Vector Analysis:** Plot the error as a vector pointing from
+  the predicted value to the actual value.
+* **Flow Visualization:** Model physical phenomena like wind or ocean
+  currents in a polar context.
+
+**Advantages of Polar View:**
+
+* Provides an intuitive way to visualize vector fields that have a
+  natural central point or cyclical nature.
+* Can reveal large-scale rotational or radial patterns in the vector
+  data.
+
+**Example:**
+(See :ref:`Gallery <gallery_plot_polar_quiver>` for code and plot examples)
+
+.. raw:: html
+
+   <hr>
+
+.. rubric:: References
+
+.. footbibliography::

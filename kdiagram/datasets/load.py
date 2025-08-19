@@ -36,11 +36,10 @@ from ._property import (
 
 __all__ = ["load_uncertainty_data", "load_zhongshan_subsidence"]
 
-# TODO: Calculate and add a checksum (e.g., sha256) for data integrity check
 _ZHONGSHAN_METADATA = RemoteMetadata(
     file="min_zhongshan.csv",
     url=KD_REMOTE_DATA_URL,
-    checksum=None,  # Add SHA256 checksum here if available
+    checksum=None,  # # TODO: Add SHA256 checksum here if available
     descr_module=None,
     data_module=KD_DMODULE,
 )
@@ -57,86 +56,6 @@ def load_zhongshan_subsidence(
     download_if_missing: bool = True,
     force_download: bool = False,
 ) -> Bunch | pd.DataFrame:
-    r"""Load the Zhongshan land subsidence prediction dataset.
-
-    This dataset contains sample multi-period quantile predictions
-    (Q10, Q50, Q90 for 2022-2026) and simulated actual subsidence
-    for 2022 and 2023, along with coordinates for 898 locations in
-    Zhongshan, China. It is intended for demonstrating and testing
-    `k-diagram`'s uncertainty and evaluation plots.
-
-    The function first checks a local cache directory (`~/kdiagram_data`
-    by default, configurable via `data_home` or KDIAGRAM_DATA env var).
-    If the file is not found, it attempts to load it from the installed
-    `k-diagram` package resources. If still not found (or if
-    `force_download=True`) and `download_if_missing=True`, it tries
-    to download the dataset from the `k-diagram` GitHub repository
-    into the cache directory.
-
-    Parameters
-    ----------
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object containing
-          the DataFrame and associated metadata.
-        - If ``True``: Returns only the pandas DataFrame.
-
-    years : list of int, optional
-        List of specific years (e.g., ``[2023, 2025]``) for which to
-        load quantile and target columns. If ``None``, loads data for
-        all available years (2022-2026 for quantiles, 2022/2023 for target).
-        Default is ``None``.
-
-    quantiles : list of float, optional
-        List of specific quantile levels (e.g., ``[0.1, 0.9]``) for
-        which to load columns. Values must be between 0 and 1. If
-        ``None``, attempts to load all detected quantile columns for the
-        selected years. Default is ``[0.1, 0.5, 0.9]``.
-
-    include_coords : bool, default=True
-        If ``True``, include 'longitude' and 'latitude' columns in
-        the output.
-
-    include_target : bool, default=True
-        If ``True``, include the base target columns
-        (``'subsidence_2022'``, ``'subsidence_2023'``) if they exist
-        in the data and match the selected `years`.
-
-    data_home : str, optional
-        Specify a directory path to cache downloaded datasets. If
-        ``None``, uses the path determined by
-        :func:`~kdiagram.datasets._property.get_data`. Default is ``None``.
-
-    download_if_missing : bool, default=True
-        If ``True``, attempt to download the dataset from the remote
-        repository if it's not found in the cache or package resources.
-
-    force_download : bool, default=False
-        If ``True``, forces the download even if the file exists
-        locally in the cache or package resources. Useful for ensuring
-        the latest version.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with attributes like ``frame`` (DataFrame),
-        ``data`` (numeric NumPy array), ``feature_names`` (coords),
-        ``target_names``, ``target`` (if applicable), ``longitude``,
-        ``latitude``, ``quantile_cols`` (dict), ``years_available``,
-        ``quantiles_available``, and ``DESCR``.
-        If ``as_frame=True``:
-        The loaded (and potentially subsetted) data as a pandas
-        DataFrame.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the dataset file cannot be found locally (in cache or
-        package) and downloading is disabled or fails.
-    ValueError
-        If specified years or quantiles are invalid or not found.
-    """
     # --- Step 1: Determine file location (Cache > Package > Download) ---
     if quantiles is None:
         quantiles = [0.1, 0.5, 0.9]
@@ -281,6 +200,7 @@ def load_zhongshan_subsidence(
         warnings.warn(
             f"Requested years not available: {invalid_years}. "
             f"Available: {available_years}",
+            UserWarning,
             stacklevel=2,
         )
         requested_years &= set(available_years)  # Keep only valid ones
@@ -288,6 +208,7 @@ def load_zhongshan_subsidence(
         warnings.warn(
             f"Requested quantiles not available: {invalid_quantiles}. "
             f"Available: {available_quantiles}",
+            UserWarning,
             stacklevel=2,
         )
         requested_quantiles &= set(available_quantiles)  # Keep only valid ones
@@ -460,6 +381,186 @@ def load_zhongshan_subsidence(
         return Bunch(**bunch_dict)
 
 
+load_zhongshan_subsidence.__doc__ = r"""
+Load the Zhongshan land subsidence prediction dataset.
+
+This dataset contains sample multi-period quantile predictions
+(Q10, Q50, Q90 for 2022–2026) and simulated actual subsidence for
+2022 and 2023, along with geographic coordinates for 898 locations
+in Zhongshan, China. It is intended for demonstrating and testing
+`k-diagram`'s uncertainty and evaluation plots and for reproducing
+examples related to spatiotemporal uncertainty diagnostics
+:footcite:p:`Liu2024, kouadiob2025`.
+
+The function searches a local cache directory, bundled package
+resources, and optionally a remote repository (in that order).
+On success it returns either a pandas ``DataFrame`` or a
+:class:`~kdiagram.bunch.Bunch` with convenient attributes.
+
+Parameters
+----------
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` that
+    includes the filtered ``DataFrame`` plus metadata and sliced
+    arrays (e.g., coordinates, target, and quantile columns).
+    If ``True``, return only the filtered ``DataFrame``.
+
+years : list of int, optional
+    Subset to these calendar years (e.g., ``[2023, 2025]``) when
+    selecting target and quantile columns. If ``None``, load all
+    years found in the file (quantiles typically 2022–2026; targets
+    typically 2022/2023).
+
+quantiles : list of float, optional
+    Subset to these quantile levels in ``[0, 1]`` (e.g.,
+    ``[0.1, 0.5, 0.9]``). If ``None``, load all detected
+    quantiles for the selected years. Defaults to
+    ``[0.1, 0.5, 0.9]``.
+
+include_coords : bool, default=True
+    If ``True``, include coordinate columns ``'longitude'`` and
+    ``'latitude'`` when present.
+
+include_target : bool, default=True
+    If ``True``, include base target columns (e.g.,
+    ``'subsidence_2022'``, ``'subsidence_2023'``) when present
+    and consistent with the requested ``years``.
+
+data_home : str, optional
+    Directory path for caching datasets. If ``None``, the path is
+    resolved by :func:`~kdiagram.datasets._property.get_data`. You
+    may also configure the root via the ``KDIAGRAM_DATA`` environment
+    variable. Example default is ``~/kdiagram_data``.
+
+download_if_missing : bool, default=True
+    If ``True``, attempt to download the dataset into the cache when
+    it is not found locally nor in package resources.
+
+force_download : bool, default=False
+    If ``True``, attempt to fetch a fresh copy even if a local file
+    exists. Useful to refresh data during development.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default) a Bunch with:
+        
+    - ``frame`` : pandas ``DataFrame`` filtered by the request.
+    - ``feature_names`` : list of included coordinate column names.
+    - ``target_names`` : list of included target column names.
+    - ``target`` : NumPy array of target values (or ``None``).
+    - ``longitude``, ``latitude`` : NumPy arrays when coordinates
+      are included.
+    - ``quantile_cols`` : dict mapping keys like ``'q0.1'`` to
+      lists of matching column names.
+    - ``q10_cols``, ``q50_cols``, ``q90_cols`` : convenience lists.
+    - ``years_available``, ``quantiles_available`` : lists detected
+      in the original file.
+    - ``start_year`` : smallest year in the loaded subset (if any).
+    - ``n_periods`` : number of loaded years.
+    - ``DESCR`` : human-readable dataset description.
+
+    If ``as_frame=True``, only the filtered pandas ``DataFrame`` is
+    returned.
+
+Raises
+------
+FileNotFoundError
+    When the dataset cannot be resolved from cache or package
+    resources and either downloading is disabled or the download
+    fails.
+
+ValueError
+    If requested ``years`` or ``quantiles`` are invalid or not
+    present in the data file.
+
+Notes
+-----
+**Search order.** The loader resolves a file path using the
+following order: (1) local cache under ``data_home``;
+(2) installed package resources; (3) optional remote download
+when ``download_if_missing=True``. You can force step (3) with
+``force_download=True``.
+
+**Column detection.** Quantile columns encode a year :math:`y` and a
+quantile level :math:`q` in their names.
+
+.. math::
+
+   \text{quantile name}
+   \;\equiv\;
+   \texttt{<prefix>}\_{y}\_\texttt{q}q,
+   \qquad
+   y \in \{2022,\dots,2026\},\; q \in (0,1)
+
+Target columns encode only the year :math:`y`:
+
+.. math::
+
+   \text{target name}
+   \;\equiv\;
+   \texttt{subsidence}\_{y}
+
+In code, the implementation detects these with the following regular
+expressions (kept as literals, not math):
+``r"_(\d{4})_q([0-9.]+)$"`` (quantile columns) and
+``r"_(\d{4})$"`` (target columns).
+
+This design enables flexible subsetting by year and quantile without
+hard-coding headers.
+
+**Coordinate handling.** When present and ``include_coords=True``,
+the columns ``'longitude'`` and ``'latitude'`` are included and
+exposed both in the returned frame and as top-level arrays in the
+Bunch for convenience.
+
+**Intended use.** The dataset is a compact sample designed for
+tutorials, documentation figures, and regression tests of k-diagram
+uncertainty diagnostics :footcite:p:`kouadiob2025`. It is not a
+comprehensive research release.
+
+See Also
+--------
+load_uncertainty_data
+    Generate a synthetic dataset with controllable anomalies and
+    quantiles for testing visual diagnostics.
+
+kdiagram.plot.uncertainty.plot_model_drift
+kdiagram.plot.uncertainty.plot_uncertainty_drift
+kdiagram.plot.uncertainty.plot_coverage_diagnostic
+kdiagram.plot.uncertainty.plot_anomaly_magnitude
+    Example consumers of this dataset in documentation figures.
+
+Examples
+--------
+Basic usage returning a Bunch with metadata:
+
+>>> from kdiagram.datasets import load_zhongshan_subsidence
+>>> ds = load_zhongshan_subsidence()
+>>> isinstance(ds.frame, type(__import__('pandas').DataFrame()))
+True
+>>> list(ds.quantile_cols.keys())[:3]
+['q0.1', 'q0.5', 'q0.9']
+>>>
+>>> # Return only the DataFrame and subset to selected years/quantiles:
+>>>
+>>> df = load_zhongshan_subsidence(
+...     as_frame=True, years=[2023, 2025], quantiles=[0.1, 0.9]
+... )
+>>> set(c.split('_')[-1] for c in df.columns if '_q' in c) <= {'q0.1','q0.9'}
+True
+>>>
+>>> # Force a fresh download into the cache:
+>>> _ = load_zhongshan_subsidence(force_download=True)
+
+References
+------------
+
+.. footbibliography::
+    
+"""
+
+
 def load_uncertainty_data(
     *,
     as_frame: bool = False,
@@ -476,82 +577,6 @@ def load_uncertainty_data(
     interval_width_trend: float = 0.5,
     seed: int | None = 42,
 ) -> Bunch | pd.DataFrame:
-    r"""Generate and return the synthetic uncertainty dataset.
-
-    Creates a synthetic dataset suitable for testing and demonstrating
-    various `k-diagram` uncertainty plotting functions. Includes actual
-    values (for first period), multiple quantile predictions (Q10, Q50,
-    Q90) across several time periods with configurable trends and
-    noise, deliberately introduced anomalies, and spatial coordinates.
-
-    Parameters
-    ----------
-    as_frame : bool, default=False
-        Determines the return type:
-        - If ``False`` (default): Returns a Bunch object containing
-          the DataFrame and associated metadata.
-        - If ``True``: Returns only the generated pandas DataFrame.
-
-    n_samples : int, default=150
-        Number of data points (rows/locations) to generate.
-
-    n_periods : int, default=4
-        Number of consecutive time periods (e.g., years) for which
-        to generate quantile data.
-
-    anomaly_frac : float, default=0.15
-        Approximate fraction (0.0 to 1.0) of samples where the
-        'actual' value (first period) is placed outside the
-        first period's Q10-Q90 interval.
-
-    start_year : int, default=2022
-        Starting year used for naming time-dependent columns.
-
-    prefix : str, default="value"
-        Base prefix for naming value and quantile columns.
-
-    base_value : float, default=10.0
-        Approximate mean value for the signal in the first period.
-
-    trend_strength : float, default=1.5
-        Strength of the linear trend added to Q50 over periods.
-
-    noise_level : float, default=2.0
-        Standard deviation of base random noise added.
-
-    interval_width_base : float, default=4.0
-        Approximate base width of the Q10-Q90 interval initially.
-
-    interval_width_noise : float, default=1.5
-        Random noise added to interval width per sample/period.
-
-    interval_width_trend : float, default=0.5
-        Linear trend added to the interval width over periods.
-
-    seed : int, optional
-        Random seed for reproducibility. Default is 42.
-
-    Returns
-    -------
-    data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
-        If ``as_frame=False`` (default):
-        A Bunch object with attributes: ``frame`` (DataFrame),
-        ``feature_names`` (list), ``target_names`` (list),
-        ``target`` (ndarray), ``quantile_cols`` (dict),
-        ``q10_cols``, ``q50_cols``, ``q90_cols`` (lists),
-        ``n_periods`` (int), ``prefix`` (str), ``start_year`` (int),
-        ``DESCR`` (str).
-        If ``as_frame=True``:
-        The generated data as a pandas DataFrame.
-
-    Examples
-    --------
-    >>> from kdiagram.datasets import load_synthetic_uncertainty_data
-    >>> data_bunch = load_synthetic_uncertainty_data(n_samples=10, seed=0)
-    >>> print(data_bunch.DESCR)
-    >>> df = load_synthetic_uncertainty_data(as_frame=True, n_samples=10)
-    >>> print(df.shape)
-    """
     # --- Generation Logic (Moved from make_uncertainty_data) ---
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -706,3 +731,119 @@ def load_uncertainty_data(
             start_year=start_year,
             DESCR=descr,
         )
+
+
+load_uncertainty_data.__doc__ = r"""
+Generate a synthetic dataset for uncertainty diagnostics.
+
+Creates a compact, controllable dataset for demonstrating
+`k-diagram` plots: one period of actuals, multi-period predicted
+quantiles (Q10, Q50, Q90), configurable trends and noise, injected
+interval failures (anomalies), and optional coordinates. Useful for
+examples, unit tests, and performance checks :footcite:p:`kouadiob2025`.
+
+Parameters
+----------
+as_frame : bool, default=False
+    If ``False``, return a :class:`~kdiagram.bunch.Bunch` with the
+    generated frame and metadata; if ``True``, return only the
+    pandas ``DataFrame``.
+
+n_samples : int, default=150
+    Number of rows (locations) to generate.
+
+n_periods : int, default=4
+    Number of consecutive periods (e.g., years) for which quantiles
+    are generated.
+
+anomaly_frac : float, default=0.15
+    Approximate fraction in ``[0, 1]`` where the actual value lies
+    outside the first period’s Q10–Q90 interval.
+
+start_year : int, default=2022
+    Starting year used when naming time-dependent columns.
+
+prefix : str, default='value'
+    Base prefix for value and quantile column names.
+
+base_value : float, default=10.0
+    Approximate mean of the signal in the first period.
+
+trend_strength : float, default=1.5
+    Linear trend added to the Q50 trajectory across periods.
+
+noise_level : float, default=2.0
+    Standard deviation of base random noise added to values.
+
+interval_width_base : float, default=4.0
+    Base width of the Q10–Q90 interval in the first period.
+
+interval_width_noise : float, default=1.5
+    Random variability added to the interval width per sample/period.
+
+interval_width_trend : float, default=0.5
+    Linear trend added to the interval width across periods.
+
+seed : int or None, default=42
+    Random seed for reproducibility. If ``None``, use an
+    unconstrained RNG state.
+
+Returns
+-------
+data : :class:`~kdiagram.bunch.Bunch` or pandas.DataFrame
+    If ``as_frame=False`` (default) a Bunch with:
+        
+    - ``frame`` : pandas ``DataFrame`` of synthesized values.
+    - ``feature_names`` : included feature columns (e.g., coords).
+    - ``target_names`` : names of actual/target columns.
+    - ``target`` : NumPy array of target values (if present).
+    - ``quantile_cols`` : dict mapping ``'q0.1'``, ``'q0.5'``,
+      ``'q0.9'`` to lists of columns across periods.
+    - ``q10_cols``, ``q50_cols``, ``q90_cols`` : convenience lists.
+    - ``n_periods``, ``prefix``, ``start_year``, and ``DESCR``.
+
+    If ``as_frame=True``, return only the ``DataFrame``.
+
+Notes
+-----
+The generator injects a user-controlled fraction of interval
+failures to create meaningful examples for coverage and anomaly
+diagnostics. Use this dataset to exercise plots such as coverage
+rates, point-wise coverage diagnostics, anomaly magnitude,
+temporal consistency, and drift views 
+:footcite:p:`Jolliffe2012, Gneiting2007b, kouadiob2025`.
+
+See Also
+--------
+load_zhongshan_subsidence
+    Real-world sample for Zhongshan subsidence with quantiles and
+    coordinates.
+
+kdiagram.plot.uncertainty.plot_coverage
+kdiagram.plot.uncertainty.plot_coverage_diagnostic
+kdiagram.plot.uncertainty.plot_anomaly_magnitude
+kdiagram.plot.uncertainty.plot_interval_consistency
+kdiagram.plot.uncertainty.plot_model_drift
+    Visual diagnostics this dataset was designed to support.
+
+Examples
+--------
+>>> # Create a small dataset and explore quantile columns:
+>>> 
+>>> from kdiagram.datasets import load_uncertainty_data
+>>> ds = load_uncertainty_data(n_samples=10, n_periods=3, seed=0)
+>>> sorted(ds.quantile_cols.keys())
+['q0.1', 'q0.5', 'q0.9']
+>>> 
+>>> # Return a ``DataFrame`` only:
+>>> 
+>>> df = load_uncertainty_data(as_frame=True, n_samples=5, seed=1)
+>>> df.shape[0] == 5
+True
+
+References 
+------------
+
+.. footbibliography::
+    
+"""

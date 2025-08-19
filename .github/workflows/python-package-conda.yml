@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]  # test minimum + latest you support
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]  
 
     steps:
       - name: Checkout repository
@@ -45,24 +45,11 @@ jobs:
 
       - name: Lint (ruff and black)
         run: |
-          echo "Running flake8 linter..."
-          # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # flake8 . --count --exit-zero --max-complexity=12 --max-line-length=88 --statistics
-          # If you switch to Ruff:
-          echo "Installing development dependencies..."
-          python -m pip install -e .[dev]
-          
           echo "Checking for linter issues with Ruff..."
-          # Use ruff to check for issues
-          ruff check . 
+          ruff check .  # Checks for linting issues
           
-          echo "Checking for formatting issues with Black..."
-          # Use ruff to automatically fix issues (e.g., imports)
-          # ruff --fix .
-    
-          # Use black to check if the code is formatted
-          # The --check flag makes black fail if the code is not formatted, without changing files.
-          black .  #--check
+          echo "Running Black to automatically fix formatting issues..."
+          black .  # Automatically formats the code with Black
 
       - name: Test with pytest + coverage
         run: |

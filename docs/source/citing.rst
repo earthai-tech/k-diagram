@@ -40,17 +40,18 @@ author, title, version used, and repository URL.
 
 **Recommended format:**
 
-   Kouadio, K. L. (2024). *k-diagram: Rethinking Forecasting
-   Uncertainty via Polar-Based Visualization* (Version |release|).
-   GitHub Repository. https://github.com/earthai-tech/k-diagram
+  Kouadio, K. L. (2024). *k-diagram: Rethinking Forecasting
+  Uncertainty via Polar-Based Visualization* (Version |release|).
+  GitHub Repository. https://github.com/earthai-tech/k-diagram
 
-*(Replace ``|release|`` with the specific version you used. You can
-check the installed version with ``k-diagram --version`` or
-``import kdiagram; print(kdiagram.__version__)``.)*
 
 .. note::
+   
+   Replace ``|release|`` with the specific version you used. You can
+   check the installed version with ``k-diagram --version`` or
+   ``import kdiagram; print(kdiagram.__version__)``.)
 
-   We plan to archive stable releases on Zenodo to provide a persistent
+   Furthermore, we plan to archive stable releases on Zenodo to provide a persistent
    DOI. Please check the repository for updates once DOIs are issued.
 
 Related Publications

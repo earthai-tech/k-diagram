@@ -47,165 +47,6 @@ def plot_relationship(
     z_label=None,
     savefig=None,
 ):
-    r"""
-    Visualize the relationship between `y_true` and multiple `y_preds`
-    using a circular or polar plot. The function allows flexible
-    configurations such as angular coverage, z-values for replacing
-    angle labels, and customizable axis labels.
-
-    Parameters
-    -------------
-    y_true : array-like
-        The true values. Must be numeric, one-dimensional, and of the
-        same length as the values in `y_preds`.
-
-    y_preds : array-like (one or more)
-        Predicted values from one or more models. Each `y_pred` must
-        have the same length as `y_true`.
-
-    names : list of str, optional
-        A list of model names corresponding to each `y_pred`. If not
-        provided or if fewer names than predictions are given, the
-        function assigns default names as ``"Model_1"``, ``"Model_2"``,
-        etc. For instance, if `y_preds` has three predictions and
-        `names` is `["SVC", "RF"]`, the names will be updated to
-        `["SVC", "RF", "Model_3"]`.
-
-    title : str, optional
-        The title of the plot. If `None`, the title defaults to
-        `"Relationship Visualization"`.
-
-    theta_offset : float, default=0
-        Angular offset in radians to rotate the plot. This allows
-        customization of the orientation of the plot.
-
-    theta_scale : {'proportional', 'uniform'}, default='proportional'
-        Determines how `y_true` values are mapped to angular
-        coordinates (`theta`):
-
-        - ``'proportional'``: Maps `y_true` proportionally to the
-          angular range (e.g., 0 to 360° or a subset defined by
-          `acov`).
-        - ``'uniform'``: Distributes `y_true` values uniformly around
-          the angular range.
-
-    acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
-        default='default'
-
-        Specifies the angular coverage of the plot:
-
-        - ``'default'``: Full circle (360°).
-        - ``'half_circle'``: Half circle (180°).
-        - ``'quarter_circle'``: Quarter circle (90°).
-        - ``'eighth_circle'``: Eighth circle (45°).
-        The angular span is automatically restricted to the selected
-        portion of the circle.
-
-    figsize : tuple of float, default=(8, 8)
-        The dimensions of the figure in inches.
-
-    cmap : str, default='viridis'
-        Colormap for the scatter points. Refer to Matplotlib
-        documentation for a list of supported colormaps.
-
-    s : float, default=50
-        Size of scatter points representing predictions.
-
-    alpha : float, default=0.7
-        Transparency level for scatter points. Valid values range
-        from 0 (completely transparent) to 1 (fully opaque).
-
-    legend : bool, default=True
-        Whether to display a legend indicating the model names.
-
-    show_grid : bool, default=True
-        Whether to display a grid on the polar plot.
-
-    color_palette : list of str, optional
-        A list of colors to use for the scatter points. If not
-        provided, the default Matplotlib color palette (`tab10`) is
-        used.
-
-    xlabel : str, optional
-        Label for the radial axis (distance from the center). Defaults
-        to `"Normalized Predictions (r)"`.
-
-    ylabel : str, optional
-        Label for the angular axis (theta values). Defaults to
-        `"Angular Mapping (θ)"`.
-
-    z_values : array-like, optional
-        Optional values to replace the angular labels. The length of
-        `z_values` must match the length of `y_true`. If provided, the
-        angular labels are replaced by the scaled `z_values`.
-
-    z_label : str, optional
-        Label for the `z_values`, if provided. Defaults to `None`.
-
-    Notes
-    -------
-    The function dynamically maps `y_true` to angular coordinates
-    based on the `theta_scale` and `acov` parameters [1]_. The `y_preds`
-    are normalized to radial coordinates between 0 and 1 [2]_. Optionally,
-    `z_values` can replace angular labels with custom values [3]_.
-
-    .. math::
-        \theta =
-        \begin{cases}
-        \text{Proportional mapping: } \theta_i =
-        \frac{y_{\text{true}_i} - \min(y_{\text{true}})}
-        {\max(y_{\text{true}}) - \min(y_{\text{true}})}
-        \cdot \text{angular_range} \\
-        \text{Uniform mapping: } \theta_i =
-        \frac{i}{N-1} \cdot \text{angular_range}
-        \end{cases}
-
-    Radial normalization:
-
-    .. math::
-        r_i = \frac{y_{\text{pred}_i} - \min(y_{\text{pred}})}
-        {\max(y_{\text{pred}}) - \min(y_{\text{pred}})}
-
-    Examples
-    ----------
-
-    >>> from kdiagram.plot.relationship import plot_relationship
-    >>> import numpy as np
-    >>> # Create sample data
-    >>> y_true = np.random.rand(100)
-    >>> y_pred1 = y_true + np.random.normal(0, 0.1, size=100)
-    >>> y_pred2 = y_true + np.random.normal(0, 0.2, size=100)
-    >>> # Full circle visualization
-    >>> plot_relationship(
-    ...     y_true, y_pred1, y_pred2,
-    ...     names=["Model A", "Model B"],
-    ...     acov="default",
-    ...     title="Full Circle Visualization"
-    ... )
-    >>> # Half-circle visualization with z-values
-    >>> z_values = np.linspace(0, 100, len(y_true))
-    >>> plot_relationship(
-    ...     y_true, y_pred1,
-    ...     names=["Model A"],
-    ...     acov="half_circle",
-    ...     z_values=z_values,
-    ...     xlabel="Predicted Values",
-    ...     ylabel="Custom Angles"
-    ... )
-
-    See Also
-    ----------
-    matplotlib.pyplot.polar : Polar plotting in Matplotlib.
-    numpy.linspace : Uniformly spaced numbers.
-
-    References
-    ------------
-    .. [1] Hunter, J. D. (2007). Matplotlib: A 2D graphics environment.
-           Computing in Science & Engineering, 9(3), 90-95.
-    .. [2] NumPy Documentation: https://numpy.org/doc/stable/
-    .. [3] Matplotlib Documentation: https://matplotlib.org/stable/
-    """
-
     # Remove NaN values from y_true and all y_pred arrays
     y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
 
@@ -338,7 +179,7 @@ def plot_relationship(
             theta,
             r,
             label=names[i],
-            color=final_colors[i],  # FIX: Use 'color' instead of 'c'
+            color=final_colors[i],
             s=s,
             alpha=alpha,
             edgecolor="black",
@@ -406,3 +247,199 @@ def plot_relationship(
     else:
         # Warning for non-GUI backend is expected here in test envs
         plt.show()
+
+
+plot_relationship.__doc__ = r"""
+Visualize the relationship between true values and one or more
+prediction series on a polar (circular) scatter plot.
+
+Each point uses an angular position derived from ``y_true`` and a
+radial position derived from the corresponding prediction. This
+compact view lets you compare multiple prediction series against the
+same truth—useful for spotting systematic deviations and patterns
+over a cyclic or ordered domain (e.g., phase, time-of-year).
+
+Parameters
+----------
+y_true : array-like of shape (n_samples,)
+    Ground-truth (observed) values. Must be numeric, 1D, and the
+    same length as every array in ``y_preds``.
+
+*y_preds : array-like(s)
+    One or more prediction arrays, each with shape ``(n_samples,)``
+    and aligned to ``y_true``.
+
+names : list of str, optional
+    Labels for each prediction series. If fewer names than series
+    are provided, placeholders like ``'Model_3'`` are appended.
+
+title : str, optional
+    Figure title. If ``None``, uses ``'Relationship Visualization'``.
+
+theta_offset : float, default=0
+    Constant angular shift (radians) applied after the angle mapping.
+
+theta_scale : {'proportional', 'uniform'}, default='proportional'
+    Strategy for mapping ``y_true`` to angles:
+
+    - ``'proportional'``: angle proportional to the scaled value of
+      ``y_true`` within its range over the selected angular span.
+    - ``'uniform'``: angles evenly spaced over the selected span,
+      ignoring the numerical spacing in ``y_true``.
+
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
+    default='default'
+    Angular coverage (span) of the plot:
+
+    - ``'default'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+
+figsize : tuple of (float, float), optional
+    Figure size in inches. If ``None``, a sensible default is used.
+
+cmap : str, default='tab10'
+    Matplotlib colormap name used to generate distinct series colors.
+
+s : float, default=50
+    Marker size for scatter points.
+
+alpha : float, default=0.7
+    Alpha (transparency) for scatter points in ``[0, 1]``.
+
+legend : bool, default=True
+    If ``True``, show a legend for the prediction series.
+
+show_grid : bool, default=True
+    Toggle polar grid lines (delegated to ``set_axis_grid``).
+
+grid_props : dict, optional
+    Keyword arguments forwarded to the grid helper (e.g., ``linestyle``,
+    ``alpha``).
+
+color_palette : list of color-like, optional
+    Explicit list of colors. If omitted, colors are derived from
+    ``cmap``. If provided with fewer colors than series, they repeat.
+
+xlabel : str, optional
+    Label for the radial axis. Defaults to
+    ``'Normalized Predictions (r)'``.
+
+ylabel : str, optional
+    Label for the angular axis. Defaults to
+    ``'Angular Mapping (θ)'`` when ``z_values`` is not used.
+
+z_values : array-like of shape (n_samples,), optional
+    Optional values used to label angular ticks (e.g., time, phase).
+    If provided, a subset of positions is selected and tick labels
+    are replaced by formatted entries from ``z_values``.
+
+z_label : str, optional
+    Axis/legend label describing ``z_values`` (shown as text next to
+    the angular tick labels region).
+
+savefig : str, optional
+    Path to save the figure (with extension). If ``None``, the figure
+    is shown instead.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The polar axes containing the visualization.
+
+Notes
+-----
+**Angular span.** Let :math:`\Delta\theta` be the selected span:
+:math:`2\pi` (full), :math:`\pi`, :math:`\pi/2`, or :math:`\pi/4`
+depending on ``acov``. Angles are then limited to
+:math:`[0,\,\Delta\theta]` and shifted by ``theta_offset``.
+
+**Angle mapping.** For :math:`N=\text{len}(y_{\text{true}})` and
+:math:`i=0,\dots,N-1`:
+
+- Proportional mapping (range-aware):
+
+  .. math::
+
+     \theta_i \;=\;
+     \begin{cases}
+       \dfrac{y_i - y_{\min}}{y_{\max}-y_{\min}}\,\Delta\theta,
+         & \text{if } y_{\max}>y_{\min},\\[6pt]
+       0, & \text{otherwise,}
+     \end{cases}
+
+  where :math:`y_{\min}=\min_i y_i` and :math:`y_{\max}=\max_i y_i`.
+
+- Uniform mapping (index-based):
+
+  .. math::
+
+     \theta_i \;=\; \frac{i}{N}\,\Delta\theta.
+
+**Radial normalization.** Each prediction series :math:`p` is scaled
+to :math:`[0,1]` by
+
+.. math::
+
+   r_i \;=\;
+   \begin{cases}
+     \dfrac{p_i - p_{\min}}{p_{\max}-p_{\min}}, & p_{\max}>p_{\min},\\[6pt]
+     0.5, & \text{otherwise,}
+   \end{cases}
+
+to give comparable radii across heterogeneous series :footcite:p:`Hunter:2007`.
+
+**Data preparation.** The function first removes joint NaNs via
+``drop_nan_in`` and validates each pair ``(y_true, y_pred)`` through
+``validate_yy`` (continuous expectations, 1D arrays). Colors are
+drawn from ``cmap`` unless ``color_palette`` is supplied. Grid
+appearance is managed by ``set_axis_grid``.
+
+**Interpretation.** When ``theta_scale='proportional'``, nearby angles
+reflect similar truth values; with ``'uniform'``, angles reflect order
+only. Clustering by color (series) indicates systematic agreement or
+disagreement versus truth across the domain :footcite:p:`kouadiob2025`.
+
+Examples
+--------
+Basic comparison over a full circle:
+
+>>> import numpy as np
+>>> from kdiagram.plot.relationship import plot_relationship
+>>> rng = np.random.default_rng(0)
+>>> y = rng.random(200)
+>>> p1 = y + rng.normal(0, 0.10, size=len(y))
+>>> p2 = y + rng.normal(0, 0.20, size=len(y))
+>>> ax = plot_relationship(
+...     y, p1, p2,
+...     names=["Model A", "Model B"],
+...     acov="default",
+...     title="Truth–Prediction (Full Circle)"
+... )
+
+Half-circle with custom angular tick labels (e.g., months):
+
+>>> months = np.linspace(1, 12, len(y))
+>>> ax = plot_relationship(
+...     y, p1,
+...     names=["Model A"],
+...     theta_scale="uniform",
+...     acov="half_circle",
+...     z_values=months,
+...     z_label="Month",
+...     xlabel="Normalized Predictions (r)"
+... )
+
+See Also
+--------
+kdiagram.plot.uncertainty.plot_temporal_uncertainty :
+    General polar series visualization (e.g., quantiles).
+kdiagram.plot.uncertainty.plot_actual_vs_predicted :
+    Side-by-side truth vs. point prediction comparison.
+
+References
+----------
+
+.. footbibliography::
+"""

@@ -283,16 +283,16 @@ for two simulated models.
     In this example radar plot:
 
     * **Model A (Wider):** Exhibits a higher coverage rate
-        (closer to the outer edge, likely near the target 80% or
-        higher). This indicates its wider prediction intervals
-        successfully encompass a larger fraction of the true values.
-        While seemingly safer, it might suggest the model is
-        conservative, potentially overestimating uncertainty.
+      (closer to the outer edge, likely near the target 80% or
+      higher). This indicates its wider prediction intervals
+      successfully encompass a larger fraction of the true values.
+      While seemingly safer, it might suggest the model is
+      conservative, potentially overestimating uncertainty.
     * **Model B (Narrower):** Shows a lower coverage rate (points
-        closer to the center). Its narrower intervals fail to capture
-        the true value more often. This model might seem more precise
-        but likely underestimates uncertainty, increasing the risk of
-        errors where reality falls outside the predicted range.
+      closer to the center). Its narrower intervals fail to capture
+      the true value more often. This model might seem more precise
+      but likely underestimates uncertainty, increasing the risk of
+      errors where reality falls outside the predicted range.
 
     The radar layout effectively contrasts the coverage profiles.
     Points closer to the outer boundary (radius 1.0) represent
@@ -301,15 +301,15 @@ for two simulated models.
     **When to Use This Plot:**
 
     * **Comparing Interval Calibration:** Ideal for a high-level
-        comparison of how well different models' uncertainty estimates
-        are calibrated (on average). Is one model consistently too wide
-        (over-covered) or too narrow (under-covered)?
+      comparison of how well different models' uncertainty estimates
+      are calibrated (on average). Is one model consistently too wide
+      (over-covered) or too narrow (under-covered)?
     * **Model Selection:** Aids in selecting a model based on risk
-        tolerance. Model A might be preferred for risk-averse tasks,
-        while Model B might be chosen if tighter (though less reliable)
-        intervals are desired.
+      tolerance. Model A might be preferred for risk-averse tasks,
+      while Model B might be chosen if tighter (though less reliable)
+      intervals are desired.
     * **Summarizing Reliability:** Provides a concise summary of the
-        average reliability of prediction intervals.
+      average reliability of prediction intervals.
 
 .. raw:: html
 
@@ -376,36 +376,36 @@ using bars.
     **🔍 Key Insights from this Example:**
 
     * **Bar Height/Radius:** Indicates coverage status. A bar
-        reaching radius **1** means the actual value was *inside* the
-        interval (success). A bar at radius **0** means the actual
-        value was *outside* (failure).
+      reaching radius **1** means the actual value was *inside* the
+      interval (success). A bar at radius **0** means the actual
+      value was *outside* (failure).
     * **Color (Implied):** Although not the primary focus here,
-        the points/bars are often colored by coverage status (e.g.,
-        using the `cmap` parameter, green for 1, red for 0).
+      the points/bars are often colored by coverage status (e.g.,
+      using the `cmap` parameter, green for 1, red for 0).
     * **Average Coverage Line:** The solid circular line (orange
-        in this example code's customization) is drawn at the
-        radius corresponding to the **overall coverage rate**
-        (e.g., 0.75 if 75% of points are covered). This provides an
-        immediate visual benchmark against the nominal target (e.g.,
-        0.80 for a Q10-Q90 interval) and the plot boundaries (0 & 1).
+      in this example code's customization) is drawn at the
+      radius corresponding to the **overall coverage rate**
+      (e.g., 0.75 if 75% of points are covered). This provides an
+      immediate visual benchmark against the nominal target (e.g.,
+      0.80 for a Q10-Q90 interval) and the plot boundaries (0 & 1).
     * **Patterns:** Look for clusters of bars at radius 0. These
-        indicate ranges of samples (or specific conditions if the
-        angle represented something else) where the model's intervals
-        consistently fail.
+      indicate ranges of samples (or specific conditions if the
+      angle represented something else) where the model's intervals
+      consistently fail.
 
     **💡 When to Use This Plot:**
 
     * **Diagnosing Interval Failures:** Go beyond the average score
-        provided by ``plot_coverage`` to see *which specific samples*
-        are missed by the prediction intervals.
+      provided by ``plot_coverage`` to see *which specific samples*
+      are missed by the prediction intervals.
     * **Identifying Systematic Errors:** Determine if coverage
-        failures are random or concentrated in certain parts of the
-        data distribution (represented by angles).
+      failures are random or concentrated in certain parts of the
+      data distribution (represented by angles).
     * **Visual Calibration Assessment:** Get a detailed view of how
-        well the empirical coverage matches the nominal rate point-
-        by-point, complementing the overall average line.
+      well the empirical coverage matches the nominal rate point-
+      by-point, complementing the overall average line.
     * **Guiding Model Improvement:** Pinpoint problematic samples
-        or regimes where uncertainty quantification needs refinement.
+      or regimes where uncertainty quantification needs refinement.
 
 .. raw:: html
 
@@ -1004,15 +1004,16 @@ Q50.
    * **Angle (θ):** Represents the sample index/location, arranged
      circularly.
    * **Color (Context):** The color provides context.
-        * If ``use_abs_color=True`` (default, as in this example):
-          Color maps to the **average absolute Q50 value** across
-          periods. This helps see if rapid changes (high radius)
-          occur in high-value (e.g., yellow in `cividis`) or
-          low-value (e.g., purple) regions.
-        * If ``use_abs_color=False``: Color maps directly to the
-          **velocity value**. Using a diverging colormap (like
-          'coolwarm') distinguishes between positive velocity
-          (increasing trend) and negative velocity (decreasing trend).
+   
+     * If ``use_abs_color=True`` (default, as in this example):
+       Color maps to the **average absolute Q50 value** across
+       periods. This helps see if rapid changes (high radius)
+       occur in high-value (e.g., yellow in `cividis`) or
+       low-value (e.g., purple) regions.
+     * If ``use_abs_color=False``: Color maps directly to the
+       **velocity value**. Using a diverging colormap (like
+       'coolwarm') distinguishes between positive velocity
+       (increasing trend) and negative velocity (decreasing trend).
 
    **🔍 Key Insights from this Example:**
 
@@ -1043,3 +1044,417 @@ Q50.
 
     <hr>
 
+
+.. _gallery_plot_radial_density_ring:
+
+--------------------------
+Radial Density Ring
+--------------------------
+
+Visualizes the **1D probability distribution** of a metric using
+Kernel Density Estimation (KDE). This plot is a unique way to
+inspect the shape, peaks, and spread of a distribution, such as
+prediction interval widths or forecast errors.
+
+The key features are:
+
+- **Radius (`r`)**: Represents the value of the metric.
+- **Color**: Represents the probability density at that radius.
+  Brighter/more intense colors indicate more common values.
+
+.. _gallery_plot_density_ring_width:
+
+Distribution of Interval Width (``kind='width'``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This example shows the distribution of the prediction interval
+width (Q90 - Q10), a key measure of model uncertainty.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram as kd
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation (shared for all examples) ---
+    np.random.seed(42)
+    n_samples = 500
+    df_test = pd.DataFrame({
+        'q10': np.random.normal(10, 2, n_samples),
+        'q90': np.random.normal(30, 3, n_samples),
+        'value_2022': np.random.gamma(3, 5, n_samples),
+        'value_2023': np.random.gamma(4, 5, n_samples),
+        'error_metric': np.random.randn(n_samples) * 5,
+    })
+    # Ensure q90 is always greater than q10
+    df_test['q90'] = df_test[['q10', 'q90']].max(axis=1) + \
+        np.random.rand(n_samples) * 2
+
+    # --- Plotting ---
+    kd.plot_radial_density_ring(
+        df=df_test,
+        kind="width",
+        target_cols=["q10", "q90"],
+        title="Distribution of Prediction Interval Width",
+        cmap="Blues",
+        show_yticklabels=True,
+        r_label="q90 − q10",
+        savefig="gallery/images/gallery_plot_density_ring_prediction_interval.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_density_ring_prediction_interval.png
+    :alt: Radial Density Ring for Interval Width
+    :align: center
+    :width: 70%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    This plot reveals the distribution of the model's uncertainty estimates.
+
+    **Key Insights:**
+
+    * **Most Likely Uncertainty**: The brightest ring indicates the
+      most common interval width. This represents the model's
+      typical uncertainty range.
+    * **Consistency**: A narrow, bright ring suggests the model
+      produces highly consistent uncertainty estimates. A wide,
+      diffuse ring indicates high variability in uncertainty.
+    * **Multi-modality**: Multiple distinct bright rings would
+      suggest the model operates in different uncertainty modes
+      for different subsets of the data.
+
+    **🔍 In this Example:**
+
+    * The brightest part of the ring is centered around a radius
+      of **20**. This means for most samples, the prediction
+      interval (Q90 - Q10) has a width of about 20 units.
+    * The distribution is relatively symmetric and bell-shaped,
+      fading out for very narrow (<10) or very wide (>30)
+      intervals.
+
+    **💡 When to Use:**
+
+    Use this plot to answer questions like:
+
+    * "What is the typical range of my model's uncertainty?"
+    * "Does my model produce consistent uncertainty estimates, or
+      do they vary wildly?"
+    * "Are there multiple, distinct levels of uncertainty in my
+      predictions?"
+
+
+.. _gallery_plot_density_ring_velocity:
+
+Distribution of Change (``kind='velocity'``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This example visualizes the distribution of change between two
+time points (e.g., year-over-year velocity).
+
+.. code-block:: python
+    :linenos:
+
+    # Assumes df_test is already created from the previous block
+
+    kd.plot_radial_density_ring(
+        df=df_test,
+        kind="velocity",
+        target_cols=["value_2022", "value_2023"],
+        title="Distribution of Value Change (2022 to 2023)",
+        cmap="Reds",
+        show_yticklabels=True,
+        r_label="value_2023 − value_2022",
+        savefig="gallery/images/gallery_plot_density_ring_distr_value.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_density_ring_distr_value.png
+    :alt: Radial Density Ring for Velocity
+    :align: center
+    :width: 70%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    This plot shows the distribution of the rate of change between
+    two sets of values.
+
+    **Key Insights:**
+
+    * **Central Tendency**: The brightest ring shows the most
+      common change or velocity. If it's centered at zero, it
+      suggests stability; otherwise, it indicates a consistent
+      positive or negative trend.
+    * **Magnitude of Change**: The spread of the ring shows the
+      variability in the rate of change. A tight ring means
+      the change is consistent across all samples.
+
+    **🔍 In this Example:**
+
+    * The distribution is centered around a radius of **+5**. This
+      indicates that the most common change from 2022 to 2023
+      was a positive increase of 5 units.
+    * The distribution has a longer tail towards higher values,
+      suggesting that while a +5 change is most typical, some
+      samples experienced a much larger increase.
+
+    **💡 When to Use:**
+
+    * To analyze the distribution of year-over-year changes in
+      a forecast.
+    * To study the distribution of differences between two model
+      versions.
+    * To visualize the distribution of treatment effects
+      (post-treatment vs. pre-treatment values).
+
+
+
+.. _gallery_plot_density_ring_direct:
+
+Distribution of a Direct Metric (``kind='direct'``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is the most general use case, visualizing the distribution
+of any pre-calculated, single-column metric.
+
+.. code-block:: python
+    :linenos:
+
+    # Assumes df_test is already created from the first block
+
+    kd.plot_radial_density_ring(
+        df=df_test,
+        kind="direct",
+        target_cols="error_metric",
+        title="Distribution of a Pre-calculated Error Metric",
+        cmap="Greens",
+        show_yticklabels=True,
+        r_label="error_metric",
+        savefig="gallery/images/gallery_plot_density_ring_error_metric.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_density_ring_error_metric.png
+    :alt: Radial Density Ring for a Direct Metric
+    :align: center
+    :width: 70%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    This plot is a general-purpose tool for inspecting the shape
+    of any continuous variable.
+
+    **Key Insights:**
+
+    * **Distribution Shape**: Immediately reveals if a
+      distribution is symmetric, skewed, normal, or bimodal.
+    * **Central Point**: The brightest ring highlights the mode
+      (peak) of the distribution.
+    * **Spread**: The width of the colored area indicates the
+      variance or standard deviation of the metric.
+
+    **🔍 In this Example:**
+
+    * The synthetic `error_metric` was generated from a standard
+      normal distribution, and the plot reflects this perfectly.
+    * The brightest ring is at a radius of **0**, indicating an
+      unbiased error distribution centered at zero.
+    * The density is symmetric around zero and fades smoothly,
+      as expected for a Gaussian (bell-curve) distribution.
+
+    **💡 When to Use:**
+
+    * To visualize the distribution of model residuals or errors.
+    * To inspect the distribution of a feature before modeling.
+    * To present the distribution of any summary statistic in a
+      visually engaging format.
+
+.. raw:: html
+
+    <hr>
+
+.. _gallery_plot_polar_heatmap:
+
+--------------------------
+Polar Heatmap
+--------------------------
+
+Visualizes the 2D density of data points on a polar grid, showing
+the concentration of a radial variable against a cyclical or ordered
+angular variable.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram.plot.uncertainty as kdu
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation ---
+
+    np.random.seed(42)
+    n_points = 5000
+
+    # Simulate hour of day with more events in the afternoon
+
+    hour = np.concatenate([
+        np.random.normal(15, 2, int(n_points * 0.7)),
+        np.random.normal(5, 2, int(n_points * 0.3))
+    ]) % 24
+
+    # Simulate rainfall, correlated with afternoon hours
+
+    rainfall = np.random.gamma(2, 5, n_points) +  
+    (hour > 12) * np.random.gamma(3, 5, n_points)
+
+    df_weather = pd.DataFrame({'hour': hour, 'rainfall_mm': rainfall})
+
+    # --- Plotting ---
+
+    kdu.plot_polar_heatmap(
+        df=df_weather,
+        r_col='rainfall_mm',
+        theta_col='hour',
+        theta_period=24,
+        r_bins=25,
+        theta_bins=24,
+        cmap='plasma',
+        title='Rainfall Intensity vs. Hour of Day',
+        cbar_label='Event Count',
+        savefig="gallery/images/gallery_plot_polar_heatmap.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_plot_polar_heatmap.png
+    :alt: Example of a Polar Heatmap
+    :align: center
+    :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    The **Polar Heatmap** is a powerful tool for finding patterns
+    between a cyclical feature (like time) and a magnitude.
+
+    **Key Features:**
+
+    * **Angle (θ):** Represents the cyclical variable (e.g., hour of the day).
+    * **Radius (r):** Represents the magnitude variable (e.g., rainfall amount).
+    * **Color:** Shows the density or count of data points. Bright, hot
+      colors indicate a high concentration of events in that specific
+      angle-radius bin.
+
+    **🔍 In this Example:**
+
+    * The brightest colors (yellow) are concentrated between roughly
+      180° and 270° (corresponding to the afternoon hours, 12:00 to 18:00)
+      and at a moderate radius (rainfall intensity).
+    * This immediately reveals the pattern in the simulated data: heavy
+      rainfall events are most frequent in the afternoon. The rest of the
+      plot is dark, indicating few events at other times or intensities.
+
+    **💡 When to Use:**
+
+    * To find correlations between a cyclical feature (time, season) and
+      an event's magnitude or error.
+    * To identify "hot spots" in your data where specific conditions
+      (e.g., time of day and error size) frequently co-occur.
+
+.. raw:: html
+
+    <hr>
+
+.. _gallery_plot_polar_quiver:
+
+--------------------------
+Polar Quiver Plot
+--------------------------
+
+Visualizes vector data (magnitude and direction) at specific points
+on a polar grid. It's ideal for showing changes, revisions, or error
+vectors.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram.plot.uncertainty as kdu
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation ---
+
+    np.random.seed(0)
+    n_points = 50
+    locations = np.linspace(0, 360, n_points, endpoint=False)
+    initial_forecast = 10 + 5 * np.sin(np.deg2rad(locations) * 3)
+
+    # Simulate forecast revisions
+
+    radial_change = np.random.normal(0, 1.5, n_points)
+    tangential_change = np.random.normal(0, 0.1, n_points)
+
+    df_forecasts = pd.DataFrame({
+    'location_angle': locations,
+    'initial_value': initial_forecast,
+    'update_radial': radial_change,
+    'update_tangential': tangential_change,
+    })
+
+    # --- Plotting ---
+
+    kdu.plot_polar_quiver(
+        df=df_forecasts,
+        r_col='initial_value',
+        theta_col='location_angle',
+        u_col='update_radial',
+        v_col='update_tangential',
+        theta_period=360,
+        title='Forecast Revisions for Spatial Locations',
+        cmap='coolwarm',
+        scale=25,
+        savefig="gallery/images/gallery_uncertainty_vector_revisions.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_uncertainty_vector_revisions.png
+    :alt: Example of a Polar Quiver Plot
+    :align: center
+    :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    The **Polar Quiver Plot** shows the direction and magnitude of
+    change at different points in a system.
+
+    **Key Features:**
+
+    * **Arrow Position:** The base of each arrow is located at a
+      point (:math:`(r, \theta)`) on the polar grid.
+    * **Arrow Direction & Length:** The arrow points in the direction
+      of the vector, and its length represents the vector's magnitude.
+      Color is also often used to represent magnitude.
+
+    **🔍 In this Example:**
+
+    * The base of each arrow represents an initial forecast value for a
+      specific location (angle).
+    * The arrow itself shows the revision to that forecast. An arrow
+      pointing outward indicates the forecast was revised upward. An arrow
+      pointing inward indicates a downward revision.
+    * The color and length of the arrows show the magnitude of the
+      revision. The long, dark red arrow near 180° represents the largest
+      single forecast update in the dataset.
+
+    **💡 When to Use:**
+
+    * To visualize forecast updates and assess model stability.
+    * To plot error vectors (e.g., where the vector shows the direction
+      and magnitude of error from the true value).
+    * To visualize flow fields or other vector data in a polar context.

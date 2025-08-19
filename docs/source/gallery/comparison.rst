@@ -212,3 +212,118 @@ probability bins. A perfectly calibrated model lies on the
      Platt scaling/Isotonic regression) on the same dataset.
    * **Communicating** both calibration quality (curve vs. diagonal) and
      **data support** (counts per bin).
+
+.. raw:: html
+
+    <hr>
+
+.. _gallery_plot_horizon_metrics:
+
+-------------------------------------
+Comparing Metrics Across Horizons
+-------------------------------------
+
+Uses :func:`~kdiagram.plot.comparison.plot_horizon_metrics` to create
+a polar bar chart. This plot is designed to compare a primary metric
+(like mean interval width) and an optional secondary metric (encoded
+as color) across multiple distinct categories, such as forecast
+horizons.
+
+.. code-block:: python
+    :linenos:
+
+    import kdiagram.plot.comparison as kdc
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # --- Data Generation ---
+
+    # Create synthetic data where each row represents a forecast horizon.
+
+    # The columns represent different samples (e.g., from different locations).
+
+    horizons = ["H1", "H2", "H3", "H4", "H5", "H6"]
+    df_horizons = pd.DataFrame({
+    'q10_s1': [1, 2, 3, 4, 5, 6],
+    'q10_s2': [1.2, 2.3, 3.4, 4.5, 5.6, 6.7],
+    'q90_s1': [3, 4, 5.5, 7, 8, 9.5],
+    'q90_s2': [3.1, 4.2, 5.7, 7.3, 8.4, 9.9],
+    'q50_s1': [2, 3, 4.2, 5.7, 6.5, 8.2],
+    'q50_s2': [2.1, 3.2, 4.4, 5.9, 6.9, 8.8],
+    })
+
+    q10_cols = ['q10_s1', 'q10_s2']
+    q90_cols = ['q90_s1', 'q90_s2']
+    q50_cols = ['q50_s1', 'q50_s2']
+
+    # --- Plotting ---
+
+    ax = kdc.plot_horizon_metrics(
+    df=df_horizons,
+    qlow_cols=q10_cols,
+    qup_cols=q90_cols,
+    q50_cols=q50_cols,
+    title="Mean Interval Width Across Horizons",
+    xtick_labels=horizons,
+    show_value_labels=False,  # Hiding for a cleaner look
+    r_label="Mean Interval Width",
+    cbar_label="Mean Q50 Value",
+    acov="half_circle",  # Use a 180-degree view
+    # Save the plot (adjust path relative to this file)
+    savefig="images/gallery_horizon_metrics.png"
+    )
+    plt.close()
+
+.. image:: ../images/gallery_horizon_metrics.png
+    :alt: Example Plot of Metrics Across Horizons
+    :align: center
+    :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+    :class: hint
+
+    The **Horizon Metrics Plot** provides a compact and intuitive way
+    to compare how key metrics evolve across different categories,
+    most commonly forecast time steps (horizons).
+
+    **Analysis and Interpretation:**
+
+    * **Angle (θ):** Each angular segment represents a distinct
+      category or horizon (e.g., H1, H2, ...), corresponding to
+      a row in the input DataFrame.
+    * **Radius (r):** The height of each bar represents the
+      **mean value of a primary metric**. In this case, it is the
+      mean interval width (`Q90 - Q10`).
+    * **Color:** The color of each bar visualizes a **secondary
+      metric**, in this case the mean `Q50` value. This adds another
+      layer of information to the comparison.
+
+    **🔍 Key Insights from this Example:**
+
+    * **Growing Uncertainty:** The bar height (radius) clearly
+      increases from horizon H1 to H6. This indicates that the
+      model's uncertainty, represented by the **mean interval width**,
+      grows as it forecasts further into the future.
+    * **Increasing Magnitude:** The color of the bars shifts from
+      blue (lower values) to red (higher values). This shows that
+      the **mean Q50 value** (the central prediction) is also
+      trending upwards across the forecast horizons.
+    * **Combined Insight:** By combining these two features, we can
+      conclude that for this model, both the predicted value and its
+      associated uncertainty increase steadily over the forecast
+      period.
+
+    **💡 When to Use:**
+
+    * **Forecast Horizon Analysis:** Its primary use is to see how a
+      model's uncertainty and central tendency change over time.
+    * **Model Comparison:** You can create this plot for several
+      different models and compare them side-by-side to see which
+      one has more stable uncertainty estimates over time.
+    * **Categorical Comparison:** The "horizons" don't have to be
+      time-based. They can be different regions, model variants, or
+      any distinct categories for which you want to compare aggregated
+      metrics.
+
+

@@ -33,16 +33,18 @@ def test_names_padding_and_invalid_cmap_warning(tmp_path):
     y_pred2 = y_true - 0.05
 
     out = tmp_path / "pad.png"
-    # fewer names than preds -> function pads names
-    # invalid cmap -> fallback to 'tab10' with warning
-    plot_relationship(
-        y_true,
-        y_pred1,
-        y_pred2,
-        names=["First"],  # will pad to 2 names
-        cmap="definitely_not_a_cmap",
-        savefig=str(out),
-    )
+
+    pattern = r"Colormap 'definitely_not_a_cmap' not found"
+
+    with pytest.warns(UserWarning, match=pattern):
+        plot_relationship(
+            y_true,
+            y_pred1,
+            y_pred2,
+            names=["First"],
+            cmap="definitely_not_a_cmap",
+            savefig=str(out),
+        )
     assert out.exists()
     _cleanup()
 
@@ -139,8 +141,6 @@ def test_constant_y_pred_warns(tmp_path):
             y_pred_constant,
             savefig=str(out),
         )
-    # assert out.exists()
-    # _cleanup()
 
 
 def test_grid_off(tmp_path):

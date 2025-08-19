@@ -4,10 +4,6 @@ import pytest
 
 from kdiagram.datasets import make as mk
 
-# ------------------------------
-# make_cyclical_data
-# ------------------------------
-
 
 def test_make_cyclical_data_bunch_and_frame_shapes():
     n = 24
@@ -43,11 +39,6 @@ def test_make_cyclical_data_seed_reproducibility():
     np.testing.assert_allclose(a["y_true"].to_numpy(), b["y_true"].to_numpy())
 
 
-# ------------------------------
-# make_fingerprint_data
-# ------------------------------
-
-
 def test_make_fingerprint_data_bunch_and_frame_and_validations():
     # basic bunch
     bunch = mk.make_fingerprint_data(n_layers=4, n_features=6, seed=3, as_frame=False)
@@ -69,11 +60,6 @@ def test_make_fingerprint_data_bunch_and_frame_and_validations():
         mk.make_fingerprint_data(n_features=3, feature_names=["F1"])
     with pytest.raises(ValueError, match=r"layer_names .* must match"):
         mk.make_fingerprint_data(n_layers=2, layer_names=["A"])
-
-
-# ------------------------------
-# make_uncertainty_data
-# ------------------------------
 
 
 def test_make_uncertainty_data_bunch_and_lists_and_nperiods_zero():
@@ -111,11 +97,6 @@ def test_make_uncertainty_data_anomalies_outside_interval():
     assert outside.sum() > 0
 
 
-# ------------------------------
-# make_taylor_data
-# ------------------------------
-
-
 def test_make_taylor_data_bunch_and_frame_and_warnings():
     # as bunch
     bunch = mk.make_taylor_data(n_samples=50, n_models=2, seed=5, as_frame=False)
@@ -141,11 +122,6 @@ def test_make_taylor_data_bunch_and_frame_and_warnings():
     # noise_level zero while correlations < 1 allowed -> ValueError
     with pytest.raises(ValueError, match="noise_level cannot be zero"):
         _ = mk.make_taylor_data(noise_level=0.0, corr_range=(0.0, 0.9), seed=3)
-
-
-# ------------------------------
-# make_multi_model_quantile_data
-# ------------------------------
 
 
 def test_make_multi_model_quantile_data_bunch_and_frame_and_ordering():

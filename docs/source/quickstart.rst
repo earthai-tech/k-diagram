@@ -1,4 +1,4 @@
-.. _quickstart:
+.. _lab_quickstart:
 
 ==================
 Quick Start Guide
@@ -98,15 +98,16 @@ a polar plot similar to this:
 **Interpreting the Plot:**
 
 * **Angles:** Each point around the circle represents a sample from
-    the DataFrame (ordered by index in this case).
+  the DataFrame (ordered by index in this case).
 * **Radius:** The distance from the center indicates the magnitude of
-    the anomaly (how far the actual value was from the interval bound).
-    Points perfectly within the interval are not shown.
+  the anomaly (how far the actual value was from the interval bound).
+  Points perfectly within the interval are not shown.
 * **Color:** Points are colored based on the type of anomaly:
-    * Blue tones (default) indicate **under-predictions** (actual < q10).
-    * Red tones (default) indicate **over-predictions** (actual > q90).
-    * The color intensity corresponds to the anomaly magnitude shown
-        on the color bar.
+
+  * Blue tones (default) indicate **under-predictions** (actual < q10).
+  * Red tones (default) indicate **over-predictions** (actual > q90).
+  * The color intensity corresponds to the anomaly magnitude shown
+    on the color bar.
 
 Next Steps
 ----------

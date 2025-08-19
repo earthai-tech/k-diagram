@@ -1,4 +1,4 @@
-.. _installation:
+.. _lab_installation:
 
 ============
 Installation
@@ -77,6 +77,9 @@ avoids conflicts between dependencies of different projects.
    pip install k-diagram
    # conda deactivate
 
+ 
+.. _development_install_source:
+
 Development install (from source)
 ---------------------------------
 
@@ -143,6 +146,110 @@ Open Python and import the package:
    print("k-diagram version:", getattr(kdiagram, "__version__", "unknown"))
 
 If this runs without errors, your installation is working.
+
+.. _building_documentation: 
+
+Building Documentation
+----------------------
+
+After installing ``k-diagram`` (from PyPI or from source), you
+can build the documentation locally with `Sphinx
+<https://www.sphinx-doc.org/>`_ and the extensions listed in
+``pyproject.toml``.
+
+**1) Install documentation dependencies**
+
+If you followed the editable :ref:`development_install_source`
+with the ``[dev]`` extra, you’re all set. Otherwise, 
+install the doc tools:
+
+.. code-block:: bash
+
+   pip install -e .[dev]
+
+Or (if you prefer to keep testing/linting tools out of your
+environment) use the docs requirements file:
+
+.. code-block:: bash
+
+   pip install -r docs/requirements.txt
+
+**2) Build the HTML site**
+
+Using the Makefile (created by ``sphinx-quickstart``):
+
+.. code-block:: bash
+
+   cd docs
+   make html
+
+Open ``docs/_build/html/index.html`` in your browser.
+
+Alternatively, call ``sphinx-build`` directly (handy for CI or custom
+builders):
+
+.. code-block:: bash
+
+   # If your conf.py is in docs/
+   sphinx-build -b dirhtml docs docs/_build/html
+
+   # If your conf.py is in docs/source/
+   sphinx-build -b dirhtml docs/source docs/_build/html
+
+The ``dirhtml`` builder produces “pretty” URLs (one folder per page).
+
+**3) Clean builds (optional)**
+
+Force a fresh build by removing the build directory first:
+
+.. code-block:: bash
+
+   rm -rf docs/_build && sphinx-build -b dirhtml docs docs/_build/html
+
+Or with Make:
+
+.. code-block:: bash
+
+   cd docs
+   make clean
+   make html
+
+.. note::
+
+   On Windows, use ``.\make.bat html`` (and ``.\make.bat clean``)
+   instead of ``make html``.
+
+**4) Build PDF (optional)**
+
+Requires a LaTeX distribution (TeX Live on Linux/macOS, MiKTeX on
+Windows):
+
+.. code-block:: bash
+
+   cd docs
+   make latexpdf
+
+The PDF is written to ``_build/latex/k-diagram.pdf``.
+
+**5) Recommended checks**
+
+For link checking and warnings-as-errors during local QA:
+
+.. code-block:: bash
+
+   # treat warnings as errors (+ nitpicky mode)
+   sphinx-build -nW -b dirhtml docs docs/_build/html
+
+   # check external links (can be slow)
+   make linkcheck
+
+**Notes**
+
+- If math doesn’t render, ensure your MathJax (or the offline
+  plugin) is installed per your ``pyproject.toml`` extras.
+- If citations don’t appear, confirm ``sphinxcontrib-bibtex`` is
+  installed and that your ``conf.py`` includes the bibtex config.
+
 
 Troubleshooting
 ---------------

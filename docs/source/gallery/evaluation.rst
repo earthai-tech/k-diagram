@@ -18,7 +18,7 @@ correlation, standard deviation, and centered Root Mean Square Difference
    this file).
 
 
-.. _gallery_plot_taylor_diagram_flexible: # Label specific to this plot
+.. _gallery_plot_taylor_diagram_flexible: 
 
 ----------------------------------------------
 Taylor Diagram (Flexible Input & Background)
@@ -92,13 +92,14 @@ standard deviation.
      with both high correlation (small angle) and standard
      deviation close to the reference (radius near 1.0).
    * **Model Performance:**
-       * **Model A** (Red Dot): High correlation (~0.85), slightly
-         low std dev (~0.8). Good pattern match, slightly low variability.
-       * **Model B** (Blue Dot): Low correlation (~0.5), high std
-         dev (~1.2). Poor pattern match and wrong variability.
-       * **Model C** (Green Dot): Very high correlation (~0.95),
-         std dev very close to reference (~1.0). Best overall fit,
-         landing in the darkest blue region.
+
+     * **Model A** (Red Dot): High correlation (~0.85), slightly
+       low std dev (~0.8). Good pattern match, slightly low variability.
+     * **Model B** (Blue Dot): Low correlation (~0.5), high std
+       dev (~1.2). Poor pattern match and wrong variability.
+     * **Model C** (Green Dot): Very high correlation (~0.95),
+       std dev very close to reference (~1.0). Best overall fit,
+       landing in the darkest blue region.
 
    **💡 When to Use:**
 
@@ -184,12 +185,13 @@ orientation (Corr=1 at North, angles increase counter-clockwise).
      indicates correlations close to 1.0. Colors shift towards
      green/blue/purple as correlation decreases (angle increases).
    * **Model Performance:**
-       * **Model A** (Red Dot): Good correlation (in greenish-yellow
-         zone), std dev slightly below reference arc.
-       * **Model B** (Blue Dot): Low correlation (in blue/purple
-         zone), std dev slightly above reference arc.
-       * **Model C** (Green Dot): Excellent correlation (in bright
-         yellow zone), std dev very close to reference arc.
+   
+     * **Model A** (Red Dot): Good correlation (in greenish-yellow
+       zone), std dev slightly below reference arc.
+     * **Model B** (Blue Dot): Low correlation (in blue/purple
+       zone), std dev slightly above reference arc.
+     * **Model C** (Green Dot): Excellent correlation (in bright
+       yellow zone), std dev very close to reference arc.
 
    **💡 When to Use:**
 
@@ -268,15 +270,16 @@ orientation for Corr=1.
    * **Reference Arc:** The red arc shows the standard deviation of
      the reference data (approx. 1.0).
    * **Model Positions:**
-       * **Model A** (Red Dot): High correlation (small angle relative
-         to West axis), standard deviation below the reference arc
-         (~0.8). Underestimates variability.
-       * **Model B** (Blue Dot): Lower correlation (larger angle),
-         standard deviation above the reference arc (~1.2).
-         Overestimates variability and has poorer pattern match.
-       * **Model C** (Green Dot): Highest correlation (smallest angle),
-         standard deviation almost exactly on the reference arc (~1.0).
-         Best overall model in this comparison.
+   
+     * **Model A** (Red Dot): High correlation (small angle relative
+       to West axis), standard deviation below the reference arc
+       (~0.8). Underestimates variability.
+     * **Model B** (Blue Dot): Lower correlation (larger angle),
+       standard deviation above the reference arc (~1.2).
+       Overestimates variability and has poorer pattern match.
+     * **Model C** (Green Dot): Highest correlation (smallest angle),
+       standard deviation almost exactly on the reference arc (~1.0).
+       Best overall model in this comparison.
    * **RMSD:** Model C is closest to the reference point (at radius
      ~1.0 on the West axis), indicating the lowest centered RMS
      difference. Model B is furthest away.
