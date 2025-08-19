@@ -21,8 +21,6 @@ def fixed_terminal(monkeypatch):
 
 
 # ---------- beautify_dict ----------
-
-
 def test_beautify_dict_basic_formatting(fixed_terminal):
     d = {
         3: "Home & Garden",
@@ -145,6 +143,5 @@ def test_get_table_size_invalid_value_raises(fixed_terminal):
     with pytest.raises(ValueError):
         util.get_table_size("not-an-int")
 
-
-if __name__ == "__main__":  # pragma: no-cover
+if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

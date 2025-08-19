@@ -10,9 +10,6 @@ import pytest
 
 import kdiagram.utils.io as io_mod
 
-# ---- helpers ---------------------------------------------------------------
-
-
 class FakeResponse:
     """Context-manager mock for requests.get(..., stream=True)."""
 
@@ -39,9 +36,6 @@ class FakeResponse:
         # yield data in chunks
         for i in range(0, len(self._data), chunk_size):
             yield self._data[i : i + chunk_size]
-
-
-# ---- fancier_downloader tests ---------------------------------------------
 
 
 def test_fancier_downloader_requires_requests(monkeypatch):

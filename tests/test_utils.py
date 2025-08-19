@@ -40,9 +40,6 @@ def wide_df_partial():
     )
 
 
-# --- reshape_quantile_data ---------------------------------------------------
-
-
 def test_reshape_basic(wide_df_full):
     out = reshape_quantile_data(
         wide_df_full,
@@ -175,10 +172,6 @@ def test_pivot_missing_dt_raises():
     df = pd.DataFrame({"subs_q0.1": [1.0]})
     with pytest.raises(ValueError, match="Missing required columns"):
         pivot_q_data(df, value_prefix="subs", dt_col="year")
-
-
-# --- savefile decorator (smoke) ---------------------------------------------
-
 
 def test_reshape_savefile_writes(tmp_path, wide_df_full):
     out_path = tmp_path / "reshaped.csv"

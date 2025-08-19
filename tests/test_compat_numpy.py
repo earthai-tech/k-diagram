@@ -83,5 +83,5 @@ def test_set_promotion_warn_no_error():
     knp.set_promotion_warn("weak_and_warn")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":# pragma: no-cover
     pytest.main([__file__])

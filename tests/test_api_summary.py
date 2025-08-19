@@ -88,6 +88,5 @@ def test_resultsummary_add_results_type_error():
     with pytest.raises(TypeError):
         rs.add_results(["not", "a", "dict"])  # type: ignore[arg-type]
 
-
-if __name__ == "__main__":  # pragma: no-cover
+if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

@@ -973,8 +973,6 @@ def plot_model_comparison(
     ...                        title="Classification Model Comparison",
     ...                        scale='norm')
     """
-    # Docstring omitted as requested
-    # --- Input Validation and Preparation ---
     try:
         # Remove NaN values and ensure consistency
         y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")

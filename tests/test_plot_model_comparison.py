@@ -7,36 +7,16 @@ Pytest suite for testing model comparison visualization functions in
 kdiagram.plot.relationship (or wherever plot_model_comparison lives).
 """
 
-
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.axes import Axes
 
-# --- Import function to test ---
-# Adjust the import path based on your project structure
-try:
-    from kdiagram.plot.comparison import plot_model_comparison
-
-    _SKIP_TESTS = False
-except ImportError as e:
-    print(
-        f"Could not import plot_model_comparison or dependencies: {e}."
-        f" Skipping tests."
-    )
-    _SKIP_TESTS = True
-
-# Skip all tests in this file if function cannot be imported
-pytestmark = pytest.mark.skipif(
-    _SKIP_TESTS, reason="plot_model_comparison or its dependencies not found"
-)
+from kdiagram.plot.comparison import plot_model_comparison
 
 # --- Pytest Configuration ---
 matplotlib.use("Agg")  # Use Agg backend for non-interactive plotting
-
-# --- Fixtures ---
-
 
 @pytest.fixture(autouse=True)
 def close_plots():
@@ -74,9 +54,6 @@ def comparison_data():
         "names": ["M1", "M2", "M3"],
         "times": [0.5, 1.2, 0.1],  # Example times for 3 models
     }
-
-
-# --- Test Functions ---
 
 
 def test_plot_model_comparison_regression_defaults(comparison_data):
@@ -224,20 +201,9 @@ def test_plot_model_comparison_plot_options(comparison_data):
         pytest.fail(f"plot_model_comparison with plot options failed: {e}")
 
 
-@pytest.mark.skip(
-    "Sucessfully passed locally with "
-    "scikit.utils._paramerter_validation.InvalidParameterError"
-    " and regex error parsing..."
-)
 def test_plot_model_comparison_errors(comparison_data):
     """Test expected errors for invalid inputs."""
     data = comparison_data
-
-    # Mismatched names length
-    # with pytest.raises(ValueError, match="length is smaller than number of models"):
-    #      plot_model_comparison(
-    #         data["y_true_reg"], *data["y_preds_reg"], names=data["names"][:-1]
-    #      )
 
     # Mismatched train_times length
     with pytest.raises(ValueError, match="train_times must be.*length n_models"):
@@ -246,13 +212,16 @@ def test_plot_model_comparison_errors(comparison_data):
         )
 
     # Invalid metric name string
-    with pytest.raises(ValueError, match="Unknown scoring metric 'invalid_metric'"):
-        plot_model_comparison(
-            data["y_true_reg"], data["y_preds_reg"][0], metrics=["invalid_metric"]
-        )
-
+    # First, we expect a UserWarning from scikit-learn
+    with pytest.warns(UserWarning, match="Could not retrieve scorer for metric"):
+        # Inside the warning block, we expect our function to raise a ValueError
+        with pytest.raises(ValueError, match="No valid metrics found or specified"):
+            plot_model_comparison(
+                data["y_true_reg"], data["y_preds_reg"][0], metrics=["invalid_metric"]
+            )
+  
     # Invalid scale value (should be caught by decorator if @validate_params used)
-    with pytest.raises(ValueError):  # InvalidParameterError depending on decorator
+    with pytest.raises(ValueError):  
         plot_model_comparison(
             data["y_true_reg"], data["y_preds_reg"][0], scale="bad_scale_option"
         )

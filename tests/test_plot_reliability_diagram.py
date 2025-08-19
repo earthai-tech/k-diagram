@@ -31,22 +31,25 @@ def test_quantile_wilson_counts_bottom_multi_model(tmp_path, rng):
     p2 = 0.4 * np.ones_like(y) + 0.05 * rng.random(n)
 
     out = tmp_path / "rel_quantile_wilson.png"
-    ax, data = plot_reliability_diagram(
-        y,
-        p1,
-        p2,
-        names=["Wide", "Tight"],
-        n_bins=12,
-        strategy="quantile",
-        error_bars="wilson",
-        counts_panel="bottom",
-        show_ece=True,
-        show_brier=True,
-        title="Reliability Diagram (Quantile + Wilson)",
-        figsize=(8, 6),
-        savefig=str(out),
-        return_data=True,
-    )
+    with pytest.warns(
+            UserWarning, match="not compatible with tight_layout"):
+        ax, data = plot_reliability_diagram(
+            y,
+            p1,
+            p2,
+            names=["Wide", "Tight"],
+            n_bins=12,
+            strategy="quantile",
+            error_bars="wilson",
+            counts_panel="bottom",
+            show_ece=True,
+            show_brier=True,
+            title="Reliability Diagram (Quantile + Wilson)",
+            figsize=(8, 6),
+            savefig=str(out),
+            return_data=True,
+        )
+
     assert out.exists()
     # two axes: main + counts
     assert len(ax.figure.axes) == 2

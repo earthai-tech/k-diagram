@@ -3416,253 +3416,6 @@ def plot_interval_width(
     mask_angle: bool = True,
     savefig: str | None = None,
 ):
-    r"""Polar scatter plot visualizing prediction interval width.
-
-    This function generates a polar scatter plot to visualize the
-    magnitude of prediction uncertainty, represented by the width of the
-    prediction interval (Upper Quantile - Lower Quantile), across
-    different locations or samples.
-
-    - **Angular Position (`theta`)**: Represents each location or data
-      point. Currently derived from the DataFrame index, mapped
-      linearly onto the specified angular coverage (`acov`). The optional
-      `theta_col` parameter is intended for future use in ordering but
-      is currently ignored for positioning.
-    - **Radial Distance (`r`)**: Directly represents the width of the
-      prediction interval (:math:`Q_{upper} - Q_{lower}`). A larger
-      radius indicates greater predicted uncertainty for that point.
-    - **Color (`z`)**: Optionally represents a third variable, specified
-      by `z_col` (e.g., the median prediction Q50, or the actual value).
-      This allows for correlating the uncertainty width with another
-      metric. If `z_col` is not provided, the color defaults to
-      representing the interval width (`r`) itself [1]_.
-
-    This plot helps to:
-
-    - Identify locations with high or low prediction uncertainty.
-    - Visualize the spatial distribution or sample distribution of
-      uncertainty magnitude.
-    - Explore potential correlations between uncertainty width and other
-      variables (like the central prediction) when using `z_col`.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the quantile prediction columns and
-        optionally columns for theta ordering and color (`z_col`).
-        Decorators ensure it's a valid, non-empty pandas DataFrame.
-
-    q_cols : list or tuple of str
-        A sequence containing exactly two string elements: the column
-        name for the lower quantile bound (e.g., 'prediction_q10') and
-        the column name for the upper quantile bound (e.g.,
-        'prediction_q90'). The order must be ``[lower_col, upper_col]``.
-
-    theta_col : str, optional
-        *Intended* column name for ordering points angularly based on
-        its values (e.g., 'latitude'). *Note: This parameter is
-        currently ignored for positioning/ordering in this implementation;
-        points use DataFrame index order.* A warning is issued if
-        provided. Default is ``None``.
-
-    z_col : str, optional
-        Name of the column whose values will be used to color the scatter
-        points. Common choices include the median prediction column (e.g.,
-        'prediction_q50') or an actual value column to see if high/low
-        uncertainty correlates with high/low values. If ``None``, the
-        color will represent the interval width (`r`) itself.
-        Default is ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, default='default'
-
-        Specifies the angular coverage (span) of the polar plot:
-        ``'default'`` (360°), ``'half_circle'`` (180°),
-        ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°).
-
-    figsize : tuple of (float, float), default=(8.0, 8.0)
-        Width and height of the figure in inches.
-
-    title : str, optional
-        Custom title for the plot. If ``None``, a default title like
-        "Prediction Interval Width (Q_upper - Q_lower)" is used.
-        Default is ``None``.
-
-    cmap : str, default='viridis'
-        Name of the Matplotlib colormap used to color the points based
-        on the `z` value (from `z_col` or defaulting to interval width `r`).
-
-    s : int, default=30
-        Marker size for the scatter points.
-
-    alpha : float, default=0.8
-        Transparency level for the scatter points (0=transparent,
-        1=opaque).
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines.
-
-    cbar : bool, default=True
-        If ``True``, display a color bar indicating the mapping between
-        colors and the `z` values.
-
-    mask_angle : bool, default=True
-        If ``True``, hide the angular tick labels (degrees). Recommended
-        if the angle is based on index.
-
-    savefig : str, optional
-        File path to save the plot image. If ``None``, displays the plot
-        interactively. Default is ``None``.
-
-    Returns
-    -------
-    ax : matplotlib.axes._axes.Axes
-        The Matplotlib Axes object containing the polar scatter plot,
-        specifically a PolarAxesSubplot.
-
-    Raises
-    ------
-    TypeError
-        If `q_cols` does not contain exactly two elements.
-    ValueError
-        If specified columns in `q_cols`, `theta_col` (if provided), or
-        `z_col` (if provided) are not found in the DataFrame `df`.
-        If data in the required columns is not numeric.
-
-    See Also
-    --------
-    plot_interval_consistency : Visualize the temporal consistency of
-                                interval widths.
-    plot_uncertainty_drift : Visualize the temporal drift of interval
-                             widths as rings.
-    matplotlib.pyplot.scatter : Function used for plotting points.
-    matplotlib.colors.Normalize : Used for scaling color values.
-
-    Notes
-    ------
-
-    - Rows with NaN values in any of the required columns (`q_cols`,
-      `theta_col` if used, `z_col` if used) are dropped before plotting.
-    - The interval width `r` is calculated as `Upper Quantile - Lower
-      Quantile`. If the lower quantile is greater than the upper
-      quantile for any point, this will result in a negative width,
-      which might lead to unexpected plotting behavior as radius is
-      typically non-negative. A warning is issued if negative widths
-      are detected.
-    - The angular coordinate `theta` is derived from the DataFrame index
-      after NaN removal, not influenced by `theta_col` currently.
-    - Color is determined by the `z_col` values if provided, otherwise
-      it defaults to representing the interval width `r`.
-
-    Let :math:`L_j` and :math:`U_j` be the lower and upper quantile bound
-    values for data point (location) :math:`j` (:math:`j=0, \dots, N-1`
-    after NaN removal). Let :math:`z'_j` be the value from `z_col` for
-    point :math:`j`, if `z_col` is provided.
-
-    1. **Radial Coordinate (`r`)**: Interval Width.
-
-       .. math::
-           r_j = U_j - L_j
-
-    2. **Color Value (`z`)**:
-
-       .. math::
-           z_j = \begin{cases} z'_j & \text{if } z\_col \text{ is provided}\\
-               \\ r_j & \text{if } z\_col \text{ is None} \end{cases}
-
-    3. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
-       and :math:`\theta_{min}` the start angle from `acov`.
-
-       .. math::
-           \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
-
-    4. **Plotting**: Plot points :math:`(r_j, \theta_j)` using `scatter`,
-       where the color of each point is determined by applying `cmap` to
-       the normalized value of :math:`z_j`.
-
-    References
-    ----------
-    
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_interval_width
-
-    **1. Random Example:**
-
-    >>> np.random.seed(1)
-    >>> N = 120
-    >>> df_iw_rand = pd.DataFrame({
-    ...     'sample_id': range(N),
-    ...     'latitude': np.linspace(40, 42, N) + np.random.randn(N)*0.05,
-    ...     'q10_pred': np.random.rand(N) * 10,
-    ...     'q50_pred': np.random.rand(N) * 10 + 5,
-    ...     'q90_pred': np.random.rand(N) * 10 + 10, # Width varies
-    ... })
-    >>> # Ensure Q90 > Q10
-    >>> df_iw_rand['q90_pred'] = df_iw_rand['q10_pred'] + np.abs(
-    ...     df_iw_rand['q90_pred'] - df_iw_rand['q10_pred'])
-    >>>
-    >>> ax_iw_rand = plot_interval_width(
-    ...     df=df_iw_rand,
-    ...     q_cols=['q10_pred', 'q90_pred'], # Pass as list [lower, upper]
-    ...     z_col='q50_pred',           # Color by median prediction
-    ...     theta_col='latitude',       # Ignored for positioning
-    ...     acov='default',
-    ...     title='Interval Width vs. Median Prediction',
-    ...     cmap='plasma',
-    ...     s=40,
-    ...     cbar=True
-    ... )
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Data):**
-
-    >>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    zhongshan_pred_2023_2026
-    ... except NameError:
-    ...    print("Creating dummy subsidence data for example...")
-    ...    N_sub = 150
-    ...    zhongshan_pred_2023_2026 = pd.DataFrame({
-    ...       'latitude': np.linspace(22.2, 22.8, N_sub),
-    ...       'subsidence_2023_q10': np.random.rand(N_sub)*5 + 1,
-    ...       'subsidence_2023_q50': np.random.rand(N_sub)*10 + 3,
-    ...       'subsidence_2023_q90': np.random.rand(N_sub)*5 + 6 + np.linspace(0, 10, N_sub),
-    ...       # Ensure q90 > q10
-    ...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2022)*2 + 1
-    ...          for yr in range(2024, 2027)}, # Add other cols if needed
-    ...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2022)*2 + 5
-    ...          + np.linspace(0, (yr-2022)*3, N_sub)
-    ...          for yr in range(2024, 2027)},
-    ...     })
-    >>> # Ensure Q90 > Q10 for the primary year
-    >>> zhongshan_pred_2023_2026['subsidence_2023_q90'] = (
-    ...      zhongshan_pred_2023_2026['subsidence_2023_q10'] +
-    ...      np.abs(zhongshan_pred_2023_2026['subsidence_2023_q90'] -
-    ...             zhongshan_pred_2023_2026['subsidence_2023_q10']) + 0.1
-    ...      )
-    >>> ax_iw_sub = plot_interval_width(
-    ...     df=zhongshan_pred_2023_2026.head(100), # Use subset
-    ...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q90'], # Use list
-    ...     z_col='subsidence_2023_q50',   # Color by Q50
-    ...     theta_col='latitude',          # Ignored for positioning
-    ...     acov='quarter_circle',       # Use 90 degrees
-    ...     title='Spatial Spread of Uncertainty (2023)',
-    ...     cmap='YlGnBu',
-    ...     s=25,
-    ...     cbar=True,                   # Show colorbar for Q50
-    ...     mask_angle=True
-    ... )
-    >>> # plt.show() called internally
-
-    """
     # --- Input Validation ---
     # Basic df checks handled by decorators
     q_cols_processed = columns_manager(q_cols, empty_as_none=False)
@@ -3861,7 +3614,254 @@ def plot_interval_width(
 
     return ax
 
+plot_interval_width.__doc__=r"""
+Polar scatter plot visualizing prediction interval width.
 
+This function generates a polar scatter plot to visualize the
+magnitude of prediction uncertainty, represented by the width of the
+prediction interval (Upper Quantile - Lower Quantile), across
+different locations or samples.
+
+- **Angular Position (`theta`)**: Represents each location or data
+  point. Currently derived from the DataFrame index, mapped
+  linearly onto the specified angular coverage (`acov`). The optional
+  `theta_col` parameter is intended for future use in ordering but
+  is currently ignored for positioning.
+- **Radial Distance (`r`)**: Directly represents the width of the
+  prediction interval (:math:`Q_{upper} - Q_{lower}`). A larger
+  radius indicates greater predicted uncertainty for that point.
+- **Color (`z`)**: Optionally represents a third variable, specified
+  by `z_col` (e.g., the median prediction Q50, or the actual value).
+  This allows for correlating the uncertainty width with another
+  metric. If `z_col` is not provided, the color defaults to
+  representing the interval width (`r`) itself [1]_.
+
+This plot helps to:
+
+- Identify locations with high or low prediction uncertainty.
+- Visualize the spatial distribution or sample distribution of
+  uncertainty magnitude.
+- Explore potential correlations between uncertainty width and other
+  variables (like the central prediction) when using `z_col`.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing the quantile prediction columns and
+    optionally columns for theta ordering and color (`z_col`).
+    Decorators ensure it's a valid, non-empty pandas DataFrame.
+
+q_cols : list or tuple of str
+    A sequence containing exactly two string elements: the column
+    name for the lower quantile bound (e.g., 'prediction_q10') and
+    the column name for the upper quantile bound (e.g.,
+    'prediction_q90'). The order must be ``[lower_col, upper_col]``.
+
+theta_col : str, optional
+    *Intended* column name for ordering points angularly based on
+    its values (e.g., 'latitude'). *Note: This parameter is
+    currently ignored for positioning/ordering in this implementation;
+    points use DataFrame index order.* A warning is issued if
+    provided. Default is ``None``.
+
+z_col : str, optional
+    Name of the column whose values will be used to color the scatter
+    points. Common choices include the median prediction column (e.g.,
+    'prediction_q50') or an actual value column to see if high/low
+    uncertainty correlates with high/low values. If ``None``, the
+    color will represent the interval width (`r`) itself.
+    Default is ``None``.
+
+acov : {'default', 'half_circle', 'quarter_circle', \
+    'eighth_circle'}, default='default'
+
+    Specifies the angular coverage (span) of the polar plot:
+    ``'default'`` (360°), ``'half_circle'`` (180°),
+    ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°).
+
+figsize : tuple of (float, float), default=(8.0, 8.0)
+    Width and height of the figure in inches.
+
+title : str, optional
+    Custom title for the plot. If ``None``, a default title like
+    "Prediction Interval Width (Q_upper - Q_lower)" is used.
+    Default is ``None``.
+
+cmap : str, default='viridis'
+    Name of the Matplotlib colormap used to color the points based
+    on the `z` value (from `z_col` or defaulting to interval width `r`).
+
+s : int, default=30
+    Marker size for the scatter points.
+
+alpha : float, default=0.8
+    Transparency level for the scatter points (0=transparent,
+    1=opaque).
+
+show_grid : bool, default=True
+    If ``True``, display the polar grid lines.
+
+cbar : bool, default=True
+    If ``True``, display a color bar indicating the mapping between
+    colors and the `z` values.
+
+mask_angle : bool, default=True
+    If ``True``, hide the angular tick labels (degrees). Recommended
+    if the angle is based on index.
+
+savefig : str, optional
+    File path to save the plot image. If ``None``, displays the plot
+    interactively. Default is ``None``.
+
+Returns
+-------
+ax : matplotlib.axes._axes.Axes
+    The Matplotlib Axes object containing the polar scatter plot,
+    specifically a PolarAxesSubplot.
+
+Raises
+------
+TypeError
+    If `q_cols` does not contain exactly two elements.
+ValueError
+    If specified columns in `q_cols`, `theta_col` (if provided), or
+    `z_col` (if provided) are not found in the DataFrame `df`.
+    If data in the required columns is not numeric.
+
+See Also
+--------
+plot_interval_consistency : Visualize the temporal consistency of
+                            interval widths.
+plot_uncertainty_drift : Visualize the temporal drift of interval
+                         widths as rings.
+matplotlib.pyplot.scatter : Function used for plotting points.
+matplotlib.colors.Normalize : Used for scaling color values.
+
+Notes
+------
+
+- Rows with NaN values in any of the required columns (`q_cols`,
+  `theta_col` if used, `z_col` if used) are dropped before plotting.
+- The interval width `r` is calculated as `Upper Quantile - Lower
+  Quantile`. If the lower quantile is greater than the upper
+  quantile for any point, this will result in a negative width,
+  which might lead to unexpected plotting behavior as radius is
+  typically non-negative. A warning is issued if negative widths
+  are detected.
+- The angular coordinate `theta` is derived from the DataFrame index
+  after NaN removal, not influenced by `theta_col` currently.
+- Color is determined by the `z_col` values if provided, otherwise
+  it defaults to representing the interval width `r`.
+
+Let :math:`L_j` and :math:`U_j` be the lower and upper quantile bound
+values for data point (location) :math:`j` (:math:`j=0, \dots, N-1`
+after NaN removal). Let :math:`z'_j` be the value from `z_col` for
+point :math:`j`, if `z_col` is provided.
+
+1. **Radial Coordinate (`r`)**: Interval Width.
+
+   .. math::
+       r_j = U_j - L_j
+
+2. **Color Value (`z`)**:
+
+   .. math::
+       z_j = \begin{cases} z'_j & \text{if } z\_col \text{ is provided}\\
+           \\ r_j & \text{if } z\_col \text{ is None} \end{cases}
+
+3. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
+   and :math:`\theta_{min}` the start angle from `acov`.
+
+   .. math::
+       \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
+
+4. **Plotting**: Plot points :math:`(r_j, \theta_j)` using `scatter`,
+   where the color of each point is determined by applying `cmap` to
+   the normalized value of :math:`z_j`.
+
+References
+----------
+
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+   *International Journal of Forecasting*. Manuscript submitted.
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_interval_width
+
+**1. Random Example:**
+
+>>> np.random.seed(1)
+>>> N = 120
+>>> df_iw_rand = pd.DataFrame({
+...     'sample_id': range(N),
+...     'latitude': np.linspace(40, 42, N) + np.random.randn(N)*0.05,
+...     'q10_pred': np.random.rand(N) * 10,
+...     'q50_pred': np.random.rand(N) * 10 + 5,
+...     'q90_pred': np.random.rand(N) * 10 + 10, # Width varies
+... })
+>>> # Ensure Q90 > Q10
+>>> df_iw_rand['q90_pred'] = df_iw_rand['q10_pred'] + np.abs(
+...     df_iw_rand['q90_pred'] - df_iw_rand['q10_pred'])
+>>>
+>>> ax_iw_rand = plot_interval_width(
+...     df=df_iw_rand,
+...     q_cols=['q10_pred', 'q90_pred'], # Pass as list [lower, upper]
+...     z_col='q50_pred',           # Color by median prediction
+...     theta_col='latitude',       # Ignored for positioning
+...     acov='default',
+...     title='Interval Width vs. Median Prediction',
+...     cmap='plasma',
+...     s=40,
+...     cbar=True
+... )
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Data):**
+
+>>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    zhongshan_pred_2023_2026
+... except NameError:
+...    print("Creating dummy subsidence data for example...")
+...    N_sub = 150
+...    zhongshan_pred_2023_2026 = pd.DataFrame({
+...       'latitude': np.linspace(22.2, 22.8, N_sub),
+...       'subsidence_2023_q10': np.random.rand(N_sub)*5 + 1,
+...       'subsidence_2023_q50': np.random.rand(N_sub)*10 + 3,
+...       'subsidence_2023_q90': np.random.rand(N_sub)*5 + 6 + np.linspace(0, 10, N_sub),
+...       # Ensure q90 > q10
+...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2022)*2 + 1
+...          for yr in range(2024, 2027)}, # Add other cols if needed
+...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2022)*2 + 5
+...          + np.linspace(0, (yr-2022)*3, N_sub)
+...          for yr in range(2024, 2027)},
+...     })
+>>> # Ensure Q90 > Q10 for the primary year
+>>> zhongshan_pred_2023_2026['subsidence_2023_q90'] = (
+...      zhongshan_pred_2023_2026['subsidence_2023_q10'] +
+...      np.abs(zhongshan_pred_2023_2026['subsidence_2023_q90'] -
+...             zhongshan_pred_2023_2026['subsidence_2023_q10']) + 0.1
+...      )
+>>> ax_iw_sub = plot_interval_width(
+...     df=zhongshan_pred_2023_2026.head(100), # Use subset
+...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q90'], # Use list
+...     z_col='subsidence_2023_q50',   # Color by Q50
+...     theta_col='latitude',          # Ignored for positioning
+...     acov='quarter_circle',       # Use 90 degrees
+...     title='Spatial Spread of Uncertainty (2023)',
+...     cmap='YlGnBu',
+...     s=25,
+...     cbar=True,                   # Show colorbar for Q50
+...     mask_angle=True
+... )
+>>> # plt.show() called internally
+
+"""
 @check_non_emptiness
 @isdf
 def plot_coverage_diagnostic(
@@ -5007,7 +5007,8 @@ def plot_radial_density_ring(
 
     fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     cmap_obj = get_cmap(cmap, default="viridis")
-
+    
+    ax.grid (False)
     pcm = ax.pcolormesh(
         T,
         R,
@@ -5503,9 +5504,11 @@ def plot_polar_heatmap(
     # counts = counts.T
 
     # Create the polar plot
+    
     fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     cmap_obj = get_cmap(cmap, default="viridis")
-
+    
+    ax.grid (False )
     # Use pcolormesh to draw the heatmap
     T, R = np.meshgrid(theta_edges, r_edges)
     pcm = ax.pcolormesh(T, R, counts, cmap=cmap_obj, shading="auto")

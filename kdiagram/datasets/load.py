@@ -95,7 +95,8 @@ def load_zhongshan_subsidence(
             else:
                 # Error handled by download func based on 'error' flag
                 # We might still try package resource below if download fails
-                warnings.warn(f"Forced download failed for {filename}.", stacklevel=2)
+                warnings.warn(
+                    f"Forced download failed for {filename}.", stacklevel=2)
                 pass  # Continue to check package resource
         else:
             warnings.warn(
@@ -200,6 +201,7 @@ def load_zhongshan_subsidence(
         warnings.warn(
             f"Requested years not available: {invalid_years}. "
             f"Available: {available_years}",
+            UserWarning, 
             stacklevel=2,
         )
         requested_years &= set(available_years)  # Keep only valid ones
@@ -207,6 +209,7 @@ def load_zhongshan_subsidence(
         warnings.warn(
             f"Requested quantiles not available: {invalid_quantiles}. "
             f"Available: {available_quantiles}",
+            UserWarning, 
             stacklevel=2,
         )
         requested_quantiles &= set(available_quantiles)  # Keep only valid ones

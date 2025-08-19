@@ -33,7 +33,8 @@ def _lazy_import(module_name, alias=None):
 try:
     from ._scm_version import version as __version__
 except Exception:
-    __version__ = "0+unknown"  # Fallback version in case Git is not available
+    # Fallback version in case Git is not available
+    __version__ = "1+unknown"  
 
 # Dependency check
 _required_dependencies = [

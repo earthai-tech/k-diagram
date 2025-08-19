@@ -302,7 +302,11 @@ def plot_error_bands(
     )
 
     # Calculate stats per bin
-    stats = data.groupby("theta_bin")[error_col].agg(["mean", "std"]).reset_index()
+    # stats = data.groupby("theta_bin")[error_col].agg(["mean", "std"]).reset_index()
+    stats = data.groupby('theta_bin', observed=False)[error_col].agg(
+        ['mean', 'std']
+        ).reset_index()
+    
     stats["std"] = stats["std"].fillna(0)  # Handle bins with one sample
 
     # Create the plot
@@ -540,10 +544,10 @@ def plot_error_ellipses(
     fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
 
     # Plot each ellipse as a filled path
-    for i, row in data.iterrows():
+    for i, (_, row) in enumerate(data.iterrows()):
         theta_path, r_path = _get_ellipse_path(
             r_mean=row[r_col],
-            theta_mean=row[theta_col],
+            theta_mean=np.deg2rad(row[theta_col]),
             r_std=row[r_std_col],
             theta_std=row[theta_std_col],
             n_std=n_std,
@@ -551,7 +555,8 @@ def plot_error_ellipses(
         ax.fill(theta_path, r_path, color=colors[i], **ellipse_kws)
 
     cbar = plt.colorbar(
-        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj), ax=ax, pad=0.1, shrink=0.75
+        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj), 
+        ax=ax, pad=0.1, shrink=0.75
     )
     cbar.set_label(cbar_label, fontsize=10)
 
