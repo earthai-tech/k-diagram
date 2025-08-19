@@ -59,12 +59,22 @@ in improving the quality of this project.
 Best regards,
 
 
-
 ## Author response to reviewer comments
 
+### Documentation 
+*As you mentioned, the warnings and errors ... in decorators.py, e.g*
+You were absolutely right about `numpydoc` automatically loading `sphinx.ext.autosummary.` 
+I have now removed the redundant entry from our `conf.py` to clean up the configuration.
+and I have also corrected all the incorrect underline lengths in that file 
+and have also run a check across the rest of the codebase to ensure 
+consistency with numpydoc standards.
+
+GeI agree that the Sphinx build warnings are very instructive. 
+Taking your feedback as a guide, I have performed another pass on the project 
+to fix any remaining minor formatting issues and ensure the documentation 
+builds as cleanly as possible.
 
 ### Packaging
-
 
 ### Version / single-sourcing & docs config
 
