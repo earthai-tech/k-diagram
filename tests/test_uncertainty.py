@@ -6,8 +6,8 @@
 Pytest suite for testing uncertainty visualization functions in
 kdiagram.plot.uncertainty.
 """
-import sys 
 import re
+import sys
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -29,6 +29,7 @@ from kdiagram.plot.uncertainty import (
     plot_uncertainty_drift,
     plot_velocity,
 )
+
 
 @pytest.fixture(autouse=True)
 def close_plots():
@@ -117,11 +118,12 @@ def sample_data_velocity():
 
     return {"df": df, "q50_cols": q50_cols}
 
+
 @pytest.mark.parametrize("kind", ["line", "bar", "pie", "radar"])
 def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
     """Test plot_coverage with one quantile model for various kinds."""
     data = sample_data_coverage
-    
+
     try:
         # The warning only happens for polar plots in newer library versions
         if kind in ("pie", "radar") and sys.version_info >= (3, 11):
@@ -146,19 +148,20 @@ def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
                 kind=kind,
                 figsize=(6, 6),
             )
-            
+
         assert len(plt.get_fignums()) > 0, f"Plot should be created for kind='{kind}'"
-    
+
     except Exception as e:
         pytest.fail(f"plot_coverage raised an exception for kind='{kind}': {e}")
-    
+
     finally:
-        plt.close('all')
-        
+        plt.close("all")
+
+
 def test_plot_coverage_multi_model_quantile_radar(sample_data_coverage):
     """Test plot_coverage with multiple quantile models (radar)."""
     data = sample_data_coverage
-    
+
     try:
         # The Matplotlib/NumPy dtype warning can affect polar plots like 'radar'
         # in newer library versions (Python 3.11+).
@@ -187,14 +190,15 @@ def test_plot_coverage_multi_model_quantile_radar(sample_data_coverage):
                 cov_fill=True,
                 figsize=(6, 6),
             )
-            
+
         assert len(plt.get_fignums()) > 0, "Plot should be created"
-    
+
     except Exception as e:
         pytest.fail(f"plot_coverage raised an exception: {e}")
-    
+
     finally:
-        plt.close('all')
+        plt.close("all")
+
 
 def test_plot_coverage_single_model_point(sample_data_coverage):
     """Test plot_coverage with a single point forecast model."""

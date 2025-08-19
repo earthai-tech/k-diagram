@@ -31,8 +31,7 @@ def test_quantile_wilson_counts_bottom_multi_model(tmp_path, rng):
     p2 = 0.4 * np.ones_like(y) + 0.05 * rng.random(n)
 
     out = tmp_path / "rel_quantile_wilson.png"
-    with pytest.warns(
-            UserWarning, match="not compatible with tight_layout"):
+    with pytest.warns(UserWarning, match="not compatible with tight_layout"):
         ax, data = plot_reliability_diagram(
             y,
             p1,

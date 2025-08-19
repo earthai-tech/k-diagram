@@ -143,5 +143,6 @@ def test_get_table_size_invalid_value_raises(fixed_terminal):
     with pytest.raises(ValueError):
         util.get_table_size("not-an-int")
 
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

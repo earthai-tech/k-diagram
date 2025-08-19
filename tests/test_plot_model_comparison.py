@@ -18,6 +18,7 @@ from kdiagram.plot.comparison import plot_model_comparison
 # --- Pytest Configuration ---
 matplotlib.use("Agg")  # Use Agg backend for non-interactive plotting
 
+
 @pytest.fixture(autouse=True)
 def close_plots():
     """Fixture to close all matplotlib plots after each test."""
@@ -219,9 +220,9 @@ def test_plot_model_comparison_errors(comparison_data):
             plot_model_comparison(
                 data["y_true_reg"], data["y_preds_reg"][0], metrics=["invalid_metric"]
             )
-  
+
     # Invalid scale value (should be caught by decorator if @validate_params used)
-    with pytest.raises(ValueError):  
+    with pytest.raises(ValueError):
         plot_model_comparison(
             data["y_true_reg"], data["y_preds_reg"][0], scale="bad_scale_option"
         )

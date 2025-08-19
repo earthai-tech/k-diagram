@@ -16,7 +16,7 @@ from matplotlib.axes import Axes
 from kdiagram.plot.feature_based import plot_feature_fingerprint
 
 # --- Pytest Configuration ---
-matplotlib.use("Agg")  
+matplotlib.use("Agg")
 
 
 @pytest.fixture(autouse=True)
@@ -146,6 +146,7 @@ def test_plot_feature_fingerprint_name_label_mismatch(
                 labels=data["labels"][: n_lab + num_extra],
             )
             plt.close()
+
 
 def test_plot_feature_fingerprint_empty_input():
     """Test error on empty importances input."""

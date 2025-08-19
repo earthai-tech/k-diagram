@@ -4,6 +4,7 @@ import pytest
 
 from kdiagram.datasets import make as mk
 
+
 def test_make_cyclical_data_bunch_and_frame_shapes():
     n = 24
     s = 2
@@ -36,6 +37,7 @@ def test_make_cyclical_data_seed_reproducibility():
     a = mk.make_cyclical_data(n_samples=16, seed=123, as_frame=True)
     b = mk.make_cyclical_data(n_samples=16, seed=123, as_frame=True)
     np.testing.assert_allclose(a["y_true"].to_numpy(), b["y_true"].to_numpy())
+
 
 def test_make_fingerprint_data_bunch_and_frame_and_validations():
     # basic bunch
@@ -95,7 +97,6 @@ def test_make_uncertainty_data_anomalies_outside_interval():
     assert outside.sum() > 0
 
 
-
 def test_make_taylor_data_bunch_and_frame_and_warnings():
     # as bunch
     bunch = mk.make_taylor_data(n_samples=50, n_models=2, seed=5, as_frame=False)
@@ -121,6 +122,7 @@ def test_make_taylor_data_bunch_and_frame_and_warnings():
     # noise_level zero while correlations < 1 allowed -> ValueError
     with pytest.raises(ValueError, match="noise_level cannot be zero"):
         _ = mk.make_taylor_data(noise_level=0.0, corr_range=(0.0, 0.9), seed=3)
+
 
 def test_make_multi_model_quantile_data_bunch_and_frame_and_ordering():
     bunch = mk.make_multi_model_quantile_data(

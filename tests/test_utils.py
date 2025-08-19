@@ -173,6 +173,7 @@ def test_pivot_missing_dt_raises():
     with pytest.raises(ValueError, match="Missing required columns"):
         pivot_q_data(df, value_prefix="subs", dt_col="year")
 
+
 def test_reshape_savefile_writes(tmp_path, wide_df_full):
     out_path = tmp_path / "reshaped.csv"
     out = reshape_quantile_data(

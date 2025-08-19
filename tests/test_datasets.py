@@ -16,6 +16,7 @@ import pytest
 import kdiagram.datasets as kdd
 from kdiagram.api.bunch import Bunch
 
+
 @pytest.mark.parametrize("n_samples, n_periods", [(50, 3), (10, 1)])
 def test_make_uncertainty_data(n_samples, n_periods):
     """Test make_uncertainty_data runs and returns DataFrame."""
@@ -298,7 +299,7 @@ def test_load_zhongshan_from_package(
     # Make the mock return True only for the package path,
     # and False for the cache path.
     mock_exists.side_effect = lambda path: path == package_file_path
-    
+
     mock_is_resource.return_value = True
 
     with patch("kdiagram.datasets.load.get_data", return_value=cache_dir):
@@ -308,14 +309,14 @@ def test_load_zhongshan_from_package(
         )
 
     # Assertions
-    mock_exists.assert_any_call(expected_cache_path) # Checked cache (returned False)
+    mock_exists.assert_any_call(expected_cache_path)  # Checked cache (returned False)
     mock_is_resource.assert_called_once()
     mock_resource_path.assert_called_once()
     mock_copy.assert_called_once()
     mock_download.assert_not_called()
     mock_read_csv.assert_called_once_with(package_file_path)
     assert isinstance(data, Bunch)
-    
+
 
 @pytest.mark.network
 @patch("kdiagram.datasets.load.pd.read_csv", return_value=dummy_df.copy())
@@ -332,6 +333,7 @@ def test_load_zhongshan_from_download(
     # Create a stateful mock for os.path.exists.
     # It will return True only after the download has been simulated.
     _file_downloaded = False
+
     def exists_side_effect(path):
         # Only return True for the cache path if the download has "occurred"
         if path == expected_path:
@@ -356,6 +358,7 @@ def test_load_zhongshan_from_download(
     mock_download.assert_called_once()
     mock_read_csv.assert_called_once_with(expected_path)
     assert isinstance(data, pd.DataFrame)
+
 
 @patch("kdiagram.datasets.load.pd.read_csv", return_value=dummy_df.copy())
 @patch("kdiagram.datasets.load.os.path.exists", return_value=True)

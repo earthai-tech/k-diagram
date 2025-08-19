@@ -95,8 +95,7 @@ def load_zhongshan_subsidence(
             else:
                 # Error handled by download func based on 'error' flag
                 # We might still try package resource below if download fails
-                warnings.warn(
-                    f"Forced download failed for {filename}.", stacklevel=2)
+                warnings.warn(f"Forced download failed for {filename}.", stacklevel=2)
                 pass  # Continue to check package resource
         else:
             warnings.warn(
@@ -201,7 +200,7 @@ def load_zhongshan_subsidence(
         warnings.warn(
             f"Requested years not available: {invalid_years}. "
             f"Available: {available_years}",
-            UserWarning, 
+            UserWarning,
             stacklevel=2,
         )
         requested_years &= set(available_years)  # Keep only valid ones
@@ -209,7 +208,7 @@ def load_zhongshan_subsidence(
         warnings.warn(
             f"Requested quantiles not available: {invalid_quantiles}. "
             f"Available: {available_quantiles}",
-            UserWarning, 
+            UserWarning,
             stacklevel=2,
         )
         requested_quantiles &= set(available_quantiles)  # Keep only valid ones
@@ -380,6 +379,7 @@ def load_zhongshan_subsidence(
                 bunch_dict["latitude"] = df_subset["latitude"].values
 
         return Bunch(**bunch_dict)
+
 
 load_zhongshan_subsidence.__doc__ = r"""
 Load the Zhongshan land subsidence prediction dataset.
@@ -560,6 +560,7 @@ References
     
 """
 
+
 def load_uncertainty_data(
     *,
     as_frame: bool = False,
@@ -730,7 +731,8 @@ def load_uncertainty_data(
             start_year=start_year,
             DESCR=descr,
         )
-    
+
+
 load_uncertainty_data.__doc__ = r"""
 Generate a synthetic dataset for uncertainty diagnostics.
 

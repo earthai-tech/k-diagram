@@ -249,7 +249,7 @@ def plot_relationship(
         plt.show()
 
 
-plot_relationship.__doc__=r"""
+plot_relationship.__doc__ = r"""
 Visualize the relationship between true values and one or more
 prediction series on a polar (circular) scatter plot.
 

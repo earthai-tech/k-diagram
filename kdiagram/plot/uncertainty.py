@@ -1001,7 +1001,8 @@ def plot_velocity(
 
     return ax
 
-plot_velocity.__doc__ =r"""
+
+plot_velocity.__doc__ = r"""
 Polar plot visualizing average velocity across locations.
 
 Generates a polar scatter plot where each point represents a
@@ -1297,6 +1298,8 @@ Examples
 >>> # plt.show() called internally
 
 """
+
+
 @check_non_emptiness
 @isdf
 def plot_interval_consistency(
@@ -1510,6 +1513,7 @@ def plot_interval_consistency(
         plt.show()
 
     return ax
+
 
 plot_interval_consistency.__doc__ = r"""
 Polar plot showing consistency of prediction interval widths.
@@ -2085,6 +2089,7 @@ def plot_anomaly_magnitude(
 
     return ax
 
+
 plot_anomaly_magnitude.__doc__ = r"""
 Visualize magnitude and type of prediction-interval anomalies.
 
@@ -2638,7 +2643,8 @@ def plot_uncertainty_drift(
 
     return ax
 
-plot_uncertainty_drift.__doc__=r"""
+
+plot_uncertainty_drift.__doc__ = r"""
 Polar plot visualizing temporal drift of uncertainty width.
 
 This function creates a polar line plot showing how the width of
@@ -2918,6 +2924,7 @@ Examples
 >>> # plt.show() called internally
 
 """
+
 
 @check_non_emptiness
 @isdf
@@ -3614,7 +3621,8 @@ def plot_interval_width(
 
     return ax
 
-plot_interval_width.__doc__=r"""
+
+plot_interval_width.__doc__ = r"""
 Polar scatter plot visualizing prediction interval width.
 
 This function generates a polar scatter plot to visualize the
@@ -3862,6 +3870,8 @@ Examples
 >>> # plt.show() called internally
 
 """
+
+
 @check_non_emptiness
 @isdf
 def plot_coverage_diagnostic(
@@ -3917,7 +3927,7 @@ def plot_coverage_diagnostic(
                 UserWarning,
                 stacklevel=2,
             )
- 
+
     missing_essential = [
         col for col in [actual_col, qlow_col, qup_col] if col not in df.columns
     ]
@@ -4159,6 +4169,7 @@ def plot_coverage_diagnostic(
         plt.show()
 
     return ax
+
 
 plot_coverage_diagnostic.__doc__ = r"""
 Diagnose prediction-interval coverage on a polar plot.
@@ -5007,8 +5018,8 @@ def plot_radial_density_ring(
 
     fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     cmap_obj = get_cmap(cmap, default="viridis")
-    
-    ax.grid (False)
+
+    ax.grid(False)
     pcm = ax.pcolormesh(
         T,
         R,
@@ -5504,11 +5515,11 @@ def plot_polar_heatmap(
     # counts = counts.T
 
     # Create the polar plot
-    
+
     fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
     cmap_obj = get_cmap(cmap, default="viridis")
-    
-    ax.grid (False )
+
+    ax.grid(False)
     # Use pcolormesh to draw the heatmap
     T, R = np.meshgrid(theta_edges, r_edges)
     pcm = ax.pcolormesh(T, R, counts, cmap=cmap_obj, shading="auto")

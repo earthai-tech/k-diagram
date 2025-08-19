@@ -34,7 +34,7 @@ try:
     from ._scm_version import version as __version__
 except Exception:
     # Fallback version in case Git is not available
-    __version__ = "1+unknown"  
+    __version__ = "1+unknown"
 
 # Dependency check
 _required_dependencies = [

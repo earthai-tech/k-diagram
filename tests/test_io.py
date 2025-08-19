@@ -10,6 +10,7 @@ import pytest
 
 import kdiagram.utils.io as io_mod
 
+
 class FakeResponse:
     """Context-manager mock for requests.get(..., stream=True)."""
 

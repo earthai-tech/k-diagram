@@ -198,6 +198,7 @@ def make_cyclical_data(
             DESCR=descr,
         )
 
+
 make_cyclical_data.__doc__ = r"""
 Generate synthetic cyclical data for relationship and temporal plots.
 
@@ -384,6 +385,7 @@ References
     
 """
 
+
 def make_fingerprint_data(
     n_layers: int = 3,
     n_features: int = 8,
@@ -395,7 +397,7 @@ def make_fingerprint_data(
     seed: int | None = 303,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-    
+
     # --- Input Validation & Setup ---
     if not (0.0 <= sparsity <= 1.0):
         raise ValueError("sparsity must be between 0.0 and 1.0")
@@ -500,6 +502,7 @@ def make_fingerprint_data(
             feature_names=list(feature_names),
             DESCR=descr,
         )
+
 
 make_fingerprint_data.__doc__ = r"""
 Generate synthetic feature-importance data for fingerprint plots.
@@ -655,7 +658,7 @@ def make_uncertainty_data(
     interval_width_trend: float = 0.5,
     seed: int | None = 42,
     as_frame: bool = False,
-) -> Bunch | pd.DataFrame: 
+) -> Bunch | pd.DataFrame:
 
     # --- Generation Logic (same as before) ---
     if seed is not None:
@@ -830,6 +833,7 @@ def make_uncertainty_data(
             prefix=prefix,
             DESCR=descr,
         )
+
 
 make_uncertainty_data.__doc__ = r"""
 Generate a synthetic multi-period uncertainty dataset.
@@ -1031,6 +1035,7 @@ References
 .. footbibliography::
 """
 
+
 def make_taylor_data(
     n_samples: int = 100,
     n_models: int = 3,
@@ -1040,8 +1045,8 @@ def make_taylor_data(
     noise_level: float = 0.3,
     bias_level: float = 0.1,
     seed: int | None = 101,
-    as_frame: bool = False,  
-) -> Bunch | pd.DataFrame:  
+    as_frame: bool = False,
+) -> Bunch | pd.DataFrame:
     # --- Input Validation & Setup ---
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -1185,6 +1190,7 @@ def make_taylor_data(
             ref_std=actual_ref_std,
             DESCR=descr,
         )
+
 
 make_taylor_data.__doc__ = r"""
 Generate synthetic data for Taylor diagrams.
@@ -1334,6 +1340,7 @@ References
 ----------
 .. footbibliography::
 """
+
 
 def make_multi_model_quantile_data(
     n_samples: int = 100,
@@ -1535,6 +1542,7 @@ def make_multi_model_quantile_data(
             prefix=prefix,
             DESCR=descr,
         )
+
 
 make_multi_model_quantile_data.__doc__ = r"""
 Generate multi-model quantile forecast data for a single horizon.

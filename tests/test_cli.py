@@ -10,7 +10,6 @@ import pytest
 
 # # Use a non-interactive backend
 # matplotlib.use("Agg")
-
 import kdiagram.cli as cli
 
 
@@ -405,11 +404,10 @@ def test_taylor_diagram_arrays_mode(monkeypatch, small_arrays):
     assert len(used["y_preds"]) == 2
     assert used["marker"] == "x"
 
-def test_plot_taylor_diagram_in_rejects_wrong_nargs(
-    monkeypatch, small_arrays, capsys
-):
+
+def test_plot_taylor_diagram_in_rejects_wrong_nargs(monkeypatch, small_arrays, capsys):
     """Test that argparse exits if the wrong number of args is given."""
-    t_file, p1_file, _ = small_arrays # Correctly unpack the fixture
+    t_file, p1_file, _ = small_arrays  # Correctly unpack the fixture
 
     argv = [
         "kdiagram",
@@ -425,18 +423,17 @@ def test_plot_taylor_diagram_in_rejects_wrong_nargs(
     # We catch this to confirm the parser is working correctly.
     with pytest.raises(SystemExit) as e:
         cli.main()
-    
+
     assert e.value.code == 2
-    
+
     # Check for the STANDARD argparse error message
     err = capsys.readouterr().err
     assert "expected 2 arguments" in err
 
-def test_plot_taylor_diagram_in_rejects_bad_values(
-    monkeypatch, small_arrays, capsys
-):
+
+def test_plot_taylor_diagram_in_rejects_bad_values(monkeypatch, small_arrays, capsys):
     """Test custom validation for non-numeric values in --norm-range."""
-    t_file, p1_file, _ = small_arrays # Correctly unpack the fixture
+    t_file, p1_file, _ = small_arrays  # Correctly unpack the fixture
 
     def mock_plot_func(*args, **kwargs):
         pytest.fail("Plotting function should not be called with invalid args.")
@@ -444,27 +441,27 @@ def test_plot_taylor_diagram_in_rejects_bad_values(
     # We mock the plotting function itself to ensure it's not called
     # when validation fails inside the CLI helper function.
     monkeypatch.setattr(cli, "plot_taylor_diagram_in", mock_plot_func)
-    
+
     argv = [
         "kdiagram",
         "plot_taylor_diagram_in",
         os.fspath(t_file),
         os.fspath(p1_file),
         "--norm-range",
-        "bad", "values", # Correct number of args, but bad values
+        "bad",
+        "values",  # Correct number of args, but bad values
     ]
     monkeypatch.setattr(sys, "argv", argv)
-    
+
     # The CLI main function should catch the error and print a message.
     # We expect it to exit gracefully.
     with pytest.raises(SystemExit) as e:
         cli.main()
-    
+
     assert e.value.code == 2
     err = capsys.readouterr().err
     # Check for the standard argparse error message for invalid types.
     assert "invalid float value: 'bad'" in err
-
 
 
 def test_plot_feature_fingerprint_matrix_and_flags(monkeypatch, tmp_path):

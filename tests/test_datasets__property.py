@@ -151,6 +151,7 @@ def test_force_download_warns_when_disabled(tmp_path, monkeypatch):
     # Nothing available => returns None
     assert out is None
 
+
 def test_download_if_missing_success(tmp_path, monkeypatch):
     cache_dir = tmp_path / "cache"
     filename = "flow.txt"
@@ -266,13 +267,13 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
     # Wrap the function call to catch the expected UserWarning
     with pytest.warns(UserWarning, match="Could not copy dataset"):
         out = prop.download_file_if(
-            filename, data_home=str(cache_dir), download_if_missing=False,
-            verbose=False
+            filename, data_home=str(cache_dir), download_if_missing=False, verbose=False
         )
-    
+
     # Function returns cache path if exists, else package path.
     # Here cache doesn't exist, so it should return package or cache per code.
     assert out in {str(cache_dir / filename), str(pkg_file)}
-    
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

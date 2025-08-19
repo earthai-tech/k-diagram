@@ -246,20 +246,20 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
 # recheck_data_types
 # -------------------
 
+
 def test_recheck_data_types_handles_mixed_types_and_warns():
     df = pd.DataFrame(
         {
             "a": ["1", "2", "3"],
-            "b": ["2021-01-01", "nope", "2021-03-01"], 
+            "b": ["2021-01-01", "nope", "2021-03-01"],
             "c": ["1.1", "2.2", "3.3"],
         }
     )
-    
+
     # Expect the warning from the mixed-type 'b' column
     with pytest.warns(UserWarning, match="Could not infer format"):
         out = V.recheck_data_types(
-            df, coerce_numeric=True, coerce_datetime=True, 
-            return_as_numpy=False
+            df, coerce_numeric=True, coerce_datetime=True, return_as_numpy=False
         )
 
     # Assert that types were coerced correctly where possible
@@ -268,21 +268,23 @@ def test_recheck_data_types_handles_mixed_types_and_warns():
     # Assert that the problematic column remains an object
     assert pd.api.types.is_object_dtype(out["b"].dtype)
 
+
 def test_recheck_data_types_handles_non_df_input():
     # This input will produce a datetime warning because the function
     # attempts to convert all object columns to datetime by default.
     list_input = [["1", "2"], ["3", "4"]]
-    
+
     # FIX: Expect the UserWarning from pd.to_datetime
     with pytest.warns(UserWarning, match="Could not infer format"):
         out_np = V.recheck_data_types(list_input, return_as_numpy="auto")
-    
+
     # Assertions remain the same
     assert isinstance(out_np, np.ndarray)
     # Check that the data was correctly converted to numeric
     # after the datetime conversion failed.
     assert np.issubdtype(out_np.dtype, np.number)
-    
+
+
 # ---------------
 # array_to_frame
 # ---------------

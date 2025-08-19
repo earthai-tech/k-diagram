@@ -227,6 +227,7 @@ def plot_feature_fingerprint(
 
     return ax
 
+
 plot_feature_fingerprint.__doc__ = r"""
 Create a radar chart visualizing feature-importance profiles.
 

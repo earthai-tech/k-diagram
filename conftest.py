@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import os
 import warnings
+
 import pytest
 
 # Force a non-GUI backend before importing pyplot
 os.environ.setdefault("MPLBACKEND", "Agg")
 try:
     import matplotlib
+
     matplotlib.use("Agg", force=True)
     import matplotlib.pyplot as plt
 except Exception:  # Matplotlib might be optional in some envs

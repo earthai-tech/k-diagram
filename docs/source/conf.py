@@ -32,6 +32,7 @@ sys.path.insert(0, str(ROOT))
 # -- Version Handling -------------------------------------------------------
 try:
     import kdiagram as kd
+
     version = ".".join(kd.__version__.split(".")[:2])  # Use the major.minor version
     release = kd.__version__
 except Exception:
@@ -62,7 +63,7 @@ if release == "0+unknown":
 # -- Project information -----------------------------------------------------
 
 project = "k-diagram"
-author = "Laurent Kouadio"  
+author = "Laurent Kouadio"
 current_year = datetime.datetime.now().year
 copyright = f"{current_year}, {author}"
 

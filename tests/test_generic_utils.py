@@ -51,6 +51,7 @@ def test_smart_format_multiple_items_and_connector():
     out = smart_format(["apple", "banana", "cherry"], choice="and")
     assert out == "'apple','banana' and 'cherry'"
 
+
 # ---------------------------
 # count_functions
 # ---------------------------

@@ -17,8 +17,10 @@ from kdiagram.plot.uncertainty import (
     plot_velocity,
 )
 
+
 def _cleanup():
     plt.close("all")
+
 
 # ---------- plot_coverage ----------
 def test_plot_coverage_line_bar_pie_radar(tmp_path):
@@ -240,6 +242,7 @@ def test_plot_interval_consistency_length_mismatch_raises():
     with pytest.raises(ValueError, match="Mismatch in length"):
         plot_interval_consistency(df, ["a"], ["b", "b2"])
 
+
 # ---------- plot_anomaly_magnitude ----------
 def test_plot_anomaly_magnitude_under_over_and_cbar(tmp_path):
     n = 60
@@ -271,10 +274,11 @@ def test_plot_anomaly_magnitude_under_over_and_cbar(tmp_path):
             cmap_over="nope_over",  # invalid -> fallback warning
             savefig=str(out),
         )
-        
+
     assert out.exists()
     assert ax.get_thetamax() == pytest.approx(45.0, rel=1e-3)
     _cleanup()
+
 
 def test_plot_anomaly_magnitude_no_anomalies_warning(tmp_path):
     n = 20
