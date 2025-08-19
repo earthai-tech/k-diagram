@@ -118,8 +118,8 @@ The basic structure of a `k-diagram` CLI command is:
   of these files depend on the specific command (check its `--help`).
 * **`[options...]`:** Flags and arguments starting with `--` or `-`
   used to specify necessary information (like column names) or customize
-  the plot appearance. Common options include:
-    
+  the plot appearance. Common options include:   
+
   * `--actual_col`, `--q_cols`, `--q10_cols`, etc.: Specify which
     columns in your CSV contain the relevant data. **These are often
     required.**
@@ -127,6 +127,7 @@ The basic structure of a `k-diagram` CLI command is:
   * `--savefig`: Save the output plot to a file instead of displaying it.
   * Options specific to the plot type (e.g., `--acov`, `--cmap`,
     `--normalize`).
+
 
 Command Examples
 ------------------
@@ -207,7 +208,7 @@ prediction models against true values.
 * `true_values.csv`: File with actual values (first positional argument).
 * `model_A_preds.csv model_B_preds.csv`: Files with predictions for
   each model (subsequent positional arguments for `y_preds_files`).
-  
+
   .. note:: 
      Assumes these CSVs contain just the lower and upper bounds needed.
   
