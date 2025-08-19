@@ -137,7 +137,11 @@ around a cohesive API for diagnosing key aspects of forecast quality
       * **Feature Importance:** Radar charts under `kdiagram.plot.feature_based`
         visualize and compare feature importance profiles ("fingerprints")
         across models.
-
+        
+  * **Relationship Visualization**: Polar plots in `kdiagram.plot.relationship` 
+    offer a novel perspective on the correlation between true and predicted 
+    values by mapping them to angle and radius.
+  
   * **Utilities and Interface:** The package is supported by a 
     set of helper functions for reshaping quantile-based forecast data
     and a command-line interface (CLI) for generating key plots directly
@@ -150,7 +154,7 @@ users to control plot aesthetics, angular coverage (`acov`), and color mapping
 to tailor the visualizations for their specific domain. \autoref{fig2:performance} 
 demonstrates some of these key diagnostic plots.
 
-![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Actual vs Predicted (Q50): polar scatter of observed subsidence (black) and median forecasts (red), with connecting lines. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
+![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Model Error Distributions: The radial axis represents the error value, with the dashed circle indicating zero error. The width of each violin shows the density of errors, revealing that the "Good Model" is unbiased and consistent, the "Biased Model" consistently under-predicts, and the "Inconsistent Model" has high variance. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
 
 ### Installation 
 

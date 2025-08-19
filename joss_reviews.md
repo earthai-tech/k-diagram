@@ -1,3 +1,6 @@
+
+# References 
+
 Dear Reviewer Cubeth ,
 
 Thank you very much for your thoughtful and constructive feedback on the 
@@ -55,7 +58,7 @@ in improving the quality of this project.
 
 Best regards,
 
-# CODE 
+
 
 ## Author response to reviewer comments
 
@@ -125,7 +128,7 @@ I have fixed all sphinx issues on a **fresh build**:
   and resolved the remaining duplicate key.
 * Normalized math blocks and directive indentation across docstrings.
 
-
+----
 ### CI
 
 
