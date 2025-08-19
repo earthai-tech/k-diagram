@@ -36,7 +36,9 @@ def test_make_uncertainty_data(n_samples, n_periods):
 def test_make_taylor_data(n_samples, n_models):
     """Test make_taylor_data runs and returns Bunch with correct structure."""
     # Note: This function returns Bunch directly based on its signature now
-    data_bunch = kdd.make_taylor_data(n_samples=n_samples, n_models=n_models, seed=101)
+    data_bunch = kdd.make_taylor_data(
+        n_samples=n_samples, n_models=n_models, seed=101
+    )
     assert isinstance(data_bunch, Bunch)
     assert hasattr(data_bunch, "reference")
     assert hasattr(data_bunch, "predictions")
@@ -56,11 +58,15 @@ def test_make_taylor_data(n_samples, n_models):
     assert data_bunch.frame.shape[1] == 1 + n_models  # ref + preds
 
 
-@pytest.mark.parametrize("n_samples, n_models, num_q", [(70, 2, 3), (30, 1, 5)])
+@pytest.mark.parametrize(
+    "n_samples, n_models, num_q", [(70, 2, 3), (30, 1, 5)]
+)
 def test_make_multi_model_quantile_data(n_samples, n_models, num_q):
     """Test make_multi_model_quantile_data runs and returns DataFrame."""
     # Create quantiles list centered around 0.5
-    quantiles = np.linspace(0.5 - 0.4 * num_q / 3, 0.5 + 0.4 * num_q / 3, num_q)
+    quantiles = np.linspace(
+        0.5 - 0.4 * num_q / 3, 0.5 + 0.4 * num_q / 3, num_q
+    )
     quantiles = np.clip(np.round(quantiles, 2), 0.01, 0.99).tolist()
     if 0.5 not in quantiles:
         quantiles = sorted(quantiles + [0.5])
@@ -309,7 +315,9 @@ def test_load_zhongshan_from_package(
         )
 
     # Assertions
-    mock_exists.assert_any_call(expected_cache_path)  # Checked cache (returned False)
+    mock_exists.assert_any_call(
+        expected_cache_path
+    )  # Checked cache (returned False)
     mock_is_resource.assert_called_once()
     mock_resource_path.assert_called_once()
     mock_copy.assert_called_once()
@@ -373,10 +381,14 @@ def test_load_zhongshan_subsetting(mock_exists, mock_read_csv, tmp_path):
 
     assert isinstance(data_bunch, Bunch)
     assert "subsidence_2023" in data_bunch.frame.columns
-    assert "subsidence_2022" not in data_bunch.frame.columns  # Check exclusion
+    assert (
+        "subsidence_2022" not in data_bunch.frame.columns
+    )  # Check exclusion
     assert "subsidence_2023_q0.1" in data_bunch.frame.columns
     assert "subsidence_2025_q0.9" in data_bunch.frame.columns
-    assert "subsidence_2024_q0.5" not in data_bunch.frame.columns  # Check exclusion
+    assert (
+        "subsidence_2024_q0.5" not in data_bunch.frame.columns
+    )  # Check exclusion
     assert (
         "subsidence_2023_q0.5" not in data_bunch.frame.columns
     )  # Check quantile exclusion
@@ -393,8 +405,6 @@ def test_load_zhongshan_subsetting(mock_exists, mock_read_csv, tmp_path):
     assert "latitude" not in df_no_coords.columns
     assert "subsidence_2022" not in df_no_coords.columns
     assert "subsidence_2023" not in df_no_coords.columns
-    assert "subsidence_2022_q0.1" in df_no_coords.columns  # Quantiles still present
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    assert (
+        "subsidence_2022_q0.1" in df_no_coords.columns
+    )  # Quantiles still present

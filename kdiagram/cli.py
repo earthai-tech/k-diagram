@@ -126,7 +126,10 @@ def _cli_plot_coverage(args):
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
-        print("Error: No prediction files were successfully loaded.", file=sys.stderr)
+        print(
+            "Error: No prediction files were successfully loaded.",
+            file=sys.stderr,
+        )
         return
 
     print("Generating Coverage Plot...")
@@ -192,7 +195,11 @@ def _cli_plot_interval_consistency(args):
 
     # Convert figsize from string "width,height" to tuple (width, height)
     try:
-        figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (9, 9)
+        figsize = (
+            tuple(map(float, args.figsize.split(",")))
+            if args.figsize
+            else (9, 9)
+        )
     except ValueError:
         print(
             "Error: Invalid format for figsize. Expected 'width,height'"
@@ -234,7 +241,11 @@ def _cli_plot_anomaly_magnitude(args):
 
     # Convert figsize from string "width,height" to tuple (width, height)
     try:
-        figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (8, 8)
+        figsize = (
+            tuple(map(float, args.figsize.split(",")))
+            if args.figsize
+            else (8, 8)
+        )
     except ValueError:
         print(
             "Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8')."
@@ -277,7 +288,11 @@ def _cli_plot_uncertainty_drift(args):
 
     # Convert figsize from string "width,height" to tuple (width, height)
     try:
-        figsize = tuple(map(float, args.figsize.split(","))) if args.figsize else (9, 9)
+        figsize = (
+            tuple(map(float, args.figsize.split(",")))
+            if args.figsize
+            else (9, 9)
+        )
     except ValueError:
         print(
             "Error: Invalid format for figsize. Expected 'width,height' (e.g., '8,8')."
@@ -339,7 +354,9 @@ def _handle_savefig_show(savefig_path: str | None):
             plt.savefig(savefig_path, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig_path}")
         except Exception as e:
-            print(f"Error saving plot to {savefig_path}: {e}", file=sys.stderr)
+            print(
+                f"Error saving plot to {savefig_path}: {e}", file=sys.stderr
+            )
     else:
         try:
             plt.show()
@@ -491,7 +508,9 @@ def _cli_taylor_diagram(args):
     """Handler for the 'taylor_diagram' command."""
     # Determine input mode: stats or arrays
     use_stats_mode = args.stddev is not None and args.corrcoef is not None
-    use_array_mode = args.y_preds_files is not None and args.reference_file is not None
+    use_array_mode = (
+        args.y_preds_files is not None and args.reference_file is not None
+    )
 
     if use_stats_mode and use_array_mode:
         print(
@@ -516,7 +535,8 @@ def _cli_taylor_diagram(args):
             # ref_std defaults to 1 if not given with stats,
             # per function signature
             print(
-                "Warning: --ref-std not provided with stats," " using default=1.",
+                "Warning: --ref-std not provided with stats,"
+                " using default=1.",
                 file=sys.stderr,
             )
         taylor_diagram(
@@ -548,7 +568,10 @@ def _cli_taylor_diagram(args):
             y_preds_list.append(y_pred)
 
         if not y_preds_list:
-            print("Error: No prediction files loaded successfully.", file=sys.stderr)
+            print(
+                "Error: No prediction files loaded successfully.",
+                file=sys.stderr,
+            )
             return
 
         # ref_std will be calculated internally from reference array
@@ -584,7 +607,9 @@ def _cli_plot_taylor_diagram_in(args):
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
-        print("Error: No prediction files loaded successfully.", file=sys.stderr)
+        print(
+            "Error: No prediction files loaded successfully.", file=sys.stderr
+        )
         return
 
     figsize = _handle_figsize(args.fig_size, (10, 8))
@@ -596,7 +621,8 @@ def _cli_plot_taylor_diagram_in(args):
                 raise ValueError()
         except ValueError:
             print(
-                "Error: Invalid format for --norm-range. Expected " "'min,max'.",
+                "Error: Invalid format for --norm-range. Expected "
+                "'min,max'.",
                 file=sys.stderr,
             )
             return
@@ -642,7 +668,9 @@ def _cli_plot_taylor_diagram(args):
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
-        print("Error: No prediction files loaded successfully.", file=sys.stderr)
+        print(
+            "Error: No prediction files loaded successfully.", file=sys.stderr
+        )
         return
 
     figsize = _handle_figsize(args.fig_size, (10, 8))
@@ -715,7 +743,9 @@ def _cli_plot_relationship(args):
         y_preds_list.append(y_pred)
 
     if not y_preds_list:
-        print("Error: No prediction files loaded successfully.", file=sys.stderr)
+        print(
+            "Error: No prediction files loaded successfully.", file=sys.stderr
+        )
         return
 
     z_values_arr = None
@@ -757,7 +787,8 @@ def _cli_plot_relationship(args):
 def main():
     # Main parser
     parser = argparse.ArgumentParser(
-        description="K-Diagram: CLI for Forecasting Uncertainty " "Visualization.",
+        description="K-Diagram: CLI for Forecasting Uncertainty "
+        "Visualization.",
         epilog=(
             "Example: k-diagram plot_coverage true_vals.csv "
             "preds1.csv preds2.csv --names ModelA ModelB --q 0.1 0.9"
@@ -1141,7 +1172,10 @@ def main():
         dest="use_cv",
         action="store_true",
         default=True,  # Func default
-        help=("Use Coefficient of Variation (CV) for radial axis " "(default: True)."),
+        help=(
+            "Use Coefficient of Variation (CV) for radial axis "
+            "(default: True)."
+        ),
     )
     p_ic.add_argument(
         "--use-stddev",  # More intuitive flag name
@@ -1175,7 +1209,10 @@ def main():
         help="Figure size 'width,height' (e.g., '9,9').",
     )
     p_ic.add_argument(
-        "--s", type=int, default=30, help="Marker size (default: 30)."  # Func default
+        "--s",
+        type=int,
+        default=30,
+        help="Marker size (default: 30).",  # Func default
     )
     p_ic.add_argument(
         "--alpha",
@@ -1274,7 +1311,10 @@ def main():
         help="Colormap for over-predictions (default: 'Reds').",
     )
     p_am.add_argument(
-        "--s", type=int, default=30, help="Marker size (default: 30)."  # Func default
+        "--s",
+        type=int,
+        default=30,
+        help="Marker size (default: 30).",  # Func default
     )
     p_am.add_argument(
         "--alpha",
@@ -1405,7 +1445,9 @@ def main():
         default="9,9",
         help="Figure size 'width,height' (e.g., '9,9').",
     )
-    p_ud.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_ud.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_ud.add_argument(
         "--show-grid",
         action="store_true",
@@ -1502,7 +1544,9 @@ def main():
         description="Generates a polar plot comparing actual observations "
         "against point predictions (e.g., Q50).",
     )
-    p_avp.add_argument("filepath", type=str, help="Path to the CSV data file.")
+    p_avp.add_argument(
+        "filepath", type=str, help="Path to the CSV data file."
+    )
     p_avp.add_argument(
         "--actual-col",
         required=True,
@@ -1534,7 +1578,9 @@ def main():
         default="8,8",
         help="Figure size 'width,height' (e.g., '8,8').",
     )
-    p_avp.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_avp.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_avp.add_argument(
         "--line",
         action="store_true",
@@ -1636,7 +1682,9 @@ def main():
         default="8,8",
         help="Figure size 'width,height' (e.g., '8,8').",
     )
-    p_cd.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_cd.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_cd.add_argument(
         "--cmap",
         type=str,
@@ -1766,14 +1814,19 @@ def main():
         default="8,8",
         help="Figure size 'width,height' (e.g., '8,8').",
     )
-    p_iw.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_iw.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_iw.add_argument(
         "--cmap",
         type=str,
         default="viridis",
-        help="Colormap for points (used for z-col or radius) " "(default: 'viridis').",
+        help="Colormap for points (used for z-col or radius) "
+        "(default: 'viridis').",
     )
-    p_iw.add_argument("--s", type=int, default=30, help="Marker size (default: 30).")
+    p_iw.add_argument(
+        "--s", type=int, default=30, help="Marker size (default: 30)."
+    )
     p_iw.add_argument(
         "--alpha",
         type=float,
@@ -1863,7 +1916,9 @@ def main():
         default="8,8",
         help="Figure size 'width,height' (e.g., '8,8').",
     )
-    p_tu.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_tu.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_tu.add_argument(
         "--cmap",
         type=str,
@@ -1902,7 +1957,9 @@ def main():
         default=0.7,
         help="Transparency for points (default: 0.7).",
     )
-    p_tu.add_argument("--s", type=int, default=25, help="Marker size (default: 25).")
+    p_tu.add_argument(
+        "--s", type=int, default=25, help="Marker size (default: 25)."
+    )
     p_tu.add_argument(
         "--dot-style",
         type=str,
@@ -2060,7 +2117,9 @@ def main():
         default="8,6",
         help="Figure size 'width,height' (e.g., '8,6').",
     )
-    p_td.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_td.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_td.add_argument(
         "--savefig",
         type=str,
@@ -2222,7 +2281,9 @@ def main():
         default="10,8",
         help="Figure size 'width,height' (e.g., '10,8').",
     )
-    p_tdi.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_tdi.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_tdi.add_argument(
         "--savefig",
         type=str,
@@ -2306,7 +2367,9 @@ def main():
         default="10,8",
         help="Figure size 'width,height' (e.g., '10,8').",
     )
-    p_tdb.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_tdb.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_tdb.add_argument(
         "--savefig",
         type=str,
@@ -2436,7 +2499,9 @@ def main():
         default=None,
         help="Optional names for the prediction series.",
     )
-    p_rel.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    p_rel.add_argument(
+        "--title", type=str, default=None, help="Optional plot title."
+    )
     p_rel.add_argument(
         "--theta-offset",
         type=float,
@@ -2489,7 +2554,10 @@ def main():
         help="Show legend (default).",
     )
     p_rel.add_argument(
-        "--no-legend", action="store_false", dest="legend", help="Hide legend."
+        "--no-legend",
+        action="store_false",
+        dest="legend",
+        help="Hide legend.",
     )
     p_rel.add_argument(
         "--show-grid",
@@ -2518,7 +2586,10 @@ def main():
         help="Optional path to CSV file with values for angular labels.",
     )
     p_rel.add_argument(
-        "--z-label", type=str, default=None, help="Label for z-values if provided."
+        "--z-label",
+        type=str,
+        default=None,
+        help="Label for z-values if provided.",
     )
     p_rel.add_argument(
         "--savefig",

@@ -47,7 +47,8 @@ def quiver_data():
     df = pd.DataFrame(
         {
             "angle": np.linspace(0, 360, n_points, endpoint=False),
-            "radius": 10 + 5 * np.sin(np.deg2rad(np.linspace(0, 1080, n_points))),
+            "radius": 10
+            + 5 * np.sin(np.deg2rad(np.linspace(0, 1080, n_points))),
             "radial_change": np.random.normal(0, 1, n_points),
             "tangential_change": np.random.normal(0, 0.1, n_points),
             "magnitude": np.random.rand(n_points) * 5,
@@ -119,7 +120,9 @@ def test_plot_polar_heatmap_masking(heatmap_data, mask_angle, mask_radius):
 )
 def test_plot_radial_density_ring_runs_successfully(heatmap_data, kind, cols):
     """Test that plot_radial_density_ring runs for all kinds."""
-    ax = plot_radial_density_ring(df=heatmap_data, kind=kind, target_cols=cols)
+    ax = plot_radial_density_ring(
+        df=heatmap_data, kind=kind, target_cols=cols
+    )
     assert isinstance(ax, Axes)
     plt.close()
 
@@ -131,7 +134,9 @@ def test_plot_radial_density_ring_raises_error(heatmap_data):
             df=heatmap_data, kind="direct", target_cols=["value", "hour"]
         )
     with pytest.raises(ValueError):
-        plot_radial_density_ring(df=heatmap_data, kind="width", target_cols=["value"])
+        plot_radial_density_ring(
+            df=heatmap_data, kind="width", target_cols=["value"]
+        )
 
 
 # --- Tests for plot_polar_quiver ---
@@ -201,7 +206,3 @@ def test_plot_horizon_metrics_raises_error_for_mismatched_cols(horizon_data):
             qlow_cols=["q10_s1"],  # Mismatched length
             qup_cols=["q90_s1", "q90_s2"],
         )
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

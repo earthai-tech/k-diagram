@@ -160,7 +160,9 @@ class ResultSummary(FlexDict):
                     value_str = str(value)
                 else:
                     value_str = beautify_dict(
-                        value, key=f"       {formatted_key}", max_char=self.max_char
+                        value,
+                        key=f"       {formatted_key}",
+                        max_char=self.max_char,
                     )
                     formatted_results.append(value_str + ",")
                     continue

@@ -49,7 +49,9 @@ def test_reshape_basic(wide_df_full):
         error="raise",
     )
     # Columns present and in expected naming scheme
-    assert {"lon", "lat", "year", "subs_q0.1", "subs_q0.5"} <= set(out.columns)
+    assert {"lon", "lat", "year", "subs_q0.1", "subs_q0.5"} <= set(
+        out.columns
+    )
     # Year is sorted ascending
     assert list(NP_INT(out["year"].unique())) == [2022, 2023]
     # Shape: 2 spatial points * 2 years = 4 rows
@@ -72,7 +74,9 @@ def test_reshape_missing_spatial_warn(wide_df_full):
 
 def test_reshape_no_matching_cols_error():
     df = pd.DataFrame({"lon": [0], "lat": [0], "something_else": [1]})
-    with pytest.raises(ValueError, match="No columns found with prefix 'subs'"):
+    with pytest.raises(
+        ValueError, match="No columns found with prefix 'subs'"
+    ):
         reshape_quantile_data(df, "subs", error="raise")
 
 
@@ -188,7 +192,3 @@ def test_reshape_savefile_writes(tmp_path, wide_df_full):
     assert out_path.exists()
     # File shouldn't be empty
     assert out_path.stat().st_size > 0
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

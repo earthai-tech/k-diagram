@@ -47,7 +47,10 @@ def plot_feature_fingerprint(
     # generic names
     if len(features_list) < n_features_data:
         features_list.extend(
-            [f"feature {ix + 1}" for ix in range(len(features_list), n_features_data)]
+            [
+                f"feature {ix + 1}"
+                for ix in range(len(features_list), n_features_data)
+            ]
         )
     # Truncate if user provided more names than needed (optional,
     # could also raise error)
@@ -78,7 +81,10 @@ def plot_feature_fingerprint(
                 stacklevel=2,
             )
             labels_list.extend(
-                [f"Layer {ix + 1}" for ix in range(len(labels_list), n_layers)]
+                [
+                    f"Layer {ix + 1}"
+                    for ix in range(len(labels_list), n_layers)
+                ]
             )
         elif len(labels_list) > n_layers:
             warnings.warn(
@@ -181,7 +187,13 @@ def plot_feature_fingerprint(
         color = colors[idx % len(colors)]
 
         # Plot the outline
-        ax.plot(angles_closed, values_closed, label=label, color=color, linewidth=2)
+        ax.plot(
+            angles_closed,
+            values_closed,
+            label=label,
+            color=color,
+            linewidth=2,
+        )
 
         # Fill the area if requested
         if fill:
@@ -201,7 +213,9 @@ def plot_feature_fingerprint(
     if normalize:
         # Optionally add a single radial label for the max value (1.0)
         ax.set_yticks([0.25, 0.5, 0.75, 1.0])
-        ax.set_yticklabels(["0.25", "0.50", "0.75", "1.00"], fontsize=9, color="gray")
+        ax.set_yticklabels(
+            ["0.25", "0.50", "0.75", "1.00"], fontsize=9, color="gray"
+        )
 
     # Show grid lines if requested
     if show_grid:

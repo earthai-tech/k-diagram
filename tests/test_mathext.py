@@ -74,7 +74,3 @@ def test_invalid_feature_range_raises():
         match="The first element in Feature range must be less than the second.",
     ):
         _ = minmax_scaler(X, feature_range=(1.0, 1.0))
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

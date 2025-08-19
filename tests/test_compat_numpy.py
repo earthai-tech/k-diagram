@@ -74,14 +74,12 @@ def test_find_common_type_matches_result_type_no_deprecation():
         got = knp.find_common_type(arr_dtypes, [])
         # On NumPy >= 1.25, our shim must NOT emit a DeprecationWarning
         if knp.IS_NP125_PLUS:
-            assert not any(issubclass(wi.category, DeprecationWarning) for wi in w)
+            assert not any(
+                issubclass(wi.category, DeprecationWarning) for wi in w
+            )
     assert got == np.dtype(expected)
 
 
 def test_set_promotion_warn_no_error():
     # No-op on 1.x; available on 2.x. Should not raise.
     knp.set_promotion_warn("weak_and_warn")
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

@@ -30,10 +30,18 @@ def test_interval_inclusive_removed_branch(monkeypatch):
             # build a signature that does NOT include 'inclusive'
             return inspect.Signature(
                 parameters=[
-                    inspect.Parameter("self", inspect.Parameter.POSITIONAL_ONLY),
-                    inspect.Parameter("types", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-                    inspect.Parameter("left", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-                    inspect.Parameter("right", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+                    inspect.Parameter(
+                        "self", inspect.Parameter.POSITIONAL_ONLY
+                    ),
+                    inspect.Parameter(
+                        "types", inspect.Parameter.POSITIONAL_OR_KEYWORD
+                    ),
+                    inspect.Parameter(
+                        "left", inspect.Parameter.POSITIONAL_OR_KEYWORD
+                    ),
+                    inspect.Parameter(
+                        "right", inspect.Parameter.POSITIONAL_OR_KEYWORD
+                    ),
                     inspect.Parameter(
                         "closed", inspect.Parameter.POSITIONAL_OR_KEYWORD
                     ),
@@ -94,7 +102,9 @@ def test_validate_params_with_and_without_flag(monkeypatch):
     params = {"x": [int], "y": [str]}
 
     # Case 1: Signature contains prefer_skip_nested_validation (real modern sklearn)
-    dec = skl_compat.validate_params(params, prefer_skip_nested_validation=False)
+    dec = skl_compat.validate_params(
+        params, prefer_skip_nested_validation=False
+    )
 
     @dec
     def fn(x, y):
@@ -117,7 +127,9 @@ def test_validate_params_with_and_without_flag(monkeypatch):
         return real_sig.replace(parameters=pars)
 
     monkeypatch.setattr(skl_compat.inspect, "signature", fake_sig)
-    dec2 = skl_compat.validate_params(params, prefer_skip_nested_validation=True)
+    dec2 = skl_compat.validate_params(
+        params, prefer_skip_nested_validation=True
+    )
 
     @dec2
     def fn2(x, y):
@@ -210,7 +222,10 @@ def test_get_feature_names_variants_and_error():
 # --------------------------
 def test_get_transformers_from_column_transformer_and_error():
     ct = SimpleNamespace(transformers_=[("n", object(), [0])])
-    assert skl_compat.get_transformers_from_column_transformer(ct) == ct.transformers_
+    assert (
+        skl_compat.get_transformers_from_column_transformer(ct)
+        == ct.transformers_
+    )
 
     with pytest.raises(AttributeError):
         skl_compat.get_transformers_from_column_transformer(object())
@@ -225,7 +240,9 @@ def test_check_is_fitted_success_and_failure():
 
     model = LinearRegression().fit(X, y)
     assert (
-        skl_compat.check_is_fitted(model, attributes=None, msg=None, all_or_any=all)
+        skl_compat.check_is_fitted(
+            model, attributes=None, msg=None, all_or_any=all
+        )
         is None
     )
 
@@ -315,7 +332,9 @@ def test_get_transformer_feature_names_all_paths():
         "a_out",
         "b_out",
     ]
-    assert skl_compat.get_transformer_feature_names(TxNames(), ["a"]) == ["a_name"]
+    assert skl_compat.get_transformer_feature_names(TxNames(), ["a"]) == [
+        "a_name"
+    ]
 
     with pytest.raises(AttributeError):
         skl_compat.get_transformer_feature_names(TxNone())
@@ -338,8 +357,12 @@ def test_get_pipeline_feature_names_paths():
         def __init__(self):
             self.categories_ = [np.array(["A", "B"]), np.array(["C"])]
 
-    pipe = SimpleNamespace(steps=[("a", TxOut()), ("b", TxNames()), ("c", TxOHE())])
-    feats = skl_compat.get_pipeline_feature_names(pipe, input_features=["f1", "f2"])
+    pipe = SimpleNamespace(
+        steps=[("a", TxOut()), ("b", TxNames()), ("c", TxOHE())]
+    )
+    feats = skl_compat.get_pipeline_feature_names(
+        pipe, input_features=["f1", "f2"]
+    )
     # After TxOut -> ["f1_o","f2_o"]; after TxNames
     # -> ["f1_o_n","f2_o_n"]; after TxOHE -> categories concatenated
     assert feats == ["A", "B", "C"]
@@ -364,7 +387,3 @@ def test_mean_squared_error_new_path_and_rmse(monkeypatch):
     # root_mean_squared_error helper
     rmse2 = skl_compat.root_mean_squared_error(y_true, y_pred)
     assert rmse2 == pytest.approx(rmse)
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

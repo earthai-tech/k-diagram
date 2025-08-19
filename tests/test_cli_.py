@@ -113,9 +113,13 @@ def test_handle_savefig_show_writes_file_and_handles_show_error(
     assert "Use --savefig to save to file" in err
 
 
-def test_cli_plot_interval_width_invokes_function_and_saves(tmp_path, monkeypatch):
+def test_cli_plot_interval_width_invokes_function_and_saves(
+    tmp_path, monkeypatch
+):
     p = tmp_path / "df.csv"
-    pd.DataFrame({"low": [1, 2], "up": [3, 4], "z": [2, 3]}).to_csv(p, index=False)
+    pd.DataFrame({"low": [1, 2], "up": [3, 4], "z": [2, 3]}).to_csv(
+        p, index=False
+    )
 
     calls = []
     monkeypatch.setattr(cli, "plot_interval_width", _stub_calls(calls))
@@ -169,7 +173,9 @@ def test_cli_plot_coverage_numpy_inputs(tmp_path, monkeypatch):
     assert calls and isinstance(calls[0]["kwargs"].get("q"), list)
 
 
-def test_cli_taylor_diagram_stats_and_arrays_and_errors(tmp_path, monkeypatch, capsys):
+def test_cli_taylor_diagram_stats_and_arrays_and_errors(
+    tmp_path, monkeypatch, capsys
+):
     calls = []
     monkeypatch.setattr(cli, "taylor_diagram", _stub_calls(calls))
 
@@ -237,7 +243,14 @@ def test_cli_taylor_diagram_stats_and_arrays_and_errors(tmp_path, monkeypatch, c
 
     # error: neither provided (parse ok, handler prints error)
     calls.clear()
-    argv = ["k-diagram", "taylor_diagram", "--marker", "o", "--fig-size", "8,6"]
+    argv = [
+        "k-diagram",
+        "taylor_diagram",
+        "--marker",
+        "o",
+        "--fig-size",
+        "8,6",
+    ]
     monkeypatch.setattr(sys, "argv", argv)
     cli.main()
     assert not calls
@@ -279,7 +292,3 @@ def test_version_flag_prints_and_exits(monkeypatch):
     with pytest.raises(SystemExit) as ex:
         cli.main()
     assert ex.value.code == 0
-
-
-if __name__ == "__main__":  # pragma : no-cover
-    pytest.main([__file__])

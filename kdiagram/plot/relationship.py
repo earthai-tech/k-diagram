@@ -21,7 +21,9 @@ __all__ = ["plot_relationship"]
         "y_pred": ["array-like"],
         "theta_scale": [StrOptions({"proportional", "uniform"})],
         "acov": [
-            StrOptions({"default", "half_circle", "quarter_circle", "eighth_circle"})
+            StrOptions(
+                {"default", "half_circle", "quarter_circle", "eighth_circle"}
+            )
         ],
     }
 )
@@ -53,11 +55,15 @@ def plot_relationship(
     # Validate y_true and each y_pred to ensure consistency and continuity
     try:
         y_preds = [
-            validate_yy(y_true, pred, expected_type="continuous", flatten=True)[1]
+            validate_yy(
+                y_true, pred, expected_type="continuous", flatten=True
+            )[1]
             for pred in y_preds
         ]
     except Exception as err:
-        raise ValueError("Validation failed. Please check your y_pred") from err
+        raise ValueError(
+            "Validation failed. Please check your y_pred"
+        ) from err
 
     # Generate default model names if none are provided
     num_preds = len(y_preds)
@@ -84,7 +90,10 @@ def plot_relationship(
         try:
             cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
             # Sample enough distinct colors
-            if hasattr(cmap_obj, "colors") and len(cmap_obj.colors) >= num_preds:
+            if (
+                hasattr(cmap_obj, "colors")
+                and len(cmap_obj.colors) >= num_preds
+            ):
                 # Use colors directly from discrete map if enough
                 color_palette = cmap_obj.colors[:num_preds]
             else:  # Sample from continuous map or discrete map with fewer colors
@@ -98,11 +107,14 @@ def plot_relationship(
                 ]
         except ValueError:
             warnings.warn(
-                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.", stacklevel=2
+                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.",
+                stacklevel=2,
             )
             color_palette = plt.cm.tab10.colors  # Default palette
     # Ensure palette has enough colors, repeat if necessary
-    final_colors = [color_palette[i % len(color_palette)] for i in range(num_preds)]
+    final_colors = [
+        color_palette[i % len(color_palette)] for i in range(num_preds)
+    ]
 
     # Determine the angular range based on `acov`
     if acov == "default":
@@ -149,7 +161,9 @@ def plot_relationship(
         theta = np.linspace(0, angular_range, len(y_true), endpoint=False)
     else:
         # This case should be caught by @validate_params
-        raise ValueError("`theta_scale` must be either 'proportional' or 'uniform'.")
+        raise ValueError(
+            "`theta_scale` must be either 'proportional' or 'uniform'."
+        )
 
     # Apply theta offset
     theta += theta_offset
@@ -189,7 +203,9 @@ def plot_relationship(
     if z_values is not None:
         z_values = np.asarray(z_values)  # Ensure numpy array
         if len(z_values) != len(y_true):
-            raise ValueError("Length of `z_values` must match the length of `y_true`.")
+            raise ValueError(
+                "Length of `z_values` must match the length of `y_true`."
+            )
 
         # Decide number of ticks, e.g., 5-10 depending on range/preference
         num_z_ticks = min(len(z_values), 8)  # Example: max 8 ticks
@@ -199,7 +215,9 @@ def plot_relationship(
 
         # Get theta values corresponding to these indices
         theta_ticks = theta[tick_indices]  # Use theta calculated earlier
-        z_tick_labels = [f"{z_values[ix]:.2g}" for ix in tick_indices]  # Format labels
+        z_tick_labels = [
+            f"{z_values[ix]:.2g}" for ix in tick_indices
+        ]  # Format labels
 
         ax.set_xticks(theta_ticks)
         ax.set_xticklabels(z_tick_labels)
@@ -217,7 +235,9 @@ def plot_relationship(
 
     # Add labels for radial and angular axes (only if z_values are not used for angles)
     if z_values is None:
-        ax.set_ylabel(ylabel or "Angular Mapping (θ)", labelpad=15)  # Use labelpad
+        ax.set_ylabel(
+            ylabel or "Angular Mapping (θ)", labelpad=15
+        )  # Use labelpad
     # Radial label
     ax.set_xlabel(xlabel or "Normalized Predictions (r)", labelpad=15)
     # Position radial labels better
@@ -233,7 +253,9 @@ def plot_relationship(
 
     # Add legend
     if legend:
-        ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.1))  # Adjust position
+        ax.legend(
+            loc="upper right", bbox_to_anchor=(1.25, 1.1)
+        )  # Adjust position
 
     plt.tight_layout()  # Adjust layout to prevent overlap
 

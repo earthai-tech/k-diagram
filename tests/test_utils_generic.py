@@ -58,7 +58,9 @@ def test_count_functions_lists_and_counts():
     assert names == sorted(names)
 
     # exclude classes flag shouldn't error (no classes in this module)
-    names_no_cls = gu.count_functions(mod, include_class=False, return_counts=False)
+    names_no_cls = gu.count_functions(
+        mod, include_class=False, return_counts=False
+    )
     assert "str2columns" in names_no_cls
 
 
@@ -147,7 +149,3 @@ def test_error_policy_basic_and_auto_and_strict():
 def test_error_policy_invalid_error_raises_custom_exception():
     with pytest.raises(KeyError):
         gu.error_policy("totally-wrong", exception=KeyError)
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

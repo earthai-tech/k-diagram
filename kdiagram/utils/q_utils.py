@@ -187,7 +187,10 @@ def reshape_quantile_data(
     # Melt dataframe
     id_vars = spatial_cols if spatial_cols else []
     melt_df = df.melt(
-        id_vars=id_vars, value_vars=valid_cols, var_name="column", value_name="value"
+        id_vars=id_vars,
+        value_vars=valid_cols,
+        var_name="column",
+        value_name="value",
     )
 
     # Add metadata columns
@@ -196,7 +199,10 @@ def reshape_quantile_data(
 
     # Pivot to wide format
     pivot_df = melt_df.pivot_table(
-        index=id_vars + [dt_col], columns="quantile", values="value", aggfunc="first"
+        index=id_vars + [dt_col],
+        columns="quantile",
+        values="value",
+        aggfunc="first",
     ).reset_index()
 
     # Clean column names
@@ -205,7 +211,9 @@ def reshape_quantile_data(
         for col in pivot_df.columns
     ]
 
-    return pivot_df.sort_values(by=dt_col, ascending=True).reset_index(drop=True)
+    return pivot_df.sort_values(by=dt_col, ascending=True).reset_index(
+        drop=True
+    )
 
 
 @SaveFile
@@ -357,7 +365,9 @@ def melt_q_data(
     """
     # Validate error handling
     error = error_policy(
-        error, base="warn", msg="error must be one of 'raise','warn', or 'ignore'"
+        error,
+        base="warn",
+        msg="error must be one of 'raise','warn', or 'ignore'",
     )
 
     is_frame(df, df_only=True, objname="Data 'df'")
@@ -431,14 +441,19 @@ def melt_q_data(
     # Pivot with (spatial + dt_name) as index, 'quantile' as columns
     pivot_index = id_vars + [dt_name] if id_vars else [dt_name]
     pivot_df = merged_df.pivot_table(
-        index=pivot_index, columns="quantile", values=value_prefix, aggfunc="first"
+        index=pivot_index,
+        columns="quantile",
+        values=value_prefix,
+        aggfunc="first",
     ).reset_index()
 
     # Rename pivoted columns -> e.g. subs_q0.1, subs_q0.9
     new_cols = []
     for col in pivot_df.columns:
         if isinstance(col, float):
-            new_cols.append(f"{value_prefix}_q{col:.2f}".rstrip("0").rstrip("."))
+            new_cols.append(
+                f"{value_prefix}_q{col:.2f}".rstrip("0").rstrip(".")
+            )
         else:
             new_cols.append(str(col))
     pivot_df.columns = new_cols
@@ -451,7 +466,9 @@ def melt_q_data(
         print("[DEBUG] After pivot, shape: " f"{pivot_df.shape}")
 
     if verbose >= 1:
-        print(f"[INFO] melt_q_data complete. Final shape: " f"{pivot_df.shape}")
+        print(
+            f"[INFO] melt_q_data complete. Final shape: " f"{pivot_df.shape}"
+        )
 
     # Sort if requested
     if sort_values is not None:
@@ -471,7 +488,10 @@ def melt_q_data(
                 pivot_df = pivot_df.sort_values(by=sort_values)
             except Exception as e:
                 if verbose >= 2:
-                    print(f"[WARN] Sorting failed: {str(e)}. " "No sort applied.")
+                    print(
+                        f"[WARN] Sorting failed: {str(e)}. "
+                        "No sort applied."
+                    )
     return pivot_df
 
 
@@ -590,7 +610,9 @@ def pivot_q_data(
            O'Reilly Media, Inc.
     """
 
-    def handle_error(msg: str, error: str, default: pd.DataFrame) -> pd.DataFrame:
+    def handle_error(
+        msg: str, error: str, default: pd.DataFrame
+    ) -> pd.DataFrame:
         """Centralized error handling."""
         if error == "raise":
             raise ValueError(msg)
@@ -661,7 +683,9 @@ def pivot_q_data(
     )
 
     # Extract numeric quantile values
-    melt_df["quantile"] = melt_df["quantile"].str.extract(r"q([0-9.]+)$").astype(float)
+    melt_df["quantile"] = (
+        melt_df["quantile"].str.extract(r"q([0-9.]+)$").astype(float)
+    )
 
     # Pivot to wide format
     try:

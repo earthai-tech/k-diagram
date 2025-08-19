@@ -25,7 +25,11 @@ from ..api.summary import ResultSummary
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import validate_params
 from ..decorators import check_non_emptiness, isdf
-from ..utils.diagnose_q import build_qcols_multiple, detect_quantiles_in, validate_qcols
+from ..utils.diagnose_q import (
+    build_qcols_multiple,
+    detect_quantiles_in,
+    validate_qcols,
+)
 from ..utils.handlers import columns_manager
 from ..utils.plot import set_axis_grid
 from ..utils.validator import (
@@ -134,7 +138,9 @@ def plot_coverage(
             # pred_sorted = np.sort(pred, axis=1)
             lower_q = pred_sorted[:, 0]
             upper_q = pred_sorted[:, -1]
-            in_interval = ((y_true >= lower_q) & (y_true <= upper_q)).astype(int)
+            in_interval = ((y_true >= lower_q) & (y_true <= upper_q)).astype(
+                int
+            )
             coverage = np.mean(in_interval)
 
         elif pred.ndim == 1:
@@ -163,7 +169,13 @@ def plot_coverage(
         plt.bar(x_idx, valid_cov, color="blue", alpha=0.7)
         for idx, val in enumerate(coverage_scores):
             if val is not None:
-                plt.text(x=idx, y=val + 0.01, s=f"{val:.2f}", ha="center", va="bottom")
+                plt.text(
+                    x=idx,
+                    y=val + 0.01,
+                    s=f"{val:.2f}",
+                    ha="center",
+                    va="bottom",
+                )
         plt.xticks(x_idx, names)
         plt.ylim([0, 1])
         plt.ylabel("Coverage")
@@ -173,7 +185,13 @@ def plot_coverage(
         plt.plot(x_idx, valid_cov, marker="o")
         for idx, val in enumerate(coverage_scores):
             if val is not None:
-                plt.text(x=idx, y=val + 0.01, s=f"{val:.2f}", ha="center", va="bottom")
+                plt.text(
+                    x=idx,
+                    y=val + 0.01,
+                    s=f"{val:.2f}",
+                    ha="center",
+                    va="bottom",
+                )
         plt.xticks(x_idx, names)
         plt.ylim([0, 1])
         plt.ylabel("Coverage")
@@ -185,7 +203,9 @@ def plot_coverage(
         total_cov = sum(valid_cov)
         if total_cov == 0:
             # Avoid a zero-coverage pie chart.
-            plt.text(0.5, 0.5, "No coverage to plot", ha="center", va="center")
+            plt.text(
+                0.5, 0.5, "No coverage to plot", ha="center", va="center"
+            )
         else:
             plt.pie(
                 valid_cov,
@@ -251,7 +271,11 @@ def plot_coverage(
                 ax.set_ylim(0, 1)
                 ax.set_yticks([0.2, 0.4, 0.6, 0.8])
                 ax.yaxis.grid(
-                    True, color="gray", linestyle="--", linewidth=0.5, alpha=0.7
+                    True,
+                    color="gray",
+                    linestyle="--",
+                    linewidth=0.5,
+                    alpha=0.7,
                 )
 
             else:
@@ -274,7 +298,9 @@ def plot_coverage(
             print(f"{names[idx]} coverage: {val}")
 
     if verbose:
-        cov_dict = {names[idx]: cov for idx, cov in enumerate(coverage_scores)}
+        cov_dict = {
+            names[idx]: cov for idx, cov in enumerate(coverage_scores)
+        }
 
         summary = ResultSummary("CoverageScores").add_results(cov_dict)
         print(summary)
@@ -896,7 +922,9 @@ def plot_velocity(
     # --- Angular Coordinate Calculation ---
     N = len(df)  # Number of locations/points
     # Generate linear space from 0 to 1 for N points
-    theta_normalized = np.linspace(0, 1, N, endpoint=True)  # Includes endpoint 1
+    theta_normalized = np.linspace(
+        0, 1, N, endpoint=True
+    )  # Includes endpoint 1
 
     # Map normalized theta to the desired angular coverage
     angular_range_map = {
@@ -935,7 +963,9 @@ def plot_velocity(
     colors = cmap_used(color_norm(color_vals))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
 
     # Set the angular limits based on angular coverage
     ax.set_thetamin(0)
@@ -1366,11 +1396,15 @@ def plot_interval_consistency(
     # widths shape: (M, N) where M=num_time_steps, N=num_locations
     try:
         widths = np.array(
-            [df[qup].values - df[qlo].values for qlo, qup in zip(qlow_cols, qup_cols)]
+            [
+                df[qup].values - df[qlo].values
+                for qlo, qup in zip(qlow_cols, qup_cols)
+            ]
         )
     except Exception as e:
         raise TypeError(
-            "Could not compute widths. Ensure quantile columns contain " "numeric data."
+            "Could not compute widths. Ensure quantile columns contain "
+            "numeric data."
         ) from e
 
     # Calculate radial value 'r' (std dev or CV of widths over time)
@@ -1459,7 +1493,9 @@ def plot_interval_consistency(
     plot_colors = cmap_used(color_norm(color_vals_source))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
 
     # Set angular limits
     ax.set_thetamin(0)
@@ -1477,7 +1513,9 @@ def plot_interval_consistency(
     )
 
     # Set plot title
-    ax.set_title(title or "Prediction Interval Consistency", fontsize=14, y=1.08)
+    ax.set_title(
+        title or "Prediction Interval Consistency", fontsize=14, y=1.08
+    )
 
     # Add color bar
     sm = cm.ScalarMappable(norm=color_norm, cmap=cmap_used)
@@ -1849,7 +1887,9 @@ def plot_anomaly_magnitude(
     # missing_cols = [col for col in cols_needed if col not in df.columns]
     # Allow theta_col to be missing if specified, handled later
     missing_essential = [
-        col for col in [actual_col, qlow_col, qup_col] if col not in df.columns
+        col
+        for col in [actual_col, qlow_col, qup_col]
+        if col not in df.columns
     ]
     if missing_essential:
         raise ValueError(
@@ -1914,7 +1954,9 @@ def plot_anomaly_magnitude(
     if theta_col and theta_col in data_filtered.columns:
         try:
             # Sort based on the theta_col values of the anomalies
-            ordered_idx = np.argsort(data_filtered[theta_col].to_numpy(dtype=float))
+            ordered_idx = np.argsort(
+                data_filtered[theta_col].to_numpy(dtype=float)
+            )
         except (ValueError, TypeError):
             warnings.warn(
                 f"Could not sort by `theta_col` ('{theta_col}') as it "
@@ -1963,7 +2005,9 @@ def plot_anomaly_magnitude(
     over_mask_ordered = over_mask_filtered[ordered_idx]
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(coverage))  # Expects degrees
     ax.set_title(title, fontsize=14, y=1.08)  # Adjust position
@@ -1980,7 +2024,9 @@ def plot_anomaly_magnitude(
 
     # --- Color Normalization (shared scale based on max magnitude) ---
     # Ensure vmax is at least a small positive number for normalization
-    vmax = max(float(anomaly_mag_ordered.max()) if N_anomalies > 0 else 0.0, 1e-5)
+    vmax = max(
+        float(anomaly_mag_ordered.max()) if N_anomalies > 0 else 0.0, 1e-5
+    )
     norm = Normalize(vmin=0.0, vmax=vmax)
 
     # Retrieve colormaps safely
@@ -1988,7 +2034,8 @@ def plot_anomaly_magnitude(
         cmap_under_obj = get_cmap(cmap_under)
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap_under` ('{cmap_under}'). " f"Using default 'Blues'.",
+            f"Invalid `cmap_under` ('{cmap_under}'). "
+            f"Using default 'Blues'.",
             UserWarning,
             stacklevel=2,
         )
@@ -2007,8 +2054,12 @@ def plot_anomaly_magnitude(
     if np.any(under_mask_ordered):
         ax.scatter(
             theta[under_mask_ordered],  # Angles for under-preds
-            anomaly_mag_ordered[under_mask_ordered],  # Magnitudes for under-preds
-            c=anomaly_mag_ordered[under_mask_ordered],  # Color value is magnitude
+            anomaly_mag_ordered[
+                under_mask_ordered
+            ],  # Magnitudes for under-preds
+            c=anomaly_mag_ordered[
+                under_mask_ordered
+            ],  # Color value is magnitude
             cmap=cmap_under_obj,  # Blues colormap
             norm=norm,  # Shared normalization
             s=s,  # Marker size
@@ -2021,8 +2072,12 @@ def plot_anomaly_magnitude(
     if np.any(over_mask_ordered):
         ax.scatter(
             theta[over_mask_ordered],  # Angles for over-preds
-            anomaly_mag_ordered[over_mask_ordered],  # Magnitudes for over-preds
-            c=anomaly_mag_ordered[over_mask_ordered],  # Color value is magnitude
+            anomaly_mag_ordered[
+                over_mask_ordered
+            ],  # Magnitudes for over-preds
+            c=anomaly_mag_ordered[
+                over_mask_ordered
+            ],  # Color value is magnitude
             cmap=cmap_over_obj,  # Reds colormap
             norm=norm,  # Shared normalization
             s=s,  # Marker size
@@ -2072,8 +2127,12 @@ def plot_anomaly_magnitude(
             f"  Anomalies detected (outside {qlow_col}-{qup_col}): "
             f"{n_anomalies_total}"
         )
-        print(f"  ? Under-predictions ({actual_col} < {qlow_col}): {n_under_total}")
-        print(f"  ? Over-predictions  ({actual_col} > {qup_col}): {n_over_total}")
+        print(
+            f"  ? Under-predictions ({actual_col} < {qlow_col}): {n_under_total}"
+        )
+        print(
+            f"  ? Over-predictions  ({actual_col} > {qup_col}): {n_over_total}"
+        )
         print("-" * 50)
 
     # --- Output ---
@@ -2545,7 +2604,9 @@ def plot_uncertainty_drift(
     )  # Add start angle offset
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     ax.set_thetamin(np.degrees(theta_min_rad))  # Expects degrees
     ax.set_thetamax(np.degrees(theta_max_rad))  # Expects degrees
 
@@ -2570,18 +2631,23 @@ def plot_uncertainty_drift(
             color_palette = cmap_obj(np.linspace(0, 1, num_time_steps))
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap` name '{cmap}'. Falling back to 'tab10'.", stacklevel=2
+            f"Invalid `cmap` name '{cmap}'. Falling back to 'tab10'.",
+            stacklevel=2,
         )
         cmap_obj = get_cmap("tab10")  # Fallback cmap
         color_palette = cmap_obj.colors
 
     # --- Draw Rings for Each Time Step ---
-    for i, (w_norm, step_label) in enumerate(zip(normalized_widths, time_labels)):
+    for i, (w_norm, step_label) in enumerate(
+        zip(normalized_widths, time_labels)
+    ):
 
         # XXX TODO
         # Calculate base radius for this ring (increases for later years)
         # base_r = base_radius + i * some_increment # Alternative logic
-        base_r = base_radius * (i + 1)  # Base offset increases multiplicatively
+        base_r = base_radius * (
+            i + 1
+        )  # Base offset increases multiplicatively
 
         # Calculate final radius: base + scaled normalized width
         # Ensure w_norm has the same length as theta (N)
@@ -2613,7 +2679,9 @@ def plot_uncertainty_drift(
     # --- Final Touches ---
     # Set plot title
     ax.set_title(
-        title or "Multi-time Uncertainty Drift (Interval Width)", fontsize=14, y=1.08
+        title or "Multi-time Uncertainty Drift (Interval Width)",
+        fontsize=14,
+        y=1.08,
     )
 
     # Add legend if requested
@@ -3200,7 +3268,8 @@ def plot_actual_vs_predicted(
     # If theta_col is provided but currently unused, warn:
     if theta_col is not None:
         warnings.warn(
-            "`theta_col` is currently ignored" " by plot_actual_vs_predicted.",
+            "`theta_col` is currently ignored"
+            " by plot_actual_vs_predicted.",
             UserWarning,
             stacklevel=2,
         )
@@ -3289,7 +3358,9 @@ def plot_actual_vs_predicted(
         ) from e
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
 
@@ -3321,13 +3392,21 @@ def plot_actual_vs_predicted(
 
     # --- Plot Actual and Predicted Data (Lines or Dots) ---
     # Define default properties, merge with user-provided props
-    default_actual_props_line = {"color": "black", "linewidth": 1.5, "label": "Actual"}
+    default_actual_props_line = {
+        "color": "black",
+        "linewidth": 1.5,
+        "label": "Actual",
+    }
     default_pred_props_line = {
         "color": "red",
         "linewidth": 1.5,
         "label": "Predicted (Q50)",
     }
-    default_actual_props_scatter = {"color": "black", "s": 20, "label": "Actual"}
+    default_actual_props_scatter = {
+        "color": "black",
+        "s": 20,
+        "label": "Actual",
+    }
     default_pred_props_scatter = {
         "color": "red",
         "s": 20,
@@ -3357,21 +3436,28 @@ def plot_actual_vs_predicted(
             else actual
         )
         pred_plot = (
-            np.append(pred, pred[0]) if np.isclose(angular_range, 2 * np.pi) else pred
+            np.append(pred, pred[0])
+            if np.isclose(angular_range, 2 * np.pi)
+            else pred
         )
 
         ax.plot(theta_plot, actual_plot, **current_actual_props)
         ax.plot(theta_plot, pred_plot, **current_pred_props)
     else:
         # Merge user props with defaults for scatter plot
-        current_actual_props = {**default_actual_props_scatter, **actual_props}
+        current_actual_props = {
+            **default_actual_props_scatter,
+            **actual_props,
+        }
         current_pred_props = {**default_pred_props_scatter, **pred_props}
 
         ax.scatter(theta, actual, **current_actual_props)
         ax.scatter(theta, pred, **current_pred_props)
 
     # --- Final Touches ---
-    ax.set_title(title or "Actual vs Predicted Polar Plot", fontsize=14, y=1.08)
+    ax.set_title(
+        title or "Actual vs Predicted Polar Plot", fontsize=14, y=1.08
+    )
     if r_label:
         # Use set_ylabel for radial axis label, adjust padding
         ax.set_ylabel(r_label, labelpad=15, fontsize=10)
@@ -3381,7 +3467,9 @@ def plot_actual_vs_predicted(
         # Check if labels exist before showing legend
         handles, labels = ax.get_legend_handles_labels()
         if labels:  # Only show legend if there's something to label
-            ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.1), fontsize=9)
+            ax.legend(
+                loc="upper right", bbox_to_anchor=(1.25, 1.1), fontsize=9
+            )
         else:
             warnings.warn(
                 "Legend requested but no labels found for plot elements.",
@@ -3457,11 +3545,15 @@ def plot_interval_width(
             )
     if z_col:
         if z_col not in df.columns:
-            raise ValueError(f"Specified `z_col` ('{z_col}') not found in DataFrame.")
+            raise ValueError(
+                f"Specified `z_col` ('{z_col}') not found in DataFrame."
+            )
         cols_needed.append(z_col)
 
     # Check existence of essential quantile columns (redundant if exist_features used)
-    missing_essential = [col for col in [qlow_col, qup_col] if col not in df.columns]
+    missing_essential = [
+        col for col in [qlow_col, qup_col] if col not in df.columns
+    ]
     if missing_essential:
         raise ValueError(
             f"Essential quantile columns missing: {', '.join(missing_essential)}"
@@ -3474,7 +3566,8 @@ def plot_interval_width(
     data = df[cols_needed].dropna().copy()
     if len(data) == 0:
         warnings.warn(
-            "DataFrame is empty after dropping NaN values." " Cannot generate plot.",
+            "DataFrame is empty after dropping NaN values."
+            " Cannot generate plot.",
             UserWarning,
             stacklevel=2,
         )
@@ -3483,7 +3576,9 @@ def plot_interval_width(
 
     # --- Calculate Radial Coordinate (Interval Width) ---
     try:
-        r = data[qup_col].to_numpy(dtype=float) - data[qlow_col].to_numpy(dtype=float)
+        r = data[qup_col].to_numpy(dtype=float) - data[qlow_col].to_numpy(
+            dtype=float
+        )
     except Exception as e:
         raise TypeError(
             f"Could not compute interval width. Ensure columns '{qup_col}'"
@@ -3554,14 +3649,17 @@ def plot_interval_width(
         colors = cmap_ref(norm(z))
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap` name '{cmap}'. Falling back to 'viridis'.", stacklevel=2
+            f"Invalid `cmap` name '{cmap}'. Falling back to 'viridis'.",
+            stacklevel=2,
         )
         cmap = "viridis"  # Ensure cmap is valid for fallback
         cmap_ref = get_cmap(cmap)
         colors = cmap_ref(norm(z))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
 
@@ -3929,16 +4027,21 @@ def plot_coverage_diagnostic(
             )
 
     missing_essential = [
-        col for col in [actual_col, qlow_col, qup_col] if col not in df.columns
+        col
+        for col in [actual_col, qlow_col, qup_col]
+        if col not in df.columns
     ]
     if missing_essential:
-        raise ValueError(f"Essential columns missing: {', '.join(missing_essential)}")
+        raise ValueError(
+            f"Essential columns missing: {', '.join(missing_essential)}"
+        )
 
     # Drop rows with NaNs in essential columns
     data = df[cols_needed].dropna().copy()
     if len(data) == 0:
         warnings.warn(
-            "DataFrame is empty after dropping NaN values." " Cannot generate plot.",
+            "DataFrame is empty after dropping NaN values."
+            " Cannot generate plot.",
             UserWarning,
             stacklevel=2,
         )
@@ -3979,13 +4082,17 @@ def plot_coverage_diagnostic(
 
     # Calculate theta based on index, mapped to the angular range
     theta = (
-        np.linspace(0.0, 1.0, N, endpoint=False)  # Use endpoint=False for bars/scatter
+        np.linspace(
+            0.0, 1.0, N, endpoint=False
+        )  # Use endpoint=False for bars/scatter
         * angular_range_rad
         + theta_min_rad
     )
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     ax.set_thetamin(np.degrees(theta_min_rad))
     ax.set_thetamax(np.degrees(theta_max_rad))
     # Set radial limits strictly to [0, 1] for coverage plot
@@ -4036,13 +4143,17 @@ def plot_coverage_diagnostic(
             )
         except Exception as e:
             warnings.warn(
-                f"Failed to plot background gradient: {e}", UserWarning, stacklevel=2
+                f"Failed to plot background gradient: {e}",
+                UserWarning,
+                stacklevel=2,
             )
 
     # --- Optional Concentric Reference Lines ---
     # Define default levels if None
     gradient_levels = (
-        gradient_levels if gradient_levels is not None else [0.2, 0.4, 0.6, 0.8, 1.0]
+        gradient_levels
+        if gradient_levels is not None
+        else [0.2, 0.4, 0.6, 0.8, 1.0]
     )
     # Filter levels to be within [0, 1]
     valid_levels = [lv for lv in gradient_levels if 0 <= lv <= 1]
@@ -4053,7 +4164,10 @@ def plot_coverage_diagnostic(
         "linewidth": 0.8,
         "alpha": 0.8,
     }
-    current_gradient_props = {**default_gradient_props, **(gradient_props or {})}
+    current_gradient_props = {
+        **default_gradient_props,
+        **(gradient_props or {}),
+    }
 
     # Plot each reference line and its label
     theta_line = np.linspace(theta_min_rad, theta_max_rad, buffer_pts)
@@ -4087,7 +4201,9 @@ def plot_coverage_diagnostic(
         cmap_main_obj = get_cmap(cmap)
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap` ('{cmap}'). Using 'RdYlGn'.", UserWarning, stacklevel=2
+            f"Invalid `cmap` ('{cmap}'). Using 'RdYlGn'.",
+            UserWarning,
+            stacklevel=2,
         )
         cmap_main_obj = get_cmap("RdYlGn")
     # Normalize 0 to low end, 1 to high end of cmap
@@ -4102,9 +4218,13 @@ def plot_coverage_diagnostic(
             # Could also use angular_range_rad / N
             bar_widths = np.diff(theta, append=theta[0] + angular_range_rad)
             # Ensure positive widths if theta wraps around
-            bar_widths = np.abs(bar_widths) * 0.9  # Make slightly narrower than gap
+            bar_widths = (
+                np.abs(bar_widths) * 0.9
+            )  # Make slightly narrower than gap
         elif N == 1:
-            bar_widths = angular_range_rad * 0.8  # Default width for single bar
+            bar_widths = (
+                angular_range_rad * 0.8
+            )  # Default width for single bar
         else:  # N=0
             bar_widths = 0.1  # Placeholder
 
@@ -4132,7 +4252,9 @@ def plot_coverage_diagnostic(
 
     # --- Final Touches ---
     ax.set_title(
-        title or "Prediction Interval Coverage Diagnostic", fontsize=14, y=1.08
+        title or "Prediction Interval Coverage Diagnostic",
+        fontsize=14,
+        y=1.08,
     )
     # Add legend only for the average coverage line
     handles, labels = ax.get_legend_handles_labels()
@@ -4711,7 +4833,9 @@ def plot_temporal_uncertainty(
                 name="Auto-detected quantile columns",
             )
             q_cols_list = detected_cols
-        except NameError as err:  # If detect_quantiles_in is not defined/imported
+        except (
+            NameError
+        ) as err:  # If detect_quantiles_in is not defined/imported
             raise ImportError(
                 "Helper function 'detect_quantiles_in' is needed for "
                 "`q_cols='auto'` but seems unavailable."
@@ -4793,7 +4917,10 @@ def plot_temporal_uncertainty(
 
     # Calculate theta based on index of cleaned data
     # Use endpoint=False for scatter for potentially better spacing visual
-    theta = np.linspace(0.0, 1.0, N, endpoint=False) * angular_range_rad + theta_min_rad
+    theta = (
+        np.linspace(0.0, 1.0, N, endpoint=False) * angular_range_rad
+        + theta_min_rad
+    )
 
     # --- Prepare Radial Values (Normalization) ---
     # Internal helper for min-max scaling
@@ -4857,13 +4984,16 @@ def plot_temporal_uncertainty(
             color_palette = cmap_obj(np.linspace(0, 1, num_series))
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap` name '{cmap}'. Falling back to 'tab10'.", stacklevel=2
+            f"Invalid `cmap` name '{cmap}'. Falling back to 'tab10'.",
+            stacklevel=2,
         )
         cmap_obj = get_cmap("tab10")  # Fallback cmap
         color_palette = cmap_obj(np.linspace(0, 1, num_series))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
 
     # Set angular limits
     ax.set_thetamin(np.degrees(theta_min_rad))
@@ -4872,8 +5002,12 @@ def plot_temporal_uncertainty(
     # Plot each data series
     for i, (vals, label) in enumerate(zip(values_list, plot_labels)):
         if len(vals) != N:  # Should not happen if NaN handling is correct
-            raise InternalError("Mismatch between data length and theta length.")
-        color = color_palette[i % len(color_palette)]  # Cycle colors if needed
+            raise InternalError(
+                "Mismatch between data length and theta length."
+            )
+        color = color_palette[
+            i % len(color_palette)
+        ]  # Cycle colors if needed
         ax.scatter(
             theta,
             vals,
@@ -4986,19 +5120,23 @@ def plot_radial_density_ring(
         title = title or f"Distribution of {kind.title()}"
     else:
         raise ValueError(
-            f"Invalid `kind`: '{kind}'. Use 'width', " "'velocity', or 'direct'."
+            f"Invalid `kind`: '{kind}'. Use 'width', "
+            "'velocity', or 'direct'."
         )
 
     data_1d = data_1d.dropna()
     if data_1d.empty:
         warnings.warn(
-            "Derived data is empty after dropping NaNs. " "Cannot generate plot.",
+            "Derived data is empty after dropping NaNs. "
+            "Cannot generate plot.",
             UserWarning,
             stacklevel=2,
         )
         return None
 
-    grid, pdf = _calculate_kde_for_ring(data_1d.to_numpy(), bandwidth=bandwidth)
+    grid, pdf = _calculate_kde_for_ring(
+        data_1d.to_numpy(), bandwidth=bandwidth
+    )
     if grid.size == 0:
         warnings.warn(
             "Could not compute KDE. Cannot generate plot.",
@@ -5016,7 +5154,9 @@ def plot_radial_density_ring(
     T, R = np.meshgrid(thetas, grid)
     C = np.tile(pdf_norm, (len(thetas), 1)).T
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     cmap_obj = get_cmap(cmap, default="viridis")
 
     ax.grid(False)
@@ -5259,7 +5399,11 @@ def plot_polar_quiver(
     else:
         min_theta, max_theta = theta_data.min(), theta_data.max()
         if (max_theta - min_theta) > 1e-9:
-            theta_rad = ((theta_data - min_theta) / (max_theta - min_theta)) * 2 * np.pi
+            theta_rad = (
+                ((theta_data - min_theta) / (max_theta - min_theta))
+                * 2
+                * np.pi
+            )
         else:
             theta_rad = np.zeros_like(theta_data)
 
@@ -5275,14 +5419,19 @@ def plot_polar_quiver(
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(norm(color_data))
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
 
     # Matplotlib's quiver on a polar axis expects:
     # (theta, r, angular_change, radial_change)
     ax.quiver(theta_rad, r_data, v_data, u_data, color=colors, **quiver_kws)
 
     cbar = plt.colorbar(
-        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj), ax=ax, pad=0.1, shrink=0.75
+        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj),
+        ax=ax,
+        pad=0.1,
+        shrink=0.75,
     )
     cbar.set_label(cbar_label, fontsize=10)
 
@@ -5500,7 +5649,11 @@ def plot_polar_heatmap(
         # Min-max scale to [0, 2*pi]
         min_theta, max_theta = theta_data.min(), theta_data.max()
         if (max_theta - min_theta) > 1e-9:
-            theta_rad = ((theta_data - min_theta) / (max_theta - min_theta)) * 2 * np.pi
+            theta_rad = (
+                ((theta_data - min_theta) / (max_theta - min_theta))
+                * 2
+                * np.pi
+            )
         else:
             theta_rad = np.zeros_like(theta_data)
 
@@ -5509,14 +5662,18 @@ def plot_polar_heatmap(
     theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
 
     # Use np.histogram2d to get counts in each polar bin
-    counts, _, _ = np.histogram2d(x=r_data, y=theta_rad, bins=[r_edges, theta_edges])
+    counts, _, _ = np.histogram2d(
+        x=r_data, y=theta_rad, bins=[r_edges, theta_edges]
+    )
 
     # Transpose counts to match pcolormesh expectations
     # counts = counts.T
 
     # Create the polar plot
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     cmap_obj = get_cmap(cmap, default="viridis")
 
     ax.grid(False)

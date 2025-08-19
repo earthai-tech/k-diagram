@@ -115,7 +115,9 @@ def test_plot_relationship_nan_handling(sample_data_relationship):
     # Expect no error, just fewer points plotted internally
     with pytest.raises(
         ValueError,
-        match=re.escape("NaN values found in y_true, cannot proceed with NaN values."),
+        match=re.escape(
+            "NaN values found in y_true, cannot proceed with NaN values."
+        ),
     ):
         plot_relationship(
             data["y_true_nan"],
@@ -139,31 +141,39 @@ def test_plot_relationship_error_mismatched_lengths(sample_data_relationship):
         plot_relationship(data["y_true"], y_pred_short)
 
 
-def test_plot_relationship_error_mismatched_z_values(sample_data_relationship):
+def test_plot_relationship_error_mismatched_z_values(
+    sample_data_relationship,
+):
     """Test error if z_values length differs from y_true."""
     data = sample_data_relationship
     z_values_short = data["z_values"][:-10]
     with pytest.raises(ValueError, match="Length of `z_values` must match"):
-        plot_relationship(data["y_true"], data["y_preds"][0], z_values=z_values_short)
+        plot_relationship(
+            data["y_true"], data["y_preds"][0], z_values=z_values_short
+        )
 
 
 @pytest.mark.parametrize("invalid_scale", ["wrong_scale", None, 123])
-def test_plot_relationship_invalid_theta_scale(sample_data_relationship, invalid_scale):
+def test_plot_relationship_invalid_theta_scale(
+    sample_data_relationship, invalid_scale
+):
     """Test error on invalid theta_scale."""
     data = sample_data_relationship
     # Error raised by @validate_params decorator or internal check
     with pytest.raises((ValueError, TypeError)):
-        plot_relationship(data["y_true"], data["y_preds"][0], theta_scale=invalid_scale)
+        plot_relationship(
+            data["y_true"], data["y_preds"][0], theta_scale=invalid_scale
+        )
 
 
 @pytest.mark.parametrize("invalid_acov", ["full_circle", None, 360])
-def test_plot_relationship_invalid_acov(sample_data_relationship, invalid_acov):
+def test_plot_relationship_invalid_acov(
+    sample_data_relationship, invalid_acov
+):
     """Test error on invalid acov."""
     data = sample_data_relationship
     # Error raised by @validate_params decorator or internal check
     with pytest.raises((ValueError, TypeError)):
-        plot_relationship(data["y_true"], data["y_preds"][0], acov=invalid_acov)
-
-
-if __name__ == "__main__":  # pragma : no-cover
-    pytest.main([__file__])
+        plot_relationship(
+            data["y_true"], data["y_preds"][0], acov=invalid_acov
+        )

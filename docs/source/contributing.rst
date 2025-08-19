@@ -68,7 +68,7 @@ Making Changes
 
     .. code-block:: bash
 
-       pytest kdiagram/tests # Or simply 'pytest'
+       pytest tests/ # Or simply 'pytest'
 
 5.  **Documentation:** If your changes affect the user interface, add
     new features, or change behavior, please update the relevant

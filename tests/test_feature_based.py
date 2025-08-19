@@ -57,7 +57,9 @@ def test_plot_feature_fingerprint_runs_ok(
     """Test plot_feature_fingerprint runs okay with different settings."""
     data = sample_data_fingerprint
     importances_input = (
-        data["importances"] if input_type == "numpy" else data["importances"].tolist()
+        data["importances"]
+        if input_type == "numpy"
+        else data["importances"].tolist()
     )
 
     try:
@@ -150,7 +152,9 @@ def test_plot_feature_fingerprint_name_label_mismatch(
 
 def test_plot_feature_fingerprint_empty_input():
     """Test error on empty importances input."""
-    with pytest.raises((ValueError, IndexError)):  # Decorator raises ValueError
+    with pytest.raises(
+        (ValueError, IndexError)
+    ):  # Decorator raises ValueError
         plot_feature_fingerprint(importances=[])
     with pytest.raises((ValueError, IndexError)):
         plot_feature_fingerprint(importances=np.array([]))
@@ -176,11 +180,11 @@ def test_plot_feature_fingerprint_normalize_zeros(sample_data_fingerprint):
         # Assuming lines are plotted in order: Layer A outline, Layer B, Layer C
         # Layer B is lines[1]
         r_data_layer_b = lines[1].get_ydata()
-        assert np.allclose(r_data_layer_b, 0), "Normalized zero row should be zero"
+        assert np.allclose(
+            r_data_layer_b, 0
+        ), "Normalized zero row should be zero"
 
     except Exception as e:
-        pytest.fail(f"plot_feature_fingerprint normalize with zeros failed: {e}")
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])
+        pytest.fail(
+            f"plot_feature_fingerprint normalize with zeros failed: {e}"
+        )

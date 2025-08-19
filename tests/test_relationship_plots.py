@@ -162,7 +162,3 @@ def test_grid_off(tmp_path):
     y_on = any(gl.get_visible() for gl in ax.get_ygridlines())
     assert not x_on and not y_on
     _cleanup()
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

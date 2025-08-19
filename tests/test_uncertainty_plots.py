@@ -31,7 +31,9 @@ def test_plot_coverage_line_bar_pie_radar(tmp_path):
     lower = y_true - 0.1
     mid = y_true
     upper = y_true + 0.1
-    pred_q = np.vstack([upper, lower, mid]).T  # intentionally shuffled columns
+    pred_q = np.vstack(
+        [upper, lower, mid]
+    ).T  # intentionally shuffled columns
     q_levels = [0.9, 0.1, 0.5]
 
     # line
@@ -66,7 +68,12 @@ def test_plot_coverage_line_bar_pie_radar(tmp_path):
     out3 = tmp_path / "cov_pie.png"
     preds_zero = np.ones_like(y_true) * 42
     plot_coverage(
-        y_true, preds_zero, names=["Zero"], kind="pie", title="pie", savefig=str(out3)
+        y_true,
+        preds_zero,
+        names=["Zero"],
+        kind="pie",
+        title="pie",
+        savefig=str(out3),
     )
     assert out3.exists()
 
@@ -89,7 +96,9 @@ def test_plot_coverage_line_bar_pie_radar(tmp_path):
 def test_plot_coverage_bad_q_raises():
     y_true = np.arange(5)
     pred_q = np.column_stack([y_true - 1, y_true, y_true + 1])
-    with pytest.raises(ValueError, match="Quantile levels must be between 0 and 1"):
+    with pytest.raises(
+        ValueError, match="Quantile levels must be between 0 and 1"
+    ):
         plot_coverage(y_true, pred_q, q=[-0.1, 0.5, 0.9])
 
 
@@ -305,7 +314,9 @@ def test_plot_anomaly_magnitude_no_anomalies_warning(tmp_path):
 def test_plot_anomaly_magnitude_bad_q_cols_raises():
     df = pd.DataFrame({"actual": [1, 2, 3], "a": [0, 0, 0]})
     with pytest.raises(ValueError, match="Validation of `q_cols` failed"):
-        plot_anomaly_magnitude(df=df, actual_col="actual", q_cols=["a"])  # not 2 cols
+        plot_anomaly_magnitude(
+            df=df, actual_col="actual", q_cols=["a"]
+        )  # not 2 cols
 
 
 # ---------- plot_uncertainty_drift ----------
@@ -345,7 +356,9 @@ def test_plot_uncertainty_drift_empty_after_dropna_returns_none(tmp_path):
         }
     )
     with pytest.warns(UserWarning, match="empty after dropping NaN"):
-        res = plot_uncertainty_drift(df=df, qlow_cols=["q10_1"], qup_cols=["q90_1"])
+        res = plot_uncertainty_drift(
+            df=df, qlow_cols=["q10_1"], qup_cols=["q90_1"]
+        )
     assert res is None
     _cleanup()
 
@@ -441,7 +454,3 @@ def test_plot_interval_width_bad_qcols_and_missing_z_raises():
         plot_interval_width(df=df, q_cols=["a"])  # not 2 cols
     with pytest.raises(ValueError, match="`z_col`"):
         plot_interval_width(df=df, q_cols=["a", "b"], z_col="nope")
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

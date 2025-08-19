@@ -20,7 +20,9 @@ def seasonal_error_data():
     n_points = 500
     day_of_year = np.arange(n_points) % 365
     month = (day_of_year // 30) + 1
-    errors = np.sin((day_of_year - 90) * np.pi / 180) * 5 + np.random.randn(n_points)
+    errors = np.sin((day_of_year - 90) * np.pi / 180) * 5 + np.random.randn(
+        n_points
+    )
     df = pd.DataFrame({"month": month, "forecast_error": errors})
     # Add some NaNs to test handling
     df.loc[10:20, "forecast_error"] = np.nan
@@ -34,9 +36,15 @@ def multi_model_error_data():
     n_points = 200
     df = pd.DataFrame(
         {
-            "Model_A_Error": np.random.normal(loc=0, scale=1.5, size=n_points),
-            "Model_B_Error": np.random.normal(loc=-3.0, scale=1.0, size=n_points),
-            "Model_C_Error": np.random.normal(loc=1.0, scale=3.0, size=n_points),
+            "Model_A_Error": np.random.normal(
+                loc=0, scale=1.5, size=n_points
+            ),
+            "Model_B_Error": np.random.normal(
+                loc=-3.0, scale=1.0, size=n_points
+            ),
+            "Model_C_Error": np.random.normal(
+                loc=1.0, scale=3.0, size=n_points
+            ),
         }
     )
     # Add NaNs to one column
@@ -126,7 +134,9 @@ def test_plot_error_violins_runs_successfully(multi_model_error_data):
 
 def test_plot_error_violins_no_cols_raises_error(multi_model_error_data):
     """Test that plot_error_violins raises a ValueError if no columns are provided."""
-    with pytest.raises(ValueError, match="At least one error column must be provided"):
+    with pytest.raises(
+        ValueError, match="At least one error column must be provided"
+    ):
         plot_error_violins(multi_model_error_data)
 
 
@@ -206,7 +216,3 @@ def test_plot_polar_error_ellipses_with_color_col(positional_error_data):
     # A simple check that a colorbar was created
     assert len(ax.figure.axes) > 1
     plt.close()
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

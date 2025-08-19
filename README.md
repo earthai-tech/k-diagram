@@ -83,6 +83,10 @@ conda activate k-diagram-dev
 python -m pip install . --no-deps --force-reinstall
 ```
 
+> For more detailed instructions, including how to **build the documentation locally**, 
+> please see the full [Installation Guide](https://k-diagram.readthedocs.io/en/latest/installation#building-documentation) 
+> in our documentation.
+> 
 > Tip: Prefer a virtual environment (either `venv` or `conda`) to keep
 > project dependencies isolated.
 
@@ -337,8 +341,6 @@ file for details.
 
       * **Name:** Laurent Kouadio
       * 📧 **Email:** [etanoyau@gmail.com](mailto:etanoyau@gmail.com)
-      * 💼 **LinkedIn:** [linkedin.com/in/laurent-kouadio-483b2baa](https://linkedin.com/in/laurent-kouadio-483b2baa)
-      * 🆔 **ORCID:** [0000-0001-7259-7254](https://orcid.org/0000-0001-7259-7254)
 
 ---
 

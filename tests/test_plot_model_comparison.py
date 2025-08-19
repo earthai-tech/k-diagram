@@ -35,7 +35,9 @@ def comparison_data():
     # Regression Data
     y_true_reg = np.random.rand(n_samples) * 10
     y_pred_r1 = y_true_reg + rng.normal(0, 1, n_samples)  # Model 1 (Good)
-    y_pred_r2 = y_true_reg * 0.5 + rng.normal(0, 3, n_samples)  # Model 2 (Worse)
+    y_pred_r2 = y_true_reg * 0.5 + rng.normal(
+        0, 3, n_samples
+    )  # Model 2 (Worse)
     y_pred_r3 = y_true_reg + 2  # Model 3 (Biased)
 
     # Classification Data (Binary)
@@ -123,7 +125,9 @@ def test_plot_model_comparison_with_train_times(comparison_data):
 
 # Define a simple custom metric function for testing
 def _custom_metric(y_true, y_pred):
-    return np.mean(np.abs(y_true - y_pred) ** 0.5)  # Example: root absolute error avg
+    return np.mean(
+        np.abs(y_true - y_pred) ** 0.5
+    )  # Example: root absolute error avg
 
 
 @pytest.mark.parametrize(
@@ -133,7 +137,9 @@ def _custom_metric(y_true, y_pred):
         [_custom_metric, "mae"],  # Mix of callable and string
     ],
 )
-def test_plot_model_comparison_custom_metrics(comparison_data, custom_metrics):
+def test_plot_model_comparison_custom_metrics(
+    comparison_data, custom_metrics
+):
     """Test using custom lists of metrics, including callables."""
     data = comparison_data
     expected_names = []
@@ -172,7 +178,9 @@ def test_plot_model_comparison_scaling(comparison_data, scale_option):
         assert isinstance(ax, Axes)
         assert len(plt.get_fignums()) > 0
     except Exception as e:
-        pytest.fail(f"plot_model_comparison with scale={scale_option} failed: {e}")
+        pytest.fail(
+            f"plot_model_comparison with scale={scale_option} failed: {e}"
+        )
 
 
 def test_plot_model_comparison_plot_options(comparison_data):
@@ -207,26 +215,34 @@ def test_plot_model_comparison_errors(comparison_data):
     data = comparison_data
 
     # Mismatched train_times length
-    with pytest.raises(ValueError, match="train_times must be.*length n_models"):
+    with pytest.raises(
+        ValueError, match="train_times must be.*length n_models"
+    ):
         plot_model_comparison(
-            data["y_true_reg"], *data["y_preds_reg"], train_times=[0.1, 0.2]  # Needs 3
+            data["y_true_reg"],
+            *data["y_preds_reg"],
+            train_times=[0.1, 0.2],  # Needs 3
         )
 
     # Invalid metric name string
     # First, we expect a UserWarning from scikit-learn
-    with pytest.warns(UserWarning, match="Could not retrieve scorer for metric"):
+    with pytest.warns(
+        UserWarning, match="Could not retrieve scorer for metric"
+    ):
         # Inside the warning block, we expect our function to raise a ValueError
-        with pytest.raises(ValueError, match="No valid metrics found or specified"):
+        with pytest.raises(
+            ValueError, match="No valid metrics found or specified"
+        ):
             plot_model_comparison(
-                data["y_true_reg"], data["y_preds_reg"][0], metrics=["invalid_metric"]
+                data["y_true_reg"],
+                data["y_preds_reg"][0],
+                metrics=["invalid_metric"],
             )
 
     # Invalid scale value (should be caught by decorator if @validate_params used)
     with pytest.raises(ValueError):
         plot_model_comparison(
-            data["y_true_reg"], data["y_preds_reg"][0], scale="bad_scale_option"
+            data["y_true_reg"],
+            data["y_preds_reg"][0],
+            scale="bad_scale_option",
         )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

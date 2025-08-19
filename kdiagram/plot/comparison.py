@@ -26,7 +26,11 @@ from ..utils.metric_utils import get_scorer
 from ..utils.plot import set_axis_grid
 from ..utils.validator import _assert_all_types, is_iterable, validate_yy
 
-__all__ = ["plot_reliability_diagram", "plot_model_comparison", "plot_horizon_metrics"]
+__all__ = [
+    "plot_reliability_diagram",
+    "plot_model_comparison",
+    "plot_horizon_metrics",
+]
 
 
 @validate_params(
@@ -81,11 +85,15 @@ def plot_reliability_diagram(
 ):
     # -------------- input handling -------------- #
     if len(y_preds) == 0:
-        raise ValueError("Provide at least one prediction array via *y_preds.")
+        raise ValueError(
+            "Provide at least one prediction array via *y_preds."
+        )
 
     names = columns_manager(names, to_string=True) or []
     if len(names) < len(y_preds):
-        names.extend([f"Model_{i+1}" for i in range(len(names), len(y_preds))])
+        names.extend(
+            [f"Model_{i+1}" for i in range(len(names), len(y_preds))]
+        )
     if len(names) > len(y_preds):
         warnings.warn(
             (
@@ -100,7 +108,8 @@ def plot_reliability_diagram(
     y_true = np.asarray(y_true)
     if type_of_target(y_true) not in ("binary", "multiclass"):
         raise ValueError(
-            "y_true must be a classification target. " "Binary reliability is expected."
+            "y_true must be a classification target. "
+            "Binary reliability is expected."
         )
     y_bin = (y_true == positive_label).astype(int)
 
@@ -114,7 +123,9 @@ def plot_reliability_diagram(
         w = np.ones_like(y_bin, dtype=float)
     else:
         w = np.asarray(sample_weight, dtype=float)
-        y_bin, *prob_list, w = drop_nan_in(y_bin, *prob_list, w, error="raise")
+        y_bin, *prob_list, w = drop_nan_in(
+            y_bin, *prob_list, w, error="raise"
+        )
 
     clip_lo, clip_hi = clip_probs
     clipped_flag = False
@@ -136,7 +147,9 @@ def plot_reliability_diagram(
             stacklevel=2,
         )
 
-    edges, centers = _build_bins(prob_list, n_bins, strategy, clip_lo, clip_hi)
+    edges, centers = _build_bins(
+        prob_list, n_bins, strategy, clip_lo, clip_hi
+    )
     z = _z_from_conf(conf_level)
 
     # -------------- colors & layout -------------- #
@@ -254,7 +267,9 @@ def plot_reliability_diagram(
             "alpha": 0.9,
         }
         if diagonal_kwargs:
-            _assert_all_types(diagonal_kwargs, dict, objname="'diagonal_kwargs'")
+            _assert_all_types(
+                diagonal_kwargs, dict, objname="'diagonal_kwargs'"
+            )
             diag_kw.update(diagonal_kwargs)
         ax.plot((0.0, 1.0), (0.0, 1.0), **diag_kw)
 
@@ -313,7 +328,8 @@ def _to_prob_vector(arr: np.ndarray, ci: int | None) -> np.ndarray:
             )
         return arr[:, idx].astype(float, copy=False)
     raise ValueError(
-        "Predictions must be 1D probabilities or " "(n_samples, n_classes) arrays."
+        "Predictions must be 1D probabilities or "
+        "(n_samples, n_classes) arrays."
     )
 
 
@@ -343,7 +359,10 @@ def _build_bins(
         edges = np.unique(edges)
         if len(edges) - 1 < nb:
             warnings.warn(
-                ("Not enough unique quantile edges; " "falling back to uniform bins."),
+                (
+                    "Not enough unique quantile edges; "
+                    "falling back to uniform bins."
+                ),
                 UserWarning,
                 stacklevel=2,
             )
@@ -406,7 +425,8 @@ def _bin_stats(
             denom = 1.0 + (zval**2) / n_
             center = (ph + (zval**2) / (2.0 * n_)) / denom
             rad = (
-                zval * np.sqrt((ph * (1.0 - ph) + (zval**2) / (4.0 * n_)) / n_)
+                zval
+                * np.sqrt((ph * (1.0 - ph) + (zval**2) / (4.0 * n_)) / n_)
             ) / denom
             ylo[i] = np.clip(center - rad, 0.0, 1.0)
             yhi[i] = np.clip(center + rad, 0.0, 1.0)
@@ -991,14 +1011,18 @@ def plot_model_comparison(
 
     n_models = len(y_preds)
     if n_models == 0:
-        warnings.warn("No prediction arrays (*y_preds) provided.", stacklevel=2)
+        warnings.warn(
+            "No prediction arrays (*y_preds) provided.", stacklevel=2
+        )
         return None  # Cannot plot without predictions
 
     # --- Handle Names ---
     if names is None:
         names = [f"Model_{i+1}" for i in range(n_models)]
     else:
-        names = columns_manager(list(names), empty_as_none=False)  # Ensure list
+        names = columns_manager(
+            list(names), empty_as_none=False
+        )  # Ensure list
         if len(names) < n_models:
             names += [f"Model_{i+1}" for i in range(len(names), n_models)]
         elif len(names) > n_models:
@@ -1039,20 +1063,29 @@ def plot_model_comparison(
                 metric_funcs.append(scorer_func)
                 metric_names.append(metric)
                 # Identify error metrics (lower is better) for potential scaling flip
-                if metric in ["mae", "mape", "rmse", "mse"]:  # Add others if needed
+                if metric in [
+                    "mae",
+                    "mape",
+                    "rmse",
+                    "mse",
+                ]:  # Add others if needed
                     error_metrics.append(metric)
             elif callable(metric):
                 metric_funcs.append(metric)
-                m_name = getattr(metric, "__name__", f"func_{len(metric_names)}")
+                m_name = getattr(
+                    metric, "__name__", f"func_{len(metric_names)}"
+                )
                 metric_names.append(m_name)
                 # Cannot easily determine if callable is error/score metric
             else:
                 warnings.warn(
-                    f"Ignoring invalid metric type: {type(metric)}", stacklevel=2
+                    f"Ignoring invalid metric type: {type(metric)}",
+                    stacklevel=2,
                 )
         except Exception as e:
             warnings.warn(
-                f"Could not retrieve scorer for metric '{metric}': {e}", stacklevel=2
+                f"Could not retrieve scorer for metric '{metric}': {e}",
+                stacklevel=2,
             )
 
     if not metric_funcs:
@@ -1061,7 +1094,9 @@ def plot_model_comparison(
     # --- Handle Train Times ---
     train_time_vals = None
     if train_times is not None:
-        if isinstance(train_times, (int, float, np.number)):  # Handle single value
+        if isinstance(
+            train_times, (int, float, np.number)
+        ):  # Handle single value
             train_time_vals = np.array([float(train_times)] * n_models)
         else:
             train_times = np.asarray(train_times, dtype=float)
@@ -1095,7 +1130,9 @@ def plot_model_comparison(
                     )
                     results[i, j] = np.nan
             else:
-                results[i, j] = np.nan  # Should not happen if logic is correct
+                results[i, j] = (
+                    np.nan
+                )  # Should not happen if logic is correct
 
     # --- Scale Results ---
     # Make copy for scaling to preserve original results if needed later
@@ -1270,7 +1307,8 @@ def plot_horizon_metrics(
         )
     if q50_cols and len(qlow_cols) != len(q50_cols):
         raise ValueError(
-            "Mismatch in length: `q50_cols` must match other " "quantile column lists."
+            "Mismatch in length: `q50_cols` must match other "
+            "quantile column lists."
         )
 
     # --- Data Calculation ---
@@ -1303,7 +1341,9 @@ def plot_horizon_metrics(
     num_bars = len(df)
     theta = np.linspace(0, span, num_bars, endpoint=False)
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
     ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
     ax.set_thetamin(0)

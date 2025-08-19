@@ -47,7 +47,9 @@ def test_features_too_many_truncated_warn(tmp_path):
     features = ["f1", "f2", "f3", "f4"]
     out = tmp_path / "b.png"
     with pytest.warns(UserWarning, match="More feature names"):
-        ax = plot_feature_fingerprint(imp, features=features, savefig=str(out))
+        ax = plot_feature_fingerprint(
+            imp, features=features, savefig=str(out)
+        )
     assert out.exists()
     lbls = [t.get_text() for t in ax.get_xticklabels()]
     assert lbls == ["f1", "f2"]  # truncated
@@ -105,7 +107,3 @@ def test_importances_as_dataframe_hits_values_branch(tmp_path):
     ax = plot_feature_fingerprint(imp_df, savefig=str(out))
     assert out.exists()
     _close_ax(ax)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    pytest.main([__file__])

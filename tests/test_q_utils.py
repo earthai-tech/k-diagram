@@ -40,7 +40,10 @@ def long_df():
 # ---------- reshape_quantile_data ----------
 def test_reshape_quantile_data_basic(wide_df):
     out = q_utils.reshape_quantile_data(
-        wide_df, value_prefix="subs", spatial_cols=["lon", "lat"], dt_col="year"
+        wide_df,
+        value_prefix="subs",
+        spatial_cols=["lon", "lat"],
+        dt_col="year",
     )
     # expected columns exist
     assert set(["lon", "lat", "year"]).issubset(out.columns)
@@ -63,9 +66,14 @@ def test_reshape_quantile_data_missing_spatial_warns_and_continues(wide_df):
 
 
 def test_reshape_quantile_data_no_matching_prefix(wide_df):
-    with pytest.warns(UserWarning, match=r"No columns found with prefix 'other'"):
+    with pytest.warns(
+        UserWarning, match=r"No columns found with prefix 'other'"
+    ):
         out = q_utils.reshape_quantile_data(
-            wide_df, value_prefix="other", spatial_cols=["lon", "lat"], error="warn"
+            wide_df,
+            value_prefix="other",
+            spatial_cols=["lon", "lat"],
+            error="warn",
         )
     assert isinstance(out, pd.DataFrame) and out.empty
 
@@ -120,7 +128,9 @@ def test_melt_q_data_filter_quantiles(wide_df):
 
 
 def test_melt_q_data_no_match_prefix_warns_and_empty(wide_df):
-    with pytest.warns(UserWarning, match=r"No columns found with prefix 'other'"):
+    with pytest.warns(
+        UserWarning, match=r"No columns found with prefix 'other'"
+    ):
         out = q_utils.melt_q_data(
             wide_df, value_prefix="other", dt_name="year", error="warn"
         )
@@ -174,7 +184,8 @@ def test_pivot_q_data_basic(long_df):
     # Must have lon/lat and reconstructed quantile/year columns
     assert set(["lon", "lat"]).issubset(out.columns)
     assert any(
-        c.startswith("subs_2022_q") or c.startswith("subs_2023_q") for c in out.columns
+        c.startswith("subs_2022_q") or c.startswith("subs_2023_q")
+        for c in out.columns
     )
     # check a known value location (rough presence check)
     # there should be at least these two reconstructed columns
@@ -196,7 +207,9 @@ def test_pivot_q_data_missing_dt_col_warns_and_empty(long_df):
 
 
 def test_pivot_q_data_no_quantile_columns_warns_and_empty():
-    df = pd.DataFrame({"lon": [0, 0], "lat": [0, 0], "year": [2022, 2022], "x": [1, 2]})
+    df = pd.DataFrame(
+        {"lon": [0, 0], "lat": [0, 0], "year": [2022, 2022], "x": [1, 2]}
+    )
     with pytest.warns(UserWarning, match=r"No quantile columns found"):
         out = q_utils.pivot_q_data(
             df,
@@ -239,7 +252,3 @@ def test_pivot_q_data_input_type_check():
             value_prefix="subs",
             dt_col="year",
         )
-
-
-if __name__ == "__main__":  # pragma : no-cover
-    pytest.main([__file__])

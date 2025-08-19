@@ -50,7 +50,9 @@ def stub_plots(monkeypatch):
             monkeypatch.setattr(cli, fn, make_stub(fn), raising=False)
     # stub IO helpers
     monkeypatch.setattr(
-        cli, "read_csv_to_df", lambda p: pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+        cli,
+        "read_csv_to_df",
+        lambda p: pd.DataFrame({"a": [1, 2], "b": [3, 4]}),
     )
     monkeypatch.setattr(
         cli, "read_csv_to_numpy", lambda p, delimiter=",": np.array([1, 2, 3])
@@ -163,7 +165,14 @@ def test_cli_version(capsys):
             "plot_interval_width",
         ),
         (
-            ["plot_temporal_uncertainty", "data.csv", "--q-cols", "q10", "q50", "q90"],
+            [
+                "plot_temporal_uncertainty",
+                "data.csv",
+                "--q-cols",
+                "q10",
+                "q50",
+                "q90",
+            ],
             "plot_temporal_uncertainty",
         ),
     ],
@@ -277,7 +286,9 @@ def test_plot_coverage_command(monkeypatch, small_arrays, no_gui, tmp_path):
         recorded["names"] = names
         recorded["q"] = q
 
-    monkeypatch.setattr(cli, "plot_coverage", fake_plot_coverage, raising=True)
+    monkeypatch.setattr(
+        cli, "plot_coverage", fake_plot_coverage, raising=True
+    )
     out_png = tmp_path / "cov.png"
 
     argv = [
@@ -317,7 +328,10 @@ def test_plot_interval_consistency_figsize_fallback(monkeypatch, small_df):
         called["cols"] = (k.get("qlow_cols"), k.get("qup_cols"))
 
     monkeypatch.setattr(
-        cli, "plot_interval_consistency", fake_plot_interval_consistency, raising=True
+        cli,
+        "plot_interval_consistency",
+        fake_plot_interval_consistency,
+        raising=True,
     )
 
     argv = [
@@ -346,7 +360,9 @@ def test_taylor_diagram_stats_mode(monkeypatch, tmp_path):
     def fake_taylor_diagram(**kwargs):
         used.update(kwargs)
 
-    monkeypatch.setattr(cli, "taylor_diagram", fake_taylor_diagram, raising=True)
+    monkeypatch.setattr(
+        cli, "taylor_diagram", fake_taylor_diagram, raising=True
+    )
 
     argv = [
         "kdiagram",
@@ -381,7 +397,9 @@ def test_taylor_diagram_arrays_mode(monkeypatch, small_arrays):
     def fake_taylor_diagram(**kwargs):
         used.update(kwargs)
 
-    monkeypatch.setattr(cli, "taylor_diagram", fake_taylor_diagram, raising=True)
+    monkeypatch.setattr(
+        cli, "taylor_diagram", fake_taylor_diagram, raising=True
+    )
 
     argv = [
         "kdiagram",
@@ -405,7 +423,9 @@ def test_taylor_diagram_arrays_mode(monkeypatch, small_arrays):
     assert used["marker"] == "x"
 
 
-def test_plot_taylor_diagram_in_rejects_wrong_nargs(monkeypatch, small_arrays, capsys):
+def test_plot_taylor_diagram_in_rejects_wrong_nargs(
+    monkeypatch, small_arrays, capsys
+):
     """Test that argparse exits if the wrong number of args is given."""
     t_file, p1_file, _ = small_arrays  # Correctly unpack the fixture
 
@@ -431,12 +451,16 @@ def test_plot_taylor_diagram_in_rejects_wrong_nargs(monkeypatch, small_arrays, c
     assert "expected 2 arguments" in err
 
 
-def test_plot_taylor_diagram_in_rejects_bad_values(monkeypatch, small_arrays, capsys):
+def test_plot_taylor_diagram_in_rejects_bad_values(
+    monkeypatch, small_arrays, capsys
+):
     """Test custom validation for non-numeric values in --norm-range."""
     t_file, p1_file, _ = small_arrays  # Correctly unpack the fixture
 
     def mock_plot_func(*args, **kwargs):
-        pytest.fail("Plotting function should not be called with invalid args.")
+        pytest.fail(
+            "Plotting function should not be called with invalid args."
+        )
 
     # We mock the plotting function itself to ensure it's not called
     # when validation fails inside the CLI helper function.
@@ -471,12 +495,17 @@ def test_plot_feature_fingerprint_matrix_and_flags(monkeypatch, tmp_path):
         used.update(kwargs)
 
     monkeypatch.setattr(
-        cli, "plot_feature_fingerprint", fake_plot_feature_fingerprint, raising=True
+        cli,
+        "plot_feature_fingerprint",
+        fake_plot_feature_fingerprint,
+        raising=True,
     )
 
     # 2x3 "matrix" CSV
     mat = tmp_path / "M.csv"
-    np.savetxt(mat, np.array([[1, 2, 3], [4, 5, 6]], dtype=float), delimiter=",")
+    np.savetxt(
+        mat, np.array([[1, 2, 3], [4, 5, 6]], dtype=float), delimiter=","
+    )
 
     argv = [
         "kdiagram",
@@ -512,7 +541,9 @@ def test_plot_feature_fingerprint_matrix_and_flags(monkeypatch, tmp_path):
     assert used["show_grid"] is True
 
 
-def test_plot_relationship_with_optional_z(monkeypatch, small_arrays, tmp_path):
+def test_plot_relationship_with_optional_z(
+    monkeypatch, small_arrays, tmp_path
+):
     y_true, p1, p2 = small_arrays
     zf = tmp_path / "z.csv"
     zf.write_text("10\n20\n30\n", encoding="utf-8")
@@ -521,7 +552,9 @@ def test_plot_relationship_with_optional_z(monkeypatch, small_arrays, tmp_path):
     def fake_plot_relationship(*a, **k):
         used["kwargs"] = k
 
-    monkeypatch.setattr(cli, "plot_relationship", fake_plot_relationship, raising=True)
+    monkeypatch.setattr(
+        cli, "plot_relationship", fake_plot_relationship, raising=True
+    )
 
     argv = [
         "kdiagram",
@@ -559,7 +592,3 @@ def test_version_flag(monkeypatch, capsys):
     assert ex.value.code == 0
     out = capsys.readouterr().out
     assert "9.9.9" in out
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

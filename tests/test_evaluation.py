@@ -154,13 +154,17 @@ def test_taylor_diagram_error_no_input(sample_data_taylor):
     with pytest.raises(ValueError, match="Provide either stddev.*or y_preds"):
         taylor_diagram(stddev=sample_data_taylor["stds"])  # Missing corrcoef
     with pytest.raises(ValueError, match="Provide either stddev.*or y_preds"):
-        taylor_diagram(y_preds=sample_data_taylor["y_preds"])  # Missing reference
+        taylor_diagram(
+            y_preds=sample_data_taylor["y_preds"]
+        )  # Missing reference
 
 
 def test_taylor_diagram_error_inconsistent_stats(sample_data_taylor):
     """Test error if stddev and corrcoef have different lengths."""
     data = sample_data_taylor
-    with pytest.raises(ValueError):  # check_consistent_length raises ValueError
+    with pytest.raises(
+        ValueError
+    ):  # check_consistent_length raises ValueError
         taylor_diagram(
             stddev=data["stds"][:-1],  # Shorter list
             corrcoef=data["corrs"],
@@ -209,7 +213,9 @@ def test_plot_taylor_diagram_in_background(
     data = sample_data_taylor
     # Expect warning for unsupported strategies
     if strategy in ["rwf", "center_focus"]:
-        with pytest.warns(UserWarning, match="'rwf'|'center_focus' is not available"):
+        with pytest.warns(
+            UserWarning, match="'rwf'|'center_focus' is not available"
+        ):
             plot_taylor_diagram_in(
                 *data["y_preds"],
                 reference=data["reference"],
@@ -249,7 +255,9 @@ def test_plot_taylor_diagram_in_invalid_enums(sample_data_taylor):
     data = sample_data_taylor
     with pytest.raises(ValueError):  # validate_params raises ValueError
         plot_taylor_diagram_in(
-            *data["y_preds"], reference=data["reference"], zero_location="invalid_loc"
+            *data["y_preds"],
+            reference=data["reference"],
+            zero_location="invalid_loc",
         )
     with pytest.raises(ValueError):  # validate_params raises ValueError
         plot_taylor_diagram_in(
@@ -267,7 +275,9 @@ def test_plot_taylor_diagram_in_invalid_enums(sample_data_taylor):
 
 @pytest.mark.parametrize("acov", ["default", "half_circle"])
 @pytest.mark.parametrize("zero_loc", ["N", "S", "W"])
-def test_plot_taylor_diagram_basic_runs_ok(sample_data_taylor, acov, zero_loc):
+def test_plot_taylor_diagram_basic_runs_ok(
+    sample_data_taylor, acov, zero_loc
+):
     """Test basic plot_taylor_diagram runs okay."""
     data = sample_data_taylor
     try:
@@ -301,7 +311,9 @@ def test_plot_taylor_diagram_invalid_enums(sample_data_taylor):
     # Assuming validate_params decorator applies here too
     with pytest.raises(ValueError):  # validate_params raises ValueError
         plot_taylor_diagram(
-            *data["y_preds"], reference=data["reference"], zero_location="invalid_loc"
+            *data["y_preds"],
+            reference=data["reference"],
+            zero_location="invalid_loc",
         )
     with pytest.raises(ValueError):  # validate_params raises ValueError
         plot_taylor_diagram(
@@ -309,8 +321,6 @@ def test_plot_taylor_diagram_invalid_enums(sample_data_taylor):
         )
     # Direction check is internal
     with pytest.warns(UserWarning, match="direction should be either 1"):
-        plot_taylor_diagram(*data["y_preds"], reference=data["reference"], direction=5)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+        plot_taylor_diagram(
+            *data["y_preds"], reference=data["reference"], direction=5
+        )

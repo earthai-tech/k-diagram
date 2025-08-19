@@ -79,7 +79,9 @@ def _get_cmap(name="viridis", lut=None, allow_none=False):
                 return result
 
         except (TypeError, KeyError, ValueError) as err:
-            raise ValueError(f"'{name}' is not a valid colormap name.") from err
+            raise ValueError(
+                f"'{name}' is not a valid colormap name."
+            ) from err
     else:
         # The old API raises ValueError for invalid names.
 
@@ -126,7 +128,9 @@ def _is_valid_cmap(cmap, default="viridis", error="raise"):
     except ValueError as err:
         # The name is invalid, so handle it based on the 'error' flag.
         if error == "raise":
-            raise ValueError(f"'{cmap}' is not a valid colormap name.") from err
+            raise ValueError(
+                f"'{cmap}' is not a valid colormap name."
+            ) from err
         elif error == "warn":
             warnings.warn(
                 f"Invalid `cmap` name '{cmap}'. Falling back to '{default}'.",
@@ -191,7 +195,12 @@ def is_valid_cmap(cmap, allow_none=False, **kw):  # **for future extension
 
 
 def get_cmap(
-    name, default="viridis", allow_none=False, error=None, failsafe="continuous", **kw
+    name,
+    default="viridis",
+    allow_none=False,
+    error=None,
+    failsafe="continuous",
+    **kw,
 ):
     r"""Robustly retrieve a Matplotlib colormap with fallbacks.
 

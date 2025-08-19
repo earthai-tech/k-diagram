@@ -124,7 +124,3 @@ def test_flexdict_setstate_restores_and_binds_dict():
     # __dict__ should be the mapping itself for attr passthrough
     fd.new_key = 3
     assert fd["new_key"] == 3
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

@@ -21,7 +21,9 @@ def _grid_visible(ax):
 def test_set_axis_grid_single_on_off():
     fig, ax = plt.subplots()
     try:
-        set_axis_grid(ax, show_grid=True, grid_props={"linestyle": "--", "alpha": 0.3})
+        set_axis_grid(
+            ax, show_grid=True, grid_props={"linestyle": "--", "alpha": 0.3}
+        )
         fig.canvas.draw()  # flush
         assert _grid_visible(ax) is True
 
@@ -36,7 +38,9 @@ def test_set_axis_grid_multiple_axes_list():
     fig, axs = plt.subplots(1, 2)
     try:
         set_axis_grid(
-            list(axs), show_grid=True, grid_props={"linestyle": ":", "alpha": 0.7}
+            list(axs),
+            show_grid=True,
+            grid_props={"linestyle": ":", "alpha": 0.7},
         )
         fig.canvas.draw()
         assert all(_grid_visible(a) for a in axs)
@@ -93,7 +97,3 @@ def test_is_valid_kind_with_validation_rejects_nonraise():
         "spiderweb", valid_kinds=["scatter", "line", "bar"], error="warn"
     )
     assert out == "spiderweb"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

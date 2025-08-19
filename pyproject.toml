@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "k-diagram"
-dynamic = ["version"]  
+dynamic = ["version"]
 description = "Rethinking Forecasting Uncertainty via Polar-Based Visualization"
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "Laurent Kouadio", email = "etanoyau@gmail.com" }]
@@ -12,29 +12,29 @@ license = { text = "Apache-2.0" }
 requires-python = ">=3.9"
 keywords = ["forecasting", "uncertainty visualization", "model evaluation"]
 classifiers = [
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Developers",
-  "Topic :: Software Development",
-  "Topic :: Scientific/Engineering",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Operating System :: OS Independent",
-  "Operating System :: Microsoft :: Windows",
-  "Operating System :: POSIX",
-  "Operating System :: Unix"
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix"
 ]
 dependencies = [
-  "numpy>=1.22",          
-  "pandas",
-  "scipy",
-  "matplotlib",
-  "seaborn",
-  "scikit-learn"
+    "numpy>=1.22",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "scikit-learn"
 ]
 
 [tool.setuptools_scm]
@@ -45,75 +45,61 @@ write_to = "kdiagram/_scm_version.py"
 "API Documentation" = "https://k-diagram.readthedocs.io/en/latest/api_references.html"
 "Installation guide" = "https://k-diagram.readthedocs.io/en/latest/installation.html"
 "User guide" = "https://k-diagram.readthedocs.io/en/latest/user_guide.html"
-"Bug Tracker" = "https://github.com/earthai-tech/k-diagram/issues"
-"Source" = "https://github.com/earthai-tech/k-diagram"
+"Bug Tracker" = "https://github.com/earth-ai-tech/k-diagram/issues"
+"Source" = "https://github.com/earth-ai-tech/k-diagram"
 
 [project.scripts]
 k-diagram = "kdiagram.cli:main"
 
 [project.optional-dependencies]
-
 dev = [
-  "pytest>=8.0",
-  "pytest-cov>=4.1",
-  "pytest-xdist",
-  "black>=24.0",
-  "ruff>=0.4",
-  "coverage[toml]>=7.0",
-  "tqdm",
-  # Sphinx and related tools for docs
-  "sphinx>=7.0",
-  "furo",
-  "sphinx-copybutton",
-  "myst-parser",
-  "sphinx-design",
-  "sphinx-gallery",
-  "sphinxcontrib-jsmath",
-  "sphinx-mathjax-offline",
-  "sphinx-issues",
-  "sphinx-prompt",
-  "sphinxcontrib-bibtex",
-  "numpydoc>=1.6"
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "pytest-xdist",
+    "black>=24.0",
+    "ruff>=0.4",
+    "coverage[toml]>=7.0",
+    "tqdm",
+    # for docs
+    "sphinx>=7.0",
+    "furo",
+    "sphinx-copybutton",
+    "myst-parser",
+    "sphinx-design",
+    "sphinx-gallery",
+    "sphinxcontrib-jsmath",
+    "sphinx-mathjax-offline",
+    "sphinx-issues",
+    "sphinx-prompt",
+    "sphinxcontrib-bibtex",
+    "numpydoc>=1.6"
 ]
 
 [tool.setuptools.packages.find]
 include = ["kdiagram*"]
 
 [tool.setuptools.package-data]
-kdiagram = [] # we could add everything containing in data dir of  "kdiagram/datasets/data/*",
-# -----------------------------
-# Consolidated tool config here
-# -----------------------------
+# Include all CSV files 
+kdiagram = ["datasets/data/*.csv"]
+
+
 [tool.pytest.ini_options]
 addopts = "-ra --cov=kdiagram --cov-report=xml"
 testpaths = ["tests"]
-# Keep warnings actionable; don’t globally suppress in code.
-# filterwarnings = [
-#   "error::DeprecationWarning",
-#   "ignore:FigureCanvasAgg is non-interactive:UserWarning",
-#   "ignore:All-NaN slice encountered:RuntimeWarning",
-  # keep SyntaxWarning visible by default; adjust only if a specific dep is noisy:
-  # "ignore::SyntaxWarning:numpy\\..*",
-  # explicitly ignore this one *only while migrating*
-#   "ignore:np.find_common_type is deprecated:DeprecationWarning:numpy",
-#   "ignore:.*tight_layout.*:UserWarning"
-# ]
-
 markers = [
     "network: marks tests as requiring network access",
 ]
 
 [tool.coverage.run]
-source = ["kdiagram"]       # measure only the package
+source = ["kdiagram"]
 branch = true
 parallel = true
 omit = [
-  "kdiagram/tests/*",                # never count tests
-  "kdiagram/__init__.py",            # module that only re-exports
-  "kdiagram/datasets/data/*",        # data loaders 
-  "kdiagram/datasets/_property.py",  # Inner data loaders  
-  "kdiagram/cli.py",                 # Main CLI parser setup :757-9999
-  "kdiagram/compat/*",               # 
+    "kdiagram/tests/*",             # Never count tests
+    "kdiagram/__init__.py",         # Only re-exports
+    "kdiagram/datasets/_property.py", # Inner data loaders
+    "kdiagram/cli.py",              # Main CLI parser setup
+    "kdiagram/compat/*",            # Compatibility shims
 ]
 
 [tool.coverage.report]
@@ -121,26 +107,23 @@ show_missing = true
 skip_covered = false
 precision = 1
 exclude_lines = [
-  "pragma: no cover",
-  "if __name__ == .__main__.:",
-  "def __repr__",
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "def __repr__",
 ]
 
-
 [tool.black]
-line-length = 88
-target-version = ["py39","py310","py311","py312"]
+line-length = 78
+target-version = ["py39", "py310", "py311", "py312", "py313"]
 
-# I'm standardizing on Ruff (supersedes flake8 + isort)
 [tool.ruff]
-line-length = 88
+line-length = 78
 target-version = "py39"
 exclude = ["docs", "kdiagram/_scm_version.py"]
 
 [tool.ruff.lint]
-select = ["E","F","I","B","UP"]
+select = ["E", "F", "I", "B", "UP"]
 ignore = ["F401", "E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["kdiagram"]
-
