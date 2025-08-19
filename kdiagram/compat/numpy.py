@@ -104,10 +104,6 @@ def asarray(x, dtype=None, copy=None):
 # Expose what the “default” int type is in this NumPy build.
 default_int = np.intp if IS_NP2 else np.int_
 
-
-# --- find_common_type replacement ------------------------------------------
-
-
 def _to_dtype_list(seq):
     return [np.dtype(x) for x in (seq or [])]
 
