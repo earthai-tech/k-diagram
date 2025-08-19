@@ -9,8 +9,6 @@ kdiagram.plot.uncertainty.
 import re
 from datetime import datetime, timedelta
 from unittest.mock import patch
-from packaging.version import parse as parse_version
-
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -66,6 +64,7 @@ def sample_data_coverage():
         "q": q_levels,
         "names": names,
     }
+
 
 @pytest.fixture
 def sample_data_drift():
@@ -125,30 +124,14 @@ def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
     data = sample_data_coverage
 
     try:
-        if kind =="pie" and parse_version(
-                np.__version__) >= parse_version("2.0.0"):
-        # The warning only happens for polar plots in newer library versions
-            # On newer versions, expect and catch the warning
-            with pytest.warns(UserWarning, match=r"result dtype changed"):
-                plot_coverage(
-                    data["y_true"],
-                    data["y_pred_q1"],
-                    names=[data["names"][0]],
-                    q=data["q"],
-                    kind=kind,
-                    figsize=(6, 6),
-                )
-        else:
-            # On older versions, or for non-polar plots, run without
-            # expecting a warning.
-            plot_coverage(
-                data["y_true"],
-                data["y_pred_q1"],
-                names=[data["names"][0]],
-                q=data["q"],
-                kind=kind,
-                figsize=(6, 6),
-            )
+        plot_coverage(
+            data["y_true"],
+            data["y_pred_q1"],
+            names=[data["names"][0]],
+            q=data["q"],
+            kind=kind,
+            figsize=(6, 6),
+        )
 
         assert len(plt.get_fignums()) > 0, f"Plot should be created for kind='{kind}'"
 
@@ -173,6 +156,7 @@ def test_plot_coverage_multi_model_quantile_radar(sample_data_coverage):
         figsize=(6, 6),
     )
     assert len(plt.get_fignums()) > 0, "Plot should be created"
+
 
 def test_plot_coverage_single_model_point(sample_data_coverage):
     """Test plot_coverage with a single point forecast model."""
@@ -999,6 +983,7 @@ def test_plot_interval_width_negative_width_warning(sample_data_iw):
     df_neg.loc[0:10, data["q_cols"][1]] = df_neg.loc[0:10, data["q_cols"][0]] - 1
     with pytest.warns(UserWarning, match="negative interval width"):
         plot_interval_width(df=df_neg, q_cols=data["q_cols"])
+
 
 @pytest.mark.parametrize("as_bars", [True, False])
 @pytest.mark.parametrize("fill_gradient", [True, False])
