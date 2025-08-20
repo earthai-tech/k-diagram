@@ -682,7 +682,7 @@ and the normalized predictions (mapped to radius) using
 .. code-block:: python
    :linenos:
 
-   import kdiagram as kd # Assuming top-level access or specific imports
+   import kdiagram as kd 
    import matplotlib.pyplot as plt
    import numpy as np 
 

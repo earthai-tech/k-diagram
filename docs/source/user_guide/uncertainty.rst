@@ -656,7 +656,11 @@ angle :math:`\theta_i` (based on index) and radius :math:`r_{i,k} = v_{i,k}`.
 
 If ``normalize=True``, each series :math:`k` is independently scaled
 to the range [0, 1] before plotting using min-max scaling:
-:math:`r_{i,k} = (v_{i,k} - \min_j(v_{j,k})) / (\max_j(v_{j,k}) - \min_j(v_{j,k}))`.
+
+.. math::
+
+   r_{i,k} = (v_{i,k} - \min_j(v_{j,k})) / (\max_j(v_{j,k}) - \min_j(v_{j,k}))
+   
 Each series :math:`k` is assigned a distinct color.
 
 **Interpretation:**
@@ -729,7 +733,10 @@ discussion of evolving forecast distributions, see fan-chart literature
 For each location :math:`j` and time step :math:`t`, the interval width
 is calculated: :math:`w_{j,t} = Q_{up,j,t} - Q_{low,j,t}`. These widths
 are typically **normalized globally** across all locations and times:
-:math:`w'_{j,t} = w_{j,t} / \max_{j',t'}(w_{j',t'})`.
+
+.. math::
+
+   w'_{j,t} = w_{j,t} / \max_{j',t'}(w_{j',t'})
 
 Each location :math:`j` corresponds to an angle :math:`\theta_j`. For a
 given time step :math:`t`, the radius :math:`r_{j,t}` for location

@@ -66,6 +66,7 @@ if _missing_dependencies:
 
 # Re-export config helpers
 from .config import configure_warnings, warnings_config  # noqa: F401, E402
+# from . import datasets # noqa: E402
 from .plot import (  # noqa: E402
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,

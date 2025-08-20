@@ -40,7 +40,7 @@ author, title, version used, and repository URL.
 
 **Recommended format:**
 
-  Kouadio, K. L. (2024). *k-diagram: Rethinking Forecasting
+  Kouadio, K. L. (2025). *k-diagram: Rethinking Forecasting
   Uncertainty via Polar-Based Visualization* (Version |release|).
   GitHub Repository. https://github.com/earthai-tech/k-diagram
 

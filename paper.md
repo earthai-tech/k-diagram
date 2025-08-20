@@ -147,7 +147,7 @@ around a cohesive API for diagnosing key aspects of forecast quality
     and a command-line interface (CLI) for generating key plots directly
     from data files.
     
-![Structure of the k-diagram, illustrating the identification of global features.\label{fig1:workflow}](docs/source/_static/paper_fig1.png)
+![Structure of the k-diagram, illustrating the identification of global components.\label{fig1:workflow}](docs/source/_static/paper_fig1.png)
 
 The package is designed for ease of use and customization, allowing
 users to control plot aesthetics, angular coverage (`acov`), and color mapping
