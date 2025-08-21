@@ -9,10 +9,10 @@ data analysis and forecast evaluation. Before applying complex
 visualizations, it's often crucial to inspect the fundamental
 characteristics of key metrics, such as prediction errors or the
 width of uncertainty intervals. The histogram and its smoothed
-counterpart, the Kernel Density Estimate (KDE) ():footcite:t:`Silverman1986`),
+counterpart, the Kernel Density Estimate (KDE) :footcite:p:`Silverman1986`,
 are primary tools for this task. In practice, these visualizations are
-computed with array and scientific routines (:footcite:t:`harris2020array, 2020SciPy-NMeth`)
-and rendered with common plotting libraries (:footcite:t:`Hunter:2007, Waskom2021`).
+computed with array and scientific routines :footcite:p:`harris2020array, 2020SciPy-NMeth`
+and rendered with common plotting libraries :footcite:p:`Hunter:2007, Waskom2021`.
 
 The :mod:`kdiagram.utils.hist` module provides straightforward functions
 for creating these essential distribution plots.
@@ -61,7 +61,7 @@ spread of a variable.
    creates a smooth curve by placing a kernel function (typically a
    Gaussian) on each data point, and then summing all these kernels.
    The resulting curve, :math:`\hat{f}_h(x)`, is a smooth estimate of the
-   data's distribution :footcite:t:`Silverman1986`.
+   data's distribution :footcite:p:`Silverman1986`.
 
    .. math::
 
@@ -70,9 +70,9 @@ spread of a variable.
    Here, :math:`K` is the kernel function, :math:`h` is the bandwidth
    (a smoothing parameter), and :math:`n` is the number of data points.
    Typical implementations rely on numerical routines and array ops
-   from SciPy/NumPy (:footcite:t:`2020SciPy-NMeth, harris2020array`), while
+   from SciPy/NumPy :footcite:p:`2020SciPy-NMeth, harris2020array`, while
    the visualization itself is commonly produced with Matplotlib/Seaborn
-   (:footcite:t:`Hunter:2007, Waskom2021`).
+   :footcite:p:`Hunter:2007, Waskom2021`.
 
 **Interpretation:**
 
