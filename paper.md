@@ -156,13 +156,13 @@ The **Coverage Evaluation** plot (\autoref{fig2:performance}a) provides a
 point-wise diagnostic of interval performance. While the overall coverage of 
 81.1% is close to the nominal 80% for a Q10-Q90 interval, the plot allows 
 for a deeper analysis of where the interval failures occur. The 
-**Model Error Distributions** plot (\autoref{fig2:performance}b) offers 
+**Model Error Distributions** diagram (\autoref{fig2:performance}b) offers 
 a powerful comparative view, using polar violins to contrast the
  full error profiles of multiple models. It clearly distinguishes 
 a "Good Model" (unbiased, low variance) from a "Biased Model" 
 (consistently under-predicting) and an "Inconsistent Model" (high variance), 
 revealing performance trade-offs that a single error score would miss. 
-Finally, the **Forecast Horizon Drift** plot (\autoref{fig2:performance}c) 
+Finally, the **Forecast Horizon Drift** diagram (\autoref{fig2:performance}c) 
 visualizes how uncertainty evolves over time. The increasing height of the 
 bars from 2023 to 2026 provides an immediate and intuitive confirmation 
 that the model's uncertainty grows as it forecasts further into the future.
