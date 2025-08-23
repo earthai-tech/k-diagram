@@ -194,7 +194,8 @@ documentation, including a user guide, an example gallery, and a detailed
 API reference, is hosted at [https://k-diagram.readthedocs.io/](https://k-diagram.readthedocs.io/). 
 I welcome contributions from the community; bug reports, feature requests, 
 and development discussions occur on the [GitHub repository](https://github.com/earthai-tech/k-diagram/issues). 
-Detailed guidelines for contributors can be found in the documentation.
+Detailed [guidelines](https://k-diagram.readthedocs.io/en/latest/contributing.html) 
+for contributors can be found in the documentation.
      
 # Acknowledgements
 
