@@ -146,33 +146,52 @@ The package is designed for ease of use and customization, allowing
 users to control plot aesthetics, angular coverage (`acov`), and color mapping
 to tailor the visualizations for their specific domain. 
 
-# Illustrative Diagnostics and Application
+
+### Illustrative Diagnostics and Application
 
 The practical utility of `k-diagram` is best demonstrated through its key 
-diagnostic plots, which reveal model behaviors often hidden by aggregate
-metrics (see \autoref{fig2:performance}).
+diagnostic plots, which are grounded in clear statistical concepts and reveal 
+model behaviors often hidden by aggregate metrics (see \autoref{fig2:performance}).
 
 The **Coverage Evaluation** plot (\autoref{fig2:performance}a) provides a 
-point-wise diagnostic of interval performance. While the overall coverage of 
-81.1% is close to the nominal 80% for a Q10-Q90 interval, the plot allows 
-for a deeper analysis of where the interval failures occur. The 
-**Model Error Distributions** plot (\autoref{fig2:performance}b) offers 
-a powerful comparative view, using polar violins to contrast the
- full error profiles of multiple models. It clearly distinguishes 
-a "Good Model" (unbiased, low variance) from a "Biased Model" 
-(consistently under-predicting) and an "Inconsistent Model" (high variance), 
-revealing performance trade-offs that a single error score would miss. 
-Finally, the **Forecast Horizon Drift** plot (\autoref{fig2:performance}c) 
-visualizes how uncertainty evolves over time. The increasing height of the 
-bars from 2023 to 2026 provides an immediate and intuitive confirmation 
-that the model's uncertainty grows as it forecasts further into the future.
+point-wise diagnostic of interval performance. For each observation $y\_i$ 
+and its corresponding prediction interval $[L\_i, U\_i]$, a binary 
+coverage value $c\_i$ is determined as:
+
+$$c_i = \mathbf{1}\{L_i \le y_i \le U_i\}$$
+
+where $\\mathbf{1}$ is the indicator function. The plot visualizes 
+each $c\_i$, allowing for a deeper analysis of where interval failures 
+occur, while the average of all $c\_i$ gives the overall empirical 
+coverage 81.1% close to the nominal 80% for a Q10-Q90 interval.
+
+The **Model Error Distributions** diagram (\autoref{fig2:performance}b) 
+offers a comparative view by visualizing the full error distribution for 
+multiple models. It uses polar violins, where the shape of each violin is 
+determined by the Kernel Density Estimate (KDE) of the model's 
+errors [@Silverman1986]. The resulting diagram clearly distinguishes a 
+"Good Model" (unbiased and narrow) from a "Biased Model" 
+(shifted from the zero-error line) and an "Inconsistent Model" 
+(wide and dispersed), revealing performance trade-offs that a single 
+error score would miss.
+
+Finally, the **Forecast Horizon Drift** plot (\\autoref{fig2:performance}c) 
+visualizes how uncertainty evolves over time. For each forecast horizon $j$, 
+it calculates the mean interval width, $\\bar{w}\_j$, across all $N$ spatial 
+locations:
+
+$$\bar{w}_j = \frac{1}{N} \sum_{i=1}^{N} (U_{i,j} - L_{i,j})$$
+
+The increasing height of the bars from 2023 to 2026 provides an immediate 
+and intuitive confirmation that the model's uncertainty grows as it forecasts 
+further into the future.
 
 These visualization methods were developed alongside research applying 
 advanced deep learning models, such as physics-informed deep learning[^1], 
 to complex environmental forecasting challenges [@kouadiob2025]. Specifically, 
 these polar diagnostics were utilized to analyze and interpret the uncertainty 
-associated with land subsidence predictions using an Extreme Temporal Fusion 
-Transformer model [@Kouadio2025] in Nansha city, China.
+associated with land subsidence predictions using an Extreme Temporal 
+Fusion Transformer model [@Kouadio2025] in Nansha city, China.
 
 Full usage examples and a gallery of all plot types are available in the 
 official documentation's [gallery section](https://k-diagram.readthedocs.io/en/latest/gallery/uncertainty.html).
@@ -184,6 +203,7 @@ and interpretation guides, please refer to the detailed [User Guide](https://k-d
       <https://fusion-lab.readthedocs.io/en/latest/user_guide/models/pinn/index.html>
  
 ![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Model Error Distributions: The radial axis represents the error value, with the dashed circle indicating zero error. The width of each violin shows the density of errors, revealing that the "Good Model" is unbiased and consistent, the "Biased Model" consistently under-predicts, and the "Inconsistent Model" has high variance. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
+
 
 # Availability and Community
 

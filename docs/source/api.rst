@@ -93,6 +93,7 @@ Functions for comparing multi-model performances on a radar chart.
 
    ~kdiagram.plot.comparison.plot_model_comparison 
    ~kdiagram.plot.comparison.plot_reliability_diagram
+   ~kdiagram.plot.comparison.plot_polar_reliability
    ~kdiagram.plot.comparison.plot_horizon_metrics  
    
    
@@ -108,6 +109,7 @@ Functions for visualizing feature importance and influence patterns.
    :nosignatures:
 
    ~kdiagram.plot.feature_based.plot_feature_fingerprint
+   ~kdiagram.plot.feature_based.plot_feature_interaction
 
 .. _api_relationship: 
 
@@ -122,6 +124,9 @@ values using polar coordinates.
    :nosignatures:
 
    ~kdiagram.plot.relationship.plot_relationship
+   ~kdiagram.plot.relationship.plot_conditional_quantiles
+   ~kdiagram.plot.relationship.plot_error_relationship
+   ~kdiagram.plot.relationship.plot_residual_relationship
 
 
 .. _api_utils:

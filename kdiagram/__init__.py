@@ -8,6 +8,7 @@ K-Diagram: Polar Diagnostics for Forecast Uncertainty
 specialized diagnostic polar plots, called "k-diagrams,
 for comprehensive model evaluation and forecast analysis.
 """
+
 import importlib
 import logging
 import warnings
@@ -34,7 +35,7 @@ try:
     from ._scm_version import version as __version__
 except Exception:
     # Fallback version
-    __version__ = "1.2.0"
+    __version__ = "1+unknown"
 
 # Dependency check
 _required_dependencies = [
@@ -77,6 +78,7 @@ from .plot import (  # noqa: E402
     plot_error_ellipses,
     plot_error_violins,
     plot_feature_fingerprint,
+    plot_feature_interaction, 
     plot_horizon_metrics,
     plot_interval_consistency,
     plot_interval_width,
@@ -87,12 +89,21 @@ from .plot import (  # noqa: E402
     plot_radial_density_ring,
     plot_relationship,
     plot_reliability_diagram,
+    plot_polar_reliability, 
     plot_taylor_diagram,
     plot_taylor_diagram_in,
     plot_temporal_uncertainty,
     plot_uncertainty_drift,
     plot_velocity,
     taylor_diagram,
+    plot_crps_comparison, 
+    plot_pit_histogram, 
+    plot_polar_sharpness, 
+    plot_credibility_bands, 
+    plot_calibration_sharpness, 
+    plot_error_relationship, 
+    plot_residual_relationship, 
+    plot_conditional_quantiles, 
 )
 
 __all__ = [
@@ -113,10 +124,12 @@ __all__ = [
     "plot_taylor_diagram_in",
     "taylor_diagram",
     "plot_feature_fingerprint",
+    "plot_feature_interaction", 
     "plot_relationship",
     "plot_model_comparison",
     "plot_radial_density_ring",
     "plot_reliability_diagram",
+    "plot_polar_reliability", 
     "plot_horizon_metrics",
     "plot_horizon_metrics",
     "plot_polar_heatmap",
@@ -124,4 +137,12 @@ __all__ = [
     "plot_error_bands",
     "plot_error_ellipses",
     "plot_error_violins",
+    "plot_crps_comparison", 
+    "plot_pit_histogram", 
+    "plot_polar_sharpness", 
+    "plot_credibility_bands", 
+    "plot_calibration_sharpness", 
+    "plot_error_relationship", 
+    "plot_residual_relationship", 
+    "plot_conditional_quantiles", 
 ]

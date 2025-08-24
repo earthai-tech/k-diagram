@@ -31,7 +31,8 @@ forecasting models and data.
    evaluation  
    comparison               
    feature_based       
-   relationship 
+   relationship
+   probabilistic 
    errors
    hist  
    datasets                 

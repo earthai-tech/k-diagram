@@ -1,6 +1,8 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
+from __future__ import annotations 
+
 import warnings
 from typing import Any, Optional, Union
 
@@ -9,12 +11,257 @@ import numpy as np
 import pandas as pd
 
 from ..compat.matplotlib import get_cmap
-from ..decorators import check_non_emptiness
+from ..decorators import check_non_emptiness, isdf
 from ..utils.handlers import columns_manager
-from ..utils.validator import ensure_2d
+from ..utils.validator import ensure_2d, exist_features
+from ..utils.plot import set_axis_grid
 
-__all__ = ["plot_feature_fingerprint"]
+__all__ = ["plot_feature_fingerprint", "plot_feature_interaction"]
 
+
+@check_non_emptiness(params=["df"])
+@isdf
+def plot_feature_interaction(
+    df: pd.DataFrame,
+    theta_col: str,
+    r_col: str,
+    color_col: str,
+    *,
+    statistic: str = "mean",
+    theta_period: Optional[float] = None,
+    theta_bins: int = 24,
+    r_bins: int = 10,
+    title: Optional[str] = None,
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool=False, 
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    # --- Input Validation ---
+    required_cols = [theta_col, r_col, color_col]
+    exist_features(df, features=required_cols)
+    data = df[required_cols].dropna().copy()
+    if data.empty:
+        warnings.warn(
+            "DataFrame is empty after dropping NaNs.", UserWarning)
+        return None
+
+    # --- Binning and Aggregation ---
+    if theta_period:
+        data['theta_rad'] = (
+            (data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+    else:
+        min_theta, max_theta = data[theta_col].min(), data[theta_col].max()
+        if (max_theta - min_theta) > 1e-9:
+            data['theta_rad'] = ((data[theta_col] - min_theta) /
+                                 (max_theta - min_theta)) * 2 * np.pi
+        else:
+            data['theta_rad'] = 0
+
+    data['theta_bin'] = pd.cut(data['theta_rad'], bins=theta_bins)
+    data['r_bin'] = pd.cut(data[r_col], bins=r_bins)
+
+    # Group by both bins and calculate the statistic
+    heatmap_data = data.groupby(
+        ['theta_bin', 'r_bin'], observed=False
+        )[color_col].agg(statistic).unstack()
+    
+    # Get bin edges for plotting
+    theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
+    r_edges = np.linspace(data[r_col].min(), data[r_col].max(), r_bins + 1)
+    
+    # --- Plotting ---
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    
+    T, R = np.meshgrid(theta_edges, r_edges)
+    
+    # Note: pcolormesh expects C with shape (num_r_bins, num_theta_bins)
+    # The unstacked heatmap_data has shape (num_theta_bins, num_r_bins)
+    pcm = ax.pcolormesh(T, R, heatmap_data.T.values, cmap=cmap, shading="auto")
+
+    # --- Formatting ---
+    cbar = fig.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
+    cbar.set_label(f"{statistic.capitalize()} of {color_col}", fontsize=10)
+    
+    ax.set_title(title or f"Interaction between {theta_col} and {r_col}", 
+                 fontsize=14, y=1.1)
+    ax.set_xlabel(theta_col)
+    ax.set_ylabel(r_col, labelpad=25)
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    
+    if mask_radius: 
+        # Hide radial tick labels (often preferred for normalized data)
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+plot_feature_interaction.__doc__ = r"""
+Plots a polar heatmap of feature interactions.
+
+This function visualizes how a target variable (``color_col``)
+changes based on the interaction between two features, one
+mapped to the angle and one to the radius. It is a powerful
+tool for discovering non-linear relationships and conditional
+patterns in the data.
+
+- The **angular position (θ)** represents the binned values
+  of the first feature (``theta_col``).
+- The **radial distance (r)** represents the binned values
+  of the second feature (``r_col``).
+- The **color** of each polar sector represents the aggregated
+  value (e.g., mean) of the target variable (``color_col``)
+  for all data points that fall into that specific bin.
+
+This plot is useful for identifying "hot spots" where a
+particular combination of feature values leads to a specific
+outcome, revealing complex interactions that are not visible
+from one-dimensional feature importance plots.
+
+Parameters
+----------
+df : pd.DataFrame
+    The input DataFrame containing the feature and target data.
+theta_col : str
+    The name of the feature to be mapped to the angular axis.
+    This is often a cyclical feature like "month" or "hour".
+r_col : str
+    The name of the feature to be mapped to the radial axis.
+color_col : str
+    The name of the target column whose value will be
+    represented by the color in each bin.
+statistic : str, default='mean'
+    The aggregation function to apply to ``color_col`` within
+    each bin (e.g., 'mean', 'median', 'std').
+theta_period : float, optional
+    The period of the cyclical data in ``theta_col`` (e.g., 24
+    for hours, 12 for months). This ensures the data wraps
+    correctly around the polar plot.
+theta_bins : int, default=24
+    The number of bins to create for the angular feature.
+r_bins : int, default=10
+    The number of bins to create for the radial feature.
+title : str, optional
+    The title for the plot. If ``None``, a default is generated.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap for the heatmap.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+Raises
+------
+ValueError
+    If any of the specified columns are not found in the DataFrame.
+
+See Also
+--------
+pandas.cut : Bin values into discrete intervals.
+pandas.DataFrame.groupby : 
+    Group DataFrame using a mapper or by a Series of columns.
+matplotlib.pyplot.pcolormesh : 
+    Create a pseudocolor plot with a non-regular rectangular grid.
+
+Notes
+-----
+This plot is a novel visualization method developed as part of
+the analytics framework in :footcite:p:`kouadiob2025`.
+
+The heatmap is constructed by first binning the 2D polar space
+defined by ``theta_col`` and ``r_col``. For each resulting polar
+sector, the specified ``statistic`` (e.g., mean) is calculated
+for all data points whose feature values fall within that
+sector. The resulting aggregate value is then mapped to a color,
+creating the heatmap effect.
+
+**Coordinate Mapping and Binning**:
+    
+1.  The angular data from ``theta_col``, :math:`\theta_{data}`, is
+    converted to radians :math:`[0, 2\pi]`. If a period :math:`P`
+    is given, the mapping is:
+
+    .. math::
+       :label: eq:theta_mapping
+
+       \theta_{rad} = \left( \frac{\theta_{data} \pmod P}{P} \right) \cdot 2\pi
+
+2.  The data space is then divided into a grid of :math:`K_r \times K_{\theta}`
+    bins, where :math:`K_r` is ``r_bins`` and :math:`K_{\theta}` is
+    ``theta_bins``.
+
+3.  For each bin :math:`B_{ij}`, the aggregate value :math:`C_{ij}`
+    is computed from the target column ``color_col`` (:math:`z`):
+
+    .. math::
+       :label: eq:bin_aggregation
+
+       C_{ij} = \text{statistic}(\{z_k \mid (r_k, \theta_k) \in B_{ij}\})
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot.feature_based import plot_feature_interaction
+>>>
+>>> # Simulate solar panel output data
+>>> np.random.seed(0)
+>>> n_points = 5000
+>>> hour = np.random.uniform(0, 24, n_points)
+>>> cloud = np.random.rand(n_points)
+>>>
+>>> # Output depends on the interaction of daylight and cloud cover
+>>> daylight = np.sin(hour * np.pi / 24)**2
+>>> cloud_factor = (1 - cloud**0.5)
+>>> output = 100 * daylight * cloud_factor + np.random.rand(n_points) * 5
+>>> output[(hour < 6) | (hour > 18)] = 0 # No output at night
+>>>
+>>> df_solar = pd.DataFrame({
+...     'hour_of_day': hour,
+...     'cloud_cover': cloud,
+...     'panel_output': output
+... })
+>>>
+>>> # Generate the plot
+>>> ax = plot_feature_interaction(
+...     df=df_solar,
+...     theta_col='hour_of_day',
+...     r_col='cloud_cover',
+...     color_col='panel_output',
+...     theta_period=24,
+...     theta_bins=24,
+...     r_bins=8,
+...     cmap='inferno',
+...     title='Solar Panel Output by Hour and Cloud Cover'
+... )
+
+References
+----------
+.. footbibliography::
+"""
 
 @check_non_emptiness(params=["importances"])
 def plot_feature_fingerprint(
@@ -29,7 +276,6 @@ def plot_feature_fingerprint(
     show_grid: bool = True,
     savefig: Optional[str] = None,
 ):
-    # --- Input Validation and Preparation ---
     # Ensure importances is a 2D NumPy array
     importance_matrix = ensure_2d(importances)
 
@@ -114,7 +360,6 @@ def plot_feature_fingerprint(
         # Initialize normalized matrix
         normalized_matrix = np.zeros_like(importance_matrix, dtype=float)
 
-        # --- FIX START ---
         # Get boolean index for valid rows, shape (n_layers,) e.g., (3,)
         valid_rows_indices = valid_max_mask[:, 0]
 
@@ -134,8 +379,7 @@ def plot_feature_fingerprint(
 
             # Place the normalized rows back into the result matrix
             normalized_matrix[valid_rows_indices] = normalized_rows
-        # --- FIX END ---
-
+      
         # Rows where max_val <= 0 remain zero (already initialized)
         # Update importance_matrix with normalized values
         importance_matrix = normalized_matrix

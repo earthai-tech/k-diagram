@@ -8,7 +8,8 @@ from numbers import Real
 from typing import (
     Any,
     Callable,
-    Literal,
+    Literal, 
+    Tuple
 )
 
 import matplotlib.pyplot as plt
@@ -16,6 +17,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm
 from matplotlib.colors import Normalize
+from matplotlib.collections import LineCollection
 
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, type_of_target, validate_params
@@ -30,6 +32,7 @@ __all__ = [
     "plot_reliability_diagram",
     "plot_model_comparison",
     "plot_horizon_metrics",
+    "plot_polar_reliability"
 ]
 
 
@@ -737,6 +740,256 @@ Binary example with quantile bins and Wilson intervals.
 """
 
 
+@check_non_emptiness(params=["y_true", "y_preds"])
+def plot_polar_reliability(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: list[str] | None = None,
+    n_bins: int = 10,
+    strategy: str = "uniform",
+    title: str = "Polar Reliability Diagram",
+    figsize: Tuple[float, float] = (8, 8),
+    cmap: str = "coolwarm", 
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    show_cbar: bool=True, 
+    mask_radius: bool = False,
+    savefig: str | None = None,
+    dpi: int = 300,
+):
+    if not y_preds:
+        raise ValueError("At least one prediction array must be provided.")
+    if not names:
+        names = [f"Model {i+1}" for i in range(len(y_preds))]
+
+    y_true = np.asarray(y_true)
+    prob_list = [_to_prob_vector(p, ci=None) for p in y_preds]
+    weights = np.ones_like(y_true, dtype=float)
+    edges, _ = _build_bins(prob_list, n_bins, strategy, 0.0, 1.0)
+    
+    # Use the robust _colors helper for consistency
+    colors = _colors(cmap, palette=None, k=len(y_preds))
+    
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+    
+    # --- Plot Perfect Calibration Spiral ---
+    perfect_theta = np.linspace(0, np.pi / 2, 100)
+    perfect_radius = np.linspace(0, 1, 100)
+    ax.plot(perfect_theta, perfect_radius, color='black', linestyle='--',
+            lw=1.5, label='Perfect Calibration')
+
+    # Use a single LineCollection for the colorbar reference
+    line_collection_for_cbar = None
+    
+    # --- Plot Model Spirals with Diagnostic Coloring ---
+    for i, (name, p) in enumerate(zip(names, prob_list)):
+        stats = _bin_stats(p, y_true, weights, edges, "none", 0)
+        df = pd.DataFrame({
+            "p_mean": stats["pmean"],
+            "y_rate": stats["yrate"],
+        }).dropna()
+        
+        model_theta = df["p_mean"] * (np.pi / 2)
+        model_radius = df["y_rate"]
+        
+        # Calculate the error (deviation from perfect calibration)
+        calibration_error = model_radius - df["p_mean"]
+        
+        # Create line segments for coloring
+        points = np.array([model_theta, model_radius]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        
+        # Normalize the error for the colormap (- is over-confident, + is under-confident)
+        norm = Normalize(vmin=-0.5, vmax=0.5)
+        lc = LineCollection(segments, cmap=cmap, norm=norm)
+        lc.set_array(calibration_error)
+        lc.set_linewidth(3)
+        
+        line = ax.add_collection(lc)
+        if i == 0: # Use the first line for the colorbar
+            line_collection_for_cbar = line
+            
+        # Add a dummy line for the legend
+        ax.plot([], [], color=get_cmap(cmap)(0.5), lw=3, label=name)
+        
+        ax.fill_between(
+            perfect_theta,
+            np.interp(perfect_theta, model_theta, model_radius, left=0, right=1),
+            perfect_radius,
+            color=colors[i],
+            alpha=0.15
+        )
+        
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_thetamin(0); ax.set_thetamax(90)
+    ax.set_ylim(0, 1.05)
+    ax.set_xticks(np.linspace(0, np.pi / 2, 6))
+    ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
+    
+    # Add padding to the x-axis label to prevent overlap
+    ax.set_xlabel("Predicted Probability", labelpad=15)
+    ax.set_ylabel("Observed Frequency", labelpad=25)
+    
+    # Adjust legend position to avoid overlap
+    ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.15))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    
+
+    # Add a colorbar to explain the diagnostic colors
+    # Conditionally add colorbar and move it to the bottom
+    if show_cbar and line_collection_for_cbar:
+        cbar = fig.colorbar(
+            line_collection_for_cbar,
+            ax=ax,
+            orientation='horizontal', # Horizontal orientation
+            shrink=0.75,
+            pad=0.08 # Adjust padding
+        )
+        cbar.set_label("Calibration Error (Observed - Predicted)", fontsize=10)
+        
+    # cbar = fig.colorbar(line, ax=ax, pad=0.1, shrink=0.75)
+    # cbar.set_label("Calibration Error (Observed - Predicted)", fontsize=10)
+    
+    if mask_radius:
+        ax.set_yticklabels([])
+        
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+plot_polar_reliability.__doc__ = r"""
+Plot a Polar Reliability Diagram (Calibration Spiral).
+
+This function provides a novel visualization of model calibration by
+mapping the traditional reliability diagram onto a polar coordinate
+system :footcite:p:`kouadiob2025`. It compares **predicted
+probabilities** (mapped to the angle) to **observed frequencies**
+(mapped to the radius).
+
+Perfect calibration is represented by a perfect Archimedean spiral.
+The plot uses a diverging colormap to diagnostically color the
+model's spiral, immediately revealing regions of over- or
+under-confidence.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true binary labels (0 or 1).
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted probabilities for each model.
+names : list of str, optional
+    Display names for each of the models. If not provided, generic
+    names like ``'Model 1'`` will be generated.
+n_bins : int, default=10
+    Number of bins to group predicted probabilities into for analysis.
+strategy : {'uniform', 'quantile'}, default='uniform'
+    The strategy for creating bins:
+
+    - ``'uniform'``: Bins are of equal width across the [0, 1] range.
+    - ``'quantile'``: Bins are created based on the quantiles of the
+      predicted probabilities, ensuring each bin has a similar
+      number of samples.
+      
+title : str, default="Polar Reliability Diagram"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='coolwarm'
+    A diverging colormap used to color the model's spiral. The center
+    of the colormap represents perfect calibration, with one color for
+    over-confidence and another for under-confidence.
+show_cbar : bool, default=True
+    If ``True``, display a color bar that explains the diagnostic
+    coloring of the calibration error.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling (e.g.,
+    ``linestyle``, ``alpha``).
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar reliability plot.
+
+Notes
+-----
+This plot is a polar adaptation of the standard reliability diagram,
+a key tool in forecast verification :footcite:p:`Jolliffe2012`.
+
+1.  **Binning**: Predicted probabilities :math:`p_i` are first
+    partitioned into :math:`K` bins. For each bin :math:`k`, the mean
+    predicted probability (:math:`\bar{p}_k`) and the mean observed
+    frequency (:math:`\bar{y}_k`) are calculated.
+
+2.  **Polar Mapping**: These values are then mapped to polar
+    coordinates:
+
+    .. math::
+        \theta_k &= \bar{p}_k \cdot \frac{\pi}{2} \\
+        r_k &= \bar{y}_k
+
+    The plot is constrained to a 90-degree quadrant where the angle
+    :math:`\theta` represents the predicted probability from 0 to 1,
+    and the radius :math:`r` represents the observed frequency from
+    0 to 1.
+
+3.  **Perfect Calibration**: A perfectly calibrated model, where
+    :math:`\bar{p}_k = \bar{y}_k` for all bins, will form a perfect
+    Archimedean spiral defined by :math:`r = \frac{2\theta}{\pi}`.
+    This is drawn as a dashed black reference line.
+
+4.  **Diagnostic Coloring**: The calibration error for each bin is
+    calculated as :math:`e_k = \bar{y}_k - \bar{p}_k`. The line
+    segments of the model's spiral are colored based on this error:
+        
+    - :math:`e_k < 0`: The model is **over-confident** (observed
+      frequency is lower than predicted probability).
+    - :math:`e_k > 0`: The model is **under-confident** (observed
+      frequency is higher than predicted probability).
+
+Examples
+--------
+>>> import numpy as np
+>>> from kdiagram.plot.comparison import plot_polar_reliability
+>>>
+>>> # Generate synthetic data for two models
+>>> np.random.seed(0)
+>>> n_samples = 2000
+>>> y_true = (np.random.rand(n_samples) < 0.4).astype(int)
+>>> # A well-calibrated model
+>>> calibrated_preds = np.clip(0.4 + np.random.normal(0, 0.15, n_samples), 0, 1)
+>>> # An over-confident model
+>>> overconfident_preds = np.clip(0.4 + np.random.normal(0, 0.3, n_samples), 0, 1)
+>>>
+>>> # Generate the plot
+>>> ax = plot_polar_reliability(
+...     y_true,
+...     calibrated_preds,
+...     overconfident_preds,
+...     names=["Well-Calibrated", "Over-Confident"],
+...     n_bins=15,
+...     cmap='coolwarm'
+... )
+
+References
+----------
+.. footbibliography::
+    
+"""
 @validate_params(
     {
         "train_times": ["array-like", None],
@@ -942,6 +1195,7 @@ def plot_model_comparison(
 
       .. math::
          S'_{m,k} = \frac{S_{m,k} - \min_j(S_{m,j})}{\max_j(S_{m,j}) - \min_j(S_{m,j})}
+         
     - Standard ('std'):
 
       .. math::

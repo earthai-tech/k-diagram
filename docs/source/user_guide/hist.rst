@@ -106,6 +106,10 @@ spread of a variable.
 (See the :ref:`Histogram with KDE Overlay <gallery_plot_hist_kde>`
 in the Gallery for code and a plot example)
 
+.. raw:: html
+
+   <hr>
+   
 .. rubric:: References
 
 .. footbibliography::

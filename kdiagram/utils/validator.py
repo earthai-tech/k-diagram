@@ -85,10 +85,13 @@ def validate_yy(
     *,
     validation_mode="strict",
     flatten=False,
+    allow_2d_pred=False,
 ):
     r"""
-    Validates the shapes and types of actual and predicted target arrays,
-    ensuring they are compatible for further analysis or metrics calculation.
+    Validates the shapes and types of actual and predicted target arrays.
+
+    Ensures arrays are compatible for metrics calculation, handling cases
+    where predictions might be two-dimensional (e.g., quantiles).
 
     Parameters
     ----------
@@ -97,50 +100,65 @@ def validate_yy(
     y_pred : array-like
         Predicted target values.
     expected_type : str, optional
-        The expected sklearn type of the target ('binary', 'multiclass', etc.).
+        The expected scikit-learn type of the target ('binary', etc.).
     validation_mode : str, optional
         Validation strictness. Currently, only 'strict' is implemented,
         which requires y_true and y_pred to have the same shape and match the
         expected_type.
-    flatten : bool, optional
-        If True, both y_true and y_pred are flattened to one-dimensional arrays.
+    flatten : bool, default=False
+        If True, both y_true and y_pred are flattened to 1D arrays.
+    allow_2d_pred : bool, default=False
+        If True, allows y_pred to be a 2D array (e.g., for quantiles)
+        while y_true must be 1D. The number of samples (rows) must
+        still be consistent.
 
     Raises
     ------
     ValueError
-        If y_true and y_pred do not meet the validation criteria.
+        If inputs do not meet the validation criteria.
 
     Returns
     -------
     tuple
-        The validated y_true and y_pred arrays, potentially flattened.
+        The validated y_true and y_pred as NumPy arrays.
     """
     from ..compat.sklearn import type_of_target
 
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
 
-    if str(flatten) == "auto":
-        # check whether is two and the second dimension is 1
-        if y_pred.ndim == 2 and y_pred.shape[1] == 1:
-            y_pred = y_pred.ravel()
-        if y_true.ndim == 2 and y_true.shape[1] == 1:
-            y_true = y_true.ravel()
-
     if flatten:
         y_true = y_true.ravel()
         y_pred = y_pred.ravel()
 
-    if y_true.ndim != 1 or y_pred.ndim != 1:
-        msg = (
-            "Both y_true and y_pred must be one-dimensional arrays."
-            f" Got {y_true.shape} and {y_pred.shape}. Set ``flatten=True``"
-            " to raveling arrays back to one-dimensional."
+    # After potential flattening, check dimensions
+    if allow_2d_pred:
+        # Special mode for functions where y_pred is a 2D quantile array
+        if y_true.ndim != 1:
+            raise ValueError(
+                f"y_true must be 1D when allow_2d_pred=True, but got "
+                f"shape {y_true.shape}."
+            )
+        if y_pred.ndim != 2:
+            raise ValueError(
+                f"y_pred must be 2D when allow_2d_pred=True, but got "
+                f"shape {y_pred.shape}."
+            )
+    else:
+        # Default mode: expect both arrays to be 1D
+        if y_true.ndim != 1 or y_pred.ndim != 1:
+            raise ValueError(
+                "Both y_true and y_pred must be 1D arrays. "
+                f"Got shapes {y_true.shape} and {y_pred.shape}. "
+                "Consider setting `flatten=True`."
+            )
+
+    # Check for consistent number of samples (first dimension)
+    if y_true.shape[0] != y_pred.shape[0]:
+        raise ValueError(
+            "Found input variables with inconsistent numbers of samples: "
+            f"[{y_true.shape[0]}, {y_pred.shape[0]}]"
         )
-
-        raise ValueError(msg)
-
-    check_consistent_length(y_true, y_pred)
 
     if expected_type is not None:
         actual_type_y_true = type_of_target(y_true)
