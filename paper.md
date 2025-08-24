@@ -209,12 +209,13 @@ and interpretation guides, please refer to the detailed [User Guide](https://k-d
 
 The latest stable release of `k-diagram` is available on the Python Package 
 Index (PyPI) and can be installed via `pip install k-diagram`. The package 
-is distributed under the OSI-approved Apache License 2.0. Comprehensive 
-documentation, including a user guide, an example gallery, and a detailed 
+is distributed under the OSI-approved [Apache License 2.0](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE). 
+Comprehensive documentation, including a user guide, an example gallery, and a detailed 
 API reference, is hosted at [https://k-diagram.readthedocs.io/](https://k-diagram.readthedocs.io/). 
 I welcome contributions from the community; bug reports, feature requests, 
 and development discussions occur on the [GitHub repository](https://github.com/earthai-tech/k-diagram/issues). 
-Detailed guidelines for contributors can be found in the documentation.
+Detailed [guidelines](https://k-diagram.readthedocs.io/en/latest/contributing.html) 
+for contributors can be found in the documentation.
      
 # Acknowledgements
 
@@ -222,7 +223,6 @@ I extend my sincere gratitude to the anonymous colleagues who provided
 invaluable feedback during the development of `k-diagram`, as well as those 
 who rigorously tested its early iterations. Their insights and dedication 
 were instrumental in refining the software.
-
 I also appreciate the constructive feedback from reviewers and early users, 
 whose contributions have significantly enhanced the quality and usability 
 of the project.
