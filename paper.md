@@ -186,7 +186,7 @@ error score would miss.
 Finally, the **Forecast Horizon Drift** diagram (\autoref{fig2:performance}c) 
 visualizes how uncertainty evolves over time. For each forecast horizon $j$, 
 it calculates the mean interval width, $\bar{w}_j$, across all $N$ spatial 
-locations:
+locations as:
 
 $$
 \bar{w}_j = \frac{1}{N} \sum_{i=1}^{N} \bigl(U_{i,j} - L_{i,j}\bigr)
