@@ -96,7 +96,6 @@ Functions for comparing multi-model performances on a radar chart.
    ~kdiagram.plot.comparison.plot_polar_reliability
    ~kdiagram.plot.comparison.plot_horizon_metrics  
    
-   
 .. _api_feature_based: 
 
 Feature-Based Visualization (`kdiagram.plot.feature_based`)

@@ -95,8 +95,8 @@ around a cohesive API for diagnosing key aspects of forecast quality
   * **Uncertainty and Error Diagnostics:** The primary contribution
     of `k-diagram` is a suite of novel polar visualizations for
     dissecting forecast performance [@kouadiob2025]. The
-    `kdiagram.plot.uncertainty` and `kdiagram.plot.errors` modules
-    provide functions to visualize:
+    `kdiagram.plot.uncertainty`, `kdiagram.plot.errors`, and 
+    `kdiagram.plot.probabilistic` modules provide functions to visualize:
 
       * **Interval Performance:** Metrics such as prediction interval
         coverage, the magnitude of interval failures (anomalies), and
@@ -105,6 +105,12 @@ around a cohesive API for diagnosing key aspects of forecast quality
         systemic bias from random error, while polar violins—a novel
         adaptation of the traditional violin plot [@Hintze1998]—are
         used to compare the full error distributions of multiple models.
+      * **Probabilistic Diagnostics:** A dedicated suite of plots for
+        evaluating the full predictive distribution, including Polar 
+        Probability Integral Transform (PIT) Histograms for calibration, 
+        Sharpness Diagrams for precision, and Continuous Ranked Probability
+        Score (CRPS) plots for overall skill, based on the foundational 
+        concepts of probabilistic forecasting [@Gneiting2007b].
       * **2D Uncertainty:** The package introduces velocity diagram, polar 
         heatmaps, quiver plots, and error ellipses to visualize complex, 
         multi-dimensional error and uncertainty structures.
@@ -154,16 +160,18 @@ diagnostic plots, which are grounded in clear statistical concepts and reveal
 model behaviors often hidden by aggregate metrics (see \autoref{fig2:performance}).
 
 The **Coverage Evaluation** plot (\autoref{fig2:performance}a) provides a 
-point-wise diagnostic of interval performance. For each observation $y\_i$ 
-and its corresponding prediction interval $[L\_i, U\_i]$, a binary 
-coverage value $c\_i$ is determined as:
+point-wise diagnostic of interval performance. For each observation $y_i$ 
+and its corresponding prediction interval $[L_i, U_i]$, a binary 
+coverage value $c_i$ is determined as:
 
-$$c_i = \mathbf{1}\{L_i \le y_i \le U_i\}$$
+$$
+c_i = \mathbf{1}\{\, L_i \le y_i \le U_i \,\}
+$$
 
-where $\\mathbf{1}$ is the indicator function. The plot visualizes 
-each $c\_i$, allowing for a deeper analysis of where interval failures 
-occur, while the average of all $c\_i$ gives the overall empirical 
-coverage 81.1% close to the nominal 80% for a Q10-Q90 interval.
+where $\mathbf{1}$ is the indicator function. The plot visualizes each $c_i$, 
+allowing for a granular analysis of where interval failures occur. The 
+average of these outcomes provides the overall empirical coverage, which 
+at 81.1% is close to the nominal 80% for the Q10-Q90 interval shown.
 
 The **Model Error Distributions** diagram (\autoref{fig2:performance}b) 
 offers a comparative view by visualizing the full error distribution for 
@@ -175,12 +183,14 @@ errors [@Silverman1986]. The resulting diagram clearly distinguishes a
 (wide and dispersed), revealing performance trade-offs that a single 
 error score would miss.
 
-Finally, the **Forecast Horizon Drift** plot (\\autoref{fig2:performance}c) 
+Finally, the **Forecast Horizon Drift** diagram (\autoref{fig2:performance}c) 
 visualizes how uncertainty evolves over time. For each forecast horizon $j$, 
-it calculates the mean interval width, $\\bar{w}\_j$, across all $N$ spatial 
+it calculates the mean interval width, $\bar{w}_j$, across all $N$ spatial 
 locations:
 
-$$\bar{w}_j = \frac{1}{N} \sum_{i=1}^{N} (U_{i,j} - L_{i,j})$$
+$$
+\bar{w}_j = \frac{1}{N} \sum_{i=1}^{N} \bigl(U_{i,j} - L_{i,j}\bigr)
+$$
 
 The increasing height of the bars from 2023 to 2026 provides an immediate 
 and intuitive confirmation that the model's uncertainty grows as it forecasts 
