@@ -153,7 +153,7 @@ users to control plot aesthetics, angular coverage (`acov`), and color mapping
 to tailor the visualizations for their specific domain. 
 
 
-### Illustrative Diagnostics and Application
+# Illustrative Diagnostics and Application
 
 The practical utility of `k-diagram` is best demonstrated through its key 
 diagnostic plots, which are grounded in clear statistical concepts and reveal 
@@ -165,7 +165,7 @@ and its corresponding prediction interval $[L_i, U_i]$, a binary
 coverage value $c_i$ is determined as:
 
 $$
-c_i = \mathbf{1}\{\, L_i \le y_i \le U_i \,\}
+c_i = \\mathbf{1}\\{\\, L_i \le y_i \\le U_i \\,\\}
 $$
 
 where $\mathbf{1}$ is the indicator function. The plot visualizes each $c_i$, 
@@ -185,16 +185,18 @@ error score would miss.
 
 Finally, the **Forecast Horizon Drift** diagram (\autoref{fig2:performance}c) 
 visualizes how uncertainty evolves over time. For each forecast horizon $j$, 
-it calculates the mean interval width, $\bar{w}_j$, across all $N$ spatial 
+it calculates the mean interval width, $\\bar{w}_j$, across all $N$ spatial 
 locations as:
 
 $$
-\bar{w}_j = \frac{1}{N} \sum_{i=1}^{N} \bigl(U_{i,j} - L_{i,j}\bigr)
+\\bar{w}_j = \\frac{1}{N} \\sum_{i=1}^{N} \\bigl(U_{i,j} - L_{i,j}\\bigr)
 $$
 
 The increasing height of the bars from 2023 to 2026 provides an immediate 
 and intuitive confirmation that the model's uncertainty grows as it forecasts 
 further into the future.
+
+![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Model Error Distributions: The radial axis represents the error value, with the dashed circle indicating zero error. The width of each violin shows the density of errors, revealing that the "Good Model" is unbiased and consistent, the "Biased Model" consistently under-predicts, and the "Inconsistent Model" has high variance. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
 
 These visualization methods were developed alongside research applying 
 advanced deep learning models, such as physics-informed deep learning[^1], 
@@ -212,8 +214,6 @@ and interpretation guides, please refer to the detailed [User Guide](https://k-d
       Networks (PINNs), see:
       <https://fusion-lab.readthedocs.io/en/latest/user_guide/models/pinn/index.html>
  
-![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Model Error Distributions: The radial axis represents the error value, with the dashed circle indicating zero error. The width of each violin shows the density of errors, revealing that the "Good Model" is unbiased and consistent, the "Biased Model" consistently under-predicts, and the "Inconsistent Model" has high variance. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
-
 
 # Availability and Community
 
