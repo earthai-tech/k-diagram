@@ -192,7 +192,6 @@ predictions.
     after sorting, to create a continuous spiral.
 
     .. math::
-       :label: eq:angle_map_pred
 
        \theta_i \propto y_{pred,i}
 
@@ -395,7 +394,6 @@ value, a key assumption in many statistical models.
     predicted value.
 
     .. math::
-       :label: eq:error_calc_true
 
        e_i = y_{true,i} - y_{pred,i}
 
@@ -404,7 +402,6 @@ value, a key assumption in many statistical models.
     after sorting, to create a continuous spiral.
 
     .. math::
-       :label: eq:angle_map_true
 
        \theta_i \propto y_{true,i}
 
@@ -636,7 +633,6 @@ an intuitive view of the conditional predictive distribution.
     angular coordinate :math:`\theta` in the range :math:`[0, 2\pi]`.
 
     .. math::
-       :label: eq:angle_map_cond_q
 
        \theta_i \propto y_{true,i}^{\text{(sorted)}}
 

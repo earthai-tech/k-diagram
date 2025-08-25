@@ -183,6 +183,7 @@ validations.
    ~kdiagram.utils.build_cdf_interpolator
    ~kdiagram.utils.build_q_column_names
    ~kdiagram.utils.calculate_calibration_error
+   ~kdiagram.utils.calculate_probabilistic_scores
    ~kdiagram.utils.compute_coverage_score
    ~kdiagram.utils.compute_crps
    ~kdiagram.utils.compute_forecast_errors
@@ -193,6 +194,7 @@ validations.
    ~kdiagram.utils.detect_quantiles_in
    ~kdiagram.utils.get_forecast_arrays
    ~kdiagram.utils.melt_q_data
+   ~kdiagram.utils.minmax_scaler
    ~kdiagram.utils.pivot_forecasts_long
    ~kdiagram.utils.pivot_q_data
    ~kdiagram.utils.plot_hist_kde

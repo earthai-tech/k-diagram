@@ -410,7 +410,6 @@ The primary reference is the **identity line**, defined by the
 equation:
 
 .. math::
-   :label: eq:identity_line
 
    y = x
 
@@ -557,7 +556,6 @@ correlation between a time series and its own past values. For a
 series of errors :math:`e_t`, the ACF is defined as:
 
 .. math::
-   :label: eq:acf
 
    \rho_k = \frac{\text{Cov}(e_t, e_{t-k})}{\text{Var}(e_t)}
 

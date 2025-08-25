@@ -208,6 +208,7 @@ are related to the true value on the angular axis.
     bias.
 * **Shaded Bands (Prediction Intervals)**: The **width** of these
     bands is the most important feature.
+    
     - If the band has a **constant width** as the angle increases,
       the model's uncertainty is **homoscedastic** (constant).
     - If the band's width **changes** (e.g., gets wider), the
@@ -234,7 +235,7 @@ See the gallery example and code: :ref:`gallery_plot_conditional_quantiles`.
 .. _ug_plot_error_relationship:
 
 Error vs. True Value Relationship (:func:`~kdiagram.plot.relationship.plot_error_relationship`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose**
 This function creates a **Polar Error vs. True Value Plot**, a
@@ -310,7 +311,7 @@ See the gallery example and code: :ref:`gallery_plot_error_relationship`.
 .. _ug_plot_residual_relationship:
 
 Residual vs. Predicted Relationship (:func:`~kdiagram.plot.relationship.plot_residual_relationship`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 This function creates a **Polar Residual vs. Predicted Plot**, a

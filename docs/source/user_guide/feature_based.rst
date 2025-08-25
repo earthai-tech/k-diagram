@@ -189,26 +189,26 @@ the other to a radial coordinate, :math:`r`.
 The plot reveals how the two features jointly influence the target.
 
 * **Angle (θ)**: Represents the first feature (``theta_col``). If
-    the feature is cyclical (like the hour of the day), the plot
-    will wrap around seamlessly.
+  the feature is cyclical (like the hour of the day), the plot
+  will wrap around seamlessly.
 * **Radius (r)**: Represents the second feature (``r_col``), with
-    lower values near the center and higher values at the edge.
+  lower values near the center and higher values at the edge.
 * **Color**: The color of each polar sector shows the average
-    value of the target variable (``color_col``). "Hot spots"
-    (bright, intense colors) indicate a strong interaction effect,
-    where a specific combination of the two features leads to a
-    notable outcome.
+  value of the target variable (``color_col``). "Hot spots"
+  (bright, intense colors) indicate a strong interaction effect,
+  where a specific combination of the two features leads to a
+  notable outcome.
 
 **Use Cases:**
 
 * To diagnose how **pairs of features** interact to affect a
-    model's prediction or error, moving beyond simple feature
-    importance.
+  model's prediction or error, moving beyond simple feature
+  importance.
 * To identify non-linear relationships and conditional patterns
-    in your data.
+  in your data.
 * To visually confirm that a model has learned an expected
-    physical or logical interaction (e.g., high solar output
-    only occurs at midday with low cloud cover).
+  physical or logical interaction (e.g., high solar output
+  only occurs at midday with low cloud cover).
 
 
 **Example**

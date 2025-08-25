@@ -173,7 +173,8 @@ its sharpness.
 * **Comparison**: The plot allows for an immediate visual comparison
   of the relative sharpness of different models.
 
-**Use Cases**
+**Use Cases:**
+
 * To directly compare the precision (average interval width) of
   multiple forecasting models.
 * To use in conjunction with a calibration plot (like the PIT
@@ -326,6 +327,7 @@ are related to the feature on the angular axis.
   constant but depends on the binned feature.
 
 **Use Cases:**
+
 * To diagnose if a model's uncertainty changes predictably with
   another feature (e.g., time, or the magnitude of the forecast
   itself).
@@ -359,7 +361,7 @@ center of the plot.
 This plot synthesizes two key aspects of a probabilistic forecast
 into a single point for each model. It is a novel visualization
 developed as part of the analytics framework
-:footcite:p:`kouadiob2b2025`.
+:footcite:p:`kouadiob2025`.
 
 1.  **Sharpness (Radius)**: The radial coordinate represents the
     forecast's sharpness, calculated as the average width of the
@@ -393,23 +395,23 @@ The plot provides a high-level summary of probabilistic forecast
 quality, with the ideal model located at the center (origin).
 
 * **Radius (Sharpness)**: The distance from the center. **Models
-    closer to the center are sharper** (more precise).
+  closer to the center are sharper** (more precise).
 * **Angle (Calibration Error)**: The angle from the 0° axis.
-    **Models with a smaller angle are better calibrated**.
+  **Models with a smaller angle are better calibrated**.
 * **Overall Performance**: The best model is the one closest to the
-    origin, as it represents the optimal balance of both low
-    calibration error and high sharpness.
+  origin, as it represents the optimal balance of both low
+  calibration error and high sharpness.
 
 
 **Use Cases:**
 
 * To quickly compare the overall quality of multiple probabilistic
-    models in a single, decision-oriented view.
+  models in a single, decision-oriented view.
 * To visualize the trade-off between a model's reliability and its
-    precision. For example, one model might be very sharp but poorly
-    calibrated, while another is well-calibrated but not very sharp.
+  precision. For example, one model might be very sharp but poorly
+  calibrated, while another is well-calibrated but not very sharp.
 * For model selection when a balanced performance between
-    calibration and sharpness is the primary goal.
+  calibration and sharpness is the primary goal.
 
 
 **Example**

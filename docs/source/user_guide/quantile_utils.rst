@@ -75,21 +75,21 @@ number (e.g., ``'prediction_q0.5'``).
 **Key Parameters Explained:**
 
 * **`col_prefix`**: An optional string to narrow down the search.
-    For example, using `'prediction'` will only find columns that
-    start with that prefix, like `'prediction_q0.5'`, and ignore
-    others like `'temperature_q0.5'`.
+  For example, using `'prediction'` will only find columns that
+  start with that prefix, like `'prediction_q0.5'`, and ignore
+  others like `'temperature_q0.5'`.
 * **`dt_value`**: An optional list of date/time strings (like
-    ``['2023']``) to filter columns that include a temporal
-    component in their name (e.g., `'prediction_2023_q0.9'`).
+  ``['2023']``) to filter columns that include a temporal
+  component in their name (e.g., `'prediction_2023_q0.9'`).
 * **`return_types`**: This crucial parameter specifies the output
-    format. You can choose to get back:
+  format. You can choose to get back:
     
-    - ``'columns'``: A list of the matching column names (default).
-    - ``'q_val'``: A list of the unique quantile levels found.
-    - ``'values'``: The raw data from the matching columns as a
-        list of NumPy arrays.
-    - ``'frame'``: A new DataFrame containing only the matching
-        quantile columns.
+  - ``'columns'``: A list of the matching column names (default).
+  - ``'q_val'``: A list of the unique quantile levels found.
+  - ``'values'``: The raw data from the matching columns as a
+    list of NumPy arrays.
+  - ``'frame'``: A new DataFrame containing only the matching
+    quantile columns.
 
 **Conceptual Basis:**
 The function operates by parsing column names using regular

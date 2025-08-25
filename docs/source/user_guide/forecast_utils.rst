@@ -242,7 +242,6 @@ that capture these qualities.
     or equal to the observation.
 
     .. math::
-       :label: eq:pit_score
 
        \text{PIT}_i = \frac{1}{M} \sum_{j=1}^{M}
        \mathbf{1}\{q_{i,j} \le y_i\}
@@ -253,7 +252,6 @@ that capture these qualities.
     quantiles for each observation :math:`i`.
 
     .. math::
-       :label: eq:sharpness_score_ind
 
        \text{Sharpness}_i = y_{i, q_{max}} - y_{i, q_{min}}
 
@@ -263,7 +261,6 @@ that capture these qualities.
     across all :math:`M` quantiles for each observation :math:`i`.
 
     .. math::
-       :label: eq:crps_score_ind
 
        \text{CRPS}_i \approx \frac{1}{M} \sum_{j=1}^{M}
        2 \mathcal{L}_{\tau_j}(q_{i,j}, y_i)

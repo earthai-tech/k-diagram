@@ -682,10 +682,12 @@ Parameters
 ----------
 df : pandas.DataFrame
     Input table with:
+        
     - Spatial columns (optional)
     - Temporal column ``dt_col``
     - One column per quantile:
       ``{value_prefix}_q{α}``
+      
 value_prefix : str
     Base measurement name (e.g., ``'subs'``). Used to reconstruct
     wide column names.
@@ -699,9 +701,11 @@ spatial_cols : tuple[str, ...] or list[str], optional
     index during pivot and preserved in the output.
 error : {'raise', 'warn', 'ignore'}, default='raise'
     Handling for missing components:
+        
     - ``'raise'`` : raise ``ValueError`` with details
     - ``'warn'``  : warn and return an empty frame or partial
     - ``'ignore'``: silently return partial results
+    
 verbose : {0,1,2,3,4,5}, default=0
     Detail level for progress messages.
 
@@ -709,12 +713,14 @@ Returns
 -------
 pandas.DataFrame
     Wide DataFrame with columns:
+        
     - Spatial columns (if provided)
     - For each :math:`t\in\mathcal{T}` and :math:`\alpha\in\mathcal{Q}`,
       a column named ``{value_prefix}_{t}_q{α}``.
 
 Notes
 -----
+
 - Quantile columns in the input must follow the pattern
   ``{value_prefix}_q{α}``. The temporal values are taken from
   ``dt_col``.

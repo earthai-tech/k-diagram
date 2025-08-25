@@ -205,7 +205,6 @@ When the predictive CDF is represented by a finite set of
 quantiles that are less than or equal to the observation:
 
 .. math::
-   :label: eq:pit_quantile
 
    \text{PIT}_i = \frac{1}{M} \sum_{j=1}^{M}
    \mathbf{1}\{q_{i,j} \le y_i\}
@@ -425,7 +424,6 @@ observed outcomes.
     (:math:`q_{min}` and :math:`q_{max}`).
 
     .. math::
-       :label: eq:interval_width
 
        w_i = y_{i, q_{max}} - y_{i, q_{min}}
 
@@ -435,7 +433,6 @@ observed outcomes.
     coordinate in the plot. A lower score is better.
 
     .. math::
-       :label: eq:sharpness
 
        S = \frac{1}{N} \sum_{i=1}^{N} w_i
 
@@ -631,7 +628,6 @@ used metric for evaluating probabilistic forecasts
 and a predictive CDF :math:`F`, it is defined as:
 
 .. math::
-   :label: eq:crps_integral
 
    \text{CRPS}(F, y) = \int_{-\infty}^{\infty}\\
        (F(x) - \mathbf{1}\{x \ge y\})^2 dx
@@ -644,7 +640,6 @@ averaging the pinball loss :math:`\mathcal{L}_{\tau}` over the
 quantile levels :math:`\tau \in \{ \tau_1, ..., \tau_M \}`:
 
 .. math::
-   :label: eq:crps_pinball
 
    \text{CRPS}(F, y) \approx \frac{1}{M} \sum_{j=1}^{M} 2\\
        \mathcal{L}_{\tau_j}(q_j, y)
@@ -652,7 +647,6 @@ quantile levels :math:`\tau \in \{ \tau_1, ..., \tau_M \}`:
 The pinball loss for a quantile :math:`\tau` is:
 
 .. math::
-   :label: eq:pinball_loss
 
    \mathcal{L}_{\tau}(q, y) =
    \begin{cases}
@@ -893,13 +887,13 @@ part of the analytics framework in :footcite:t:`kouadiob2025`.
     (:math:`\bar{q}_{up,k}`) are calculated.
 
     .. math::
-       :label: eq:mean_quantiles
 
        \bar{q}_{j,k} = \frac{1}{|B_k|} \sum_{i \in B_k} q_{j,i}
 
     where :math:`j \in \{\text{low, med, up}\}`.
 
 3.  **Visualization**: The plot displays:
+    
     - A central line representing the mean median forecast
       (:math:`\bar{q}_{med,k}`).
     - A shaded band between the mean lower and upper bounds
@@ -940,6 +934,7 @@ Examples
 References
 ----------
 .. footbibliography::
+    
 """
 
 
@@ -1128,7 +1123,6 @@ visualization developed as part of the analytics framework in
     quantiles. A smaller radius is better (sharper).
 
     .. math::
-       :label: eq:sharpness_score
 
        S = \frac{1}{N} \sum_{i=1}^{N} (y_{i, q_{max}} - y_{i, q_{min}})
 
@@ -1141,7 +1135,6 @@ visualization developed as part of the analytics framework in
     values and the CDF of a perfect uniform distribution.
 
     .. math::
-       :label: eq:calib_error
 
        E_{calib} = \sup_{x} | F_{PIT}(x) - U(x) |
 

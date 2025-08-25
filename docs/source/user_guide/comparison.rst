@@ -340,6 +340,7 @@ calibration reference.
 
 
 **Use Cases:**
+
 * To get a more intuitive and visually engaging assessment of
   model calibration compared to a traditional Cartesian plot.
 * To quickly identify in which probability ranges a model is

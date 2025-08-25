@@ -254,7 +254,7 @@ plot_horizon_metrics : A plot that benefits from this data format.
 Examples
 --------
 >>> import pandas as pd
->>> from kdiagram.utils.forecast import pivot_forecasts_long
+>>> from kdiagram.utils.forecast_utils import pivot_forecasts_long
 >>>
 >>> # Create a sample wide-format DataFrame
 >>> df_wide = pd.DataFrame({
@@ -325,10 +325,10 @@ Parameters
 ----------
 df : pd.DataFrame
     The input DataFrame containing the quantile forecast columns.
-*quantile_pairs : list of (str or float)
+quantile_pairs : list of (str or float)
     One or more lists or tuples, each containing two elements in
     the order: ``[lower_quantile_col, upper_quantile_col]``.
-prefix : str, default='width_'
+prefix : str, default='width{_}'
     The prefix for the new interval width column names. The new
     name will be f"{prefix}{upper_col_name}".
 inplace : bool, default=False
@@ -362,14 +362,13 @@ is the simple difference between the upper and lower quantile
 forecasts:
 
 .. math::
-   :label: eq:interval_width_calc
 
    w_i = q_{upper, i} - q_{lower, i}
 
 Examples
 --------
 >>> import pandas as pd
->>> from kdiagram.utils.forecast import compute_interval_width
+>>> from kdiagram.utils.forecast_utils import compute_interval_width
 >>>
 >>> df = pd.DataFrame({
 ...     'q10_model_A': [1, 2], 'q90_model_A': [10, 12],
@@ -463,7 +462,7 @@ function(s) to the ``target_cols`` for each group.
 Examples
 --------
 >>> import pandas as pd
->>> from kdiagram.utils.forecast import bin_by_feature
+>>> from kdiagram.utils.forecast_utils import bin_by_feature
 >>>
 >>> df = pd.DataFrame({
 ...     'forecast_value': [10, 12, 20, 22, 30, 32],
@@ -552,11 +551,13 @@ actual_col : str
     different models.
 error_type : {'raw', 'absolute', 'squared', 'percentage'}, default='raw'
     The type of error to calculate:
+        
     - 'raw': :math:`y_{true} - y_{pred}`
     - 'absolute': :math:`|y_{true} - y_{pred}|`
     - 'squared': :math:`(y_{true} - y_{pred})^2`
     - 'percentage': :math:`100 \cdot (y_{true} - y_{pred}) / y_{true}`
-prefix : str, default='error_'
+    
+prefix : str, default='error{_}'
     The prefix to add to the new error column names. For example,
     a prediction column 'Model_A' will become 'error_Model_A'.
 inplace : bool, default=False
@@ -590,7 +591,6 @@ model performance. This function calculates it in several forms:
     negative for over-prediction).
 
     .. math::
-       :label: eq:raw_error
 
        e_i = y_{true,i} - y_{pred,i}
 
@@ -598,14 +598,12 @@ model performance. This function calculates it in several forms:
     always non-negative.
 
     .. math::
-       :label: eq:abs_error
 
        e_{abs,i} = |y_{true,i} - y_{pred,i}|
 
 3.  **Squared Error**: Penalizes larger errors more heavily.
 
     .. math::
-       :label: eq:sq_error
 
        e_{sq,i} = (y_{true,i} - y_{pred,i})^2
 
@@ -614,14 +612,13 @@ model performance. This function calculates it in several forms:
     :math:`y_{true,i}` is close to zero.
 
     .. math::
-       :label: eq:pct_error
 
        e_{\%,i} = 100 \cdot \frac{y_{true,i} - y_{pred,i}}{y_{true,i}}
 
 Examples
 --------
 >>> import pandas as pd
->>> from kdiagram.utils.forecast import compute_forecast_errors
+>>> from kdiagram.utils.forecast_utils import compute_forecast_errors
 >>>
 >>> df = pd.DataFrame({
 ...     'actual': [10, 20, 30],

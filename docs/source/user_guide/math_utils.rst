@@ -26,31 +26,31 @@ Summary of Mathematical Utility Functions
 
    * - Function
      - Description
-   * - :func:`~kdiagram.utils.mathext.get_forecast_arrays`
+   * - :func:`~kdiagram.utils.get_forecast_arrays`
      - Extracts and validates true and predicted values from a
        DataFrame into NumPy arrays or pandas objects.
-   * - :func:`~kdiagram.utils.mathext.compute_coverage_score`
+   * - :func:`~kdiagram.utils.compute_coverage_score`
      - Calculates the empirical coverage of a prediction interval,
        with options to check for over- and under-prediction.
-   * - :func:`~kdiagram.utils.mathext.compute_winkler_score`
+   * - :func:`~kdiagram.utils.compute_winkler_score`
      - Computes the Winkler score, which evaluates both the sharpness
        and calibration of a prediction interval.
-   * - :func:`~kdiagram.utils.mathext.compute_pinball_loss`
+   * - :func:`~kdiagram.utils.compute_pinball_loss`
      - Calculates the Pinball Loss for a single quantile forecast, the
        foundational metric for quantile evaluation.
-   * - :func:`~kdiagram.utils.mathext.compute_crps`
+   * - :func:`~kdiagram.utils.compute_crps`
      - Approximates the Continuous Ranked Probability Score (CRPS) by
        averaging the Pinball Loss over all quantiles.
-   * - :func:`~kdiagram.utils.mathext.compute_pit`
+   * - :func:`~kdiagram.utils.compute_pit`
      - Computes the Probability Integral Transform (PIT) value for each
        observation to assess calibration.
-   * - :func:`~kdiagram.utils.mathext.calculate_calibration_error`
+   * - :func:`~kdiagram.utils.calculate_calibration_error`
      - Quantifies the overall calibration error using the
        Kolmogorov-Smirnov statistic on PIT values.
-   * - :func:`~kdiagram.utils.mathext.build_cdf_interpolator`
+   * - :func:`~kdiagram.utils.build_cdf_interpolator`
      - Creates a callable empirical CDF from a set of quantile
        forecasts.
-   * - :func:`~kdiagram.utils.mathext.minmax_scaler`
+   * - :func:`~kdiagram.utils.minmax_scaler`
      - Scales features to a specified range, robust to zero-variance
        features.
   
@@ -104,6 +104,7 @@ formatted for downstream analysis.
     input DataFrame.
 
 2.  **Data Subsetting and Cleaning**:
+
     a. A subset of the DataFrame containing only the required
        columns is created.
     b. If ``fillna`` is specified, missing values are imputed
@@ -254,22 +255,22 @@ interval), but also the proportion of values falling *above* or
 **Key Parameters Explained:**
 
 * **`method`**: This parameter controls which type of coverage is
-    calculated.
+  calculated.
     
-    - ``'within'``: This is the standard coverage. It tells you the
-      fraction of time your forecast was "correct" in its
-      uncertainty estimate.
-    - ``'below'``: This calculates the fraction of times the true
-      value was *lower* than your lower bound. A high value
-      indicates your model's intervals are systematically too high.
-    - ``'above'``: This calculates the fraction of times the true
-      value was *higher* than your upper bound. A high value
-      indicates your model's intervals are systematically too low.
+  - ``'within'``: This is the standard coverage. It tells you the
+    fraction of time your forecast was "correct" in its
+    uncertainty estimate.
+  - ``'below'``: This calculates the fraction of times the true
+    value was *lower* than your lower bound. A high value
+    indicates your model's intervals are systematically too high.
+  - ``'above'``: This calculates the fraction of times the true
+    value was *higher* than your upper bound. A high value
+    indicates your model's intervals are systematically too low.
 
 * **`return_counts`**: By default, the function returns a
-    proportion (a float between 0 and 1). Setting this to ``True``
-    returns the raw integer count, which can be useful for reports
-    or further statistical tests.
+  proportion (a float between 0 and 1). Setting this to ``True``
+  returns the raw integer count, which can be useful for reports
+  or further statistical tests.
 
 
 **Mathematical Concept:**
@@ -401,10 +402,10 @@ A lower score is better.
 **Key Parameters Explained**
 
 * **`alpha`**: This is the significance level of the prediction
-    interval. It determines how heavily the score penalizes
-    observations that fall outside the bounds. For a 90% prediction
-    interval (from Q5 to Q95), the `alpha` would be 0.1. For an 80%
-    interval (Q10 to Q90), the `alpha` would be 0.2.
+  interval. It determines how heavily the score penalizes
+  observations that fall outside the bounds. For a 90% prediction
+  interval (from Q5 to Q95), the `alpha` would be 0.1. For an 80%
+  interval (Q10 to Q90), the `alpha` would be 0.2.
 
 
 **Mathematical Concept:**
@@ -474,14 +475,14 @@ score for a set of forecasts.
 Computing the Pinball Loss (:func:`~kdiagram.utils.compute_pinball_loss`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Purpose**
+**Purpose:**
 This utility calculates the **Pinball Loss**, a fundamental metric
 used to evaluate the accuracy of a single quantile forecast. It is
 the building block for the Continuous Ranked Probability Score
 (CRPS). A lower score indicates a more accurate quantile forecast.
 
----
-**Mathematical Concept**
+
+**Mathematical Concept:**
 The Pinball Loss, :math:`\mathcal{L}_{\tau}`, is a proper scoring
 rule for a single quantile forecast :math:`q` at level
 :math:`\tau` against an observation :math:`y`. Its key feature is
@@ -501,8 +502,7 @@ weight of :math:`(1 - \tau)` to over-predictions (when :math:`y < q`).
 This function calculates the average of this loss over all
 provided observations.
 
----
-**Example**
+**Example:**
 The following example demonstrates how to calculate the average
 Pinball Loss for a 90th percentile (Q90) forecast.
 
@@ -541,7 +541,7 @@ Pinball Loss for a 90th percentile (Q90) forecast.
 Computing the CRPS (:func:`~kdiagram.utils.compute_crps`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Purpose**
+**Purpose:**
 This utility approximates the **Continuous Ranked Probability Score
 (CRPS)**, a proper scoring rule that provides a single, comprehensive
 measure of a probabilistic forecast's quality. It generalizes the
@@ -549,7 +549,7 @@ Mean Absolute Error to a probabilistic setting and simultaneously
 assesses both **calibration** and **sharpness**. A lower CRPS value
 indicates a better forecast.
 
-**Mathematical Concept**
+**Mathematical Concept:**
 The Continuous Ranked Probability Score (CRPS) is a widely used
 metric for evaluating probabilistic forecasts
 :footcite:p:`Gneiting2007b`. For a single observation :math:`y`
@@ -558,7 +558,6 @@ squared difference between the forecast CDF and the empirical CDF
 of the observation:
 
 .. math::
-   :label: eq:crps_integral
 
    \text{CRPS}(F, y) = \int_{-\infty}^{\infty} (F(x) -
    \mathbf{1}\{x \ge y\})^2 dx
@@ -577,21 +576,21 @@ The CRPS provides a single number to summarize the overall
 performance of a probabilistic forecast.
 
 * **Lower is Better**: A model with a lower average CRPS is
-    considered superior, as it indicates a better combination of
-    calibration and sharpness.
+  considered superior, as it indicates a better combination of
+  calibration and sharpness.
 * **Units**: The CRPS is expressed in the same units as the
-    observed variable, making it easy to interpret.
+  observed variable, making it easy to interpret.
 
 
 **Use Cases**
 
 * To get a single, high-level summary score for comparing the
-    overall performance of multiple probabilistic models.
+  overall performance of multiple probabilistic models.
 * To use as the primary objective function when tuning a
-    probabilistic forecasting model.
+  probabilistic forecasting model.
 * To use alongside diagnostic plots like the PIT Histogram and
-    Sharpness Diagram to understand *why* one model has a better
-    CRPS than another.
+  Sharpness Diagram to understand *why* one model has a better
+  CRPS than another.
 
 
 **Example**

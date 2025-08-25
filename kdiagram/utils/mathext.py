@@ -317,9 +317,11 @@ drop_na : bool, default=True
     ``na_policy``.
 na_policy : {"any", "all", "none"}, default="any"
     The policy for dropping rows with NA values:
+        
     - "any": Drop rows if any selected column has an NA.
     - "all": Drop rows only if all selected columns are NA.
     - "none": Do not drop rows based on NAs.
+    
 fillna : scalar, dict or {"ffill", "bfill"}, optional
     A value or method to use for filling NA values before any
     dropping occurs.
@@ -351,9 +353,11 @@ Returns
 -------
 np.ndarray, pd.Series, pd.DataFrame, or tuple
     The return type depends on the input parameters:
+        
     - If only ``actual_col`` is provided -> y_true
     - If only ``pred_cols`` is provided -> y_pred(s)
     - If both are provided -> (y_true, y_pred(s))
+    
     If ``with_index=True``, the index is prepended to the
     return value(s).
 
@@ -497,7 +501,6 @@ of :math:`M` quantiles, the PIT value for each observation
 quantiles that are less than or equal to the observation:
 
 .. math::
-   :label: eq:pit_quantile_util
 
    \text{PIT}_i = \frac{1}{M} \sum_{j=1}^{M}
    \mathbf{1}\{q_{i,j} \le y_i\}
@@ -988,7 +991,6 @@ penalizes errors, giving a weight of :math:`\tau` to
 under-predictions and :math:`(1 - \tau)` to over-predictions.
 
 .. math::
-   :label: eq:pinball_loss_def
 
    \mathcal{L}_{\tau}(q, y) =
    \begin{cases}
@@ -1105,7 +1107,6 @@ observation :math:`y` and a :math:`(1-\alpha)` prediction
 interval :math:`[l, u]` is defined as:
 
 .. math::
-   :label: eq:winkler_score
 
    S_{\alpha}(l, u, y) = (u - l) +
    \begin{cases}
@@ -1268,7 +1269,6 @@ For each feature (column) in the input data :math:`\mathbf{X}`,
 the transformation is calculated as:
 
 .. math::
-   :label: eq:minmax_scaler
 
    X_{\text{scaled}} = \text{min}_{\text{range}} +
    (\text{max}_{\text{range}} - \text{min}_{\text{range}})

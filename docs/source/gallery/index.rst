@@ -19,7 +19,6 @@ Browse through the sections below to see `k-diagram` in action.
 
    uncertainty
    errors
-   evaluation
    probabilistic
    comparison
    relationship

@@ -29,7 +29,7 @@ Summary of Contextual Plotting Functions
    * - :func:`~kdiagram.plot.context.plot_time_series`
      - Plots the actual and predicted values over time, with optional
        uncertainty bands.
-   * - :func:`~k-diagram.plot.context.plot_scatter_correlation`
+   * - :func:`~kdiagram.plot.context.plot_scatter_correlation`
      - Creates a standard scatter plot of true vs. predicted values
        to assess correlation and bias.
    * - :func:`~kdiagram.plot.context.plot_error_distribution`
@@ -44,6 +44,8 @@ Summary of Contextual Plotting Functions
    * - :func:`~kdiagram.plot.context.plot_error_pacf`
      - Creates a PACF plot to identify the specific structure of
        autocorrelation in the errors.
+
+.. _common_plotting_parameters: 
 
 Common Plotting Parameters
 --------------------------
@@ -139,15 +141,12 @@ forecast's performance against the true observed values.
 
 
 **Use Cases:**
+
 * As the **first step** in any forecast evaluation to get a high-level
   sense of model performance.
 * To visually compare the tracking ability of multiple models.
 * To check if the prediction intervals are wide enough to contain the
   actual values and to see if the uncertainty changes over time.
-
-
-**Example:**
-See the gallery example and code: :ref:`gallery_plot_time_series`.
 
 **Example**
 The following example demonstrates how to plot the true values
@@ -317,26 +316,26 @@ The plot provides an immediate visual summary of the error
 distribution's key characteristics.
 
 * **Bias (Central Tendency)**: The location of the highest peak
-    of the distribution. For an unbiased model, this peak should
-    be centered at zero.
+  of the distribution. For an unbiased model, this peak should
+  be centered at zero.
 * **Variance (Spread)**: The width of the distribution. A narrow
-    distribution indicates low-variance, consistent errors, while
-    a wide distribution indicates high-variance, less reliable
-    predictions.
+  distribution indicates low-variance, consistent errors, while
+  a wide distribution indicates high-variance, less reliable
+  predictions.
 * **Shape**: The overall shape of the curve. A symmetric "bell
-    curve" suggests the errors are normally distributed. Skewness
-    or multiple peaks (bimodality) can indicate that the model
-    struggles with certain types of predictions.
+  curve" suggests the errors are normally distributed. Skewness
+  or multiple peaks (bimodality) can indicate that the model
+  struggles with certain types of predictions.
 
 
 **Use Cases:**
 
 * To check if a model's errors are unbiased (i.e., have a mean of
-    zero).
+  zero).
 * To assess if the errors follow a normal distribution, which is a
-    key assumption for constructing valid confidence intervals.
+  key assumption for constructing valid confidence intervals.
 * To identify skewness or heavy tails in the error distribution,
-    which might indicate that the model has systematic failings.
+  which might indicate that the model has systematic failings.
 
 
 **Example**
@@ -463,28 +462,28 @@ The plot is used to identify if predictable patterns remain in the
 model's errors.
 
 * **Significance Bands**: The horizontal lines or shaded area
-    represent the significance threshold. Autocorrelations that
-    fall **inside** this band are generally considered to be
-    statistically insignificant from zero.
+  represent the significance threshold. Autocorrelations that
+  fall **inside** this band are generally considered to be
+  statistically insignificant from zero.
 * **Significant Lags**: If one or more spikes extend **outside**
-    the significance bands, it indicates that the errors are
-    correlated with their past values at those lags. This means
-    the model has failed to capture all the predictable
-    information in the time series.
+  the significance bands, it indicates that the errors are
+  correlated with their past values at those lags. This means
+  the model has failed to capture all the predictable
+  information in the time series.
 
 
 **Use Cases:**
 
 * To check if a time series model's errors are independent over
-    time (i.e., resemble white noise), which is a key assumption
-    for a well-specified model.
+  time (i.e., resemble white noise), which is a key assumption
+  for a well-specified model.
 * To identify remaining seasonality or trend in the residuals. If
-    you see significant spikes at regular intervals (e.g., every
-    12 lags for monthly data), it means your model has not fully
-    captured the seasonal pattern.
+  you see significant spikes at regular intervals (e.g., every
+  12 lags for monthly data), it means your model has not fully
+  captured the seasonal pattern.
 * To guide model improvement. Significant autocorrelation suggests
-    that the model could be improved by adding more lags or other
-    time-based features.
+  that the model could be improved by adding more lags or other
+  time-based features.
 
 
 **Example**
@@ -536,24 +535,24 @@ The PACF plot is used in conjunction with the ACF plot to diagnose
 the specific structure of any remaining patterns in the residuals.
 
 * **Significance Band**: The shaded area represents the
-    significance threshold. Spikes that extend **outside** this
-    band are statistically significant.
+  significance threshold. Spikes that extend **outside** this
+  band are statistically significant.
 * **Cut-off Pattern**: A key pattern to look for is a sharp
-    "cut-off." If the PACF plot shows a significant spike at lag
-    :math:`p` and non-significant spikes thereafter, it is a
-    strong indication of an autoregressive (AR) process of order
-    :math:`p`.
+  "cut-off." If the PACF plot shows a significant spike at lag
+  :math:`p` and non-significant spikes thereafter, it is a
+  strong indication of an autoregressive (AR) process of order
+  :math:`p`.
 
 
 **Use Cases:**
 
 * To identify the order of an autoregressive (AR) model that might
-    be missing from your forecast model.
+  be missing from your forecast model.
 * To confirm that a model's errors are random and that no
-    significant *direct* linear relationships between lagged errors
-    remain.
+  significant *direct* linear relationships between lagged errors
+  remain.
 * As a complementary tool to the ACF plot for a more complete
-    diagnosis of time series residuals.
+  diagnosis of time series residuals.
 
 
 **Example**

@@ -123,8 +123,9 @@ values comparing feature influence across three years.
       
 .. _gallery_plot_feature_interaction:
 
+---------------------------
 Polar Feature Interaction
--------------------------
+---------------------------
 
 Visualizes the interaction between two features by plotting a target
 variable's aggregated value on a polar heatmap. This plot is designed to
