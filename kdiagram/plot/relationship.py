@@ -1,9 +1,10 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
-from __future__ import annotations 
+from __future__ import annotations
 
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -13,11 +14,12 @@ from ..utils.generic_utils import drop_nan_in
 from ..utils.plot import set_axis_grid
 from ..utils.validator import validate_yy
 
-__all__ = ["plot_relationship", 
-           "plot_conditional_quantiles", 
-           "plot_residual_relationship",
-           "plot_error_relationship"
-           ]
+__all__ = [
+    "plot_relationship",
+    "plot_conditional_quantiles",
+    "plot_residual_relationship",
+    "plot_error_relationship",
+]
 
 
 @validate_params(
@@ -28,36 +30,36 @@ __all__ = ["plot_relationship",
 def plot_residual_relationship(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
-    names: Optional[List[str]] = None,
+    names: list[str] | None = None,
     title: str = "Residual vs. Predicted Relationship",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     s: int = 50,
     alpha: float = 0.7,
     show_zero_line: bool = True,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
 
     # --- Input Validation and Preparation ---
     if not y_preds:
         raise ValueError("At least one prediction array must be provided.")
-    
+
     y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
     y_true_val, _ = validate_yy(y_true, y_preds[0])
-    
+
     if not names:
         names = [f"Model {i+1}" for i in range(len(y_preds))]
 
     # --- Error and Coordinate Calculation ---
     errors_list = [y_true_val - np.asarray(yp) for yp in y_preds]
     all_errors = np.concatenate(errors_list)
-    
+
     # Shift the origin to handle negative error values on the radial axis
     r_offset = np.abs(np.min(all_errors)) if np.min(all_errors) < 0 else 0
-    
+
     # --- Plotting Setup ---
     fig, ax = plt.subplots(
         figsize=figsize, subplot_kw={"projection": "polar"}
@@ -67,26 +69,37 @@ def plot_residual_relationship(
 
     # --- Plot Zero-Error Line ---
     if show_zero_line:
-        ax.plot(np.linspace(0, 2 * np.pi, 100), [r_offset] * 100,
-                color='black', linestyle='--', lw=1.5, label='Zero Error')
+        ax.plot(
+            np.linspace(0, 2 * np.pi, 100),
+            [r_offset] * 100,
+            color="black",
+            linestyle="--",
+            lw=1.5,
+            label="Zero Error",
+        )
 
     # --- Plot Error Points for Each Model ---
     for i, (yp, errors) in enumerate(zip(y_preds, errors_list)):
         y_pred_val = np.asarray(yp)
-        
+
         # Sort by the predicted value for a smooth spiral
         sort_idx = np.argsort(y_pred_val)
         y_pred_sorted = y_pred_val[sort_idx]
         errors_sorted = errors[sort_idx]
-        
+
         # Map sorted predicted value to angle
-        theta = (y_pred_sorted - y_pred_sorted.min()) / \
-                (y_pred_sorted.max() - y_pred_sorted.min()) * 2 * np.pi
-        
+        theta = (
+            (y_pred_sorted - y_pred_sorted.min())
+            / (y_pred_sorted.max() - y_pred_sorted.min())
+            * 2
+            * np.pi
+        )
+
         radii = errors_sorted + r_offset
-        
-        ax.scatter(theta, radii, color=colors[i], s=s, alpha=alpha,
-                   label=names[i])
+
+        ax.scatter(
+            theta, radii, color=colors[i], s=s, alpha=alpha, label=names[i]
+        )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
@@ -103,6 +116,7 @@ def plot_residual_relationship(
         plt.show()
 
     return ax
+
 
 plot_residual_relationship.__doc__ = r"""
 Plots the relationship between forecast error and predicted value.
@@ -213,6 +227,7 @@ References
 .. footbibliography::
 """
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -221,45 +236,51 @@ References
 def plot_error_relationship(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
-    names: Optional[List[str]] = None,
+    names: list[str] | None = None,
     title: str = "Error vs. True Value Relationship",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     s: int = 50,
     alpha: float = 0.7,
     show_zero_line: bool = True,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool=False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
- 
+
     # --- Input Validation and Preparation ---
     if not y_preds:
         raise ValueError("At least one prediction array must be provided.")
-    
+
     y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
-    y_true, _ = validate_yy(y_true, y_preds[0]) # Validate first pred against true
-    
+    y_true, _ = validate_yy(
+        y_true, y_preds[0]
+    )  # Validate first pred against true
+
     if not names:
         names = [f"Model {i+1}" for i in range(len(y_preds))]
 
     # --- Error and Coordinate Calculation ---
     errors_list = [y_true - np.asarray(yp) for yp in y_preds]
     all_errors = np.concatenate(errors_list)
-    
+
     # To handle negative errors on a polar plot, we shift the origin.
     # The zero-error line will be a circle.
     r_offset = np.abs(np.min(all_errors)) if np.min(all_errors) < 0 else 0
-    
+
     # Sort by true value to create a smooth spiral effect
     sort_idx = np.argsort(y_true)
     y_true_sorted = y_true[sort_idx]
-    
+
     # Map sorted true value to angle
-    theta = (y_true_sorted - y_true_sorted.min()) / \
-            (y_true_sorted.max() - y_true_sorted.min()) * 2 * np.pi
+    theta = (
+        (y_true_sorted - y_true_sorted.min())
+        / (y_true_sorted.max() - y_true_sorted.min())
+        * 2
+        * np.pi
+    )
 
     # --- Plotting Setup ---
     fig, ax = plt.subplots(
@@ -270,16 +291,23 @@ def plot_error_relationship(
 
     # --- Plot Zero-Error Line ---
     if show_zero_line:
-        ax.plot(np.linspace(0, 2 * np.pi, 100), [r_offset] * 100,
-                color='black', linestyle='--', lw=1.5, label='Zero Error')
+        ax.plot(
+            np.linspace(0, 2 * np.pi, 100),
+            [r_offset] * 100,
+            color="black",
+            linestyle="--",
+            lw=1.5,
+            label="Zero Error",
+        )
 
     # --- Plot Error Points for Each Model ---
     for i, errors in enumerate(errors_list):
         errors_sorted = errors[sort_idx]
         radii = errors_sorted + r_offset
-        
-        ax.scatter(theta, radii, color=colors[i], s=s, alpha=alpha,
-                   label=names[i])
+
+        ax.scatter(
+            theta, radii, color=colors[i], s=s, alpha=alpha, label=names[i]
+        )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
@@ -287,10 +315,10 @@ def plot_error_relationship(
     ax.set_ylabel("Forecast Error", labelpad=25)
     ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
+
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -299,6 +327,7 @@ def plot_error_relationship(
         plt.show()
 
     return ax
+
 
 plot_error_relationship.__doc__ = r"""
 Plots the relationship between forecast error and the true value.
@@ -411,6 +440,7 @@ References
     
 """
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -423,16 +453,16 @@ def plot_conditional_quantiles(
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
     *,
-    bands: Optional[List[int]] = None,
+    bands: list[int] | None = None,
     title: str = "Conditional Quantile Plot",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     alpha_min: float = 0.2,
     alpha_max: float = 0.5,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool =False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
 
@@ -448,22 +478,27 @@ def plot_conditional_quantiles(
     sort_idx = np.argsort(y_true)
     y_true_sorted = y_true[sort_idx]
     y_preds_sorted = y_preds_quantiles[sort_idx, :]
-    
+
     # --- Plotting Setup ---
     fig, ax = plt.subplots(
         figsize=figsize, subplot_kw={"projection": "polar"}
     )
-    
+
     # Map y_true to the angular coordinate
-    theta = (y_true_sorted - y_true_sorted.min()) / \
-            (y_true_sorted.max() - y_true_sorted.min()) * 2 * np.pi
+    theta = (
+        (y_true_sorted - y_true_sorted.min())
+        / (y_true_sorted.max() - y_true_sorted.min())
+        * 2
+        * np.pi
+    )
 
     # --- Identify Median and Bands ---
     median_q = 0.5
     if median_q not in quantiles:
         warnings.warn(
             "Median (0.5) not found in quantiles."
-            " No central line will be plotted."
+            " No central line will be plotted.",
+            stacklevel=2,
         )
         median_idx = -1
     else:
@@ -473,9 +508,9 @@ def plot_conditional_quantiles(
         # Default to the widest possible interval
         min_q, max_q = np.min(quantiles), np.max(quantiles)
         bands = [int((max_q - min_q) * 100)]
-    
-    bands = sorted(bands, reverse=True) # Plot widest band first
-    
+
+    bands = sorted(bands, reverse=True)  # Plot widest band first
+
     cmap_obj = get_cmap(cmap, default="viridis")
     alphas = np.linspace(alpha_min, alpha_max, len(bands))
     colors = cmap_obj(np.linspace(0.3, 0.9, len(bands)))
@@ -484,38 +519,48 @@ def plot_conditional_quantiles(
     for i, band_pct in enumerate(bands):
         lower_q = (100 - band_pct) / 200.0
         upper_q = 1 - lower_q
-        
+
         try:
             lower_idx = np.where(np.isclose(quantiles, lower_q))[0][0]
             upper_idx = np.where(np.isclose(quantiles, upper_q))[0][0]
         except IndexError:
-            warnings.warn(f"Quantiles for {band_pct}% interval not found. Skipping.")
+            warnings.warn(
+                f"Quantiles for {band_pct}% interval not found. Skipping.",
+                stacklevel=2,
+            )
             continue
-            
+
         ax.fill_between(
             theta,
             y_preds_sorted[:, lower_idx],
             y_preds_sorted[:, upper_idx],
             color=colors[i],
             alpha=alphas[i],
-            label=f'{band_pct}% Interval'
+            label=f"{band_pct}% Interval",
         )
 
     # --- Plot Median Line ---
     if median_idx != -1:
-        ax.plot(theta, y_preds_sorted[:, median_idx], color='black',
-                lw=1.5, label='Median (Q50)')
+        ax.plot(
+            theta,
+            y_preds_sorted[:, median_idx],
+            color="black",
+            lw=1.5,
+            label="Median (Q50)",
+        )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_xlabel(f"Based on {y_true.name if hasattr(y_true, 'name') else 'True Value'}")
+    ax.set_xlabel(
+        f"Based on {y_true.name if hasattr(y_true, 'name') else 'True Value'}"
+    )
     ax.set_ylabel("Predicted Value", labelpad=25)
     ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
+
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -524,6 +569,7 @@ def plot_conditional_quantiles(
         plt.show()
 
     return ax
+
 
 plot_conditional_quantiles.__doc__ = r"""
 Plots polar conditional quantile bands.
@@ -640,6 +686,7 @@ References
 ----------
 .. footbibliography::
 """
+
 
 @validate_params(
     {

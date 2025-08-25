@@ -7,7 +7,7 @@ Probabilistic Forecast Evaluation Plots
 from __future__ import annotations
 
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,26 +15,25 @@ import pandas as pd
 from scipy.stats import kstest, uniform
 
 from ..compat.matplotlib import get_cmap
-from ..compat.sklearn import validate_params 
+from ..compat.sklearn import validate_params
 from ..decorators import check_non_emptiness, isdf
 from ..utils.plot import set_axis_grid
-from ..utils.validator import validate_yy
-from ..utils.validator import exist_features
-
+from ..utils.validator import exist_features, validate_yy
 
 __all__ = [
-    "plot_crps_comparison", 
-    "plot_pit_histogram", 
-    "plot_polar_sharpness", 
+    "plot_crps_comparison",
+    "plot_pit_histogram",
+    "plot_polar_sharpness",
     "plot_credibility_bands",
-    "plot_calibration_sharpness"
-    ]
+    "plot_calibration_sharpness",
+]
+
 
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_preds_quantiles": ['array-like'],
-        "quantiles": ['array-like'],
+        "y_preds_quantiles": ["array-like"],
+        "quantiles": ["array-like"],
     }
 )
 @check_non_emptiness(params=["y_true", "y_preds_quantiles"])
@@ -45,21 +44,23 @@ def plot_pit_histogram(
     *,
     n_bins: int = 10,
     title: str = "PIT Histogram",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     color: str = "#3498DB",
     edgecolor: str = "black",
     alpha: float = 0.7,
     show_uniform_line: bool = True,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool =False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
     # --- Input Validation ---
     y_true, y_preds_quantiles = validate_yy(
-        y_true, y_preds_quantiles, expected_type=None,
-        allow_2d_pred=True, 
+        y_true,
+        y_preds_quantiles,
+        expected_type=None,
+        allow_2d_pred=True,
     )
     quantiles = np.asarray(quantiles)
     if y_preds_quantiles.shape[1] != len(quantiles):
@@ -80,20 +81,25 @@ def plot_pit_histogram(
     # --- Histogram Calculation ---
     hist, bin_edges = np.histogram(pit_values, bins=n_bins, range=(0, 1))
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-    
+
     # --- Plotting ---
     fig, ax = plt.subplots(
         figsize=figsize, subplot_kw={"projection": "polar"}
     )
-    
+
     # Angles are the PIT bins, radius is the frequency
     angles = bin_centers * 2 * np.pi
     radii = hist
     width = (2 * np.pi) / n_bins
 
     ax.bar(
-        angles, radii, width=width, color=color,
-        edgecolor=edgecolor, alpha=alpha, label="PIT Frequency"
+        angles,
+        radii,
+        width=width,
+        color=color,
+        edgecolor=edgecolor,
+        alpha=alpha,
+        label="PIT Frequency",
     )
 
     # Add reference line for perfect calibration
@@ -102,10 +108,10 @@ def plot_pit_histogram(
         ax.plot(
             np.linspace(0, 2 * np.pi, 100),
             [expected_count] * 100,
-            color='red',
-            linestyle='--',
+            color="red",
+            linestyle="--",
             lw=2,
-            label=f'Uniform ({expected_count:.1f})'
+            label=f"Uniform ({expected_count:.1f})",
         )
 
     # --- Formatting ---
@@ -116,10 +122,10 @@ def plot_pit_histogram(
     ax.set_ylabel("Frequency")
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
+
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -128,6 +134,7 @@ def plot_pit_histogram(
         plt.show()
 
     return ax
+
 
 plot_pit_histogram.__doc__ = r"""
 Plots a Polar Probability Integral Transform (PIT) Histogram.
@@ -243,25 +250,26 @@ References
 .. footbibliography::
 """
 
+
 @validate_params(
     {
-        "quantiles": ['array-like'],
+        "quantiles": ["array-like"],
     }
 )
 @check_non_emptiness(params=["y_preds_quantiles"])
 def plot_polar_sharpness(
     *y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
-    names: Optional[List[str]] = None,
+    names: list[str] | None = None,
     title: str = "Forecast Sharpness Comparison",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     marker: str = "o",
     s: int = 100,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool =False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
 
@@ -273,7 +281,10 @@ def plot_polar_sharpness(
         raise ValueError("`quantiles` must be a 1D array.")
 
     if names and len(names) != len(y_preds_quantiles):
-        warnings.warn("Number of names does not match number of models. Using defaults.")
+        warnings.warn(
+            "Number of names does not match number of models. Using defaults.",
+            stacklevel=2,
+        )
         names = None
     if not names:
         names = [f"Model {i+1}" for i in range(len(y_preds_quantiles))]
@@ -283,8 +294,10 @@ def plot_polar_sharpness(
     for preds in y_preds_quantiles:
         preds = np.asarray(preds)
         if preds.shape[1] != len(quantiles):
-            raise ValueError("Prediction array shape mismatch with quantiles.")
-        
+            raise ValueError(
+                "Prediction array shape mismatch with quantiles."
+            )
+
         # Use the widest interval for sharpness (e.g., 95% - 5%)
         lower_bound = preds[:, np.argmin(quantiles)]
         upper_bound = preds[:, np.argmax(quantiles)]
@@ -295,11 +308,11 @@ def plot_polar_sharpness(
     fig, ax = plt.subplots(
         figsize=figsize, subplot_kw={"projection": "polar"}
     )
-    
+
     num_models = len(y_preds_quantiles)
     angles = np.linspace(0, 2 * np.pi, num_models, endpoint=False)
     radii = sharpness_scores
-    
+
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(np.linspace(0, 1, num_models))
 
@@ -307,18 +320,24 @@ def plot_polar_sharpness(
 
     # Add labels next to points
     for i, name in enumerate(names):
-        ax.text(angles[i], radii[i], f'  {name}\n  ({radii[i]:.2f})',
-                ha='left', va='center', fontsize=9)
+        ax.text(
+            angles[i],
+            radii[i],
+            f"  {name}\n  ({radii[i]:.2f})",
+            ha="left",
+            va="center",
+            fontsize=9,
+        )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=14, y=1.1)
-    ax.set_xticks([]) # No angular ticks needed
+    ax.set_xticks([])  # No angular ticks needed
     ax.set_ylabel("Average Interval Width (Sharpness)")
     ax.set_ylim(bottom=0)
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -333,14 +352,15 @@ def _calculate_crps(y_true, y_preds_quantiles, quantiles):
     """
     Approximates the CRPS using the pinball loss averaged over quantiles.
     """
-    y_true = y_true[:, np.newaxis] # Reshape for broadcasting
+    y_true = y_true[:, np.newaxis]  # Reshape for broadcasting
     pinball_loss = np.where(
         y_true >= y_preds_quantiles,
         (y_true - y_preds_quantiles) * quantiles,
-        (y_preds_quantiles - y_true) * (1 - quantiles)
+        (y_preds_quantiles - y_true) * (1 - quantiles),
     )
     # Average over quantiles for each observation, then over all observations
     return np.mean(np.mean(pinball_loss, axis=1))
+
 
 plot_polar_sharpness.__doc__ = r"""
 Plots a Polar Sharpness Diagram to compare forecast precision.
@@ -454,10 +474,11 @@ References
 
 """
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
-        "quantiles": ['array-like'],
+        "quantiles": ["array-like"],
     }
 )
 @check_non_emptiness(params=["y_true", "y_preds_quantiles"])
@@ -465,16 +486,16 @@ def plot_crps_comparison(
     y_true: np.ndarray,
     *y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
-    names: Optional[List[str]] = None,
+    names: list[str] | None = None,
     title: str = "Probabilistic Forecast Performance (CRPS)",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     marker: str = "o",
     s: int = 100,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool=False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
 
@@ -486,8 +507,9 @@ def plot_crps_comparison(
     if names and len(names) != len(y_preds_quantiles):
         warnings.warn(
             "Number of names does not match"
-            " number of models. Using defaults."
-    )
+            " number of models. Using defaults.",
+            stacklevel=2,
+        )
         names = None
     if not names:
         names = [f"Model {i+1}" for i in range(len(y_preds_quantiles))]
@@ -496,8 +518,10 @@ def plot_crps_comparison(
     crps_scores = []
     for preds in y_preds_quantiles:
         y_true_val, preds_val = validate_yy(
-            y_true, preds, expected_type=None, 
-            allow_2d_pred= True, 
+            y_true,
+            preds,
+            expected_type=None,
+            allow_2d_pred=True,
         )
         crps = _calculate_crps(y_true_val, preds_val, quantiles)
         crps_scores.append(crps)
@@ -506,11 +530,11 @@ def plot_crps_comparison(
     fig, ax = plt.subplots(
         figsize=figsize, subplot_kw={"projection": "polar"}
     )
-    
+
     num_models = len(y_preds_quantiles)
     angles = np.linspace(0, 2 * np.pi, num_models, endpoint=False)
     radii = crps_scores
-    
+
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(np.linspace(0, 1, num_models))
 
@@ -518,8 +542,14 @@ def plot_crps_comparison(
 
     # Add labels next to points
     for i, name in enumerate(names):
-        ax.text(angles[i], radii[i], f'  {name}\n  ({radii[i]:.3f})',
-                ha='left', va='center', fontsize=9)
+        ax.text(
+            angles[i],
+            radii[i],
+            f"  {name}\n  ({radii[i]:.3f})",
+            ha="left",
+            va="center",
+            fontsize=9,
+        )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=14, y=1.1)
@@ -527,10 +557,10 @@ def plot_crps_comparison(
     ax.set_ylabel("Average CRPS (Lower is Better)")
     ax.set_ylim(bottom=0)
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
+
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -539,6 +569,7 @@ def plot_crps_comparison(
         plt.show()
 
     return ax
+
 
 plot_crps_comparison.__doc__ = r"""
 Plots a Polar CRPS Comparison Diagram.
@@ -670,76 +701,99 @@ References
 .. footbibliography::
 """
 
+
 @check_non_emptiness(params=["df"])
 @isdf
 def plot_credibility_bands(
     df: pd.DataFrame,
-    q_cols: Tuple[str, str, str],
+    q_cols: tuple[str, str, str],
     theta_col: str,
     *,
-    theta_period: Optional[float] = None,
+    theta_period: float | None = None,
     theta_bins: int = 24,
     title: str = "Forecast Credibility Bands",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     color: str = "#3498DB",
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool=False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
     **fill_kws,
 ):
     # --- Input Validation ---
     if len(q_cols) != 3:
-        raise ValueError("`q_cols` must be a tuple of three column names: "
-                         "(lower_q, median_q, upper_q).")
+        raise ValueError(
+            "`q_cols` must be a tuple of three column names: "
+            "(lower_q, median_q, upper_q)."
+        )
     q_low_col, q_med_col, q_up_col = q_cols
     required_cols = [q_low_col, q_med_col, q_up_col, theta_col]
     exist_features(df, features=required_cols)
 
     data = df[required_cols].dropna().copy()
     if data.empty:
-        warnings.warn("DataFrame is empty after dropping NaNs.", UserWarning)
+        warnings.warn(
+            "DataFrame is empty after dropping NaNs.",
+            UserWarning,
+            stacklevel=2,
+        )
         return None
 
     if theta_period:
-        data['theta_rad'] = ((data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+        data["theta_rad"] = (
+            ((data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+        )
     else:
         min_theta, max_theta = data[theta_col].min(), data[theta_col].max()
         if (max_theta - min_theta) > 1e-9:
-            data['theta_rad'] = ((data[theta_col] - min_theta) / 
-                                 (max_theta - min_theta)) * 2 * np.pi
+            data["theta_rad"] = (
+                ((data[theta_col] - min_theta) / (max_theta - min_theta))
+                * 2
+                * np.pi
+            )
         else:
-            data['theta_rad'] = 0
+            data["theta_rad"] = 0
 
     # --- Binning and Statistics ---
     theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
     theta_labels = (theta_edges[:-1] + theta_edges[1:]) / 2
-    data['theta_bin'] = pd.cut(data['theta_rad'], bins=theta_edges, 
-                               labels=theta_labels, include_lowest=True)
+    data["theta_bin"] = pd.cut(
+        data["theta_rad"],
+        bins=theta_edges,
+        labels=theta_labels,
+        include_lowest=True,
+    )
 
-    stats = data.groupby('theta_bin', observed=False).agg({
-        q_low_col: 'mean',
-        q_med_col: 'mean',
-        q_up_col: 'mean'
-    }).reset_index()
+    stats = (
+        data.groupby("theta_bin", observed=False)
+        .agg({q_low_col: "mean", q_med_col: "mean", q_up_col: "mean"})
+        .reset_index()
+    )
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
-    
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+
     # Plot the mean median line
-    ax.plot(stats['theta_bin'], stats[q_med_col], color='black', lw=2,
-            label='Mean Median Forecast')
+    ax.plot(
+        stats["theta_bin"],
+        stats[q_med_col],
+        color="black",
+        lw=2,
+        label="Mean Median Forecast",
+    )
 
     # Plot the shaded credibility band
     ax.fill_between(
-        stats['theta_bin'],
+        stats["theta_bin"],
         stats[q_low_col],
         stats[q_up_col],
         color=color,
-        alpha=fill_kws.pop('alpha', 0.3),
-        label='Credibility Band',
-        **fill_kws
+        alpha=fill_kws.pop("alpha", 0.3),
+        label="Credibility Band",
+        **fill_kws,
     )
 
     # --- Formatting ---
@@ -748,10 +802,10 @@ def plot_credibility_bands(
     ax.set_ylabel("Forecast Value", labelpad=25)
     ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
+
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -768,10 +822,11 @@ def _calculate_ks_statistic(pit_values):
     of PIT values from a perfect uniform distribution.
     """
     if len(pit_values) < 2:
-        return 1.0 # Max penalty for insufficient data
+        return 1.0  # Max penalty for insufficient data
     # Compare the empirical distribution of PIT values to a uniform distribution
     ks_statistic, _ = kstest(pit_values, uniform.cdf)
     return ks_statistic
+
 
 plot_credibility_bands.__doc__ = r"""
 Plots Polar Credibility Bands to visualize forecast uncertainty.
@@ -887,21 +942,22 @@ References
 .. footbibliography::
 """
 
+
 @check_non_emptiness(params=["y_true", "y_preds_quantiles"])
 def plot_calibration_sharpness(
     y_true: np.ndarray,
     *y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
-    names: Optional[List[str]] = None,
+    names: list[str] | None = None,
     title: str = "Calibration vs. Sharpness Trade-off",
-    figsize: Tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     marker: str = "o",
     s: int = 150,
     show_grid: bool = True,
-    grid_props: Optional[Dict[str, Any]] = None,
-    mask_radius: bool=False, 
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
 
@@ -914,62 +970,87 @@ def plot_calibration_sharpness(
     # --- Score Calculation ---
     sharpness_scores = []
     calibration_scores = []
-    
+
     for preds in y_preds_quantiles:
         y_true_val, preds_val = validate_yy(y_true, preds, allow_2d_pred=True)
-        
+
         # 1. Calculate Sharpness (Radius)
         lower = preds_val[:, np.argmin(quantiles)]
         upper = preds_val[:, np.argmax(quantiles)]
         sharpness = np.mean(upper - lower)
         sharpness_scores.append(sharpness)
-        
+
         # 2. Calculate Calibration Error (Angle)
         sort_idx = np.argsort(quantiles)
         sorted_preds = preds_val[:, sort_idx]
-        pit_values = np.mean(sorted_preds <= y_true_val[:, np.newaxis], axis=1)
+        pit_values = np.mean(
+            sorted_preds <= y_true_val[:, np.newaxis], axis=1
+        )
         ks_stat = _calculate_ks_statistic(pit_values)
         calibration_scores.append(ks_stat)
 
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
-    
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+
     num_models = len(y_preds_quantiles)
     # Angle: 0 for perfect calibration (KS=0), 90 for worst (KS=1)
     angles = np.array(calibration_scores) * (np.pi / 2)
     radii = np.array(sharpness_scores)
-    
+
     cmap_obj = get_cmap(cmap, default="viridis")
     colors = cmap_obj(np.linspace(0, 1, num_models))
 
-    ax.scatter(angles, radii, c=colors, s=s, marker=marker, zorder=3, alpha=0.8)
+    ax.scatter(
+        angles, radii, c=colors, s=s, marker=marker, zorder=3, alpha=0.8
+    )
 
     # Add labels
     for i, name in enumerate(names):
-        ax.text(angles[i], radii[i], f'  {name}', ha='left', va='bottom', fontsize=9)
+        ax.text(
+            angles[i],
+            radii[i],
+            f"  {name}",
+            ha="left",
+            va="bottom",
+            fontsize=9,
+        )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
     ax.set_thetamin(0)
-    ax.set_thetamax(90) # Use a quarter circle for clarity
+    ax.set_thetamax(90)  # Use a quarter circle for clarity
     ax.set_ylim(bottom=0)
-    
+
     # Format angular ticks to represent calibration error
     ax.set_xticks(np.linspace(0, np.pi / 2, 5))
     ax.set_xticklabels([f"{val:.2f}" for val in np.linspace(0, 1, 5)])
-    
+
     ax.set_xlabel("Calibration Error (Lower is Better)")
     ax.set_ylabel("Sharpness (Lower is Better)", labelpad=25)
-    
+
     # Add a legend for colors
-    legend_elements = [plt.Line2D([0], [0], marker=marker, color=colors[i], label=names[i],
-                                  linestyle='None', markersize=10) for i in range(num_models)]
-    ax.legend(handles=legend_elements, loc="upper right", bbox_to_anchor=(1.35, 1.1))
-    
+    legend_elements = [
+        plt.Line2D(
+            [0],
+            [0],
+            marker=marker,
+            color=colors[i],
+            label=names[i],
+            linestyle="None",
+            markersize=10,
+        )
+        for i in range(num_models)
+    ]
+    ax.legend(
+        handles=legend_elements, loc="upper right", bbox_to_anchor=(1.35, 1.1)
+    )
+
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -978,6 +1059,7 @@ def plot_calibration_sharpness(
         plt.show()
 
     return ax
+
 
 plot_calibration_sharpness.__doc__ = r"""
 Plots a Polar Calibration-Sharpness Diagram.

@@ -7,10 +7,9 @@ Gallery
 Welcome to the `k-diagram` example gallery!
 
 This section provides practical, runnable examples demonstrating how to
-generate the various diagnostic plots and use the utility functions
-available in the package. Each example includes the necessary Python
-code and shows the resulting output (either a plot image or text
-output for utilities).
+generate the various diagnostic plots available in the package. Each
+example includes the necessary Python code and shows the resulting
+output.
 
 Browse through the sections below to see `k-diagram` in action.
 
@@ -18,12 +17,13 @@ Browse through the sections below to see `k-diagram` in action.
    :maxdepth: 1
    :caption: Gallery Sections:
 
-   uncertainty       
-   evaluation 
-   comparison       
-   feature_based     
-   relationship
-   probabilistic
+   uncertainty
    errors
-   hist      
-   utils             
+   evaluation
+   probabilistic
+   comparison
+   relationship
+   feature_based
+   evaluation
+   context
+   hist

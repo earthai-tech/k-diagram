@@ -162,9 +162,6 @@ specific location (if provided), time step, and quantile level. Creates
 separate columns for the time step identifier, the quantile level, and
 the corresponding value.
 
-*(Note: Based on the implementation details likely involving melt-merge-pivot,
-the actual output format might resemble `reshape_quantile_data`. However,
-documenting based on the common understanding of "melting" to a long format.)*
 
 **Key Parameters:**
 

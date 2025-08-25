@@ -1,0 +1,74 @@
+.. _release_v1_3_0:
+
+----------------
+Version 1.3.0
+----------------
+
+*(Released: 2025-08-25)*
+
+This is a major feature release that introduces a new ``context``
+module for standard Cartesian diagnostic plots and adds a 
+suite of utilities for data preparation and mathematical scoring.
+This release enhances the package's capabilities as a
+complete forecast evaluation toolkit.
+
+New Features
+~~~~~~~~~~~~~
+
+* |Feature| **New Contextual Plots Module** (``kdiagram.plot.context``):
+  A dedicated suite of standard diagnostic plots to provide context
+  for the main polar diagrams.
+  
+  - :func:`~kdiagram.plot.context.plot_time_series`
+  - :func:`~kdiagram.plot.context.plot_scatter_correlation`
+  - :func:`~kdiagram.plot.context.plot_error_distribution`
+  - :func:`~kdiagram.plot.context.plot_qq`
+  - :func:`~kdiagram.plot.context.plot_error_autocorrelation` (ACF)
+  - :func:`~kdiagram.plot.context.plot_error_pacf` (PACF)
+
+* |Feature| **New Data & Math Utilities**:
+
+  - New ``kdiagram.utils.forecast_utils`` module with 
+    helpers for common data wrangling tasks like
+    :func:`~kdiagram.utils.compute_forecast_errors`,
+    :func:`~kdiagram.utils.compute_interval_width`, and
+    :func:`~kdiagram.utils.pivot_forecasts_long`.
+  - New ``kdiagram.utils.mathext`` module for core mathematical
+    and probabilistic scoring functions, including
+    :func:`~kdiagram.utils.compute_crps`,
+    :func:`~kdiagram.utils.compute_pit`, and
+    :func:`~kdiagram.utils.compute_winkler_score`.
+
+Enhancements
+~~~~~~~~~~~~~~
+
+* |Enhancement| The API for several plotting functions (e.g.,
+  ``plot_time_series``) has been made flexible and explicit by
+  replacing variadic arguments (``*args``) with clear keyword
+  arguments (e.g., ``pred_cols: list``).
+
+Documentation
+~~~~~~~~~~~~~~~
+
+* |Docs| **New User Guides**:
+
+  - Added a comprehensive ``context.rst`` user guide with detailed
+    explanations and examples for all new contextual plots.
+  - Added new ``forecast_utils.rst`` and ``math_utils.rst`` user
+    guides for all new utility functions.
+* |Docs| **New Gallery Page**: Created a new ``context.rst`` gallery 
+  page with runnable examples and interpretation guides for all 
+  new contextual plots.
+
+Testing & QA
+~~~~~~~~~~~~~~
+
+* |Tests| **Test Suite Completed**: Added comprehensive test suites
+  for the new ``context``, ``forecast_utils``, and ``mathext``
+  modules, ensuring high code coverage.
+* |Tests| **All Warnings Resolved**: The entire test suite now
+  passes cleanly with **zero warnings** across all supported Python
+  versions (3.9 to 3.13). All previously skipped tests have been
+  fixed and enabled, and all global warning filters in
+  ``pyproject.toml`` have been removed in favor of explicit,
+  local handling within the tests.

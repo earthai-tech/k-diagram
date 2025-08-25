@@ -31,118 +31,6 @@ def reshape_quantile_data(
     savefile: str | None = None,
     verbose: int = 0,
 ) -> pd.DataFrame:
-    r"""
-    Reshape a wide-format DataFrame with quantile columns into a
-    DataFrame where the quantiles are separated into distinct
-    columns for each quantile value.
-
-    This method transforms columns that follow the naming pattern
-    ``{value_prefix}_{dt_value}_q{quantile}`` into a structured format,
-    preserving spatial coordinates and adding the temporal dimension
-    based on extracted datetime values [1]_.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing quantile columns. The columns should
-        follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
-
-        - `value_prefix` is the base name for the quantile measurement
-          (e.g., ``'predicted_subsidence'``)
-        - `dt_val` is the datetime value (e.g., year or month)
-        - `quantile` is the quantile value (e.g., 0.1, 0.5, 0.9)
-    value_prefix : str
-        Base name for quantile measurement columns (e.g.,
-        ``'predicted_subsidence'``). This is used to identify the
-        quantile columns in the DataFrame.
-    spatial_cols : list of str, optional
-        List of spatial column names (e.g., ``['longitude', 'latitude']``).
-        These columns will be preserved through the reshaping operations.
-        If `None`, the default columns (e.g., ``['longitude', 'latitude']``)
-        will be used.
-    dt_col : str, default='year'
-        Name of the column that will contain the extracted temporal
-        information (e.g., 'year'). This will be used as a column in the
-        output DataFrame for temporal dimension tracking.
-    error : {'raise', 'warn', 'ignore'}, default='warn'
-        Specifies how to handle errors when certain columns or data
-        patterns are not found. Options include:
-        - ``'raise'``: Raises a ValueError with a message if columns are missing.
-        - ``'warn'``: Issues a warning with a message if columns are missing.
-        - ``'ignore'``: Silently returns an empty DataFrame when issues are found.
-    savefile : str, optional
-        Path to save the reshaped DataFrame. If provided, the DataFrame
-        will be saved to this location.
-    verbose : int, default=0
-        Level of verbosity for progress messages. Higher values
-        correspond to more detailed output during processing:
-        - 0: Silent
-        - 1: Basic progress
-        - 2: Column parsing details
-        - 3: Metadata extraction
-        - 4: Reshaping steps
-        - 5: Full debug
-
-    Returns
-    -------
-    pd.DataFrame
-        A reshaped DataFrame with quantiles as separate columns for each
-        quantile value. The DataFrame will have the following columns:
-
-        - Spatial columns (if any)
-        - Temporal column (specified by ``dt_col``)
-        - ``{value_prefix}_q{quantile}`` value columns for each quantile
-
-    Examples
-    --------
-    >>> from kdiagram.utils.q_utils import reshape_quantile_data
-    >>> import pandas as pd
-    >>> wide_df = pd.DataFrame({
-    ...     'lon': [-118.25, -118.30],
-    ...     'lat': [34.05, 34.10],
-    ...     'subs_2022_q0.1': [1.2, 1.3],
-    ...     'subs_2022_q0.5': [1.5, 1.6],
-    ...     'subs_2023_q0.1': [1.7, 1.8]
-    ... })
-    >>> reshaped_df = reshape_quantile_data(wide_df, 'subs')
-    >>> reshaped_df.columns
-    Index(['lon', 'lat', 'year', 'subs_q0.1', 'subs_q0.5'], dtype='object')
-
-    Notes
-    -----
-
-    - The column names must follow the pattern
-      ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
-    - The temporal dimension is determined by the ``dt_col`` argument.
-    - Spatial columns are automatically detected or can be passed explicitly.
-    - The quantiles are pivoted and separated into distinct columns
-      based on the unique quantile values found in the DataFrame [2]_.
-
-    .. math::
-
-        \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
-
-    where:
-
-    - :math:`m` = Original row count
-    - :math:`n` = Original columns (quantile + spatial + temporal)
-    - :math:`p` = :math:`m \times t` (t = unique temporal values)
-    - :math:`k` = Spatial cols + 1 temporal + q quantile cols
-
-
-    See Also
-    --------
-    pandas.melt : For reshaping DataFrames from wide to long format.
-    kdiagram.utils.q_utils.melt_q_data : Alternative method for reshaping quantile data.
-
-
-    References
-    ----------
-    .. [1] McKinney, W. (2010). "Data Structures for Statistical Computing
-           in Python". Proceedings of the 9th Python in Science Conference.
-    .. [2] Wickham, H. (2014). "Tidy Data". Journal of Statistical Software,
-           59(10), 1-23.
-    """
     is_frame(df, df_only=True, objname="Data 'df'")
 
     if spatial_cols:
@@ -216,6 +104,120 @@ def reshape_quantile_data(
     )
 
 
+reshape_quantile_data.__doc__ = r"""
+Reshape a wide-format DataFrame with quantile columns into a
+DataFrame where the quantiles are separated into distinct
+columns for each quantile value.
+
+This method transforms columns that follow the naming pattern
+``{value_prefix}_{dt_value}_q{quantile}`` into a structured format,
+preserving spatial coordinates and adding the temporal dimension
+based on extracted datetime values [1]_.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing quantile columns. The columns should
+    follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
+
+    - `value_prefix` is the base name for the quantile measurement
+      (e.g., ``'predicted_subsidence'``)
+    - `dt_val` is the datetime value (e.g., year or month)
+    - `quantile` is the quantile value (e.g., 0.1, 0.5, 0.9)
+value_prefix : str
+    Base name for quantile measurement columns (e.g.,
+    ``'predicted_subsidence'``). This is used to identify the
+    quantile columns in the DataFrame.
+spatial_cols : list of str, optional
+    List of spatial column names (e.g., ``['longitude', 'latitude']``).
+    These columns will be preserved through the reshaping operations.
+    If `None`, the default columns (e.g., ``['longitude', 'latitude']``)
+    will be used.
+dt_col : str, default='year'
+    Name of the column that will contain the extracted temporal
+    information (e.g., 'year'). This will be used as a column in the
+    output DataFrame for temporal dimension tracking.
+error : {'raise', 'warn', 'ignore'}, default='warn'
+    Specifies how to handle errors when certain columns or data
+    patterns are not found. Options include:
+    - ``'raise'``: Raises a ValueError with a message if columns are missing.
+    - ``'warn'``: Issues a warning with a message if columns are missing.
+    - ``'ignore'``: Silently returns an empty DataFrame when issues are found.
+savefile : str, optional
+    Path to save the reshaped DataFrame. If provided, the DataFrame
+    will be saved to this location.
+verbose : int, default=0
+    Level of verbosity for progress messages. Higher values
+    correspond to more detailed output during processing:
+    - 0: Silent
+    - 1: Basic progress
+    - 2: Column parsing details
+    - 3: Metadata extraction
+    - 4: Reshaping steps
+    - 5: Full debug
+
+Returns
+-------
+pd.DataFrame
+    A reshaped DataFrame with quantiles as separate columns for each
+    quantile value. The DataFrame will have the following columns:
+
+    - Spatial columns (if any)
+    - Temporal column (specified by ``dt_col``)
+    - ``{value_prefix}_q{quantile}`` value columns for each quantile
+
+Examples
+--------
+>>> from kdiagram.utils.q_utils import reshape_quantile_data
+>>> import pandas as pd
+>>> wide_df = pd.DataFrame({
+...     'lon': [-118.25, -118.30],
+...     'lat': [34.05, 34.10],
+...     'subs_2022_q0.1': [1.2, 1.3],
+...     'subs_2022_q0.5': [1.5, 1.6],
+...     'subs_2023_q0.1': [1.7, 1.8]
+... })
+>>> reshaped_df = reshape_quantile_data(wide_df, 'subs')
+>>> reshaped_df.columns
+Index(['lon', 'lat', 'year', 'subs_q0.1', 'subs_q0.5'], dtype='object')
+
+Notes
+-----
+
+- The column names must follow the pattern
+  ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
+- The temporal dimension is determined by the ``dt_col`` argument.
+- Spatial columns are automatically detected or can be passed explicitly.
+- The quantiles are pivoted and separated into distinct columns
+  based on the unique quantile values found in the DataFrame [2]_.
+
+.. math::
+
+    \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
+
+where:
+
+- :math:`m` = Original row count
+- :math:`n` = Original columns (quantile + spatial + temporal)
+- :math:`p` = :math:`m \times t` (t = unique temporal values)
+- :math:`k` = Spatial cols + 1 temporal + q quantile cols
+
+
+See Also
+--------
+pandas.melt : For reshaping DataFrames from wide to long format.
+kdiagram.utils.q_utils.melt_q_data : Alternative method for reshaping quantile data.
+
+
+References
+----------
+.. [1] McKinney, W. (2010). "Data Structures for Statistical Computing
+       in Python". Proceedings of the 9th Python in Science Conference.
+.. [2] Wickham, H. (2014). "Tidy Data". Journal of Statistical Software,
+       59(10), 1-23.
+"""
+
+
 @SaveFile
 @check_non_emptiness
 def melt_q_data(
@@ -229,140 +231,6 @@ def melt_q_data(
     savefile: str | None = None,
     verbose: int = 0,
 ) -> pd.DataFrame:
-    r"""
-    Reshape wide-format DataFrame with quantile columns to long format
-    with explicit temporal and quantile dimensions.
-
-    This method transforms columns that follow the naming pattern
-    ``{value_prefix}_{dt_value}_q{quantile}`` into a structured long format
-    with separated datetime and quantile columns. Handles spatial
-    coordinates preservation through reshaping operations [1]_.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing quantile columns. The columns should
-        follow the pattern ``{value_prefix}_{dt_val}_q{quantile}``, where:
-
-        - `value_prefix` is the base name for the quantile measurement
-          (e.g., ``'predicted_subsidence'``)
-        - `dt_val` is the datetime value (e.g., year or month)
-        - `quantile` is the quantile value (e.g., 0.1, 0.5, 0.9)
-    value_prefix : str
-        Base name for quantile measurement columns (e.g.,
-        ``'predicted_subsidence'``). This is used to identify the
-        quantile columns in the DataFrame.
-    dt_name : str, default='dt_col'
-        Name of the column that will contain the extracted temporal
-        information (e.g., 'year'). This will be used as a column in the
-        output DataFrame for temporal dimension tracking.
-    q : list of float/str, optional
-        Specific quantiles to include. Accepts:
-        - Float values (0.1, 0.5, 0.9)
-        - Percentage strings ("10%", "90%")
-        - None (include all detected quantiles)
-    error : {'raise', 'warn', 'ignore'}, default='raise'
-        Specifies how to handle errors when certain columns or data
-        patterns are not found. Options include:
-        - ``'raise'``: Raises a ValueError with a message if columns are missing.
-        - ``'warn'``: Issues a warning with a message if columns are missing.
-        - ``'ignore'``: Silently returns an empty DataFrame when issues are found.
-    sort_values : str, optional
-        If provided, the final pivoted DataFrame is sorted by this column.
-        If the column does not exist and `verbose` >= 1, the function
-        warns and does not sort.
-    spatial_cols : tuple of str, optional
-        Columns corresponding to spatial coordinates (e.g.,
-        ``('lon', 'lat')``). These are retained as part of the
-        index when the DataFrame is pivoted.
-    savefile : str, optional
-        Path to save the reshaped DataFrame. If provided, the DataFrame
-        will be saved to this location.
-    verbose : int, default=0
-        Level of verbosity for progress messages. Higher values
-        correspond to more detailed output during processing:
-        - 0: Silent
-        - 1: Basic progress
-        - 2: Column parsing details
-        - 3: Metadata extraction
-        - 4: Reshaping steps
-        - 5: Full debug
-
-    Returns
-    -------
-    pd.DataFrame
-        A long-format DataFrame with quantiles as separate columns for
-        each quantile value. The DataFrame will have the following columns:
-        - Spatial columns (if any)
-        - Temporal column (specified by ``dt_name``)
-        - ``{value_prefix}_q{quantile}`` value columns for each quantile
-
-    Examples
-    --------
-    >>> from kdiagram.utils.q_utils import melt_q_data
-    >>> import pandas as pd
-    >>> wide_df = pd.DataFrame({
-    ...     'lon': [-118.25, -118.30],
-    ...     'lat': [34.05, 34.10],
-    ...     'subs_2022_q0.1': [1.2, 1.3],
-    ...     'subs_2022_q0.5': [1.5, 1.6],
-    ...     'subs_2023_q0.9': [1.7, 1.8]
-    ... })
-    >>> long_df = melt_q_data(wide_df, 'subs', dt_name='year')
-    >>> long_df
-    Out[113]:
-       year  subs_q0.1  subs_q0.5  subs_q0.9
-    0  2022        1.2        1.5        NaN
-    1  2023        NaN        NaN        1.7
-    >>>
-    >>> long_df.columns
-    Index(['lon', 'lat', 'year', 'subs_q0.1', 'subs_q0.5'], dtype='object')
-    >>>
-    >>> long_df = melt_q_data(wide_df, 'subs', dt_name='year',
-    ...                      spatial_cols=('lon', 'lat'))
-    >>> long_df
-    Out[115]:
-          lon    lat  year  subs_q0.1  subs_q0.5  subs_q0.9
-    0 -118.30  34.10  2022        1.3        1.6        NaN
-    1 -118.30  34.10  2023        NaN        NaN        1.8
-    2 -118.25  34.05  2022        1.2        1.5        NaN
-    3 -118.25  34.05  2023        NaN        NaN        1.7
-
-    Notes
-    -----
-
-    - The column names must follow the pattern
-      ``{value_prefix}_{dt_value}_q{quantile}`` for proper extraction.
-    - The temporal dimension is determined by the ``dt_name`` argument.
-    - Spatial columns are automatically detected or can be passed explicitly.
-    - The quantiles are pivoted and separated into distinct columns
-      based on the unique quantile values found in the DataFrame [2]_.
-
-    .. math::
-
-        \mathbf{W}_{m \times n} \rightarrow \mathbf{L}_{p \times k}
-
-    Where:
-
-    - :math:`m` = Original row count
-    - :math:`n` = Original columns (quantile + spatial + temporal)
-    - :math:`p` = :math:`m \times t` (t = unique temporal values)
-    - :math:`k` = Spatial cols + 1 temporal + q quantile cols
-
-    See Also
-    --------
-    pandas.melt : For reshaping DataFrames from wide to long format.
-    kdiagram.utils.q_utils.reshape_quantile_data :
-        Alternative method for reshaping quantile data.
-
-
-    References
-    ----------
-    .. [1] McKinney, W. (2010). "Data Structures for Statistical Computing
-           in Python". Proceedings of the 9th Python in Science Conference.
-    .. [2] Wickham, H. (2014). "Tidy Data". Journal of Statistical Software,
-           59(10), 1-23.
-    """
     # Validate error handling
     error = error_policy(
         error,
@@ -503,6 +371,161 @@ def handle_error(msg: str, error: str) -> None:
         warnings.warn(msg, stacklevel=2)
 
 
+melt_q_data.__doc__ = r"""
+Reshape a wide DataFrame with time-embedded quantile columns into a
+tidy wide table with explicit temporal and quantile dimensions.
+
+This function looks for columns named like
+``{value_prefix}_{dt_value}_q{quantile}`` (e.g., ``subs_2022_q0.1``)
+and returns a table with one row per temporal value (and optional
+spatial coordinates), and one **column per quantile**
+(e.g., ``subs_q0.1``, ``subs_q0.5``, ...). Internally it melts,
+extracts metadata (time & quantile), then pivots so quantiles become
+separate columns.
+
+
+.. math::
+
+   \mathcal{S}=\text{spatial indices},\quad
+   \mathcal{T}=\text{times},\quad
+   \mathcal{Q}=\text{quantiles}
+
+.. math::
+
+   \mathbf{W}\in\mathbb{R}^{m\times n}
+   \ \xrightarrow{\ \text{melt+pivot}\ }\ 
+   \mathbf{L}\in\mathbb{R}^{p\times k}
+
+with
+
+- :math:`p=\lvert\{(s,t): s\in\mathcal{S},\,t\in\mathcal{T}\}\rvert`
+- :math:`k=\lvert\mathcal{S}\rvert + 1 + \lvert\mathcal{Q}\rvert`
+
+The source columns are named
+
+.. math::
+
+   \mathrm{col}(t,\alpha)=
+   \texttt{f"{value\_prefix}\_\{t\}\_q\{\alpha\}"}
+
+and hold values :math:`y_{s,t,\alpha}`. The output table contains,
+for each :math:`\alpha\in\mathcal{Q}`, the column
+
+.. math::
+
+   \texttt{f"{value\_prefix}\_q\{\alpha\}"}
+   \quad\text{with entries}\quad
+   \left[\mathbf{L}\right]_{(s,t),\,\alpha}
+   = y_{s,t,\alpha}.
+   
+Parameters
+----------
+df : pandas.DataFrame
+    Input DataFrame containing quantile columns named with the pattern
+    ``{value_prefix}_{dt_value}_q{quantile}``. Here ``dt_value`` is a
+    time token (e.g., year) and ``quantile`` is a numeric label (e.g.,
+    ``0.1``, ``0.5``, ``0.9``).
+value_prefix : str
+    Base measurement name used to identify quantile columns
+    (e.g., ``'subs'`` or ``'predicted_subsidence'``). **Required**.
+dt_name : str, default='dt_col'
+    Name of the output column holding the extracted temporal value
+    (e.g., ``'year'``).
+q : list of {float, str}, optional
+    Which quantiles to keep. Floats like ``0.1`` or strings like
+    ``"10%"`` are accepted. If ``None``, all detected quantiles are used.
+error : {'raise', 'warn', 'ignore'}, default='raise'
+    Behavior when no matching columns are found or a filter removes all:
+    - ``'raise'`` : raise ``ValueError`` with details
+    - ``'warn'``  : warn and return an empty DataFrame
+    - ``'ignore'``: silently return an empty DataFrame
+sort_values : str, optional
+    If provided, sort the **final** DataFrame by this column. If the
+    column is missing, a warning is printed when ``verbose >= 1`` and no
+    sort is applied.
+spatial_cols : tuple[str, ...] or list[str], optional
+    Names of columns that identify spatial coordinates (e.g.,
+    ``('lon', 'lat')``). If provided, they are retained in the index
+    during aggregation and preserved in the output. If omitted, spatial
+    columns are **not** retained (unless your environment-specific
+    helper auto-detects them).
+savefile : str, optional
+    Path to save the reshaped DataFrame (handled by ``@SaveFile``).
+verbose : int, default=0
+    Verbosity level: 0=silent, 1=progress, 2=column parsing,
+    3=metadata extraction, 4=reshaping steps, 5=full debug.
+
+Returns
+-------
+pandas.DataFrame
+    A tidy-wide DataFrame with columns:
+    - Spatial columns (if provided via ``spatial_cols``)
+    - The temporal column named ``dt_name``
+    - One column per quantile: ``{value_prefix}_q{quantile}``
+
+    Quantile column names are normalized to compact fixed-point strings,
+    e.g. ``subs_q0.1``, ``subs_q0.25``, ``subs_q0.9`` (trailing zeros
+    are trimmed).
+
+Notes
+-----
+
+- Expected input column pattern:
+  ``{value_prefix}_{dt_value}_q{quantile}``. The time token is captured
+  literally (e.g., ``2022``) and emitted into the ``dt_name`` column.
+- Quantile labels are parsed as floats. They are re-emitted with stable
+  string formatting (e.g., ``q0.1``, ``q0.25``).
+- If ``spatial_cols`` is not provided, spatial coordinates are typically
+  **not** preserved (unless a custom ``columns_manager`` performs
+  automatic detection in your codebase).
+- The function sorts rows by ``spatial_cols + [dt_name]`` (when
+  ``spatial_cols`` are present) or by ``[dt_name]`` for consistency.
+- If ``sort_values`` is given, a secondary sort is attempted; failures
+  are downgraded to warnings when ``verbose >= 2``.
+
+Examples
+--------
+Basic reshape without spatial coordinates::
+    
+    >>> from kdiagram.utils.q_utils import melt_q_data
+    >>> wide_df = pd.DataFrame({
+    ...     'lon': [-118.25, -118.30],
+    ...     'lat': [34.05, 34.10],
+    ...     'subs_2022_q0.1': [1.2, 1.3],
+    ...     'subs_2022_q0.5': [1.5, 1.6],
+    ...     'subs_2023_q0.9': [1.7, 1.8]
+    ... })
+    >>> out = melt_q_data(wide_df, 'subs', dt_name='year')
+    >>> out.columns.tolist()
+    ['year', 'subs_q0.1', 'subs_q0.5', 'subs_q0.9']
+
+Preserving spatial coordinates::
+
+    >>> out2 = melt_q_data(
+    ...     wide_df, 'subs', dt_name='year', spatial_cols=('lon', 'lat')
+    ... )
+    >>> out2.columns[:3].tolist()
+    ['lon', 'lat', 'year']
+
+Filtering to a subset of quantiles::
+
+    >>> out3 = melt_q_data(wide_df, 'subs', q=[0.1, '50%'])
+    >>> [c for c in out3.columns if c.startswith('subs_q')]
+    ['subs_q0.1', 'subs_q0.5']
+
+See Also
+--------
+pandas.melt : Reshape from wide to long.
+pandas.DataFrame.pivot_table : Pivot long to wide.
+
+References
+----------
+.. [1] Wickham, H. (2014). *Tidy Data*. J. Stat. Software, 59(10).
+.. [2] McKinney, W. (2010). *Data Structures for Statistical
+       Computing in Python*. Proc. SciPy.
+"""
+
+
 @SaveFile
 @check_non_emptiness
 def pivot_q_data(
@@ -514,101 +537,6 @@ def pivot_q_data(
     error: str = "raise",
     verbose: int = 0,
 ) -> pd.DataFrame:
-    r"""
-    Convert long-format DataFrame with quantile columns back to wide format
-    with temporal quantile measurements.
-
-    Reconstructs columns following the pattern
-    ``{value_prefix}_{dt_value}_q{quantile}`` from separated temporal and
-    quantile dimensions. Inverse operation of ``to_long_data_q`` [1]_.
-
-    .. math::
-
-        \mathbf{L}_{p \times k} \rightarrow \mathbf{W}_{m \times n}
-
-    where:
-
-    - :math:`p` = Long format row count
-    - :math:`k` = Spatial cols + temporal + quantile columns
-    - :math:`m` = :math:`p / t` (t = unique temporal values)
-    - :math:`n` = Spatial cols + :math:`t \times q` quantile columns
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Long-format DataFrame containing:
-        - Spatial columns (e.g., ``'lon'``, ``'lat'``)
-        - Temporal column (``dt_col``)
-        - Quantile columns (``{value_prefix}_q{quantile}``)
-    value_prefix : str
-        Base measurement name for column reconstruction
-        (e.g., ``'predicted_subsidence'``)
-    dt_col : str, default='dt_col'
-        Name of temporal dimension column containing dt_values
-    q : list of float/str, optional
-        Specific quantiles to include in output. If None,
-        uses all detected quantiles in columns
-    error : {'raise', 'warn', 'ignore'}, default='raise'
-        Handling for missing components:
-        - ``'raise'``: ValueError on missing data
-        - ``'warn'``: Warning with partial DataFrame
-        - ``'ignore'``: Return partial DataFrame silently
-    verbose : {0, 1, 2, 3, 4, 5}, default=0
-        Detail level for processing messages:
-        - 0: Silent
-        - 1: Basic progress
-        - 2: Column detection details
-        - 3: Quantile validation
-        - 4: Pivoting steps
-        - 5: Full shape transitions
-
-    Returns
-    -------
-    pd.DataFrame
-        Wide-format DataFrame with columns:
-        - Spatial columns
-        - ``{value_prefix}_{dt_value}_q{quantile}`` columns
-
-    Examples
-    --------
-    >>> from kdiagram.utils.q_utils import pivot_q_data
-    >>> long_df = pd.DataFrame({
-    ...     'lon': [-118.25, -118.25, -118.3],
-    ...     'lat': [34.05, 34.05, 34.1],
-    ...     'year': [2022, 2023, 2022],
-    ...     'subs_q0.1': [1.2, 1.7, 1.3],
-    ...     'subs_q0.5': [1.5, 1.9, 1.6]
-    ... })
-    >>> wide_df = pivot_q_data(long_df, 'subs', dt_col='year')
-    >>> wide_df.columns
-    Index(['lon', 'lat', 'subs_2022_q0.1', 'subs_2022_q0.5',
-           'subs_2023_q0.1', 'subs_2023_q0.5'], dtype='object')
-
-    Notes
-    -----
-    1. Column requirements:
-
-       - Must contain exactly one temporal column (``dt_col``)
-       - Quantile columns must follow ``{prefix}_q{quantile}`` pattern
-       - Spatial columns must be unique per location
-
-    2. Pivoting logic [2]_:
-
-       - Maintains original spatial coordinates through operations
-       - Handles missing quantiles per temporal value based on ``error``
-       - Preserves original data types for measurement values
-
-    See Also
-    --------
-    pandas.pivot_table : Base pandas function for reshaping
-
-    References
-    ----------
-    .. [1] VanderPlas, J. (2016). "Python Data Science Handbook".
-           O'Reilly Media, Inc.
-    .. [2] McKinney, W. (2013). "Python for Data Analysis".
-           O'Reilly Media, Inc.
-    """
 
     def handle_error(
         msg: str, error: str, default: pd.DataFrame
@@ -706,3 +634,138 @@ def pivot_q_data(
     ]
 
     return wide_df.reset_index()
+
+
+pivot_q_data.__doc__ = r"""
+Convert a long/tidy-wide quantile table back to a time-embedded
+wide format with columns named like ``{value_prefix}_{t}_q{α}``.
+
+This function expects one column per quantile in the input
+(e.g., ``subs_q0.1``, ``subs_q0.5``) plus a temporal column
+``dt_col`` and optional spatial columns. It reconstructs the
+original wide layout by creating a column for each pair
+``(t,α)`` and moving values into
+``{value_prefix}_{t}_q{α}``.
+
+.. math::
+
+   \mathcal{S}=\text{spatial indices},\quad
+   \mathcal{T}=\text{times},\quad
+   \mathcal{Q}=\text{quantiles}
+
+Input frame :math:`\mathbf{L}` has columns
+
+.. math::
+
+   \{\text{spatial}\}\ \cup\ \{\texttt{dt\_col}\}\
+   \cup\ \{\ \texttt{f"{value\_prefix}\_q\{\alpha\}"}\
+   :\ \alpha\in\mathcal{Q}\ \}.
+
+The output frame :math:`\mathbf{W}` has columns
+
+.. math::
+
+   \{\text{spatial}\}\ \cup\
+   \{\ \texttt{f"{value\_prefix}\_\{t\}\_q\{\alpha\}"}\
+   :\ t\in\mathcal{T},\,\alpha\in\mathcal{Q}\ \}.
+
+For each location :math:`s\in\mathcal{S}`, time :math:`t`, and
+quantile :math:`\alpha`,
+
+.. math::
+
+   \mathbf{W}\big[s,\ \texttt{f"{value\_prefix}\_\{t\}\_q\{\alpha\}"}\big]
+   \ =\ 
+   \mathbf{L}\big[(s,t),\ \texttt{f"{value\_prefix}\_q\{\alpha\}"}\big].
+
+Parameters
+----------
+df : pandas.DataFrame
+    Input table with:
+    - Spatial columns (optional)
+    - Temporal column ``dt_col``
+    - One column per quantile:
+      ``{value_prefix}_q{α}``
+value_prefix : str
+    Base measurement name (e.g., ``'subs'``). Used to reconstruct
+    wide column names.
+dt_col : str, default='dt_col'
+    Temporal column from which tokens ``t`` are taken.
+q : list of {float, str}, optional
+    Quantiles to include in the output. If ``None``, all detected
+    quantiles are used.
+spatial_cols : tuple[str, ...] or list[str], optional
+    Names of spatial coordinate columns. If provided, used as the
+    index during pivot and preserved in the output.
+error : {'raise', 'warn', 'ignore'}, default='raise'
+    Handling for missing components:
+    - ``'raise'`` : raise ``ValueError`` with details
+    - ``'warn'``  : warn and return an empty frame or partial
+    - ``'ignore'``: silently return partial results
+verbose : {0,1,2,3,4,5}, default=0
+    Detail level for progress messages.
+
+Returns
+-------
+pandas.DataFrame
+    Wide DataFrame with columns:
+    - Spatial columns (if provided)
+    - For each :math:`t\in\mathcal{T}` and :math:`\alpha\in\mathcal{Q}`,
+      a column named ``{value_prefix}_{t}_q{α}``.
+
+Notes
+-----
+- Quantile columns in the input must follow the pattern
+  ``{value_prefix}_q{α}``. The temporal values are taken from
+  ``dt_col``.
+- Column names in the output are normalized with compact fixed-point
+  quantile formatting (e.g., ``q0.1``, ``q0.25``).
+- Duplicate entries for the same ``(spatial, t, α)`` are aggregated
+  with ``aggfunc='first'`` by default. Adjust upstream data to avoid
+  ambiguity if necessary.
+- The transformation is the (approximate) inverse of
+  :func:`melt_q_data`:
+
+  .. math::
+
+     \mathbf{L}\ \xrightarrow{\ \text{pivot}\ }\ \mathbf{W}
+     \quad\text{and}\quad
+     \mathbf{W}\ \xrightarrow{\ \text{melt+pivot}\ }\ \mathbf{L}.
+
+Examples
+--------
+From long/tidy-wide to time-embedded wide::
+
+    >>> long_df = pd.DataFrame({
+    ...   'lon': [-118.25, -118.25, -118.30],
+    ...   'lat': [34.05, 34.05, 34.10],
+    ...   'year': [2022, 2023, 2022],
+    ...   'subs_q0.1': [1.2, 1.7, 1.3],
+    ...   'subs_q0.5': [1.5, 1.9, 1.6]
+    ... })
+    >>> wide_df = pivot_q_data(long_df, 'subs', dt_col='year')
+    >>> sorted(c for c in wide_df.columns if c.startswith('subs_'))
+    ['subs_2022_q0.1', 'subs_2022_q0.5',
+     'subs_2023_q0.1', 'subs_2023_q0.5']
+
+Filtering quantiles::
+
+    >>> wide_df2 = pivot_q_data(long_df, 'subs', dt_col='year',
+    ...                         q=[0.1])
+    >>> sorted(c for c in wide_df2.columns if c.startswith('subs_'))
+    ['subs_2022_q0.1', 'subs_2023_q0.1']
+
+See Also
+--------
+melt_q_data
+    Forward reshape: parse time-embedded quantile columns and
+    produce one column per quantile.
+pandas.DataFrame.pivot_table
+    Core reshaping used in the wide reconstruction.
+
+References
+----------
+.. [1] Wickham, H. (2014). *Tidy Data*. J. Stat. Software, 59(10).
+.. [2] McKinney, W. (2013). *Python for Data Analysis*. O’Reilly.
+
+"""

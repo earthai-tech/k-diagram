@@ -5,19 +5,14 @@ from __future__ import annotations
 
 import warnings
 from numbers import Real
-from typing import (
-    Any,
-    Callable,
-    Literal, 
-    Tuple
-)
+from typing import Any, Callable, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import cm
-from matplotlib.colors import Normalize
 from matplotlib.collections import LineCollection
+from matplotlib.colors import Normalize
 
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, type_of_target, validate_params
@@ -32,7 +27,7 @@ __all__ = [
     "plot_reliability_diagram",
     "plot_model_comparison",
     "plot_horizon_metrics",
-    "plot_polar_reliability"
+    "plot_polar_reliability",
 ]
 
 
@@ -748,11 +743,11 @@ def plot_polar_reliability(
     n_bins: int = 10,
     strategy: str = "uniform",
     title: str = "Polar Reliability Diagram",
-    figsize: Tuple[float, float] = (8, 8),
-    cmap: str = "coolwarm", 
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "coolwarm",
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
-    show_cbar: bool=True, 
+    show_cbar: bool = True,
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
@@ -766,75 +761,87 @@ def plot_polar_reliability(
     prob_list = [_to_prob_vector(p, ci=None) for p in y_preds]
     weights = np.ones_like(y_true, dtype=float)
     edges, _ = _build_bins(prob_list, n_bins, strategy, 0.0, 1.0)
-    
+
     # Use the robust _colors helper for consistency
     colors = _colors(cmap, palette=None, k=len(y_preds))
-    
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
-    
+
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+
     # --- Plot Perfect Calibration Spiral ---
     perfect_theta = np.linspace(0, np.pi / 2, 100)
     perfect_radius = np.linspace(0, 1, 100)
-    ax.plot(perfect_theta, perfect_radius, color='black', linestyle='--',
-            lw=1.5, label='Perfect Calibration')
+    ax.plot(
+        perfect_theta,
+        perfect_radius,
+        color="black",
+        linestyle="--",
+        lw=1.5,
+        label="Perfect Calibration",
+    )
 
     # Use a single LineCollection for the colorbar reference
     line_collection_for_cbar = None
-    
+
     # --- Plot Model Spirals with Diagnostic Coloring ---
     for i, (name, p) in enumerate(zip(names, prob_list)):
         stats = _bin_stats(p, y_true, weights, edges, "none", 0)
-        df = pd.DataFrame({
-            "p_mean": stats["pmean"],
-            "y_rate": stats["yrate"],
-        }).dropna()
-        
+        df = pd.DataFrame(
+            {
+                "p_mean": stats["pmean"],
+                "y_rate": stats["yrate"],
+            }
+        ).dropna()
+
         model_theta = df["p_mean"] * (np.pi / 2)
         model_radius = df["y_rate"]
-        
+
         # Calculate the error (deviation from perfect calibration)
         calibration_error = model_radius - df["p_mean"]
-        
+
         # Create line segments for coloring
         points = np.array([model_theta, model_radius]).T.reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
-        
+
         # Normalize the error for the colormap (- is over-confident, + is under-confident)
         norm = Normalize(vmin=-0.5, vmax=0.5)
         lc = LineCollection(segments, cmap=cmap, norm=norm)
         lc.set_array(calibration_error)
         lc.set_linewidth(3)
-        
+
         line = ax.add_collection(lc)
-        if i == 0: # Use the first line for the colorbar
+        if i == 0:  # Use the first line for the colorbar
             line_collection_for_cbar = line
-            
+
         # Add a dummy line for the legend
         ax.plot([], [], color=get_cmap(cmap)(0.5), lw=3, label=name)
-        
+
         ax.fill_between(
             perfect_theta,
-            np.interp(perfect_theta, model_theta, model_radius, left=0, right=1),
+            np.interp(
+                perfect_theta, model_theta, model_radius, left=0, right=1
+            ),
             perfect_radius,
             color=colors[i],
-            alpha=0.15
+            alpha=0.15,
         )
-        
+
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_thetamin(0); ax.set_thetamax(90)
+    ax.set_thetamin(0)
+    ax.set_thetamax(90)
     ax.set_ylim(0, 1.05)
     ax.set_xticks(np.linspace(0, np.pi / 2, 6))
     ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
-    
+
     # Add padding to the x-axis label to prevent overlap
     ax.set_xlabel("Predicted Probability", labelpad=15)
     ax.set_ylabel("Observed Frequency", labelpad=25)
-    
+
     # Adjust legend position to avoid overlap
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.15))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
 
     # Add a colorbar to explain the diagnostic colors
     # Conditionally add colorbar and move it to the bottom
@@ -842,18 +849,20 @@ def plot_polar_reliability(
         cbar = fig.colorbar(
             line_collection_for_cbar,
             ax=ax,
-            orientation='horizontal', # Horizontal orientation
+            orientation="horizontal",  # Horizontal orientation
             shrink=0.75,
-            pad=0.08 # Adjust padding
+            pad=0.08,  # Adjust padding
         )
-        cbar.set_label("Calibration Error (Observed - Predicted)", fontsize=10)
-        
+        cbar.set_label(
+            "Calibration Error (Observed - Predicted)", fontsize=10
+        )
+
     # cbar = fig.colorbar(line, ax=ax, pad=0.1, shrink=0.75)
     # cbar.set_label("Calibration Error (Observed - Predicted)", fontsize=10)
-    
+
     if mask_radius:
         ax.set_yticklabels([])
-        
+
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -862,6 +871,7 @@ def plot_polar_reliability(
         plt.show()
 
     return ax
+
 
 plot_polar_reliability.__doc__ = r"""
 Plot a Polar Reliability Diagram (Calibration Spiral).
@@ -990,6 +1000,8 @@ References
 .. footbibliography::
     
 """
+
+
 @validate_params(
     {
         "train_times": ["array-like", None],
@@ -1195,7 +1207,7 @@ def plot_model_comparison(
 
       .. math::
          S'_{m,k} = \frac{S_{m,k} - \min_j(S_{m,j})}{\max_j(S_{m,j}) - \min_j(S_{m,j})}
-         
+
     - Standard ('std'):
 
       .. math::

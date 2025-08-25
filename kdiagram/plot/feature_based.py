@@ -1,7 +1,7 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import annotations 
+from __future__ import annotations
 
 import warnings
 from typing import Any, Optional, Union
@@ -13,8 +13,8 @@ import pandas as pd
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
 from ..utils.handlers import columns_manager
-from ..utils.validator import ensure_2d, exist_features
 from ..utils.plot import set_axis_grid
+from ..utils.validator import ensure_2d, exist_features
 
 __all__ = ["plot_feature_fingerprint", "plot_feature_interaction"]
 
@@ -28,16 +28,16 @@ def plot_feature_interaction(
     color_col: str,
     *,
     statistic: str = "mean",
-    theta_period: Optional[float] = None,
+    theta_period: float | None = None,
     theta_bins: int = 24,
     r_bins: int = 10,
-    title: Optional[str] = None,
+    title: str | None = None,
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
-    mask_radius: bool=False, 
-    savefig: Optional[str] = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
     dpi: int = 300,
 ):
     # --- Input Validation ---
@@ -46,53 +46,70 @@ def plot_feature_interaction(
     data = df[required_cols].dropna().copy()
     if data.empty:
         warnings.warn(
-            "DataFrame is empty after dropping NaNs.", UserWarning)
+            "DataFrame is empty after dropping NaNs.",
+            UserWarning,
+            stacklevel=2,
+        )
         return None
 
     # --- Binning and Aggregation ---
     if theta_period:
-        data['theta_rad'] = (
-            (data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+        data["theta_rad"] = (
+            ((data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+        )
     else:
         min_theta, max_theta = data[theta_col].min(), data[theta_col].max()
         if (max_theta - min_theta) > 1e-9:
-            data['theta_rad'] = ((data[theta_col] - min_theta) /
-                                 (max_theta - min_theta)) * 2 * np.pi
+            data["theta_rad"] = (
+                ((data[theta_col] - min_theta) / (max_theta - min_theta))
+                * 2
+                * np.pi
+            )
         else:
-            data['theta_rad'] = 0
+            data["theta_rad"] = 0
 
-    data['theta_bin'] = pd.cut(data['theta_rad'], bins=theta_bins)
-    data['r_bin'] = pd.cut(data[r_col], bins=r_bins)
+    data["theta_bin"] = pd.cut(data["theta_rad"], bins=theta_bins)
+    data["r_bin"] = pd.cut(data[r_col], bins=r_bins)
 
     # Group by both bins and calculate the statistic
-    heatmap_data = data.groupby(
-        ['theta_bin', 'r_bin'], observed=False
-        )[color_col].agg(statistic).unstack()
-    
+    heatmap_data = (
+        data.groupby(["theta_bin", "r_bin"], observed=False)[color_col]
+        .agg(statistic)
+        .unstack()
+    )
+
     # Get bin edges for plotting
     theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
     r_edges = np.linspace(data[r_col].min(), data[r_col].max(), r_bins + 1)
-    
+
     # --- Plotting ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
-    
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+
     T, R = np.meshgrid(theta_edges, r_edges)
-    
+
     # Note: pcolormesh expects C with shape (num_r_bins, num_theta_bins)
     # The unstacked heatmap_data has shape (num_theta_bins, num_r_bins)
-    pcm = ax.pcolormesh(T, R, heatmap_data.T.values, cmap=cmap, shading="auto")
+    ax.grid(False)  # New version set to False explicitly
+    pcm = ax.pcolormesh(
+        T, R, heatmap_data.T.values, cmap=cmap, shading="auto"
+    )
 
     # --- Formatting ---
     cbar = fig.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
     cbar.set_label(f"{statistic.capitalize()} of {color_col}", fontsize=10)
-    
-    ax.set_title(title or f"Interaction between {theta_col} and {r_col}", 
-                 fontsize=14, y=1.1)
+
+    ax.set_title(
+        title or f"Interaction between {theta_col} and {r_col}",
+        fontsize=14,
+        y=1.1,
+    )
     ax.set_xlabel(theta_col)
     ax.set_ylabel(r_col, labelpad=25)
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    
-    if mask_radius: 
+
+    if mask_radius:
         # Hide radial tick labels (often preferred for normalized data)
         ax.set_yticklabels([])
 
@@ -104,6 +121,7 @@ def plot_feature_interaction(
         plt.show()
 
     return ax
+
 
 plot_feature_interaction.__doc__ = r"""
 Plots a polar heatmap of feature interactions.
@@ -263,18 +281,19 @@ References
 .. footbibliography::
 """
 
+
 @check_non_emptiness(params=["importances"])
 def plot_feature_fingerprint(
     importances,
-    features: Optional[list[str]] = None,
-    labels: Optional[list[str]] = None,
+    features: list[str] | None = None,
+    labels: list[str] | None = None,
     normalize: bool = True,
     fill: bool = True,
-    cmap: Union[str, list[Any]] = "tab10",
+    cmap: str | list[Any] = "tab10",
     title: str = "Feature Impact Fingerprint",
-    figsize: Optional[tuple[float, float]] = None,
+    figsize: tuple[float, float] | None = None,
     show_grid: bool = True,
-    savefig: Optional[str] = None,
+    savefig: str | None = None,
 ):
     # Ensure importances is a 2D NumPy array
     importance_matrix = ensure_2d(importances)
@@ -379,7 +398,7 @@ def plot_feature_fingerprint(
 
             # Place the normalized rows back into the result matrix
             normalized_matrix[valid_rows_indices] = normalized_rows
-      
+
         # Rows where max_val <= 0 remain zero (already initialized)
         # Update importance_matrix with normalized values
         importance_matrix = normalized_matrix

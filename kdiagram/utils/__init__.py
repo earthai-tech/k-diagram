@@ -2,6 +2,13 @@ from .diagnose_q import (
     build_q_column_names,
     detect_quantiles_in,
 )
+from .forecast_utils import (
+    bin_by_feature,
+    calculate_probabilistic_scores,
+    compute_forecast_errors,
+    compute_interval_width,
+    pivot_forecasts_long,
+)
 from .hist import plot_hist_kde
 from .q_utils import (
     melt_q_data,
@@ -16,4 +23,9 @@ __all__ = [
     "detect_quantiles_in",
     "build_q_column_names",
     "plot_hist_kde",
+    "compute_forecast_errors",
+    "pivot_forecasts_long",
+    "calculate_probabilistic_scores",
+    "bin_by_feature",
+    "compute_interval_width",
 ]
