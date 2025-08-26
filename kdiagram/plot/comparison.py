@@ -1069,10 +1069,10 @@ def plot_model_comparison(
     train_times : float or list of float, optional
         Training time in seconds for each model corresponding to
         `*y_preds`. If provided:
-            
+
         - A single float assumes the same time for all models.
         - A list must match the number of models.
-        
+
         It will be added as an additional axis/metric on the chart.
         Default is ``None``.
 

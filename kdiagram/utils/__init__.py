@@ -10,16 +10,16 @@ from .forecast_utils import (
     pivot_forecasts_long,
 )
 from .hist import plot_hist_kde
-from .mathext import ( 
+from .mathext import (
     build_cdf_interpolator,
     calculate_calibration_error,
     compute_coverage_score,
+    compute_crps,
     compute_pinball_loss,
+    compute_pit,
     compute_winkler_score,
-    compute_crps, 
-    compute_pit, 
-    get_forecast_arrays, 
-    minmax_scaler
+    get_forecast_arrays,
+    minmax_scaler,
 )
 from .q_utils import (
     melt_q_data,
@@ -39,7 +39,6 @@ __all__ = [
     "calculate_probabilistic_scores",
     "bin_by_feature",
     "compute_interval_width",
-    "minmax_scaler",
     "compute_coverage_score",
     "compute_winkler_score",
     "build_cdf_interpolator",
@@ -48,6 +47,5 @@ __all__ = [
     "compute_pit",
     "compute_crps",
     "get_forecast_arrays",
-    "minmax_scaler"
-    
+    "minmax_scaler",
 ]

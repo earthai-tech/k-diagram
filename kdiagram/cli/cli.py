@@ -18,40 +18,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# Import package itself for version (if available)
-try:
-    import kdiagram
-except ImportError:
-    # Define a dummy if running script directly before install
-    class kdiagram:
-        __version__ = "unknown"
-
-else:
-    # --- Import plotting functions ---
-    # Assuming the structure kdiagram -> plot -> uncertainty.py
-    # Import ALL uncertainty plot functions intended for CLI
-    from kdiagram.plot.evaluation import (
-        plot_taylor_diagram,
-        plot_taylor_diagram_in,
-        taylor_diagram,
-    )
-    from kdiagram.plot.feature_based import plot_feature_fingerprint
-    from kdiagram.plot.relationship import plot_relationship
-    from kdiagram.plot.uncertainty import (
-        plot_actual_vs_predicted,
-        plot_anomaly_magnitude,
-        plot_coverage,
-        plot_coverage_diagnostic,
-        plot_interval_consistency,
-        plot_interval_width,
-        plot_model_drift,
-        plot_temporal_uncertainty,
-        plot_uncertainty_drift,
-        plot_velocity,
-    )
+from kdiagram.plot.evaluation import (
+    plot_taylor_diagram,
+    plot_taylor_diagram_in,
+    taylor_diagram,
+)
+from kdiagram.plot.feature_based import plot_feature_fingerprint
+from kdiagram.plot.relationship import plot_relationship
+from kdiagram.plot.uncertainty import (
+    plot_actual_vs_predicted,
+    plot_anomaly_magnitude,
+    plot_coverage,
+    plot_coverage_diagnostic,
+    plot_interval_consistency,
+    plot_interval_width,
+    plot_model_drift,
+    plot_temporal_uncertainty,
+    plot_uncertainty_drift,
+    plot_velocity,
+)
 
 
-# ... (rest of imports like kdiagram package for version) ...
 def read_csv_to_df(filepath: str) -> pd.DataFrame | None:
     r"""
     Reads data from a CSV file into a Pandas DataFrame.
@@ -178,7 +165,6 @@ def _cli_plot_velocity(args):
         df=df,
         q50_cols=args.q50_cols,
         theta_col=args.theta_col,
-        # Add other relevant args from your function signature if needed
     )
     if args.savefig:
         plt.savefig(args.savefig)
@@ -464,18 +450,6 @@ def _cli_plot_temporal_uncertainty(args):
         return
     figsize = _handle_figsize(args.figsize, (8, 8))
 
-    # Handle 'auto' q_cols case - requires detect_quantiles_in logic
-    # For simplicity in CLI, we might mandate explicit columns here.
-    # If 'auto' was kept:
-    # if isinstance(args.q_cols, str) and args.q_cols.lower() == 'auto':
-    #    from .utils.diagnose_q import detect_quantiles_in # Requires import
-    #    q_cols_list = detect_quantiles_in(df)
-    #    if not q_cols_list:
-    #        print("Error: 'auto' detected no quantile columns.", file=sys.stderr)
-    #        return
-    # else:
-    #    q_cols_list = args.q_cols
-    # Simplified: assume args.q_cols is always a list from nargs='+'
     q_cols_list = args.q_cols
 
     print("Generating Temporal Uncertainty Plot...")
@@ -499,9 +473,6 @@ def _cli_plot_temporal_uncertainty(args):
         mask_angle=args.mask_angle,
     )
     _handle_savefig_show(args.savefig)
-
-
-# --- Add NEW Handler Functions ---
 
 
 def _cli_taylor_diagram(args):
@@ -779,9 +750,6 @@ def _cli_plot_relationship(args):
         z_label=args.z_label,
     )
     _handle_savefig_show(args.savefig)
-
-
-# --- Main CLI Parser Setup ---
 
 
 def main():
@@ -1495,48 +1463,6 @@ def main():
     )
     p_ud.set_defaults(func=_cli_plot_uncertainty_drift)
 
-    # --- Add subparsers for Evaluation, Feature-Based, Relationship ---
-    # (Defined in the previous response - Omitted here for brevity)
-    # p_td = subparsers.add_parser("taylor_diagram", ...)
-    # p_tdi = subparsers.add_parser("plot_taylor_diagram_in", ...)
-    # p_tdb = subparsers.add_parser("plot_taylor_diagram", ...)
-    # p_ff = subparsers.add_parser("plot_feature_fingerprint", ...)
-    # p_rel = subparsers.add_parser("plot_relationship", ...)
-    # --- END Other Subparsers ---
-
-    # --- Parse Arguments and Execute ---
-    # (Keep existing logic)
-    # ...
-
-    # --- Entry Point Guard ---
-    # (Keep existing logic)
-    # ...
-    # def main():
-    #     # Main parser
-    #     parser = argparse.ArgumentParser(
-    #         description="K-Diagram: CLI for Forecasting Uncertainty Visualization.",
-    #         epilog=("Example: k-diagram plot_anomaly_magnitude data.csv "
-    #                 "--actual-col=obs --q-cols=p10 p90 --savefig=plot.png")
-    #     )
-    #     parser.add_argument(
-    #         '--version', action='version',
-    #         version=f'%(prog)s {kdiagram.__version__}'
-    #     )
-
-    #     # Create subparsers for commands (plot types)
-    #     subparsers = parser.add_subparsers(
-    #         dest="command",
-    #         required=True,
-    #         title="Available commands (use <command> --help for details)",
-    #         metavar="<command>",
-    #     )
-
-    # --- Add Subparsers for ALL Uncertainty Plots ---
-
-    # (Existing subparsers for plot_coverage, plot_model_drift,
-    #  plot_velocity, plot_interval_consistency, plot_anomaly_magnitude,
-    #  plot_uncertainty_drift are assumed here - Omitted for brevity)
-
     # --- Subparser: plot_actual_vs_predicted ---
     p_avp = subparsers.add_parser(
         "plot_actual_vs_predicted",
@@ -1997,23 +1923,6 @@ def main():
         help="Save plot to file instead of displaying.",
     )
     p_tu.set_defaults(func=_cli_plot_temporal_uncertainty)
-
-    # cli.py -> main() function
-
-    # ... (Main parser and subparsers setup as before) ...
-    # --- Subparsers for Uncertainty Plots ---
-    # (Keep all 10 subparsers defined previously)
-    # parser_coverage = subparsers.add_parser(...)
-    # parser_drift = subparsers.add_parser(...)
-    # parser_velocity = subparsers.add_parser(...)
-    # parser_consistency = subparsers.add_parser(...)
-    # parser_anomaly = subparsers.add_parser(...)
-    # parser_unc_drift = subparsers.add_parser(...)
-    # p_avp = subparsers.add_parser(...)
-    # p_cd = subparsers.add_parser(...)
-    # p_iw = subparsers.add_parser(...)
-    # p_tu = subparsers.add_parser(...)
-    # --- END Uncertainty Subparsers ---
 
     # --- Subparser: taylor_diagram ---
     p_td = subparsers.add_parser(
@@ -2609,7 +2518,6 @@ def main():
         sys.exit(1)
 
 
-# --- Entry Point Guard ---
 # This allows the script to be run directly (python kdiagram/cli.py ...)
 # for testing, but is not strictly necessary when installed via setup.py
 if __name__ == "__main__":
