@@ -20,9 +20,7 @@ from ._utils import (
     _parse_q_levels,
 )
 
-
 # ----------------------- commands -----------------------
-
 def _cmd_plot_polar_sharpness(ns: argparse.Namespace) -> None:
     df = load_df(ns.input, format=ns.format)
 
@@ -100,10 +98,7 @@ def _cmd_plot_calibration_sharpness(
         dpi=ns.dpi,
     )
 
-
 # ----------------------- subparsers ---------------------
-
-
 def add_plot_sharpness(
     subparsers: argparse._SubParsersAction,
 ) -> None:
