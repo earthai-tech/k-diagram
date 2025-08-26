@@ -12,15 +12,15 @@ from ..plot.uncertainty import (
     plot_coverage_diagnostic,
 )
 from ._utils import (
-    ColumnsPairAction, 
-    ColumnsListAction, 
+    ColumnsListAction,
+    ColumnsPairAction,
+    _infer_figsize,
+    _parse_q_levels,
     ensure_columns,
     ensure_numeric,
     load_df,
-    resolve_ytrue_preds, 
-    _parse_q_levels, 
-    _infer_figsize,
-    split_csv
+    resolve_ytrue_preds,
+    split_csv,
 )
 
 __all__ = [
@@ -33,6 +33,7 @@ __all__ = [
 
 
 # ------------------------------ cmds --------------------------------
+
 
 def cmd_plot_coverage(ns: argparse.Namespace) -> None:
     df = load_df(ns.input, format=ns.format)
@@ -64,7 +65,6 @@ def cmd_plot_coverage(ns: argparse.Namespace) -> None:
     else:
         names = [ms.name for ms in specs]
 
-
     # Quantile levels (optional; None is fine if not a q-set)
     q_levels = _parse_q_levels(ns.q_levels)
 
@@ -88,6 +88,7 @@ def cmd_plot_coverage(ns: argparse.Namespace) -> None:
         savefig=ns.savefig,
         verbose=ns.verbose,
     )
+
 
 def cmd_plot_coverage_diagnostic(ns: argparse.Namespace) -> None:
     df = load_df(ns.input, format=ns.format)
@@ -296,6 +297,7 @@ def add_plot_coverage_subparser(
     p.set_defaults(func=cmd_plot_coverage)
     return p
 
+
 def add_plot_coverage_diagnostic_subparser(
     subparsers: argparse._SubParsersAction,
 ) -> argparse.ArgumentParser:
@@ -429,7 +431,6 @@ def add_plot_coverage_diagnostic_subparser(
 
     p.set_defaults(func=cmd_plot_coverage_diagnostic)
     return p
-
 
 
 def add_plot_coverages(

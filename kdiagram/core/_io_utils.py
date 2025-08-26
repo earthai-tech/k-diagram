@@ -197,11 +197,10 @@ def _get_valid_kwargs(
         else:
             invalid.append(k)
 
-    if invalid and error =="warn":
+    if invalid and error == "warn":
         warnings.warn(
             "Ignoring invalid keyword(s): " + ", ".join(invalid),
             stacklevel=2,
         )
 
     return valid_kwargs
-

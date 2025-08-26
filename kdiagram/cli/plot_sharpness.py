@@ -1,24 +1,24 @@
-
 from __future__ import annotations
 
 import argparse
 
 from kdiagram.plot.probabilistic import (
-    plot_polar_sharpness,
     plot_calibration_sharpness,
+    plot_polar_sharpness,
 )
 
 from ._utils import (
-    load_df,
-    ensure_columns,
-    ensure_numeric,
-    parse_figsize,
-    add_bool_flag,
     ColumnsListAction,
     _collect_pred_specs,
     _names_from_specs,
     _parse_q_levels,
+    add_bool_flag,
+    ensure_columns,
+    ensure_numeric,
+    load_df,
+    parse_figsize,
 )
+
 
 # ----------------------- commands -----------------------
 def _cmd_plot_polar_sharpness(ns: argparse.Namespace) -> None:
@@ -27,9 +27,7 @@ def _cmd_plot_polar_sharpness(ns: argparse.Namespace) -> None:
     # collect prediction groups
     specs = _collect_pred_specs(ns)
     if not specs:
-        raise SystemExit(
-            "provide groups via --pred/--pred-cols/--model"
-        )
+        raise SystemExit("provide groups via --pred/--pred-cols/--model")
 
     need = [c for _, cols in specs for c in cols]
     ensure_columns(df, need)
@@ -69,9 +67,7 @@ def _cmd_plot_calibration_sharpness(
     # prediction groups (support all styles)
     specs = _collect_pred_specs(ns)
     if not specs:
-        raise SystemExit(
-            "provide groups via --pred/--pred-cols/--model"
-        )
+        raise SystemExit("provide groups via --pred/--pred-cols/--model")
 
     need = [c for _, cols in specs for c in cols]
     ensure_columns(df, need, error="raise")
@@ -97,6 +93,7 @@ def _cmd_plot_calibration_sharpness(
         savefig=str(ns.savefig) if ns.savefig else None,
         dpi=ns.dpi,
     )
+
 
 # ----------------------- subparsers ---------------------
 def add_plot_sharpness(
@@ -138,10 +135,7 @@ def add_plot_sharpness(
         "--model",
         action="append",
         default=None,
-        help=(
-            "Model spec 'NAME:col1[,col2,...]'. Repeat to add "
-            "models."
-        ),
+        help=("Model spec 'NAME:col1[,col2,...]'. Repeat to add " "models."),
     )
     p.add_argument(
         "--pred",
@@ -285,10 +279,7 @@ def add_plot_sharpness(
         "--model",
         action="append",
         default=None,
-        help=(
-            "Model spec 'NAME:col1[,col2,...]'. Repeat to add "
-            "models."
-        ),
+        help=("Model spec 'NAME:col1[,col2,...]'. Repeat to add " "models."),
     )
     p2.add_argument(
         "--pred",

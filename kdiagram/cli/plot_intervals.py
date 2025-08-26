@@ -13,8 +13,8 @@ from ..plot.uncertainty import (
     plot_interval_width,
 )
 from ._utils import (
-    ColumnsPairAction,
     ColumnsListAction,
+    ColumnsPairAction,
     add_bool_flag,
     ensure_columns,
     ensure_numeric,
@@ -71,6 +71,7 @@ def _as_list(x) -> list[str] | None:
         s = x.replace(" ", ",")
         return [t.strip() for t in s.split(",") if t.strip()]
     return list(x)
+
 
 def _cmd_plot_interval_consistency(ns: argparse.Namespace) -> None:
     qlow_cols = _as_list(ns.qlow_cols) or []
@@ -142,9 +143,9 @@ def add_plot_intervals(
     p.add_argument(
         "--q-cols",
         action=ColumnsPairAction,
-        nargs="+",                  # accept 1 token ("low,up") or 2 tokens
+        nargs="+",  # accept 1 token ("low,up") or 2 tokens
         required=True,
-        metavar="LOW,UP",           # single string, not a tuple
+        metavar="LOW,UP",  # single string, not a tuple
         help=(
             "Two columns 'lower,upper' that define the interval. "
             "Accepts 'low,up' or two tokens."
@@ -238,7 +239,8 @@ def add_plot_intervals(
         help="Explicit input format.",
     )
     p2.add_argument(
-        "--qlow-cols", "--q10-cols",
+        "--qlow-cols",
+        "--q10-cols",
         action=ColumnsListAction,
         nargs="+",
         required=True,
@@ -247,7 +249,8 @@ def add_plot_intervals(
         help="Lower-bound columns by time.",
     )
     p2.add_argument(
-        "--qup-cols", "--q90-cols",
+        "--qup-cols",
+        "--q90-cols",
         action=ColumnsListAction,
         nargs="+",
         required=True,
@@ -270,9 +273,9 @@ def add_plot_intervals(
         default=None,
         help="Ordering column (ignored).",
     )
-    
+
     add_bool_flag(p2, "use-cv", True, "Use CV metric.", "Use Std Dev.")
-    
+
     p2.add_argument(
         "--cmap",
         type=str,

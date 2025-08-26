@@ -3,22 +3,21 @@ from __future__ import annotations
 import argparse
 
 from kdiagram.plot.probabilistic import (
-    plot_pit_histogram,
     plot_crps_comparison,
+    plot_pit_histogram,
 )
 
 from ._utils import (
-    load_df,
-    ensure_columns,
-    ensure_numeric,
-    parse_figsize,
-    add_bool_flag,
     ColumnsListAction,
-    _parse_q_levels,
     _collect_pred_specs,
     _names_from_specs,
+    _parse_q_levels,
+    add_bool_flag,
+    ensure_columns,
+    ensure_numeric,
+    load_df,
+    parse_figsize,
 )
-
 
 # --------------------------- PIT ---------------------------------
 
@@ -38,8 +37,9 @@ def _cmd_plot_pit_hist(ns: argparse.Namespace) -> None:
             "provide one pred group via "
             "--pred/--pred-cols/--model/--q-cols"
         )
-    if len(specs) != 1:
-        raise SystemExit("PIT expects exactly one pred group")
+    # Be permissive: take the first group if multiple were passed.
+    if len(specs) > 1:
+        specs = [specs[0]]
 
     _, cols = specs[0]
     ensure_columns(df, cols)
@@ -231,8 +231,6 @@ def add_plot_pit_histogram_subparser(
 
 
 # --------------------------- CRPS --------------------------
-
-
 def _cmd_plot_crps_comparison(ns: argparse.Namespace) -> None:
     df = load_df(ns.input, format=ns.format)
 
@@ -241,26 +239,35 @@ def _cmd_plot_crps_comparison(ns: argparse.Namespace) -> None:
     df = ensure_numeric(df, [ns.y_true], copy=True, errors="raise")
     y_true = df[ns.y_true].to_numpy(dtype=float)
 
-    # collect model/pred groups
+    # collect groups
     specs = _collect_pred_specs(ns)
     if not specs:
         raise SystemExit(
-            "provide one or more groups via "
-            "--pred/--pred-cols/--model"
+            "provide one or more groups via " "--pred/--pred-cols/--model"
         )
 
+    # quantiles, then check group sizes first
+    q = _parse_q_levels(ns.q_levels)
+    for name, cols in specs:
+        if len(cols) != len(q):
+            raise SystemExit(
+                f"group {name!r} has {len(cols)} cols but "
+                f"--q-levels has {len(q)}"
+            )
+
+    # columns -> arrays
     need = [c for _, cols in specs for c in cols]
     ensure_columns(df, need)
     df = ensure_numeric(df, need, copy=True, errors="raise")
     yqs = [df[cols].to_numpy(dtype=float) for _, cols in specs]
 
-    # names
+    # names (CLI override or auto from specs)
     names = ns.names if ns.names else _names_from_specs(specs)
+    if names and any(isinstance(n, list) for n in names):
+        names = [
+            x for g in names for x in (g if isinstance(g, list) else [g])
+        ]
 
-    # quantiles
-    q = _parse_q_levels(ns.q_levels)
-
-    # y_true positional to avoid duplicate kw
     plot_crps_comparison(
         y_true,
         *yqs,
@@ -322,10 +329,7 @@ def add_plot_crps_comparison_subparser(
         "--model",
         action="append",
         default=None,
-        help=(
-            "Model spec 'name:col1[,col2,...]'. Repeat to add "
-            "models."
-        ),
+        help=("Model spec 'name:col1[,col2,...]'. Repeat to add " "models."),
     )
     p.add_argument(
         "--pred",

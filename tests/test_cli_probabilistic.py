@@ -2,15 +2,14 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from kdiagram.cli import build_parser
-
 
 # --------------------------- helpers ---------------------------------
 
@@ -61,7 +60,7 @@ def demo_csv_prob(tmp_path: Path) -> Path:
 
     # Model 1 (base)
     scale1 = 2.5
-    q10 = np.quantile(actual[:, None] + rng.normal(0, scale1, (n, 3)), q, axis=1)
+    np.quantile(actual[:, None] + rng.normal(0, scale1, (n, 3)), q, axis=1)
     # cheat: construct q10/q50/q90 in a simple, monotone way
     q10_col = actual - abs(rng.normal(2.0, 0.3, n))
     q50_col = actual + rng.normal(0.0, 0.2, n)

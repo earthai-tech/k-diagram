@@ -7,8 +7,8 @@ import argparse
 import io
 import re
 import warnings
-from dataclasses import dataclass
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Union
 
@@ -172,7 +172,9 @@ def ensure_numeric(
 
     return out
 
+
 # ---------- CLI parsing helpers ---------------------------------------
+
 
 def parse_list(
     x: str | Sequence[str] | None,
@@ -358,12 +360,15 @@ def detect_quantile_columns(
 
 # --- parsing helpers (CLI-wide) ---------------------------------
 
+
 @dataclass
 class ModelSpec:
     name: str
     cols: list[str]
 
+
 # ---------- small alias + parsing helpers ----------
+
 
 def ns_get(ns: argparse.Namespace, *names: str, default=None):
     for n in names:
@@ -371,10 +376,12 @@ def ns_get(ns: argparse.Namespace, *names: str, default=None):
             return getattr(ns, n)
     return default
 
+
 def _split_csv(s: str | None) -> list[str]:
     if not s:
         return []
     return [p.strip() for p in str(s).split(",") if p.strip()]
+
 
 def parse_model_token(tok: str) -> ModelSpec:
     # accepts "name:col1,col2" or just "col1,col2"
@@ -386,15 +393,13 @@ def parse_model_token(tok: str) -> ModelSpec:
     nm = cols[0] if cols else "model"
     return ModelSpec(name=nm, cols=cols)
 
+
 # ---------- auto detection from df ----------
 
-_DEF_YTRUE = [
-    "y_true", "actual", "y", "target", "truth", "label"
-]
-_DEF_YPRED = [
-    "y_pred", "pred", "prediction", "q50", "median"
-]
+_DEF_YTRUE = ["y_true", "actual", "y", "target", "truth", "label"]
+_DEF_YPRED = ["y_pred", "pred", "prediction", "q50", "median"]
 _Q_RE = re.compile(r"(.+?)_q(\d{1,3})$", flags=re.I)
+
 
 def detect_y_true(df: pd.DataFrame) -> str | None:
     for c in _DEF_YTRUE:
@@ -402,11 +407,13 @@ def detect_y_true(df: pd.DataFrame) -> str | None:
             return c
     return None
 
+
 def detect_single_pred(df: pd.DataFrame) -> str | None:
     for c in _DEF_YPRED:
         if c in df.columns:
             return c
     return None
+
 
 def detect_quantile_groups(
     df: pd.DataFrame, levels: Iterable[int] = (10, 50, 90)
@@ -421,12 +428,14 @@ def detect_quantile_groups(
         found.setdefault(base, {})[lvl] = col
     groups: list[list[str]] = []
     lvls = list(levels)
-    for base, mp in found.items():
-        if all(l in mp for l in lvls):
-            groups.append([mp[l] for l in lvls])
+    for _, mp in found.items():
+        if all(lo in mp for lo in lvls):
+            groups.append([mp[lu] for lu in lvls])
     return groups
 
+
 # ---------- public resolvers used by CLIs ----------
+
 
 def resolve_ytrue_preds(
     ns: argparse.Namespace, df: pd.DataFrame
@@ -483,6 +492,7 @@ def resolve_ytrue_preds(
         )
     return y_true, specs
 
+
 # ----------------------------- helpers ------------------------------
 def split_csv(s: str) -> list[str]:
     return [x.strip() for x in s.split(",") if x.strip()]
@@ -538,6 +548,7 @@ def _parse_models(
         groups.append(col_list)
     return names, groups
 
+
 def _coerce_q_levels(val: Any) -> list[float]:
     """
     Accept either a CSV string (e.g. '0.1,0.5,0.9')
@@ -569,8 +580,8 @@ def normalize_specs_as_quantiles(
             if m:
                 lvl = int(m.group(2))
                 mp[lvl] = c
-        if all(l in mp for l in lvls):
-            out.append([mp[l] for l in lvls])
+        if all(lo in mp for lo in lvls):
+            out.append([mp[lu] for lu in lvls])
         else:
             out.append(ms.cols[:])
     return out
@@ -602,33 +613,96 @@ def parse_figsize(arg: str | None) -> tuple[float, float] | None:
     except ValueError as exc:
         raise argparse.ArgumentTypeError("Invalid figsize.") from exc
 
-def _collect_pred_specs(ns: argparse.Namespace) -> list[tuple[str, list[str]]]:
+
+def _collect_point_preds(
+    df,
+    ns: argparse.Namespace,
+) -> tuple[list[np.ndarray], list[str]]:
     """
-    Return list of (name, cols). Accept --model 'n:c1,c2,...' and/or
-    repeated --pred/--pred-cols (anonymous names).
+    Collect 1D prediction arrays from flexible CLI specs.
+    Enforces exactly one column per model/group.
+    """
+    specs = _collect_pred_specs(ns)
+    if not specs:
+        raise SystemExit("provide predictions via --model/--pred/--pred-cols")
+
+    # ensure each spec has exactly one column
+    for name, cols in specs:
+        if len(cols) != 1:
+            raise SystemExit(
+                f"group {name!r} must map to exactly one column; "
+                "use one col per model for these plots."
+            )
+
+    need = [cols[0] for _, cols in specs]
+    ensure_columns(df, need)
+    ensure_numeric(df, need, copy=True, errors="raise")
+
+    yps = [df[c].to_numpy(dtype=float) for c in need]
+    names = ns.names if ns.names else _names_from_specs(specs)
+    return yps, list(names)
+
+
+def _collect_pred_specs(
+    ns: argparse.Namespace,
+) -> list[tuple[str, list[str]]]:
+    """
+    Merge prediction specs from --model, --pred/--pred-cols,
+    and --q-cols. Returns [(name, [cols...]), ...].
+    If --pred is flattened, chunk by len(--q-levels).
     """
     specs: list[tuple[str, list[str]]] = []
 
-    # --model (name:cols)
-    for spec in (ns.model or []):
-        name, cols = _parse_models([spec])[0]
-        specs.append((name, cols))
+    # 1) --model NAME:col1[,col2,...]
+    m = getattr(ns, "model", None)
+    if m:
+        m_names, m_groups = _parse_models(m)
+        for name, grp in zip(m_names, m_groups):
+            specs.append((name, list(grp)))
 
-    # --pred / --pred-cols (repeatable), give auto names
-    for grp in (ns.pred or []):
-        specs.append(("", list(grp)))
-    for grp in (ns.pred_cols or []):
-        specs.append(("", list(grp)))
+    def _groups_from(val) -> list[list[str]]:
+        if not val:
+            return []
+        # already grouped: list-of-lists
+        if (
+            isinstance(val, list)
+            and val
+            and all(isinstance(x, list) for x in val)
+        ):
+            return [list(g) for g in val]
+        # flat list or single CSV string -> one group
+        if isinstance(val, list):
+            return [list(val)]
+        s = str(val)
+        cols = [c.strip() for c in s.split(",") if c.strip()]
+        return [cols]
 
-    # legacy --q-cols (PIT only) -> single group
-    if getattr(ns, "q_cols", None):
-        if specs:
-            # both styles used, keep them all
-            pass
-        else:
-            specs.append(("", list(ns.q_cols)))
+    # 2) collect groups from --pred / --pred-cols / --q-cols
+    groups: list[list[str]] = []
+    groups += _groups_from(getattr(ns, "pred", None))
+    groups += _groups_from(getattr(ns, "pred_cols", None))
+    groups += _groups_from(getattr(ns, "q_cols", None))
+
+    # 3) If we got exactly one flat group but it really
+    #    represents multiple groups (flattened), split it by
+    #    the number of quantiles if available and divisible.
+    if len(groups) == 1:
+        g0 = groups[0]
+        q_raw = getattr(ns, "q_levels", None)
+        if q_raw:
+            # parse once, tolerate whitespace
+            q_vals = _parse_q_levels(q_raw)
+            q_len = len(q_vals)
+            if q_len > 0 and len(g0) % q_len == 0 and len(g0) != q_len:
+                # split into chunks of size q_len
+                groups = [g0[i : i + q_len] for i in range(0, len(g0), q_len)]
+
+    # 4) add unnamed groups with auto names
+    for cols in groups:
+        specs.append((f"M{len(specs) + 1}", list(cols)))
 
     return specs
+
 
 def _names_from_specs(specs: list[tuple[str, list[str]]]) -> list[str]:
     names = []
@@ -640,6 +714,7 @@ def _names_from_specs(specs: list[tuple[str, list[str]]]) -> list[str]:
             names.append(f"Model {auto_idx}")
             auto_idx += 1
     return names
+
 
 def add_bool_flag(
     parser: argparse.ArgumentParser,
@@ -721,7 +796,9 @@ def _parse_kv_list(tokens: list[str] | None) -> dict[str, Any]:
         out[k] = v
     return out
 
+
 # --- flexible argparse actions -------------------------------------------
+
 
 class ColumnsPairAction(argparse.Action):
     """
@@ -730,6 +807,7 @@ class ColumnsPairAction(argparse.Action):
       --q-cols low,up
     and set dest -> ['low', 'up'].
     """
+
     def __call__(self, parser, ns, values, option_string=None):
         vals = values
         if isinstance(vals, str):
@@ -746,7 +824,7 @@ class ColumnsPairAction(argparse.Action):
                 self, "expected two columns: 'low,up' or 'low up'"
             )
         setattr(ns, self.dest, parts)
-        
+
 
 class ColumnsListAction(argparse.Action):
     """
@@ -756,6 +834,7 @@ class ColumnsListAction(argparse.Action):
       --cols a b --cols c,d
     Always store a list[str] in the namespace.
     """
+
     def __call__(
         self,
         parser: argparse.ArgumentParser,
@@ -799,6 +878,7 @@ class FlexibleListAction(argparse.Action):
       --qlow-cols a b,c
     dest -> ['a','b','c']
     """
+
     def __call__(self, parser, ns, values, option_string=None):
         vals = values
         out: list[str] = []
@@ -815,6 +895,7 @@ class FlexibleListAction(argparse.Action):
         if not out:
             raise argparse.ArgumentError(self, "expects one or more names")
         setattr(ns, self.dest, out)
+
 
 __all__ += [
     "ColumnsPairAction",

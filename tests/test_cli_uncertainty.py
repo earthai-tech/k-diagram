@@ -1,14 +1,13 @@
-
 from __future__ import annotations
 
 from pathlib import Path
 
+# force non-GUI backend
+import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
 
-# force non-GUI backend
-import matplotlib
 matplotlib.use("Agg")
 
 from kdiagram.cli import build_parser
@@ -157,8 +156,8 @@ def test_plot_interval_consistency_cli(demo_csv: Path, tmp_path: Path):
 
 def test_plot_anomaly_magnitude_cli(demo_csv: Path, tmp_path: Path):
     out = tmp_path / "anomaly.png"
-    
-    with pytest.warns(UserWarning): 
+
+    with pytest.warns(UserWarning):
         _run(
             [
                 "plot-anomaly-magnitude",
@@ -310,9 +309,7 @@ def test_plot_polar_quiver_cli(demo_csv: Path, tmp_path: Path):
     _expect_file(out)
 
 
-def test_plot_radial_density_ring_cli(
-    demo_csv: Path, tmp_path: Path
-):
+def test_plot_radial_density_ring_cli(demo_csv: Path, tmp_path: Path):
     out = tmp_path / "ring.png"
     _run(
         [
@@ -329,9 +326,7 @@ def test_plot_radial_density_ring_cli(
     _expect_file(out)
 
 
-def test_plot_actual_vs_predicted_cli(
-    demo_csv: Path, tmp_path: Path
-):
+def test_plot_actual_vs_predicted_cli(demo_csv: Path, tmp_path: Path):
     out = tmp_path / "avp.png"
     _run(
         [
@@ -349,9 +344,7 @@ def test_plot_actual_vs_predicted_cli(
     _expect_file(out)
 
 
-def test_plot_coverage_diagnostic_cli(
-    demo_csv: Path, tmp_path: Path
-):
+def test_plot_coverage_diagnostic_cli(demo_csv: Path, tmp_path: Path):
     out = tmp_path / "coverage_diag.png"
     _run(
         [
@@ -367,7 +360,6 @@ def test_plot_coverage_diagnostic_cli(
         ]
     )
     _expect_file(out)
-
 
 
 @pytest.mark.parametrize("yflag", ["--true-col", "--y-true"])
@@ -399,9 +391,12 @@ def test_plot_coverage_cli_comma_sep_token(
     assert hasattr(ns, "func")
     ns.func(ns)
     _expect_file(out)
-    
+
+
 @pytest.mark.parametrize("yflag", ["--true-col", "--y-true"])
-def test_plot_coverage_cli_space_sep_token(demo_csv: Path, tmp_path: Path, yflag: str):
+def test_plot_coverage_cli_space_sep_token(
+    demo_csv: Path, tmp_path: Path, yflag: str
+):
     out = tmp_path / "coverage.png"
     argv = [
         "plot-coverage",
@@ -413,7 +408,7 @@ def test_plot_coverage_cli_space_sep_token(demo_csv: Path, tmp_path: Path, yflag
         "--pred",
         "q10_2024,q50,q90_2024",
         "--names",
-        "M1,M2",            # <-- one token, comma-separated
+        "M1,M2",  # <-- one token, comma-separated
         "--kind",
         "bar",
         "--savefig",

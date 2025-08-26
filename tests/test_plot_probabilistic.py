@@ -168,7 +168,3 @@ def test_mask_radius_param(probabilistic_data):
     # Check that radial tick labels are empty
     assert all(label.get_text() == "" for label in ax.get_yticklabels())
     plt.close()
-
-
-if __name__ == "__main__":  # pragma: no-cover
-    pytest.main([__file__])

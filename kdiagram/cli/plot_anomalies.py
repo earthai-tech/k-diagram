@@ -10,7 +10,7 @@ import pandas as pd
 
 from ..plot.uncertainty import plot_anomaly_magnitude
 from ._utils import (
-    ColumnsPairAction, 
+    ColumnsPairAction,
     add_bool_flag,
     ensure_columns,
     ensure_numeric,
@@ -98,9 +98,9 @@ def add_plot_anomalies(
     p.add_argument(
         "--q-cols",
         action=ColumnsPairAction,
-        nargs="+",                  # accept 1 token ("low,up") or 2 tokens
+        nargs="+",  # accept 1 token ("low,up") or 2 tokens
         required=True,
-        metavar="LOW,UP",           # single string, not a tuple
+        metavar="LOW,UP",  # single string, not a tuple
         help=(
             "Two columns 'lower,upper' that define the interval. "
             "Accepts 'low,up' or two tokens."

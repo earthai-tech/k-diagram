@@ -9,18 +9,21 @@ except Exception:  # pragma: no cover
 
 # subcommand registrars
 from .plot_anomalies import add_plot_anomalies
+from .plot_comparison import add_plot_comparison
+from .plot_cond_relationship import add_plot_cond_relationship
 from .plot_coverages import add_plot_coverages
+from .plot_credibility import add_plot_credibility
 from .plot_drift import add_plot_drift
+from .plot_errors import add_plot_errors
+from .plot_eval_relationship import add_plot_eval_relationship
 from .plot_fields import add_plot_fields
 from .plot_intervals import add_plot_intervals
+from .plot_probs import add_plot_probs
+from .plot_reliability import add_plot_reliability
+from .plot_sharpness import add_plot_sharpness
 from .plot_temporal import add_plot_temporal
 from .plot_velocities import add_plot_velocities
 from .plot_vs import add_plot_vs
-
-
-from .plot_probs import add_plot_probs
-from .plot_sharpness import add_plot_sharpness
-from .plot_credibility import add_plot_credibility
 
 __all__ = ["build_parser", "main"]
 
@@ -51,7 +54,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run 'kdiagram <command> -h' for help.",
     )
 
-
     # register all commands (grouped by theme)
     # Uncertainty / coverage
     add_plot_coverages(sub)
@@ -73,7 +75,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Ground-truth vs prediction
     add_plot_vs(sub)
-    
+
+    # Relationship views (truth vs preds, conditional bands)
+    add_plot_cond_relationship(sub)
+    add_plot_eval_relationship(sub)
+
+    # errors plot
+    add_plot_errors(sub)
+
+    # comparison plots
+    add_plot_reliability(sub)
+    add_plot_comparison(sub)
 
     return parser
 

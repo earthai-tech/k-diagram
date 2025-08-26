@@ -1,23 +1,22 @@
-# kdiagram/cli/plot_credibility.py
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import List
 
 from kdiagram.plot.probabilistic import plot_credibility_bands
 
 from ._utils import (
-    load_df,
+    ColumnsListAction,
+    add_bool_flag,
     ensure_columns,
     ensure_numeric,
+    load_df,
     parse_figsize,
-    add_bool_flag,
-    ColumnsListAction,
 )
 
+
 def _cmd_plot_credibility_bands(ns: argparse.Namespace) -> None:
-    q_cols: List[str] = list(ns.q_cols or [])
+    q_cols: list[str] = list(ns.q_cols or [])
     if len(q_cols) != 3:
         raise SystemExit(
             "--q-cols expects three names (low,med,up). "
