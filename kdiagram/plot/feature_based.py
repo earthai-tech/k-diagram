@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Optional, Union
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -575,7 +575,7 @@ ax : matplotlib.axes.Axes
 Notes
 -----
 **Angular encoding.** With :math:`N` features, angular positions are
-equally spaced:
+equally spaced as:
 
 .. math::
 
@@ -601,7 +601,7 @@ magnitude information. Set ``normalize=False`` to compare magnitudes.
 
 **Alternative min–max scaling (pre-processing).** If you prefer values
 distributed over :math:`[0,1]` using the local range, apply this
-transformation per row before calling the function:
+transformation per row before calling the function as:
 
 .. math::
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# force non-GUI backend
 import matplotlib
 import numpy as np
 import pandas as pd
@@ -50,7 +49,7 @@ def demo_csv(tmp_path_factory: pytest.TempPathFactory) -> Path:
     rval = np.clip(np.abs(np.sin(x)) + 0.1, 0, None)
     u = np.cos(theta)
     v = np.sin(theta)
-    color_val = (rval - rval.min()) / (rval.ptp() + 1e-9)
+    color_val = (rval - rval.min()) / (np.ptp(rval) + 1e-9)
 
     df = pd.DataFrame(
         {

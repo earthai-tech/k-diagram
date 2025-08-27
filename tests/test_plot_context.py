@@ -1,3 +1,4 @@
+import builtins
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
+import kdiagram.utils._deps as deps
 from kdiagram.plot.context import (
     plot_error_autocorrelation,
     plot_error_distribution,
@@ -14,6 +16,9 @@ from kdiagram.plot.context import (
     plot_scatter_correlation,
     plot_time_series,
 )
+
+_real_import = builtins.__import__
+
 
 # Use a non-interactive backend for testing
 plt.switch_backend("Agg")
@@ -120,30 +125,39 @@ def test_plot_error_autocorrelation_runs(context_data):
 
 
 # --- Tests for plot_error_pacf ---
+def test_plot_error_pacf_runs(context_data):
+    """Test basic execution of plot_error_pacf."""
+    # This test now receives a clean, 100-sample DataFrame
+    # and will no longer raise the ValueError from statsmodels.
+    try:
+        import statsmodels  # noqa
+
+        ax = plot_error_pacf(
+            df=context_data,
+            actual_col="actual",
+            pred_col="pred_biased",
+        )
+        assert isinstance(ax, Axes)
+        plt.close()
+    except ImportError:
+        pytest.skip("statsmodels not installed, skipping PACF test.")
 
 
-@patch("kdiagram.plot.context._lazy_import_pacf")
-def test_plot_error_pacf_runs(mock_lazy_pacf, context_data):
-    """Test basic execution of plot_error_pacf with a mocked backend."""
-    # Mock the statsmodels function to avoid dependency
-    mock_plot_pacf = mock_lazy_pacf.return_value
-
-    ax = plot_error_pacf(
-        df=context_data,
-        actual_col="actual",
-        pred_col="pred_biased",  # Use biased preds to check for structure
-    )
-    assert isinstance(ax, Axes)
-    mock_plot_pacf.assert_called_once()
-    plt.close()
+def _blocked_import(name, *args, **kwargs):
+    if name == "statsmodels" or name.startswith("statsmodels."):
+        raise ImportError("statsmodels is required")
+    return _real_import(name, *args, **kwargs)
 
 
 def test_plot_error_pacf_raises_import_error_if_not_installed():
-    """Test that @ensure_pkg raises an error if statsmodels is missing."""
-    with patch.dict("sys.modules", {"statsmodels": None}):
+    # ensure ensure_pkg re-checks
+    deps._REQUIREMENT_CACHE.clear()
+
+    df = pd.DataFrame({"a": np.arange(10), "b": np.arange(10)})
+
+    # Don't poison sys.modules with None; just block imports
+    with patch("builtins.__import__", side_effect=_blocked_import):
         with pytest.raises(ImportError, match=r"statsmodels is required"):
-            # This test requires a dummy df to pass the initial decorators
-            df = pd.DataFrame({"a": [1, 2], "b": [1, 2]})
             plot_error_pacf(df, "a", "b")
 
 
@@ -160,8 +174,6 @@ def test_plot_qq_runs(context_data):
 
 
 # --- Tests for plot_error_distribution ---
-
-
 def test_plot_error_distribution_runs(context_data):
     """Test basic execution of plot_error_distribution."""
     ax = plot_error_distribution(

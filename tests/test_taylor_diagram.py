@@ -14,7 +14,7 @@ import pytest
 
 # --- Import functions to test ---
 # Adjust the import path based on your project structure
-from kdiagram.plot.evaluation import (
+from kdiagram.plot.taylor_diagram import (
     plot_taylor_diagram,
     plot_taylor_diagram_in,
     taylor_diagram,

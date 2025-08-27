@@ -1,1149 +1,1561 @@
 #   License: Apache-2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
-from __future__ import annotations
-
 import warnings
-from numbers import Integral
+from typing import Any, Callable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from ..compat.sklearn import StrOptions, validate_params
-from ..utils.handlers import columns_manager
-from ..utils.mathext import minmax_scaler
-from ..utils.validator import (
-    check_consistent_length,
-    contains_nested_objects,
-    validate_length_range,
-    validate_yy,
+from sklearn.metrics import (
+    auc,
+    average_precision_score,
+    classification_report,
+    confusion_matrix,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_recall_curve,
+    r2_score,
+    roc_curve,
 )
-from ._properties import TDG_DIRECTIONS
+
+from ..compat.matplotlib import get_cmap
+from ..compat.sklearn import type_of_target
+from ..decorators import check_non_emptiness
+from ..utils.handlers import columns_manager
+from ..utils.mathext import compute_pinball_loss
+from ..utils.plot import set_axis_grid
+from ..utils.validator import validate_yy
 
 __all__ = [
-    "plot_taylor_diagram",
-    "plot_taylor_diagram_in",
-    "taylor_diagram",
+    "plot_polar_roc",
+    "plot_polar_pr_curve",
+    "plot_polar_confusion_matrix",
+    "plot_polar_confusion_matrix_in",
+    "plot_polar_confusion_multiclass",
+    "plot_polar_classification_report",
+    "plot_pinball_loss",
+    "plot_regression_performance",
 ]
 
 
-def taylor_diagram(
-    stddev=None,
-    corrcoef=None,
-    y_preds=None,
-    reference=None,
-    names=None,
-    ref_std=1,
-    cmap=None,
-    draw_ref_arc=False,
-    radial_strategy="rwf",
-    norm_c=False,
-    power_scaling=1.0,
-    marker="o",
-    ref_props=None,
-    fig_size=None,
-    size_props=None,
-    title=None,
-    savefig=None,
+@check_non_emptiness(params=["y_true", "y_preds"])
+def plot_polar_roc(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: Optional[list[str]] = None,
+    title: str = "Polar ROC Curve",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
 ):
-    r"""
-    Plot a Taylor diagram to compare multiple predictions against
-    a reference by visualizing their correlation and standard
-    deviation. This function can accept either precomputed
-    statistics (i.e. `stddev` and `corrcoef`) or the actual arrays
-    (`y_preds` and `reference`) from which these statistics will be
-    derived.
+    if not y_preds:
+        raise ValueError(
+            "At least one prediction array" " (*y_preds) must be provided."
+        )
 
-    The radial axis represents the standard deviation (std. dev.),
-    while the angular axis represents the correlation with the
-    reference (with angle :math:`\theta = \arccos(\rho)`).
+    if names and len(names) != len(y_preds):
+        warnings.warn(
+            "Number of names does not match models." " Using defaults.",
+            stacklevel=2,
+        )
+        names = None
+    if not names:
+        names = [f"Model {i+1}" for i in range(len(y_preds))]
 
-    Parameters
-    ----------
-    stddev : list of float or None, optional
-        List of standard deviations for each prediction. If
-        `None`, the standard deviations are computed internally
-        from `y_preds`. The length of `stddev` should match the
-        number of models if provided.
+    y_true, _ = validate_yy(y_true, y_preds[0])  # Validate first pred
 
-    corrcoef : list of float or None, optional
-        List of correlation coefficients for each prediction
-        against the reference. If `None`, these are computed
-        internally from `y_preds`. Must match the length of
-        `stddev` if provided.
-
-    y_preds : list of array-like or None, optional
-        One or more prediction arrays (e.g. model outputs).
-        Each array must share the same length as `reference`.
-        Required if `stddev` or `corrcoef` is not provided.
-
-    reference : array-like or None, optional
-        Reference (observed) array used for computing correlation
-        and std. dev. of predictions if `stddev` or `corrcoef`
-        is not given. Must share length with each prediction in
-        `y_preds`.
-
-    names : list of str or None, optional
-        Labels for each prediction array. Must match the number
-        of models in `y_preds` or in `stddev`/`corrcoef`. If
-        `None`, default labels of the form "Model_i" are used.
-
-    ref_std : float, optional
-        Standard deviation of the reference if already known or
-        desired to be set explicitly. If predictions are provided
-        (`y_preds` and `reference`), this is computed as
-        `np.std(reference)` by default.
-
-    cmap : str or None, optional
-        Matplotlib colormap for the background shading. If not
-        `None`, a contour fill is created based on the chosen
-        `radial_strategy`, visualizing different performance
-        or weighting zones. For example, `'viridis'` or
-        `'plasma'`.
-
-    draw_ref_arc : bool, optional
-        If `True`, an arc is drawn at the reference's standard
-        deviation, highlighting that radial distance. If `False`,
-        a point is placed at angle `0` with radial distance
-        `ref_std`. Default is `False`.
-
-    radial_strategy : {'rwf', 'convergence', 'center_focus',
-        'performance'}, optional
-
-        Strategy for computing the background mesh (when
-        `cmap` is not `None`):
-
-        * ``'rwf'``: Radial weighting function that uses
-          correlation and deviation distance in an exponential
-          form.
-        * ``'convergence'``: A simple radial function of `r`.
-        * ``'center_focus'``: Focus on a center region in the
-          (theta, r) space using an exponential decay from the
-          center.
-        * ``'performance'``: Highlight the region near the best
-          performing model (max correlation, optimal std. dev.).
-
-    norm_c : bool, optional
-        If `True`, the generated background mesh is normalized to
-        the range [0, 1] before plotting. This can highlight
-        relative differences more clearly. Default is `False`.
-
-    power_scaling : float, optional
-        When `norm_c` is `True`, the normalized background mesh
-        can be exponentiated by this factor. Useful for adjusting
-        contrast. Default is `1.0`.
-
-    marker : str, optional
-        Marker style for the points representing each prediction.
-        Defaults to `'o'`.
-
-    ref_props : dict or None, optional
-        Dictionary of reference plot properties, such as line
-        style, color, or width. Supported keys include:
-
-        * ``'label'``: Legend label for the reference.
-        * ``'lc'``: Line color/style for the reference arc.
-        * ``'color'``: Color/style for the reference point.
-        * ``'lw'``: Line width.
-
-        If not given, defaults to a green line and black point.
-
-    fig_size : (float, float) or None, optional
-        Figure size in inches, e.g. ``(width, height)``.
-        Defaults to ``(8, 6)``.
-
-    size_props : dict or None, optional
-        Optional dictionary to control tick and label sizes.
-        For instance:
-        ``{'ticks': 12, 'labels': 14}``.
-        Can be used to adjust the font sizes of the radial and
-        angular ticks and labels.
-
-    title : str or None, optional
-        Title of the figure. If `None`, defaults to
-        ``"Taylor Diagram"``.
-
-    savefig : str or None, optional
-        Path to save the figure (e.g. ``"diagram.png"``). If
-        `None`, the figure is displayed instead of being saved.
-
-    Notes
-    -----
-
-    The Taylor diagram simultaneously shows two statistics for
-    each model prediction :math:`p` compared to a reference
-    :math:`r`:
-
-    1. **Standard Deviation**:
-
-       .. math::
-          \sigma_p = \sqrt{\frac{1}{n}
-          \sum_{i=1}^{n}\bigl(p_i - \bar{p}\bigr)^2}
-
-       where :math:`\bar{p}` is the mean of :math:`p`.
-
-    2. **Correlation**: :math:`\rho`
-
-       .. math::
-          \rho = \frac{\mathrm{Cov}(p, r)}
-          {\sigma_p \; \sigma_r}
-
-       where :math:`\mathrm{Cov}(p, r)` is the covariance between
-       :math:`p` and :math:`r`, and :math:`\sigma_r` is the
-       standard deviation of :math:`r`.
-
-    The diagram uses polar coordinates with radius corresponding
-    to the standard deviation, and the angle
-    :math:`\theta = \arccos(\rho)` representing correlation.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from kdiagram.plot.evaluation import taylor_diagram
-    >>> # Generate synthetic data
-    >>> ref = np.random.randn(100)
-    >>> preds = [
-    ...     ref + 0.1 * np.random.randn(100),
-    ...     1.2 * ref + 0.5 * np.random.randn(100),
-    ... ]
-    >>> # Basic usage (auto-compute stddev and corrcoef)
-    >>> taylor_diagram(y_preds=preds, reference=ref)
-
-    See Also
-    --------
-    numpy.std : Compute standard deviation.
-    numpy.corrcoef : Compute correlation coefficients.
-
-    References
-    ----------
-    .. [1] Taylor, K. E. (2001). Summarizing multiple aspects of
-           model performance in a single diagram. *Journal of
-           Geophysical Research*, 106(D7), 7183-7192.
-    """
-
-    # Create polar subplot
+    # --- Plotting Setup ---
     fig, ax = plt.subplots(
-        subplot_kw={"projection": "polar"}, figsize=fig_size or (8, 6)
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+
+    # --- Plot No-Skill Reference Spiral ---
+    # In polar, the y=x line becomes an Archimedean spiral
+    no_skill_theta = np.linspace(0, np.pi / 2, 100)
+    no_skill_radius = np.linspace(0, 1, 100)
+    ax.plot(
+        no_skill_theta,
+        no_skill_radius,
+        color="gray",
+        linestyle="--",
+        lw=1.5,
+        label="No-Skill (AUC = 0.5)",
     )
 
-    # Handle reference properties
-    ref_props = ref_props or {}
-    ref_label = ref_props.pop("label", "Reference")
-    ref_color = ref_props.pop("lc", "red")
-    ref_point = ref_props.pop("color", "k*")
-    ref_lw = ref_props.pop("lw", 2)
+    # --- Calculate and Plot ROC for Each Model ---
+    for i, y_pred in enumerate(y_preds):
+        fpr, tpr, _ = roc_curve(y_true, y_pred)
+        roc_auc = auc(fpr, tpr)
 
-    # Compute stddev and corrcoef from predictions if needed
-    if stddev is None or corrcoef is None:
-        if y_preds is None or reference is None:
-            raise ValueError(
-                "Provide either stddev and corrcoef, "
-                "or y_preds and reference."
-            )
-        if not contains_nested_objects(y_preds, strict=True):
-            y_preds = [y_preds]
+        # Map FPR to angle and TPR to radius
+        model_theta = fpr * (np.pi / 2)
+        model_radius = tpr
 
-        y_preds = [
-            validate_yy(reference, pred, flatten="auto")[1]
-            for pred in y_preds
-        ]
-
-        stddev = [np.std(pred) for pred in y_preds]
-        corrcoef = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]
-        ref_std = np.std(reference)
-
-    # Re-check consistency
-    check_consistent_length(stddev, corrcoef)
-
-    # Ensure `names` matches number of models
-    if names is not None:
-        names = columns_manager(names)
-        if len(names) < len(stddev):
-            additional = [
-                f"Model_{i + 1}" for i in range(len(stddev) - len(names))
-            ]
-            names = names + additional
-    else:
-        names = [f"Model_{i + 1}" for i in range(len(stddev))]
-
-    # Generate background if cmap is provided
-    if cmap:
-        theta_bg, r_bg = np.meshgrid(
-            np.linspace(0, np.pi / 2, 500),
-            np.linspace(0, max(stddev) + 0.5, 500),
-        )
-
-        # Compute background based on strategy
-        if radial_strategy == "convergence":
-            background = r_bg
-        elif radial_strategy == "rwf":
-            corr_bg = np.cos(theta_bg)
-            std_diff = (r_bg - ref_std) ** 2
-            background = np.exp(-std_diff / 0.1) * corr_bg**2
-        elif radial_strategy == "center_focus":
-            center_std = (max(stddev) + ref_std) / 2
-            std_diff = (r_bg - center_std) ** 2
-            theta_diff = (theta_bg - np.pi / 4) ** 2
-            background = np.exp(-std_diff / 0.1) * np.exp(-theta_diff / 0.2)
-        elif radial_strategy == "performance":
-            best_idx = np.argmax(corrcoef)
-            std_best = stddev[best_idx]
-            corr_best = corrcoef[best_idx]
-            theta_best = np.arccos(corr_best)
-            std_diff = (r_bg - std_best) ** 2
-            theta_diff = (theta_bg - theta_best) ** 2
-            background = np.exp(-std_diff / 0.05) * np.exp(-theta_diff / 0.05)
-
-        # Normalize background if requested
-        if norm_c:
-            background = minmax_scaler(background)
-            # background = (
-            #     (background - np.min(background)) /
-            #     (np.max(background) - np.min(background))
-            # )
-            background = background**power_scaling
-
-        # Plot the colored contour
-        ax.contourf(
-            theta_bg, r_bg, background, levels=100, cmap=cmap, alpha=0.8
-        )
-
-    # Draw reference point or arc
-    if draw_ref_arc:
-        t_arc = np.linspace(0, np.pi / 2, 500)
+        # Plot the model's ROC spiral
         ax.plot(
-            t_arc,
-            [ref_std] * len(t_arc),
-            ref_color,
-            linewidth=ref_lw,
-            label=ref_label,
-        )
-    else:
-        ax.plot(0, ref_std, ref_point, markersize=12, label=ref_label)
-
-    # Plot data points
-    for i, (std_val, corr_val) in enumerate(zip(stddev, corrcoef)):
-        theta_pt = np.arccos(corr_val)
-        ax.plot(theta_pt, std_val, marker, label=names[i], markersize=10)
-
-    # Add correlation lines (dotted radial lines)
-    t_corr = np.linspace(0, np.pi / 2, 100)
-    for r_line in np.linspace(0, 1, 11):
-        ax.plot(t_corr, [r_line * ref_std] * len(t_corr), "k--", alpha=0.3)
-
-    # Add standard deviation circles
-    for r_circ in np.linspace(0, max(stddev) + 0.5, 5):
-        ax.plot(
-            np.linspace(0, np.pi / 2, 100), [r_circ] * 100, "k--", alpha=0.3
+            model_theta,
+            model_radius,
+            color=colors[i],
+            lw=2.5,
+            label=f"{names[i]} (AUC = {roc_auc:.2f})",
         )
 
-    # Set axis limits
-    ax.set_xlim(0, np.pi / 2)
-    ax.set_ylim(0, max(stddev) + 0.5)
+        # Fill the area under the curve (AUC)
+        ax.fill(model_theta, model_radius, color=colors[i], alpha=0.15)
 
-    # Set x-ticks for correlation
-    ax.set_xticks(np.arccos(np.linspace(0, 1, 6)))
-    ax.set_xticklabels(["1.0", "0.8", "0.6", "0.4", "0.2", "0.0"])
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_thetamin(0)
+    ax.set_thetamax(90)
+    ax.set_ylim(0, 1.0)
 
-    # Axis labels
-    ax.set_xlabel("Standard Deviation", labelpad=20)
+    # Set angular tick labels to represent False Positive Rate
+    ax.set_xticks(np.linspace(0, np.pi / 2, 6))
+    ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
 
-    # Correlation text label on the plot
-    ax.text(
-        0.85,
-        0.7,
-        "Correlation",
-        ha="center",
-        rotation_mode="anchor",
-        rotation=-45,
-        transform=ax.transAxes,
-    )
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    # Set size of ticks and labels if provided
-    if size_props:
-        tick_size = size_props.get("ticks", 10)
-        label_size = size_props.get("label", 12)
-        ax.tick_params(axis="both", labelsize=tick_size)
-        # X-label
-        for label in ax.xaxis.get_label():
-            label.set_size(label_size)
-        # We might want to set radial labels if any,
-        # but let's keep it minimal.
-
-    # Legend and title
-    ax.legend(loc="upper right")
-    plt.title(title or "Taylor Diagram")
-
-    # Save or show figure
+    plt.tight_layout()
     if savefig:
-        plt.savefig(savefig, bbox_inches="tight")
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
     else:
         plt.show()
 
-
-@validate_params(
-    {
-        "reference": ["array-like"],
-        "names": [str, "array-like", None],
-        "acov": [StrOptions({"default", "half_circle"}), None],
-        "zero_location": [
-            StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})
-        ],
-        "direction": [Integral],
-    }
-)
-def plot_taylor_diagram_in(
-    *y_preds,
-    reference,
-    names=None,
-    acov=None,
-    zero_location="E",
-    direction=-1,
-    only_points=False,
-    ref_color="red",
-    draw_ref_arc=True,
-    angle_to_corr=True,
-    marker="o",
-    corr_steps=6,
-    cmap="viridis",
-    shading="auto",
-    shading_res=300,
-    radial_strategy=None,
-    norm_c=False,
-    norm_range=None,
-    cbar="off",
-    fig_size=None,
-    title=None,
-    savefig=None,
-):
-    r"""Plot Taylor Diagram with background color map.
-
-    Generates a Taylor Diagram comparing predictions to a reference,
-    featuring a background color map encoding correlation or other
-    metrics based on the chosen strategy.
-
-    The diagram uses polar coordinates where the radial axis
-    represents the standard deviation (:math:`\sigma_p`) of each
-    prediction, and the angular axis represents the correlation
-    (:math:`\rho`) with the reference, typically via the angle
-    :math:`\theta = \arccos(\rho)`.
-
-    Parameters
-    ----------
-    *y_preds : array-like
-        One or more 1D prediction arrays (e.g., model outputs).
-        Each array must have the same length as `reference`.
-        Multi-dimensional inputs are flattened internally.
-
-    reference : array-like
-        The 1D reference (observed) array of shape :math:`(n,)`.
-        Must have the same length as each array in `*y_preds`.
-
-    names : list of str or None, optional
-        Labels for each prediction array in `*y_preds`. Must match
-        the number of predictions if provided. If ``None``, defaults
-        like "Pred 1", "Pred 2" are used.
-
-    acov : {'default', 'half_circle'}, optional
-        Angular coverage of the diagram:
-
-        - ``'default'``: Spans :math:`\pi` (180 degrees).
-        - ``'half_circle'``: Spans :math:`\pi/2` (90 degrees).
-
-        If ``None``, defaults to ``'half_circle'``.
-
-    zero_location : {'N','NE','E','S','SW','W','NW','SE'}, optional
-        Position corresponding to perfect correlation (:math:`\rho=1`).
-        Default is ``'E'``.
-
-    direction : int, optional
-        Rotation direction for increasing angles (correlation).
-        ``1`` for counter-clockwise, ``-1`` for clockwise.
-        Default is ``-1``.
-
-    only_points : bool, optional
-        If ``True``, plot only markers for predictions, omitting
-        radial lines from the origin. Default is ``False``.
-
-    ref_color : str, optional
-        Color for the reference standard deviation marker (arc or
-        line/point). Default is ``'red'``.
-
-    draw_ref_arc : bool, optional
-        If ``True`` (default), draw reference std dev as an arc.
-        If ``False``, draw as a radial line/point at angle zero.
-
-    angle_to_corr : bool, optional
-        If ``True`` (default), label the angular axis with
-        correlation values (:math:`\rho`). If ``False``, label with
-        degrees.
-
-    marker : str, optional
-        Marker style for prediction points (e.g., 'o', '^', 's').
-        Default is ``'o'``.
-
-    corr_steps : int, optional
-        Number of correlation ticks (0 to 1) when `angle_to_corr`
-        is ``True``. Default is 6.
-
-    cmap : str, optional
-        Colormap name for the background mesh (e.g., 'viridis').
-        Default is ``'viridis'``.
-
-    shading : {'auto', 'gouraud', 'nearest'}, optional
-        Shading method for the background mesh (`pcolormesh`).
-        Default is ``'auto'``.
-
-    shading_res : int, optional
-        Resolution for the background mesh grid. Default is 300.
-
-    radial_strategy : {'convergence', 'norm_r', 'performance'}, optional
-        Strategy for calculating background color values:
-
-        - ``'convergence'``: Color maps to correlation :math:`\cos(\theta)`.
-        - ``'norm_r'``: Color maps to normalized radius (std dev).
-        - ``'performance'``: Color highlights region near the best
-          performing input model.
-
-        If ``None``, defaults to ``'performance'``. `'rwf'` and
-        `'center_focus'` are not supported here.
-
-    norm_c : bool, optional
-        If ``True``, normalize background color values using
-        `norm_range`. Default is ``False``.
-
-    norm_range: tuple of (float, float), optional
-        Range `(min, max)` for background color normalization when
-        `norm_c` is ``True``. Default is ``(0, 1)``.
-
-    cbar : bool or {'off'}, optional
-        Control colorbar display for the background mesh.
-        ``'off'`` or ``False`` hides it, ``True`` shows it.
-        Default is ``'off'``.
-
-    fig_size : tuple of (float, float), optional
-        Figure size in inches ``(width, height)``. Default is ``(10, 8)``.
-
-    title : str, optional
-        Title of the diagram. Default is ``"Taylor Diagram"``.
-
-    savefig : str or None, optional
-        Path to save the figure (e.g., ``"diagram.png"``). If `None`,
-        the figure is displayed interactively. Default is `None`.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the Taylor Diagram.
-        *(Note: Original code may not explicitly return ax.)*
-
-    Raises
-    ------
-    ValueError
-        If input arrays have inconsistent lengths or if invalid
-        parameter options are provided (e.g., for `acov`,
-        `zero_location`, `radial_strategy`).
-    TypeError
-        If non-numeric data is encountered in input arrays.
-
-    Notes
-    -----
-    The Taylor diagram [1]_ displays standard deviation (:math:`\sigma_p`)
-    and correlation (:math:`\rho`) relative to a reference (:math:`r`)
-    with standard deviation :math:`\sigma_r`.
-
-    1.  **Correlation** (:math:`\rho`):
-
-        .. math::
-           \rho = \frac{\mathrm{Cov}(p, r)}{\sigma_p \sigma_r}
-
-    2.  **Standard Deviation** (:math:`\sigma_p`):
-
-        .. math::
-           \sigma_p = \sqrt{\frac{1}{n}
-           \sum_{i=1}^n (p_i - \bar{p})^2}
-
-    The plot uses polar coordinates where radius is :math:`\sigma_p`
-    and angle is :math:`\theta = \arccos(\rho)`. The distance from a
-    plotted point to the reference point represents the centered RMS
-    difference.
-
-    See Also
-    --------
-    numpy.corrcoef : Compute correlation coefficients.
-    numpy.std : Compute standard deviation.
-    kdiagram.plot.evaluation.taylor_diagram : Flexible version accepting
-        stats or arrays.
-    kdiagram.plot.evaluation.plot_taylor_diagram : Basic version without
-        background shading.
-
-    References
-    ----------
-    .. [1] Taylor, K. E. (2001). Summarizing multiple aspects of model
-           performance in a single diagram. *Journal of Geophysical
-           Research*, 106(D7), 7183-7192.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from kdiagram.plot.evaluation import plot_taylor_diagram_in
-    >>> np.random.seed(42)
-    >>> reference = np.random.normal(0, 1, 100)
-    >>> y_preds = [
-    ...     reference + np.random.normal(0, 0.3, 100),
-    ...     reference * 0.9 + np.random.normal(0, 0.8, 100)
-    ... ]
-    >>> # ax = plot_taylor_diagram_in( # Capture axis if returned
-    >>> plot_taylor_diagram_in(
-    ...     *y_preds,
-    ...     reference=reference,
-    ...     names=['Model A', 'Model B'],
-    ...     acov='half_circle',
-    ...     zero_location='N',
-    ...     direction=1,
-    ...     fig_size=(8, 8),
-    ...     cbar=True,
-    ...     radial_strategy='convergence'
-    ... )
-    >>> # Plot is shown if savefig is None
-    """
-
-    # Flatten the reference and predictions
-    reference = np.ravel(reference)
-    y_preds = [np.ravel(yp) for yp in y_preds]
-    n = reference.size
-    for p in y_preds:
-        if p.size != n:
-            raise ValueError(
-                "All predictions and reference must be the same length."
-            )
-
-    # correlation & stdev
-    corrs = [np.corrcoef(p, reference)[0, 1] for p in y_preds]
-    stds = [np.std(p) for p in y_preds]
-    ref_std = np.std(reference)
-
-    # Setup figure & polar axis
-
-    fig = plt.figure(figsize=fig_size or (10, 8))
-    ax = fig.add_subplot(111, polar=True)
-
-    # Decide coverage
-    acov = acov or "half_circle"
-    if acov == "half_circle":
-        angle_max = np.pi / 2
-    else:
-        angle_max = np.pi
-
-    # radial limit
-    rad_limit = max(max(stds), ref_std) * 1.2
-
-    # Create a mesh for background
-    theta_grid = np.linspace(0, angle_max, shading_res)
-    r_grid = np.linspace(0, rad_limit, shading_res)
-    TH, RR = np.meshgrid(theta_grid, r_grid)
-
-    if radial_strategy == "convergence":
-        # correlation => cos(TH)
-        # correlation = cos(TH) if half or full circle
-        # (when angle=0 => correlation=1, angle= pi/2 => corr=0, angle= pi => corr=-1)
-        CC = np.cos(TH)  # from 1..-1 or 1..0 depending on coverage
-    elif radial_strategy == "norm_r":
-        CC = RR / rad_limit  # Normalizes r to range [0, 1]
-    else:
-        if radial_strategy in {"rwf", "center_focus"}:
-            warnings.warn(
-                f"'{radial_strategy}' is not available in the current"
-                " plot. Consider using `gofast.plot.taylor_diagram`"
-                " for better support. Alternatively, choose from"
-                " 'convergence', 'norm_r', or 'performance'."
-                " Defaulting to 'performance' visualization.",
-                stacklevel=2,
-            )
-        # Fallback to performance
-        best_idx = np.argmax(corrs)
-        std_best = stds[best_idx]
-        corr_best = corrs[best_idx]
-        theta_best = np.arccos(corr_best)
-        std_diff = (RR - std_best) ** 2
-        theta_diff = (TH - theta_best) ** 2
-
-        CC = np.exp(-std_diff / 0.05) * np.exp(-theta_diff / 0.05)
-
-    # Define color values based on radial distance (normalized)
-    if norm_c:
-        if norm_range is None:
-            norm_range = (0, 1)
-        norm_range = validate_length_range(
-            norm_range, param_name="Normalized Range"
-        )
-        CC = minmax_scaler(CC, feature_range=norm_range)
-
-    # plot background
-    # Turn off grid to avoid the deprecation error
-    ax.grid(False)
-    c = ax.pcolormesh(
-        TH,
-        RR,
-        CC,
-        cmap=cmap,
-        shading=shading,
-        vmin=-1 if angle_max == np.pi else 0,
-        vmax=1,
-    )
-    ax.grid(True, which="both")
-    # convert each correlation to an angle
-    angles = np.arccos(corrs)
-    radii = stds
-
-    # pick distinct colors
-    colors = plt.cm.Set1(np.linspace(0, 1, len(y_preds)))
-    names = columns_manager(names, empty_as_none=False)
-    # plot predictions
-    for i, (ang, rd) in enumerate(zip(angles, radii)):
-        label = names[i] if (names and i < len(names)) else f"Pred {i+1}"
-        if not only_points:
-            ax.plot([ang, ang], [0, rd], color=colors[i], lw=2, alpha=0.8)
-        ax.plot(ang, rd, marker=marker, color=colors[i], label=label)
-
-    # reference arc
-    if draw_ref_arc:
-        arc_t = np.linspace(0, angle_max, 300)
-        ax.plot(
-            arc_t, [ref_std] * 300, color=ref_color, lw=2, label="Reference"
-        )
-    else:
-        ax.plot(
-            [0, 0], [0, ref_std], color=ref_color, lw=2, label="Reference"
-        )
-        ax.plot(0, ref_std, marker=marker, color=ref_color)
-
-    # set coverage
-    ax.set_thetamax(np.degrees(angle_max))
-
-    # direction
-    if direction not in (-1, 1):
-        warnings.warn("direction must be -1 or 1; using 1.", stacklevel=2)
-        direction = 1
-    ax.set_theta_direction(direction)
-    ax.set_theta_zero_location(zero_location)
-
-    # Use coordinates and positions to avoid overlapping
-    CORR_POS = TDG_DIRECTIONS[str(direction)]["CORR_POS"]
-    STD_POS = TDG_DIRECTIONS[str(direction)]["STD_POS"]
-
-    corr_pos = CORR_POS.get(zero_location)[0]
-    corr_kw = CORR_POS.get(zero_location)[1]
-    std_pos = STD_POS.get(zero_location)[0]
-    std_kw = STD_POS.get(zero_location)[1]
-
-    # angle => corr labels
-    if angle_to_corr:
-        corr_ticks = np.linspace(0, 1, corr_steps)
-        angles_deg = np.degrees(np.arccos(corr_ticks))
-        ax.set_thetagrids(
-            angles_deg, labels=[f"{ct:.2f}" for ct in corr_ticks]
-        )
-        ax.text(
-            *corr_pos,
-            "Correlation",
-            ha="center",
-            va="bottom",
-            transform=ax.transAxes,
-            **corr_kw,
-        )
-        ax.text(
-            *std_pos,
-            "Standard Deviation",
-            ha="center",
-            va="bottom",
-            transform=ax.transAxes,
-            **std_kw,
-        )
-
-    else:
-        ax.text(
-            *corr_pos,
-            "Angle (degrees)",
-            ha="center",
-            va="bottom",
-            transform=ax.transAxes,
-            **corr_kw,
-        )
-
-        ax.text(
-            *std_pos,
-            "Standard Deviation",
-            ha="center",
-            va="bottom",
-            transform=ax.transAxes,
-            **std_kw,
-        )
-
-    ax.set_ylim(0, rad_limit)
-    ax.set_rlabel_position(15)
-    title = title or "Taylor Diagram"
-    ax.set_title(title, pad=60)
-
-    ax.legend(loc="upper right", bbox_to_anchor=(1.2, 1.1))
-
-    if cbar not in ["off", False]:
-        fig.colorbar(c, ax=ax, pad=0.1, label="Correlation")
-
-    plt.tight_layout()
-    plt.show()
-
-
-@validate_params(
-    {
-        "reference": ["array-like"],
-        "names": [str, "array-like", None],
-        "acov": [StrOptions({"default", "half_circle"})],
-        "zero_location": [
-            StrOptions({"N", "NE", "E", "S", "SW", "W", "NW", "SE"})
-        ],
-        "direction": [Integral],
-    }
-)
-def plot_taylor_diagram(
+    return ax
+
+
+plot_polar_roc.__doc__ = r"""
+Plots a Polar Receiver Operating Characteristic (ROC) Curve.
+
+This function visualizes the performance of binary
+classification models by mapping the standard ROC curve onto a
+polar plot. It is a novel visualization developed as part of the
+analytics framework in :footcite:p:`kouadiob2025`.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true binary labels (0 or 1).
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted probabilities or scores
+    for the positive class.
+names : list of str, optional
+    Display names for each of the models. If not provided,
+    generic names like ``'Model 1'`` will be generated.
+title : str, default="Polar ROC Curve"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each model's
+    curve.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_polar_pr_curve : A companion plot for precision-recall.
+sklearn.metrics.roc_curve : The underlying scikit-learn function.
+
+Notes
+-----
+A Receiver Operating Characteristic (ROC) curve is a standard
+tool for evaluating binary classifiers :footcite:p:`Powers2011`.
+It plots the True Positive Rate (TPR) against the False
+Positive Rate (FPR) at various threshold settings.
+
+.. math::
+
+   \text{TPR} = \frac{TP}{TP + FN} \quad , \quad
+   \text{FPR} = \frac{FP}{FP + TN}
+
+This function adapts the concept to a polar plot:
+- The **angle (θ)** is mapped to the False Positive Rate,
+  spanning from 0 at 0° to 1 at 90°.
+- The **radius (r)** is mapped to the True Positive Rate,
+  spanning from 0 at the center to 1 at the edge.
+
+A model with no skill (random guessing) is represented by a
+perfect Archimedean spiral. A good model will have a curve that
+bows outwards, maximizing the area under the curve (AUC).
+
+Examples
+--------
+>>> import numpy as np
+>>> from sklearn.datasets import make_classification
+>>> from kdiagram.plot.evaluation import plot_polar_roc
+>>>
+>>> # Generate synthetic binary classification data
+>>> X, y_true = make_classification(
+...     n_samples=500, n_classes=2, random_state=42
+... )
+>>>
+>>> # Simulate predictions from two models
+>>> y_pred_good = y_true * 0.7 + np.random.rand(500) * 0.3
+>>> y_pred_bad = np.random.rand(500)
+>>>
+>>> # Generate the plot
+>>> ax = plot_polar_roc(
+...     y_true,
+...     y_pred_good,
+...     y_pred_bad,
+...     names=["Good Model", "Random Model"]
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+@check_non_emptiness(params=["y_true", "y_preds"])
+def plot_polar_confusion_matrix(
+    y_true: np.ndarray,
     *y_preds: np.ndarray,
-    reference: np.ndarray,
-    names: list[str] | None = None,
-    acov: str = "half_circle",
-    zero_location: str = "W",
-    direction: int = -1,
-    only_points: bool = False,
-    ref_color: str = "red",
-    draw_ref_arc: bool = True,
-    angle_to_corr: bool = True,
-    marker="o",
-    corr_steps=6,
-    fig_size: tuple[int, int] | None = None,
-    title: str | None = None,
-    savefig: str | None = None,
+    names: Optional[list[str]] = None,
+    normalize: bool = True,
+    title: str = "Polar Confusion Matrix",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    mask_radius: bool = False,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
 ):
-    r"""Plot a standard Taylor Diagram.
-
-    Graphically summarizes how closely a set of predictions match
-    observations (reference). The diagram displays the correlation
-    coefficient and standard deviation of each prediction relative
-    to the reference data [1]_.
-
-    Parameters
-    ----------
-    *y_preds : array-like
-        Variable number of 1D prediction arrays (e.g., model
-        outputs). Each must have the same length as `reference`.
-
-    reference : array-like
-        1D array of reference (observation) data. Must have the
-        same length as each prediction array in `*y_preds`.
-
-    names : list of str, optional
-        Labels for each prediction series in `*y_preds`. Must match
-        the number of predictions if provided. If ``None``,
-        defaults like "Prediction 1", "Prediction 2" are used.
-
-    acov : {'default', 'half_circle'}, default: "half_circle"
-        Determines the angular coverage (correlation range) of the
-        plot:
-
-        - ``'default'``: Spans 180 degrees (:math:`\pi`), covering
-          correlations from -1 to 1 (if applicable).
-        - ``'half_circle'``: Spans 90 degrees (:math:`\pi/2`),
-          covering positive correlations from 0 to 1.
-
-    zero_location : {'N','NE','E','S','SW','W','NW','SE'}, default: 'W'
-        Specifies the position on the polar plot corresponding to
-        perfect correlation (:math:`\rho=1`, angle=0). For example,
-        ``'N'`` (North) is top, ``'E'`` (East) is right, ``'W'``
-        (West) is left.
-
-        **Effects:**
-
-        - **Positioning:** Changes the orientation of the diagram by rotating
-          the zero-degree line.
-        - **Interpretation:** Influences how the angular coordinates
-          correspond to correlation values.
-
-        **Example:**
-
-        - Setting `zero_location='N'` places the zero-degree correlation
-          at the top of the plot.
-        - Setting `zero_location='E'` places it on the right side.
-
-    direction : {1, -1}, default: -1
-        Direction of increasing angle (decreasing correlation).
-        ``1`` for counter-clockwise, ``-1`` for clockwise.
-
-        **Effects:**
-
-        - **Angle Progression:** Dictates whether the angles move clockwise or
-          counter-clockwise from the zero location.
-        - **Visual Interpretation:** Affects the layout of the correlations
-          on the diagram.
-
-        **Example:**
-
-        - `direction=1`: Correlation angles increase counter-clockwise, which
-          might align with standard mathematical conventions.
-        - `direction=-1`: Correlation angles increase clockwise, which might
-          be preferred for specific visualization standards.
-
-    only_points : bool, default: False
-        If ``True``, only plot markers for predictions. If ``False``,
-        also draw radial lines from the origin to each marker.
-
-    ref_color : str, default: 'red'
-        Color for the reference standard deviation marker (arc or
-        point/line). Accepts any valid matplotlib color format.
-
-    draw_ref_arc : bool, default: True
-        If ``True``, show the reference standard deviation as an arc.
-        If ``False``, show as a marker/line at angle zero.
-
-    angle_to_corr : bool, default: True
-        If ``True``, label the angular axis (theta) with correlation
-        values (:math:`\rho`). If ``False``, label with degrees.
-
-    marker : str, default: 'o'
-        Marker style for the prediction points (e.g., 'o', 's', '^').
-
-    corr_steps : int, default: 6
-        Number of ticks (intervals) between 0 and 1 correlation when
-        `angle_to_corr` is ``True``.
-
-    fig_size : tuple of (float, float), optional
-        Figure size in inches ``(width, height)``. If `None`,
-        defaults to ``(10, 8)``.
-
-    title : str, optional
-        Title for the diagram. If `None`, defaults to
-        "Taylor Diagram".
-
-    savefig : str or None, optional
-        Path to save the figure (e.g., ``"diagram.png"``). If `None`,
-        the figure is displayed interactively. Default is `None`.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the Taylor Diagram.
-        *(Note: Original code implementation may need `return ax` added.)*
-
-    Raises
-    ------
-    ValueError
-        If input arrays have inconsistent lengths or if invalid
-        parameter options are provided for `acov`, `zero_location`,
-        or `direction`.
-    AssertionError
-        If length check inside the function fails (redundant with
-        ValueError from decorator likely).
-    TypeError
-        If non-numeric data is encountered in input arrays.
-
-    Notes
-    -----
-    Taylor diagrams visually assess model performance relative to
-    observations based on three statistics: the correlation
-    coefficient (:math:`R`), the standard deviation (:math:`\sigma`),
-    and the centered root-mean-square difference (RMSD).
-
-    The relationship is based on the law of cosines:
-
-    .. math::
-        RMSD^2 = \sigma_p^2 + \sigma_r^2 - 2\sigma_p \sigma_r R
-
-    where :math:`\sigma_p` and :math:`\sigma_r` are the standard
-    deviations of the prediction and reference, respectively.
-
-    On the diagram:
-
-    - Radial distance = Standard deviation (:math:`\sigma_p`)
-    - Angle = Correlation (:math:`\arccos(R)`)
-    - Distance to reference point = Centered RMSD
-
-    See Also
-    --------
-    numpy.corrcoef : Compute correlation coefficients.
-    numpy.std : Compute standard deviation.
-    kdiagram.plot.evaluation.taylor_diagram : Flexible version.
-    kdiagram.plot.evaluation.plot_taylor_diagram_in : Version with
-        background shading.
-
-    References
-    ----------
-    .. [1] Taylor, K. E. (2001). Summarizing multiple aspects of
-           model performance in a single diagram. *Journal of
-           Geophysical Research*, 106(D7), 7183-7192.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from kdiagram.plot.evaluation import plot_taylor_diagram
-    >>> np.random.seed(101)
-    >>> reference = np.random.normal(0, 1.0, 100)
-    >>> y_preds = [
-    ...     reference * 0.8 + np.random.normal(0, 0.4, 100), # Model A
-    ...     reference * 0.5 + np.random.normal(0, 1.1, 100)  # Model B
-    ... ]
-    >>> # ax = plot_taylor_diagram( # Capture axis if returned
-    >>> plot_taylor_diagram(
-    ...     *y_preds,
-    ...     reference=reference,
-    ...     names=['Model A', 'Model B'],
-    ...     acov='half_circle',
-    ...     zero_location='W', # Corr=1 on West axis
-    ...     fig_size=(9, 7)
-    ... )
-    """
-
-    # Convert inputs to 1D numpy arrays
-    y_preds = [np.asarray(pred).flatten() for pred in y_preds]
-    reference = np.asarray(reference).flatten()
-
-    # Check consistency of lengths
-    assert all(
-        pred.size == reference.size for pred in y_preds
-    ), "All predictions and the reference must be of the same length."
-
-    # Compute correlation and std dev for each prediction
-    correlations = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]
-    standard_deviations = [np.std(pred) for pred in y_preds]
-    reference_std = np.std(reference)
-
-    # standard_deviations= normalize_array(
-    #     standard_deviations, normalize = "auto", method="01"
-    #     )
-    # correlations= normalize_array(
-    #     correlations, normalize = "auto", method="01"
-    #     )
-    # Create figure and polar subplot
-    fig = plt.figure(figsize=fig_size or (10, 8))
-    ax = fig.add_subplot(111, polar=True)
-
-    # Convert correlation to angles (in radians)
-    # angle = arccos(corr), so perfect correlation = 0 rad,
-    # zero correlation = pi/2 rad, negative correlation = > pi/2, etc.
-    angles = np.arccos(correlations)
-    radii = standard_deviations
-
-    # Plot each prediction
-    # Use a color cycle so lines/points are more distinguishable
-    colors = plt.cm.Set1(np.linspace(0, 1, len(y_preds)))
-    for i, (angle, radius) in enumerate(zip(angles, radii)):
-        label = (
-            names[i] if (names and i < len(names)) else f"Prediction {i+1}"
+    # --- Input Validation and Preparation ---
+    if not y_preds:
+        raise ValueError(
+            "At least one prediction array (*y_preds) must be provided."
         )
-        if not only_points:
-            # Draw the radial line from origin to the point
-            ax.plot(
-                [angle, angle], [0, radius], color=colors[i], lw=2, alpha=0.8
-            )
-        ax.plot(angle, radius, marker, color=colors[i], label=label)
 
-    # Draw the reference as a red arc if requested
-    # This arc will have radius = reference_std
-    if draw_ref_arc:
-        if acov == "half_circle":
-            theta_arc = np.linspace(0, np.pi / 2, 300)
-        else:
-            theta_arc = np.linspace(0, np.pi, 300)
-
-        ax.plot(
-            theta_arc,
-            [reference_std] * len(theta_arc),
-            color=ref_color,
-            lw=2,
-            label="Reference",
-        )
-    else:
-        # If not drawing the arc, revert to a radial line as fallback
-        ax.plot(
-            [0, 0],
-            [0, reference_std],
-            color=ref_color,
-            lw=2,
-            label="Reference",
-        )
-        ax.plot(0, reference_std, marker, color=ref_color)
-
-    # Set coverage (max angle)
-    if acov == "half_circle":
-        ax.set_thetamax(90)  # degrees
-    else:
-        ax.set_thetamax(180)  # degrees (default)
-
-    # Set direction (1=counterclockwise, -1=clockwise)
-    if direction not in [-1, 1]:
+    if names and len(names) != len(y_preds):
         warnings.warn(
-            "direction should be either 1 (CCW) or -1 (CW). "
-            f"Got {direction}. Resetting to 1 (CCW).",
+            "Number of names does not match models. Using defaults.",
             stacklevel=2,
         )
-        direction = 1
-    ax.set_theta_direction(direction)
-    ax.set_theta_zero_location(zero_location)
+        names = None
+    if not names:
+        names = [f"Model {i+1}" for i in range(len(y_preds))]
 
-    CORR_POS = TDG_DIRECTIONS[str(direction)]["CORR_POS"]
-    STD_POS = TDG_DIRECTIONS[str(direction)]["STD_POS"]
+    y_true, _ = validate_yy(y_true, y_preds[0])
 
-    corr_pos = CORR_POS.get(zero_location)[0]
-    corr_kw = CORR_POS.get(zero_location)[1]
-    std_pos = STD_POS.get(zero_location)[0]
-    std_kw = STD_POS.get(zero_location)[1]
-
-    # Replace angle ticks with correlation values if requested
-    if angle_to_corr:
-        # We'll map correlation ticks [0..1] -> angle via arccos
-        # e.g. 1 -> 0 rad, 0 -> pi/2 or pi, depending on coverage
-        # Just pick some correlation tick steps
-        corr_ticks = np.linspace(0, 1, corr_steps)  # 0, 0.2, 0.4, 0.6, 0.8, 1
-        angle_ticks = np.degrees(np.arccos(corr_ticks))
-        # In half-circle mode, correlation from 0..1 fits in 0..pi/2,
-        # in default mode, 0..1 fits in 0..pi. This still works generally.
-        ax.set_thetagrids(
-            angle_ticks, labels=[f"{ct:.2f}" for ct in corr_ticks]
-        )
-        # We can label this dimension as 'Correlation'
-        ax.set_ylabel("")  # remove default 0.5, 1.06
-
-        ax.text(
-            *corr_pos,
-            "Correlation",
-            ha="center",
-            va="center",
-            transform=ax.transAxes,
-            **corr_kw,
-        )
-        ax.text(
-            *std_pos,
-            "Standard Deviation",
-            ha="center",
-            va="center",
-            transform=ax.transAxes,
-            **std_kw,
-        )
-    else:
-        # Keep angle as degrees
-        ax.set_ylabel("")  # remove default
-        ax.text(
-            *corr_pos,
-            "Angle (degrees)",
-            ha="center",
-            va="center",
-            transform=ax.transAxes,
+    # Check for target type and handle multiclass
+    target_type = type_of_target(y_true)
+    if target_type != "binary":
+        raise NotImplementedError(
+            f"Polar confusion matrix currently only supports binary "
+            f"classification. Got target type '{target_type}'. A chord "
+            f"diagram is planned for multiclass support in the future."
         )
 
-    # Adjust radial label (std dev)
-    # This tries to reduce label overlap
-    ax.set_rlabel_position(22.5)
-    ax.set_title(title or "Taylor Diagram", pad=60)  # 50
-    # ax.set_xlabel('Standard Deviation', labelpad=15)
+    # --- Calculate Confusion Matrices ---
+    matrices = []
+    for y_pred in y_preds:
+        # For binary classification, we assume predictions are probabilities
+        # and use a 0.5 threshold.
+        y_pred_class = (np.asarray(y_pred) > 0.5).astype(int)
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred_class).ravel()
+        matrices.append([tp, fp, tn, fn])
 
-    plt.legend(loc="upper right", bbox_to_anchor=(1.25, 1.05))
-    # plt.subplots_adjust(top=0.8)
+    matrices = np.array(matrices)
+    if normalize:
+        totals = matrices.sum(axis=1, keepdims=True)
+        matrices = matrices / totals
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+
+    # --- Plot Bars for Each Model ---
+    num_models = len(y_preds)
+    bar_width = (2 * np.pi / 4) / (num_models + 1)  # Width of each bar
+
+    categories = [
+        "True Positive",
+        "False Positive",
+        "True Negative",
+        "False Negative",
+    ]
+    angles = np.linspace(0, 2 * np.pi, 4, endpoint=False)
+
+    for i, (name, matrix) in enumerate(zip(names, matrices)):
+        offsets = angles + (i - num_models / 2 + 0.5) * bar_width
+        ax.bar(
+            offsets,
+            matrix,
+            width=bar_width,
+            color=colors[i],
+            alpha=0.7,
+            label=name,
+        )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(categories)
+    ax.set_ylabel("Proportion" if normalize else "Count", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
 
     plt.tight_layout()
-    plt.show()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_polar_confusion_matrix.__doc__ = r"""
+Plots a Polar Confusion Matrix for binary classification.
+
+This function creates a polar bar chart to visualize the four
+key components of a binary confusion matrix: True Positives
+(TP), False Positives (FP), True Negatives (TN), and False
+Negatives (FN).
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true binary labels (0 or 1).
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted probabilities or scores
+    for the positive class. A threshold of 0.5 is used to
+    convert probabilities to class labels.
+names : list of str, optional
+    Display names for each of the models. If not provided,
+    generic names like ``'Model 1'`` will be generated.
+normalize : bool, default=True
+    If ``True``, the confusion matrix values are normalized to
+    proportions (summing to 1.0 for each model). If ``False``,
+    raw counts are shown.
+title : str, default="Polar Confusion Matrix"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each model's
+    set of bars.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_polar_confusion_multiclass : 
+    The companion plot for multiclass problems.
+sklearn.metrics.confusion_matrix : 
+    The underlying scikit-learn function.
+
+Notes
+-----
+The confusion matrix is a fundamental tool for evaluating a
+classifier's performance :footcite:p:`scikit-learn`. This function 
+maps its four components to a polar bar chart for intuitive 
+comparison.
+
+- **True Positives (TP)**: 
+  Correctly predicted positive cases.
+- **False Positives (FP)**: 
+  Negative cases incorrectly predicted as positive.
+- **True Negatives (TN)**: 
+  Correctly predicted negative cases.
+- **False Negatives (FN)**: 
+  Positive cases incorrectly predicted as negative.
+
+Each of these four categories is assigned its own angular sector,
+and the height (radius) of the bar in that sector represents the
+count or proportion of samples in that category.
+
+Examples
+--------
+>>> import numpy as np
+>>> from sklearn.datasets import make_classification
+>>> from kdiagram.plot.evaluation import plot_polar_confusion_matrix
+>>>
+>>> # Generate synthetic binary classification data
+>>> X, y_true = make_classification(
+...     n_samples=500, n_classes=2, flip_y=0.2, random_state=42
+... )
+>>>
+>>> # Simulate predictions from two models
+>>> y_pred1 = y_true * 0.8 + np.random.rand(500) * 0.4 # Good model
+>>> y_pred2 = np.random.rand(500) # Random model
+>>>
+>>> # Generate the plot
+>>> ax = plot_polar_confusion_matrix(
+...     y_true,
+...     y_pred1,
+...     y_pred2,
+...     names=["Good Model", "Random Model"],
+...     normalize=True
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+@check_non_emptiness(params=["y_true", "y_preds"])
+def plot_polar_confusion_matrix_in(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    class_labels: Optional[list[str]] = None,
+    normalize: bool = True,
+    title: str = "Polar Confusion Matrix",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    mask_radius: bool = False,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    # --- Input Validation and Preparation ---
+    y_true, y_pred = validate_yy(y_true, y_pred)
+
+    labels = np.unique(np.concatenate((y_true, y_pred)))
+    n_classes = len(labels)
+
+    if class_labels and len(class_labels) != n_classes:
+        warnings.warn(
+            "Length of class_labels does not match number of classes.",
+            stacklevel=2,
+        )
+        class_labels = None
+    if not class_labels:
+        class_labels = [f"Class {lo}" for lo in labels]
+
+    # --- Calculate Confusion Matrix ---
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+
+    if normalize:
+        # Normalize across rows (true labels)
+        row_sums = cm.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1  # Avoid division by zero
+        cm = cm.astype("float") / row_sums
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, n_classes))
+
+    # --- Plot Grouped Bars ---
+    bar_width = (2 * np.pi / n_classes) / (n_classes + 1)
+    # Angles for each "True Label" group
+    group_angles = np.linspace(0, 2 * np.pi, n_classes, endpoint=False)
+
+    for i in range(n_classes):  # For each true class
+        # Calculate offsets for the predicted class bars within the group
+        offsets = group_angles + (i - n_classes / 2 + 0.5) * bar_width
+        # The values are the predictions for that true class
+        values = cm[:, i]
+        ax.bar(
+            offsets,
+            values,
+            width=bar_width,
+            color=colors[i],
+            alpha=0.7,
+            label=f"Predicted {class_labels[i]}",
+        )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xticks(group_angles)
+    ax.set_xticklabels([f"True\n{lo}" for lo in class_labels], fontsize=10)
+    ax.set_ylabel("Proportion" if normalize else "Count", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
+# Create a more convenient alias for the function
+plot_polar_confusion_multiclass = plot_polar_confusion_matrix_in
+
+plot_polar_confusion_matrix_in.__doc__ = r"""
+Plots a Polar Confusion Matrix for multiclass classification.
+
+This function creates a grouped polar bar chart to visualize the
+performance of a multiclass classifier. Each angular sector
+represents a true class, and the bars within it show the
+distribution of the model's predictions for that class. 
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true class labels.
+y_pred : np.ndarray
+    1D array of predicted class labels from a model.
+class_labels : list of str, optional
+    Display names for each of the classes. If not provided,
+    generic names like ``'Class 0'`` will be generated. The
+    order must correspond to the sorted order of the labels in
+    ``y_true`` and ``y_pred``.
+normalize : bool, default=True
+    If ``True``, the confusion matrix values are normalized across
+    each true class (row) to show proportions. If ``False``,
+    raw counts are shown.
+title : str, default="Polar Confusion Matrix"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each
+    predicted class bar.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_polar_confusion_matrix : 
+    The companion plot for binary problems.
+sklearn.metrics.confusion_matrix : 
+    The underlying scikit-learn function.
+
+Notes
+-----
+The confusion matrix, :math:`\mathbf{C}`, is a fundamental tool
+for evaluating a classifier. Each element :math:`C_{ij}` contains
+the number of observations known to be in group :math:`i` but
+predicted to be in group :math:`j`.
+
+This function visualizes this matrix by dedicating an angular
+sector to each true class :math:`i`. Within that sector, a set of
+bars is drawn, where the height of the :math:`j`-th bar
+corresponds to the value of :math:`C_{ij}`. This makes it easy to
+see how samples from a single true class are distributed among the
+predicted classes :footcite:p:`scikit-learn`.
+
+Examples
+--------
+>>> import numpy as np
+>>> from sklearn.datasets import make_classification
+>>> from kdiagram.plot.evaluation import plot_polar_confusion_matrix_in
+>>>
+>>> # Generate synthetic multiclass data
+>>> X, y_true = make_classification(
+...     n_samples=1000,
+...     n_features=20,
+...     n_informative=10,
+...     n_classes=4,
+...     n_clusters_per_class=1,
+...     flip_y=0.15,
+...     random_state=42
+... )
+>>> # Simulate predictions with some common confusions
+>>> y_pred = y_true.copy()
+>>> # Confuse some 2s as 3s
+>>> y_pred[np.where((y_true == 2) & (np.random.rand(1000) < 0.3))] = 3
+>>>
+>>> # Generate the plot
+>>> ax = plot_polar_confusion_matrix_in(
+...     y_true,
+...     y_pred,
+...     class_labels=["Class A", "Class B", "Class C", "Class D"],
+...     title="Multiclass Polar Confusion Matrix"
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+@check_non_emptiness(params=["y_true", "y_preds"])
+def plot_polar_pr_curve(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: Optional[list[str]] = None,
+    title: str = "Polar Precision-Recall Curve",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    # --- Input Validation ---
+    if not y_preds:
+        raise ValueError("Provide at least one prediction array (*y_preds).")
+
+    if names and len(names) != len(y_preds):
+        warnings.warn(
+            "Number of names does not match models. Using defaults.",
+            stacklevel=2,
+        )
+        names = None
+    if not names:
+        names = [f"Model {i+1}" for i in range(len(y_preds))]
+
+    y_true, _ = validate_yy(y_true, y_preds[0])
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+
+    # --- Plot No-Skill Reference Circle ---
+    no_skill = np.mean(y_true)
+    ax.plot(
+        np.linspace(0, np.pi / 2, 100),
+        [no_skill] * 100,
+        color="gray",
+        linestyle="--",
+        lw=1.5,
+        label=f"No-Skill (AP = {no_skill:.2f})",
+    )
+
+    # --- Calculate and Plot PR Curve for Each Model ---
+    for i, y_pred in enumerate(y_preds):
+        precision, recall, _ = precision_recall_curve(y_true, y_pred)
+        ap_score = average_precision_score(y_true, y_pred)
+
+        # Map Recall to angle and Precision to radius
+        model_theta = recall * (np.pi / 2)
+        model_radius = precision
+
+        # Plot the model's PR curve
+        ax.plot(
+            model_theta,
+            model_radius,
+            color=colors[i],
+            lw=2.5,
+            label=f"{names[i]} (AP = {ap_score:.2f})",
+        )
+        # Optional: Fill area
+        ax.fill(model_theta, model_radius, color=colors[i], alpha=0.15)
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_thetamin(0)
+    ax.set_thetamax(90)
+    ax.set_ylim(0, 1.0)
+
+    # Set angular tick labels to represent Recall
+    ax.set_xticks(np.linspace(0, np.pi / 2, 6))
+    ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
+
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_polar_pr_curve.__doc__ = r"""
+Plots a Polar Precision-Recall (PR) Curve.
+
+This function visualizes the performance of binary
+classification models by mapping the standard PR curve onto a
+polar plot. It is particularly useful for evaluating models on
+imbalanced datasets where ROC curves can be misleading.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true binary labels (0 or 1).
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted probabilities or scores
+    for the positive class.
+names : list of str, optional
+    Display names for each of the models. If not provided,
+    generic names like ``'Model 1'`` will be generated.
+title : str, default="Polar Precision-Recall Curve"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each model's
+    curve.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_polar_roc : A companion plot for ROC analysis.
+sklearn.metrics.precision_recall_curve : 
+    The underlying scikit-learn function.
+
+Notes
+-----
+A Precision-Recall (PR) curve is a standard tool for
+evaluating binary classifiers, especially on imbalanced data
+:footcite:p:`Powers2011`. It plots Precision against Recall at
+various threshold settings.
+
+.. math::
+
+   \text{Precision} = \frac{TP}{TP + FP} \quad , \quad
+   \text{Recall} = \frac{TP}{TP + FN}
+
+This function adapts the concept to a polar plot:
+- The **angle (θ)** is mapped to **Recall**, spanning from 0
+  at 0° to 1 at 90°.
+- The **radius (r)** is mapped to **Precision**, spanning from 0
+  at the center to 1 at the edge.
+
+A "no-skill" classifier, which predicts randomly based on the
+class distribution, is represented by a horizontal line (a
+circle in polar coordinates) at a radius equal to the
+proportion of positive samples. A good model will have a curve
+that bows outwards towards the top-right corner of the plot,
+maximizing the area under the curve (Average Precision).
+
+Examples
+--------
+>>> import numpy as np
+>>> from sklearn.datasets import make_classification
+>>> from kdiagram.plot.evaluation import plot_polar_pr_curve
+>>>
+>>> # Generate imbalanced binary classification data
+>>> X, y_true = make_classification(
+...     n_samples=1000,
+...     n_classes=2,
+...     weights=[0.9, 0.1], # 10% positive class
+...     flip_y=0.1,
+...     random_state=42
+... )
+>>>
+>>> # Simulate predictions from two models
+>>> y_pred_good = y_true * 0.6 + np.random.rand(1000) * 0.4
+>>> y_pred_bad = np.random.rand(1000)
+>>>
+>>> # Generate the plot
+>>> ax = plot_polar_pr_curve(
+...     y_true,
+...     y_pred_good,
+...     y_pred_bad,
+...     names=["Good Model", "Random Model"]
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+@check_non_emptiness(params=["y_true", "y_pred"])
+def plot_polar_classification_report(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    class_labels: Optional[list[str]] = None,
+    title: str = "Polar Classification Report",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    mask_radius: bool = False,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    # --- Input Validation ---
+    y_true, y_pred = validate_yy(y_true, y_pred)
+    labels = np.unique(np.concatenate((y_true, y_pred)))
+    n_classes = len(labels)
+
+    if class_labels and len(class_labels) != n_classes:
+        warnings.warn(
+            "Length of class_labels does not match number of classes.",
+            stacklevel=2,
+        )
+        class_labels = None
+    if not class_labels:
+        class_labels = [f"Class {lo}" for lo in labels]
+
+    # --- Calculate Metrics ---
+    report = classification_report(
+        y_true, y_pred, labels=labels, output_dict=True
+    )
+    metrics = {"Precision": [], "Recall": [], "F1-Score": []}
+    for label in labels:
+        metrics["Precision"].append(report[str(label)]["precision"])
+        metrics["Recall"].append(report[str(label)]["recall"])
+        metrics["F1-Score"].append(report[str(label)]["f1-score"])
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    metric_colors = cmap_obj(np.linspace(0, 1, 3))
+
+    # --- Plot Grouped Bars ---
+    n_metrics = 3
+    bar_width = (2 * np.pi / n_classes) / (n_metrics + 1)
+    group_angles = np.linspace(0, 2 * np.pi, n_classes, endpoint=False)
+
+    for i, (metric_name, values) in enumerate(metrics.items()):
+        offsets = group_angles + (i - n_metrics / 2 + 0.5) * bar_width
+        ax.bar(
+            offsets,
+            values,
+            width=bar_width,
+            color=metric_colors[i],
+            alpha=0.7,
+            label=metric_name,
+        )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xticks(group_angles)
+    ax.set_xticklabels(class_labels, fontsize=10)
+    ax.set_ylabel("Score", labelpad=25)
+    ax.set_ylim(0, 1.05)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_polar_classification_report.__doc__ = r"""
+Plots a Polar Classification Report.
+
+This function creates a grouped polar bar chart to visualize the
+key performance metrics (Precision, Recall, and F1-Score) for
+each class in a multiclass classification problem. It provides a
+detailed, per-class summary of a classifier's performance.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true class labels.
+y_pred : np.ndarray
+    1D array of predicted class labels from a model.
+class_labels : list of str, optional
+    Display names for each of the classes. If not provided,
+    generic names like ``'Class 0'`` will be generated. The
+    order must correspond to the sorted order of the labels in
+    ``y_true`` and ``y_pred``.
+title : str, default="Polar Classification Report"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each of the
+    three metrics (Precision, Recall, F1-Score).
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_polar_confusion_multiclass :
+    A plot showing the raw counts of predictions.
+sklearn.metrics.classification_report : 
+    The underlying scikit-learn function.
+
+Notes
+-----
+This plot visualizes the three most common metrics for evaluating
+a multiclass classifier on a per-class basis
+:footcite:p:`Powers2011`.
+
+1.  **Precision**: The ability of the classifier not to label as
+    positive a sample that is negative.
+
+    .. math::
+
+       \text{Precision} = \frac{TP}{TP + FP}
+
+2.  **Recall (Sensitivity)**: The ability of the classifier to
+    find all the positive samples.
+
+    .. math::
+
+       \text{Recall} = \frac{TP}{TP + FN}
+
+3.  **F1-Score**: The harmonic mean of precision and recall,
+    providing a single score that balances both.
+
+    .. math::
+
+       \text{F1-Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}\\
+           {\text{Precision} + \text{Recall}}
+
+Each class is assigned an angular sector, and within that sector,
+three bars are drawn, with their heights (radii) corresponding
+to the scores for these metrics.
+
+Examples
+--------
+>>> import numpy as np
+>>> from sklearn.datasets import make_classification
+>>> from kdiagram.plot.evaluation import plot_polar_classification_report
+>>>
+>>> # Generate synthetic multiclass data
+>>> X, y_true = make_classification(
+...     n_samples=1000,
+...     n_classes=4,
+...     n_informative=10,
+...     flip_y=0.2,
+...     random_state=42
+... )
+>>> # Simulate predictions
+>>> y_pred = y_true.copy()
+>>> # Add some errors
+>>> y_pred[np.random.choice(1000, 150, replace=False)] = 0
+>>>
+>>> # Generate the plot
+>>> ax = plot_polar_classification_report(
+...     y_true,
+...     y_pred,
+...     class_labels=["Class A", "Class B", "Class C", "Class D"],
+...     title="Per-Class Performance Report"
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+@check_non_emptiness(params=["y_true", "y_preds_quantiles"])
+def plot_pinball_loss(
+    y_true: np.ndarray,
+    y_preds_quantiles: np.ndarray,
+    quantiles: np.ndarray,
+    names: Optional[list[str]] = None,
+    title: str = "Pinball Loss per Quantile",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    mask_radius: bool = False,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    # --- Input Validation ---
+    y_true, y_preds_quantiles = validate_yy(
+        y_true, y_preds_quantiles, allow_2d_pred=True
+    )
+    # Ensure quantiles are sorted for plotting
+    sort_idx = np.argsort(quantiles)
+    quantiles = np.asarray(quantiles)[sort_idx]
+    y_preds_quantiles = y_preds_quantiles[:, sort_idx]
+
+    # --- Calculate Pinball Loss for each quantile ---
+    losses = []
+    for i in range(len(quantiles)):
+        loss = compute_pinball_loss(
+            y_true, y_preds_quantiles[:, i], quantiles[i]
+        )
+        losses.append(loss)
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+
+    # Angle is the quantile level, radius is the loss
+    angles = quantiles * 2 * np.pi
+    radii = losses
+
+    # --- Plotting ---
+    ax.plot(angles, radii, "o-", label="Pinball Loss")
+    ax.fill(angles, radii, alpha=0.25)
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xticks(np.linspace(0, 2 * np.pi, 8, endpoint=False))
+    ax.set_xticklabels(
+        [f"{q:.2f}" for q in np.linspace(0, 1, 8, endpoint=False)]
+    )
+    ax.set_xlabel("Quantile Level")
+    ax.set_ylabel("Average Pinball Loss (Lower is Better)", labelpad=25)
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
+plot_pinball_loss.__doc__ = r"""
+Plots the Pinball Loss for each quantile of a forecast.
+
+This function creates a polar plot to visualize the performance
+of a probabilistic forecast at each individual quantile level.
+The radius of the plot at a given angle (quantile) represents
+the average Pinball Loss, providing a granular view of the
+model's accuracy across its entire predictive distribution.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of the true observed values.
+y_preds_quantiles : np.ndarray
+    2D array of quantile forecasts, with shape
+    ``(n_samples, n_quantiles)``.
+quantiles : np.ndarray
+    1D array of the quantile levels corresponding to the columns
+    of the prediction array.
+names : list of str, optional
+    Display names for each of the models. *Note: This function
+    currently supports plotting one model at a time.*
+title : str, default="Pinball Loss per Quantile"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used for the plot's fill and line.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+compute_pinball_loss : The underlying mathematical utility.
+compute_crps : A score calculated by averaging the pinball loss.
+:ref:`userguide_probabilistic` : The user guide for probabilistic plots.
+
+Notes
+-----
+The Pinball Loss, :math:`\mathcal{L}_{\tau}`, is a proper scoring
+rule for evaluating a single quantile forecast :math:`q` at level
+:math:`\tau` against an observation :math:`y`. It asymmetrically
+penalizes errors, giving a different weight to over- and under-
+predictions :footcite:p:`Gneiting2007b`.
+
+.. math::
+
+   \mathcal{L}_{\tau}(q, y) =
+   \begin{cases}
+     (y - q) \tau & \text{if } y \ge q \\
+     (q - y) (1 - \tau) & \text{if } y < q
+   \end{cases}
+
+This plot calculates the average Pinball Loss for each provided
+quantile and visualizes these scores on a polar axis, where the
+angle represents the quantile level and the radius represents the
+loss. A good forecast will have a small, symmetrical shape close
+to the center.
+
+Examples
+--------
+>>> import numpy as np
+>>> from scipy.stats import norm
+>>> from kdiagram.plot.evaluation import plot_pinball_loss
+>>>
+>>> # Generate synthetic data
+>>> np.random.seed(0)
+>>> n_samples = 1000
+>>> y_true = np.random.normal(loc=50, scale=10, size=n_samples)
+>>> quantiles = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+>>>
+>>> # Simulate a model that is good at the median, worse at the tails
+>>> scales = np.array([12, 10, 8, 10, 12]) # Different scales per quantile
+>>> y_preds = norm.ppf(
+...     quantiles, loc=y_true[:, np.newaxis], scale=scales
+... )
+>>>
+>>> # Generate the plot
+>>> ax = plot_pinball_loss(
+...     y_true,
+...     y_preds,
+...     quantiles,
+...     title="Pinball Loss per Quantile"
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+def _get_scores(
+    y_true: np.ndarray,
+    y_preds: list[np.ndarray],
+    metrics: list[Union[str, Callable]],
+    higher_is_better: Optional[dict[str, bool]] = None,
+):
+    """
+    Internal helper to compute scores, ensuring higher is always better.
+    """
+    scores = {}
+    higher_is_better = higher_is_better or {}
+
+    METRIC_MAP = {
+        "r2": (r2_score, True),
+        "neg_mean_absolute_error": (mean_absolute_error, False),
+        "neg_root_mean_squared_error": (
+            lambda yt, yp: mean_squared_error(yt, yp, squared=False),
+            False,
+        ),
+    }
+
+    for metric in metrics:
+        metric_name = (
+            metric
+            if isinstance(metric, str)
+            else getattr(metric, "__name__", "custom")
+        )
+
+        func = None
+        # Default assumption: higher is better
+        is_score = True
+
+        # 1. Prioritize the user's explicit override.
+        if metric_name in higher_is_better:
+            is_score = higher_is_better[metric_name]
+            # Now find the function to call
+            if callable(metric):
+                func = metric
+            elif isinstance(metric, str) and metric in METRIC_MAP:
+                func, _ = METRIC_MAP[metric]  # Ignore the default is_score
+            else:
+                warnings.warn(
+                    f"Unknown metric '{metric}' provided in "
+                    f"higher_is_better. Skipping.",
+                    stacklevel=2,
+                )
+                continue
+
+        # 2. If no override, use the default logic.
+        elif callable(metric):
+            func = metric
+            # Infer from name if it's an error metric
+            if "error" in metric_name or "loss" in metric_name:
+                is_score = False
+        elif isinstance(metric, str) and metric in METRIC_MAP:
+            func, is_score = METRIC_MAP[metric]
+        else:
+            warnings.warn(
+                f"Unknown metric '{metric}'. Skipping.", stacklevel=2
+            )
+            continue
+
+        # Calculate the scores using the determined function
+        calculated_scores = [func(y_true, yp) for yp in y_preds]
+
+        # If lower is better (i.e., it's an error metric), negate the scores
+        if not is_score:
+            scores[metric_name] = [-s for s in calculated_scores]
+        else:
+            scores[metric_name] = calculated_scores
+
+    return scores
+
+
+def plot_regression_performance(
+    y_true: Optional[np.ndarray] = None,
+    *y_preds: np.ndarray,
+    names: Optional[list[str]] = None,
+    metrics: Optional[
+        Union[str, Callable, list[Union[str, Callable]]]
+    ] = None,
+    metric_values: Optional[dict[str, list[float]]] = None,
+    add_to_defaults: bool = False,
+    metric_labels: Optional[Union[dict[str, str], bool, list]] = None,
+    higher_is_better: Optional[dict[str, bool]] = None,
+    title: str = "Regression Model Performance",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: Optional[dict[str, Any]] = None,
+    mask_radius: bool = False,
+    savefig: Optional[str] = None,
+    dpi: int = 300,
+):
+    # --- Input Validation and Data Preparation ---
+    if metric_values is not None:
+        if y_true is not None or y_preds:
+            raise ValueError(
+                "If `metric_values` is provided, `y_true`"
+                " and `y_preds` must be None."
+            )
+        scores = metric_values
+        metric_names = list(scores.keys())
+        # Infer number of models from the first metric's list of scores
+        n_models = len(list(scores.values())[0])
+    elif y_true is not None and y_preds:
+        n_models = len(y_preds)
+        default_metrics = [
+            "r2",
+            "neg_mean_absolute_error",
+            "neg_root_mean_squared_error",
+        ]
+
+        if metrics is None:
+            metrics_to_use = default_metrics
+        else:
+            user_metrics = columns_manager(metrics)
+            if add_to_defaults:
+                metrics_to_use = default_metrics + user_metrics
+            else:
+                metrics_to_use = user_metrics
+
+        scores = _get_scores(
+            y_true, y_preds, metrics_to_use, higher_is_better
+        )
+        metric_names = list(scores.keys())
+    else:
+        raise ValueError(
+            "Either `metric_values` or both `y_true`"
+            " and `y_preds` must be provided."
+        )
+
+    if not names:
+        names = [f"Model {i+1}" for i in range(n_models)]
+
+    # --- Score Normalization ---
+    # Normalize scores for each metric so
+    # that 0 is the worst and 1 is the best
+    normalized_scores = {}
+    for metric, values in scores.items():
+        values = np.asarray(values)
+        min_val, max_val = values.min(), values.max()
+        if (max_val - min_val) > 1e-9:
+            # Since _get_scores ensures higher is better, we no longer need to
+            # check for 'neg' or 'error' in the metric name here.
+
+            # # If the metric is an error (lower is better), invert the scale
+            # if "neg" in metric or "error" in metric:
+            #     normalized = 1 - (values - min_val) / (max_val - min_val)
+            # else: # Higher is better
+            normalized = (values - min_val) / (max_val - min_val)
+        else:  # All values are the same
+            normalized = np.ones_like(values)
+        normalized_scores[metric] = normalized
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, n_models))
+
+    n_metrics = len(metric_names)
+    group_angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False)
+    bar_width = (2 * np.pi / n_metrics) / (n_models + 1)
+
+    # --- Plot Bars ---
+    for i, name in enumerate(names):
+        radii = [normalized_scores[metric][i] for metric in metric_names]
+        offsets = group_angles + (i - n_models / 2 + 0.5) * bar_width
+        ax.bar(
+            offsets,
+            radii,
+            width=bar_width,
+            color=colors[i],
+            alpha=0.7,
+            label=name,
+        )
+
+    # --- Plot Performance Rings ---
+    ax.plot(
+        np.linspace(0, 2 * np.pi, 100),
+        [1.0] * 100,
+        color="green",
+        linestyle="-",
+        lw=1.5,
+        label="Best Performance",
+    )
+    ax.plot(
+        np.linspace(0, 2 * np.pi, 100),
+        [0.0] * 100,
+        color="red",
+        linestyle="--",
+        lw=1.5,
+        label="Worst Performance",
+    )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xticks(group_angles)
+
+    # --- NEW: Smart Label Handling ---
+    if metric_labels is False or (
+        isinstance(metric_labels, list) and not metric_labels
+    ):
+        # Mute labels if False or an empty list is provided
+        ax.set_xticklabels([])
+    elif isinstance(metric_labels, dict):
+        # Rename labels using the provided dictionary
+        display_names = [
+            metric_labels.get(name, name) for name in metric_names
+        ]
+        ax.set_xticklabels(display_names, fontsize=10)
+    else:
+        # Default behavior: show the original metric names
+        ax.set_xticklabels(metric_names, fontsize=10)
+
+    # ax.set_xticklabels(metric_names, fontsize=10)
+    ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.set_yticklabels(["Worst", "0.25", "0.5", "0.75", "Best"])
+    ax.set_ylim(0, 1.05)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_regression_performance.__doc__ = r"""
+Creates a Polar Performance Chart for regression models.
+
+This function generates a grouped polar bar chart to visually
+compare the performance of multiple regression models across
+several evaluation metrics simultaneously. It provides a
+holistic snapshot of model strengths and weaknesses.
+
+Parameters
+----------
+y_true : np.ndarray, optional
+    1D array of true observed values. Required unless
+    ``metric_values`` is provided.
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted values from different
+    models.
+names : list of str, optional
+    Display names for each of the models. If not provided,
+    generic names like ``'Model 1'`` will be generated.
+metrics : str, callable, or list of such, optional
+    The metric(s) to compute. If ``None``, defaults to
+    ``['r2', 'neg_mean_absolute_error',
+    'neg_root_mean_squared_error']``. Can be strings
+    recognized by scikit-learn or custom callable functions.
+metric_values : dict of {str: list of float}, optional
+    A dictionary of pre-calculated metric scores. Keys are the
+    metric names and values are lists of scores, one for each
+    model. If provided, ``y_true`` and ``y_preds`` must be ``None``.
+add_to_defaults : bool, default=False
+    If ``True``, the user-provided ``metrics`` are added to the
+    default set of metrics instead of replacing them.
+metric_labels : dict, bool, or list, optional
+    Controls the angular axis labels.
+    
+    - ``dict``: A mapping from original metric names to new
+      display names (e.g., ``{'r2': 'R²'}``).
+    - ``False`` or ``[]``: Hides all angular labels.
+    - ``None`` (default): Shows the original metric names.
+    
+higher_is_better : dict of {str: bool}, optional
+    A dictionary to explicitly specify whether a higher score is
+    better for each metric. Keys should be metric names and
+    values should be ``True`` (higher is better) or ``False``
+    (lower is better). This overrides the default behavior for
+    both string and callable metrics.    
+title : str, default="Regression Model Performance"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each model's
+    bars.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_model_comparison : A similar plot using a radar chart format.
+:ref:`userguide_evaluation` : The user guide for evaluation plots.
+
+Notes
+-----
+This plot provides a holistic, multi-metric view of model
+performance, making it easy to identify trade-offs.
+
+1.  **Score Calculation**: For each model and each metric, a
+    score is calculated. Note that for error-based metrics
+    (like MAE or RMSE), the function uses the negated version
+    (e.g., ``neg_mean_absolute_error``) so that a **higher
+    score is always better** :footcite:p:`scikit-learn`.
+
+2.  **Normalization**: To make scores comparable, the scores for
+    each metric are independently scaled to the range [0, 1]
+    using Min-Max normalization. A score of 1 represents the
+    best-performing model for that metric, and a score of 0
+    represents the worst.
+
+3.  **Polar Mapping**:
+    
+    - Each metric is assigned its own angular sector.
+    - The normalized score of each model is mapped to the
+      **radius** (height) of its bar within that sector.
+
+Examples
+--------
+>>> import numpy as np
+>>> from kdiagram.plot.evaluation import plot_regression_performance
+>>>
+>>> # Generate synthetic data for three models
+>>> np.random.seed(0)
+>>> n_samples = 200
+>>> y_true = np.random.rand(n_samples) * 50
+>>> y_pred_good = y_true + np.random.normal(0, 5, n_samples)
+>>> y_pred_biased = y_true - 10 + np.random.normal(0, 2, n_samples)
+>>>
+>>> # Generate the plot with clean labels
+>>> ax = plot_regression_performance(
+...     y_true,
+...     y_pred_good,
+...     y_pred_biased,
+...     names=["Good Model", "Biased Model"],
+...     title="Model Performance Comparison",
+...     metric_labels={
+...         'r2': '$R$^2',
+...         'neg_mean_absolute_error': 'MAE',
+...         'neg_root_mean_squared_error': 'RMSE'
+...     }
+... )
+
+References
+----------
+.. footbibliography::
+"""

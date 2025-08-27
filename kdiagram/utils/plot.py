@@ -408,7 +408,7 @@ def add_kde_to_plot(
     # ax.legend()
 
 
-def add_histogram_to_plot(
+def _add_histogram_to_plot(
     data: np.ndarray,
     ax: plt.Axes,
     bins: int = 50,
@@ -450,8 +450,80 @@ def add_histogram_to_plot(
     zorder = hist_kws.pop(
         "zorder", 2
     )  # Ensure histogram is drawn below the KDE line,
+    # pop density if exist .
+    hist_kws.pop("density", True)
 
     hist_kws = get_valid_kwargs(ax.hist, hist_kws)
+    ax.hist(
+        data,
+        bins=bins,
+        density=True,
+        alpha=hist_alpha,
+        color=hist_color,
+        edgecolor=hist_edge_color,
+        label=label,
+        zorder=zorder,
+        **hist_kws,
+    )
+
+
+def add_histogram_to_plot(
+    data: np.ndarray,
+    ax: plt.Axes,
+    bins: int = 50,
+    hist_color: str = "skyblue",
+    hist_edge_color: str = "white",
+    hist_alpha: float = 0.7,
+    **hist_kws,
+) -> None:
+    r"""
+    Add the histogram to the plot.
+
+    This function adds a histogram to the plot, taking the data values
+    and customizes the appearance of the histogram bars.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to plot the histogram from.
+    ax : plt.Axes
+        The axes object to which the histogram will be added.
+    bins : int, optional
+        The number of bins for the histogram. Default is 50.
+    hist_color : str, optional
+        The color of the histogram bars. Default is 'skyblue'.
+    hist_edge_color : str, optional
+        The color of the histogram bars' edges. Default is 'white'.
+    hist_alpha : float, optional
+        The transparency of the histogram bars. Default is 0.7.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> add_histogram_to_plot(data, ax, bins=40, hist_color='green')
+    """
+    # extract label/zorder (don’t pass twice)
+    label = hist_kws.pop("label", "Histogram")
+    zorder = hist_kws.pop("zorder", 2)
+
+    # we set these explicitly below; remove if present in hist_kws
+    for k in (
+        "bins",
+        "alpha",
+        "color",
+        "edgecolor",
+        "density",
+        "label",
+        "zorder",
+    ):
+        hist_kws.pop(k, None)
+
+    # keep only kwargs that ax.hist actually accepts
+    hist_kws = get_valid_kwargs(ax.hist, hist_kws)
+
     ax.hist(
         data,
         bins=bins,

@@ -258,6 +258,40 @@ def normalize_acov(acov: str) -> str:
     return a if a in allowed else "default"
 
 
+def _flatten_cols(val: Any) -> list[str]:
+    """
+    Normalize CLI column inputs into a flat list of column names.
+
+    Accepts:
+      - None
+      - "a,b" (CSV string)
+      - ["a", "b"]
+      - [["a", "b"], "c,d"]
+    """
+    if val is None:
+        return []
+
+    # Single string token
+    if isinstance(val, str):
+        return split_csv(val)
+
+    flat: list[str] = []
+    # List/iterable of tokens (strings or lists)
+    for item in val:
+        if isinstance(item, (list, tuple)):
+            # Already tokenized
+            for sub in item:
+                if isinstance(sub, str):
+                    flat.extend(split_csv(sub))
+                else:
+                    flat.append(str(sub))
+        elif isinstance(item, str):
+            flat.extend(split_csv(item))
+        else:
+            flat.append(str(item))
+    return flat
+
+
 # ---------- Column discovery / expansion -------------------------------
 
 
@@ -510,14 +544,34 @@ def _parse_q_levels(
 
 
 def _parse_float_list(
-    s: str | None,
+    s: object,
 ) -> list[float] | None:
-    if not s:
+    """
+    Parse a list of floats from a CLI value that may be:
+      - None
+      - a CSV string: "1.1,0.8"
+      - a list of tokens: ["1.1", "0.8"]
+      - a mixed list with CSV tokens
+    """
+    if s is None:
         return None
+
+    tokens: list[str] = []
     try:
-        return [float(x) for x in split_csv(s)]
+        if isinstance(s, str):
+            tokens = split_csv(s)
+        elif isinstance(s, (list, tuple)):
+            for item in s:
+                if isinstance(item, str):
+                    tokens.extend(split_csv(item))
+                else:
+                    tokens.append(str(item))
+        else:
+            # single scalar
+            return [float(s)]
+        return [float(x) for x in tokens]
     except Exception as e:
-        raise ValueError(f"Invalid float list '{s}': {e}") from e
+        raise ValueError(f"Invalid float list {s!r}: {e}") from e
 
 
 def _infer_figsize(
@@ -626,6 +680,17 @@ def _collect_point_preds(
     if not specs:
         raise SystemExit("provide predictions via --model/--pred/--pred-cols")
 
+    # expand any multi-col group to 1-col groups when not using --model
+    used_model = bool(getattr(ns, "model", None))
+    if not used_model and any(len(cols) > 1 for _, cols in specs):
+        expanded = []
+        k = 1
+        for _, cols in specs:
+            for col in cols:
+                expanded.append((f"M{k}", [col]))
+                k += 1
+        specs = expanded
+
     # ensure each spec has exactly one column
     for name, cols in specs:
         if len(cols) != 1:
@@ -633,6 +698,9 @@ def _collect_point_preds(
                 f"group {name!r} must map to exactly one column; "
                 "use one col per model for these plots."
             )
+
+    # sets the private attribute ns._pred_groups
+    ns._pred_groups = [(name, cols[0]) for name, cols in specs]
 
     need = [cols[0] for _, cols in specs]
     ensure_columns(df, need)
@@ -795,6 +863,45 @@ def _parse_kv_list(tokens: list[str] | None) -> dict[str, Any]:
             raise argparse.ArgumentTypeError("Empty key in style.")
         out[k] = v
     return out
+
+
+def _parse_norm_range(
+    val: tuple[float, float] | None,
+) -> tuple[float, float] | None:
+    if val is None:
+        return None
+    lo, hi = float(val[0]), float(val[1])
+    return (lo, hi)
+
+
+# ------------------------ test helpers  --------------------------------
+def _expect_file(path: Path) -> None:
+    assert path.exists(), f"missing: {path}"
+    assert path.stat().st_size > 0, f"empty: {path}"
+
+
+def _try_parse_and_run(variants: Iterable[list[str]]) -> None:
+    """
+    Try argv variants in order. If one parses and runs, stop.
+    Raise the last error if all fail.
+    """
+    from . import build_parser
+
+    last_err: BaseException | None = None
+    for argv in variants:
+        parser = build_parser()
+        try:
+            ns = parser.parse_args(argv)
+            if not hasattr(ns, "func"):
+                raise SystemExit("no func bound")
+            ns.func(ns)
+            return
+        except SystemExit as e:
+            last_err = e
+        except Exception as e:  # pragma: no cover
+            last_err = e
+    if last_err:
+        raise last_err
 
 
 # --- flexible argparse actions -------------------------------------------

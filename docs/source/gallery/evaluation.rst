@@ -1,430 +1,897 @@
 .. _gallery_evaluation:
 
-=============================================
-Model Evaluation Gallery (Taylor Diagrams)
-=============================================
+============================
+Model Evaluation Gallery
+============================
 
-This gallery page focuses on Taylor Diagrams, which provide a concise
-visual summary of model performance. They compare key statistics like
-correlation, standard deviation, and centered Root Mean Square Difference
-(RMSD) between one or more models (or predictions) and a reference
-(observed) dataset.
+This gallery page showcases plots from the `k-diagram` package
+designed for the evaluation of classification models. It features
+novel polar adaptations of standard, powerful diagnostic tools like
+the ROC curve and the Precision-Recall curve.
+
+These visualizations provide an intuitive and aesthetically engaging
+way to compare the performance of multiple models, assess their
+discriminative power, and understand their behavior, especially on
+imbalanced datasets.
 
 .. note::
    You need to run the code snippets locally to generate the plot
-   images referenced below (e.g., ``images/gallery_taylor_diagram_rwf.png``).
-   Ensure the image paths in the ``.. image::`` directives match where
-   you save the plots (likely an ``images`` subdirectory relative to
-   this file).
+   images referenced below. Ensure the image paths in the
+   ``.. image::`` directives match where you save the plots.
 
+.. _gallery_plot_polar_pr_curve:
 
-.. _gallery_plot_taylor_diagram_flexible: 
+----------------------------------
+Polar Precision-Recall Curve
+----------------------------------
 
-----------------------------------------------
-Taylor Diagram (Flexible Input & Background)
-----------------------------------------------
-
-Uses :func:`~kdiagram.plot.evaluation.taylor_diagram`. This example
-shows its flexibility by accepting raw data arrays and adding a
-background colormap based on the 'rwf' (Radial Weighting Function)
-strategy, emphasizing points with good correlation and reference-like
-standard deviation.
+Visualizes the trade-off between Precision and Recall for one or
+more binary classifiers. This plot is particularly useful for
+evaluating models on imbalanced datasets where ROC curves can be
+misleading.
 
 .. code-block:: python
    :linenos:
 
-   # Assuming plot functions are in kd.plot.evaluation
-   import kdiagram.plot.evaluation as kde
+   import kdiagram as kd
+   import numpy as np
+   from sklearn.datasets import make_classification
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation (Imbalanced) ---
+   X, y_true = make_classification(
+       n_samples=1000,
+       n_classes=2,
+       weights=[0.9, 0.1], # 10% positive class
+       flip_y=0.1,
+       random_state=42
+   )
+
+   # Simulate predictions from two models
+   y_pred_good = y_true * 0.6 + np.random.rand(1000) * 0.4
+   y_pred_bad = np.random.rand(1000)
+
+   # --- Plotting ---
+   kd.plot_polar_pr_curve(
+       y_true,
+       y_pred_good,
+       y_pred_bad,
+       names=["Good Model", "Weak Model"],
+       title="Polar Precision-Recall Curve Comparison",
+       savefig="gallery/images/gallery_polar_pr_curve.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_polar_pr_curve.png
+   :alt: Example of a Polar Precision-Recall Curve
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar Precision-Recall (PR) Curve** provides a powerful
+   diagnostic for classifier performance, especially when the
+   positive class is rare.
+
+   **Key Features:**
+
+   * **Angle (θ):** Represents **Recall**, sweeping from 0 at 0°
+     to 1 at 90°. A wider angular sweep is better.
+   * **Radius (r):** Represents **Precision**, with 0 at the
+     center and 1 at the edge. A larger radius is better.
+   * **No-Skill Line (Dashed Circle):** Represents a random
+     classifier. A good model's curve should be far outside this
+     circle.
+
+   **🔍 In this Example:**
+
+   * **Good Model (Purple):** This model's curve bows out towards
+     the top-right, maintaining a high radius (high precision)
+     even as the angle increases (higher recall). Its Average
+     Precision (AP) score of 0.85 is significantly better than
+     the no-skill baseline.
+   * **Weak Model (Yellow):** This model's curve is much closer
+     to the no-skill line, indicating a poorer balance between
+     precision and recall.
+
+   **💡 When to Use:**
+
+   * When evaluating binary classifiers on **imbalanced datasets**.
+   * To understand the trade-off between a model's ability to
+     correctly identify positive cases (Recall) and its ability to
+     avoid false alarms (Precision).
+   * To compare models based on their Average Precision (AP) score,
+     which is summarized by the area under the PR curve.
+
+.. raw:: html
+
+   <hr>
+
+.. _gallery_plot_polar_roc:
+
+----------------------------------
+Polar ROC Curve
+----------------------------------
+
+Visualizes the performance of one or more binary classifiers using a
+Receiver Operating Characteristic (ROC) curve adapted to a polar
+coordinate system. It plots the True Positive Rate against the
+False Positive Rate to assess a model's discriminative ability.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import numpy as np
+   from sklearn.datasets import make_classification
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation ---
+   X, y_true = make_classification(
+       n_samples=1000,
+       n_classes=2,
+       flip_y=0.2, # Add some noise
+       random_state=42
+   )
+
+   # Simulate predictions from two models
+   y_pred_good = y_true * 0.7 + np.random.rand(1000) * 0.4
+   y_pred_weak = np.random.rand(1000)
+
+   # --- Plotting ---
+   kd.plot_polar_roc(
+       y_true,
+       y_pred_good,
+       y_pred_weak,
+       names=["Good Model", "Weak Model"],
+       title="Polar ROC Curve Comparison",
+       savefig="gallery/images/gallery_evaluation_plot_polar_roc.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_evaluation_plot_polar_roc.png
+   :alt: Example of a Polar ROC Curve
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar ROC Curve** provides a novel way to visualize the
+   trade-off between a classifier's True Positive Rate (sensitivity)
+   and False Positive Rate (1 - specificity).
+
+   **Key Features:**
+
+   * **Angle (θ):** Represents the **False Positive Rate (FPR)**,
+     sweeping from 0 at 0° to 1 at 90°.
+   * **Radius (r):** Represents the **True Positive Rate (TPR)**,
+     with 0 at the center and 1 at the edge.
+   * **No-Skill Spiral (Dashed Line):** This is the polar equivalent
+     of the y=x diagonal in a standard ROC plot. A model with no
+     discriminative power would lie on this line.
+   * **Model Curve:** Each colored line represents a model. A better
+     model will have a curve that bows outwards, maximizing the
+     area under the curve (AUC).
+
+   **🔍 In this Example:**
+
+   * **Good Model (Blue):** This model's curve is far from the
+     no-skill spiral, achieving a high True Positive Rate (large
+     radius) for a low False Positive Rate (small angle). Its high
+     AUC of 0.89 confirms its strong performance.
+   * **Weak Model (Yellow):** This model's curve is much closer to
+     the no-skill spiral, indicating poorer performance with an AUC
+     of 0.85.
+
+   **💡 When to Use:**
+
+   * To evaluate and compare the overall discriminative power of
+     binary classification models.
+   * To select an optimal classification threshold based on the
+     desired balance between the True Positive Rate and False
+     Positive Rate.
+
+.. raw:: html
+
+   <hr>
+
+.. _gallery_plot_polar_confusion_matrix:
+
+-----------------------------
+Polar Confusion Matrix
+-----------------------------
+
+Visualizes the components of a binary confusion matrix (True
+Positives, False Positives, True Negatives, and False Negatives)
+as bars on a polar plot, allowing for a direct comparison of
+multiple models.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import numpy as np
+   from sklearn.datasets import make_classification
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation ---
+   X, y_true = make_classification(
+       n_samples=1000,
+       n_classes=2,
+       flip_y=0.2, # Add some noise
+       random_state=42
+   )
+
+   # Simulate predictions from two models
+   y_pred_good = y_true * 0.8 + np.random.rand(1000) * 0.3
+   y_pred_weak = np.random.rand(1000)
+
+   # --- Plotting ---
+   kd.plot_polar_confusion_matrix(
+       y_true,
+       y_pred_good,
+       y_pred_weak,
+       names=["Good Model", "Weak Model"],
+       title="Binary Polar Confusion Matrix",
+       savefig="gallery/images/gallery_evaluation_plot_polar_confusion_matrix.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_evaluation_plot_polar_confusion_matrix.png
+   :alt: Example of a Polar Confusion Matrix
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar Confusion Matrix** provides an intuitive, at-a-glance
+   summary of a binary classifier's performance.
+
+   **Key Features:**
+
+   * **Angle (θ):** Each of the four angular sectors represents a
+     component of the confusion matrix: True Positive (TP),
+     False Positive (FP), True Negative (TN), and False Negative (FN).
+   * **Radius (r):** The length of each bar represents the **proportion**
+     (if normalized) or **count** of samples in that category.
+   * **Model Comparison:** Different models are represented by different
+     colored bars within each sector.
+
+   **🔍 In this Example:**
+
+   * **Good Model (Purple):** This model has long bars in the "True
+     Positive" and "True Negative" sectors, indicating it correctly
+     classifies many samples. Its bars in the "False Positive" and
+     "False Negative" sectors are short, which is desirable.
+   * **Weak Model (Yellow):** This model's bars are more evenly
+     distributed, with significant lengths in the "False Positive" and
+     "False Negative" sectors, indicating a high error rate. Its
+     performance is much closer to that of a random classifier.
+
+   **💡 When to Use:**
+
+   * To get a quick, visual summary of a binary classifier's
+     performance.
+   * To directly compare the error types (False Positives vs. False
+     Negatives) of multiple models.
+   * To create a more visually engaging and intuitive representation
+     of a confusion matrix for reports and presentations.
+
+.. raw:: html
+
+   <hr>
+   
+.. _gallery_plot_polar_confusion_matrix_in:
+
+-----------------------------------
+Multiclass Polar Confusion Matrix
+-----------------------------------
+
+Visualizes the performance of a multiclass classifier using a
+grouped polar bar chart. Each angular sector represents a true
+class, and the bars within it show the distribution of the model's
+predictions for that class.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import numpy as np
+   from sklearn.datasets import make_classification
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation ---
+   X, y_true = make_classification(
+       n_samples=1000,
+       n_features=20,
+       n_informative=10,
+       n_classes=4,
+       n_clusters_per_class=1,
+       flip_y=0.15, # Add some noise
+       random_state=42
+   )
+   # Simulate predictions
+   y_pred = y_true.copy()
+   # Add some common confusions (e.g., confuse some 2s as 3s)
+   mask = (y_true == 2) & (np.random.rand(1000) < 0.3)
+   y_pred[mask] = 3
+
+   # --- Plotting ---
+   kd.plot_polar_confusion_matrix_in(
+       y_true,
+       y_pred,
+       class_labels=["Class A", "Class B", "Class C", "Class D"],
+       title="Multiclass Polar Confusion Matrix",
+       savefig="gallery/images/gallery_evaluation_plot_polar_confusion_matrix_in.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_evaluation_plot_polar_confusion_matrix_in.png
+   :alt: Example of a Multiclass Polar Confusion Matrix
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Multiclass Polar Confusion Matrix** provides an intuitive
+   visual breakdown of a classifier's performance on a per-class
+   basis.
+
+   **Key Features:**
+
+   * **Angle (θ):** Each major angular sector represents a **True
+     Class** (e.g., "True Class A").
+   * **Bars:** Within each sector, the different colored bars show how
+     the samples from that true class were **predicted**. The legend
+     indicates which color corresponds to which predicted class.
+   * **Radius (r):** The length of each bar represents the **proportion**
+     (if normalized) or **count** of samples.
+
+   **🔍 In this Example:**
+
+   * **Good Classification:** In the "True Class C" sector, the green
+     bar ("Predicted Class C") is very long, and the other bars are
+     very short. This indicates that the model is excellent at
+     correctly identifying Class C.
+   * **Misclassification:** In the "True Class A" sector, the purple
+     bar ("Predicted Class A") is the longest, but there are also
+     visible bars for other predicted classes. This shows that while
+     the model often gets Class A right, it also frequently confuses
+     it with other classes.
+   * **Specific Confusion:** By looking at the legend, you can identify
+     the exact nature of the confusion. For example, if the yellow bar
+     is tall in the "True Class A" sector, it means the model often
+     mistakes Class A for Class D.
+
+   **💡 When to Use:**
+
+   * To get a detailed, visual summary of a multiclass classifier's
+     performance.
+   * To quickly identify which classes a model struggles with the most.
+   * To understand the specific patterns of confusion between classes
+     (e.g., "Is Class A more often confused with B or C?").
+
+.. raw:: html
+
+   <hr>
+   
+.. _gallery_plot_polar_classification_report:
+
+--------------------------------
+Polar Classification Report
+--------------------------------
+
+Visualizes the key performance metrics (Precision, Recall, and
+F1-Score) for each class in a multiclass classification problem.
+This provides a more detailed summary than a confusion matrix alone.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import numpy as np
+   from sklearn.datasets import make_classification
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation (Imbalanced) ---
+   X, y_true = make_classification(
+       n_samples=1000,
+       n_features=20,
+       n_informative=10,
+       n_classes=3,
+       n_clusters_per_class=1,
+       weights=[0.5, 0.3, 0.2], # Imbalanced classes
+       flip_y=0.15,
+       random_state=42
+   )
+   # Simulate predictions
+   y_pred = y_true.copy()
+   # Add some errors, especially for the minority class
+   mask = (y_true == 2) & (np.random.rand(1000) < 0.4)
+   y_pred[mask] = 0
+
+   # --- Plotting ---
+   kd.plot_polar_classification_report(
+       y_true,
+       y_pred,
+       class_labels=["Class Alpha", "Class Beta", "Class Gamma"],
+       title="Per-Class Performance Report",
+       cmap='Set2',
+       savefig="gallery/images/gallery_evaluation_plot_polar_classification_report.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_evaluation_plot_polar_classification_report.png
+   :alt: Example of a Polar Classification Report
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar Classification Report** provides a granular, per-class
+   breakdown of a classifier's performance, making it easy to spot
+   imbalances and trade-offs.
+
+   **Key Features:**
+
+   * **Angle (θ):** Each major angular sector represents a **True
+     Class** (e.g., "Class Alpha").
+   * **Bars:** Within each sector, the three colored bars represent
+     the key metrics: **Precision**, **Recall**, and **F1-Score**.
+   * **Radius (r):** The length of each bar represents the score for
+     that metric, from 0 at the center to 1 at the edge.
+
+   **🔍 In this Example:**
+
+   * **Class Alpha:** This class has high scores across all three
+     metrics, indicating the model performs very well on it.
+   * **Class Beta:** This class shows a trade-off. It has high
+     Precision (the light green bar is tall), but lower Recall (the
+     lime green bar is shorter). This means when the model predicts
+     "Class Beta," it's usually correct, but it fails to find all of
+     the actual "Class Beta" samples.
+   * **Class Gamma:** This class performs poorly, with low scores
+     across all metrics, which is common for minority classes in an
+     imbalanced dataset.
+
+   **💡 When to Use:**
+
+   * To get a detailed, per-class summary of a multiclass
+     classifier's performance beyond a single accuracy score.
+   * To diagnose the Precision vs. Recall trade-off for each class.
+   * To identify which specific classes a model is struggling to
+     predict correctly.
+
+.. raw:: html
+
+   <hr>
+
+. _gallery_plot_pinball_loss:
+
+-----------------------------
+Polar Pinball Loss
+-----------------------------
+
+Visualizes the per-quantile performance of a probabilistic
+forecast using the Pinball Loss. This plot provides a granular
+view of a model's accuracy across its entire predictive
+distribution.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import numpy as np
+   from scipy.stats import norm
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation ---
+   np.random.seed(0)
+   n_samples = 1000
+   y_true = np.random.normal(loc=50, scale=10, size=n_samples)
+   quantiles = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+
+   # Simulate a model that is good at the median, worse at the tails
+   scales = np.array([12, 10, 8, 10, 12]) # Different scales per quantile
+   y_preds = norm.ppf(
+       quantiles, loc=y_true[:, np.newaxis], scale=scales
+   )
+
+   # --- Plotting ---
+   kd.plot_pinball_loss(
+       y_true,
+       y_preds,
+       quantiles,
+       title="Pinball Loss per Quantile",
+       savefig="gallery/images/gallery_evaluation_plot_pinball_loss.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_evaluation_plot_pinball_loss.png
+   :alt: Example of a Polar Pinball Loss Plot
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar Pinball Loss Plot** provides a detailed breakdown of a
+   probabilistic forecast's performance, showing its accuracy at
+   predicting each specific quantile level.
+
+   **Key Features:**
+
+   * **Angle (θ):** Represents the **Quantile Level**, sweeping from
+     0 to 1 around the circle.
+   * **Radius (r):** The radial distance from the center represents the
+     **Average Pinball Loss** for that quantile. A **smaller radius
+     is better**, indicating a more accurate forecast for that
+     specific quantile.
+
+   **🔍 In this Example:**
+
+   * The plot has a distinct "butterfly" or "bow-tie" shape.
+   * The radius is smallest at the 0.5 quantile (bottom), indicating
+     that the model is very accurate at predicting the **median** of
+     the distribution.
+   * The radius is largest at the tails (0.1 and 0.9 quantiles),
+     showing that the model is much less accurate at predicting
+     **extreme values**. This is a common characteristic of many
+     forecasting models.
+
+   **💡 When to Use:**
+
+   * To get a granular, per-quantile view of a model's performance,
+     which is more detailed than an overall score like the CRPS.
+   * To diagnose if a model is better at predicting the center of a
+     distribution versus its tails.
+   * To compare the per-quantile performance of multiple models by
+     overlaying their plots.
+     
+.. _gallery_plot_regression_performance:
+
+-----------------------------
+Polar Performance Chart
+-----------------------------
+
+Visualizes and compares multiple regression models across several
+performance metrics simultaneously using a grouped polar bar chart.
+All scores are normalized so that a **larger radius is always better**.
+
+Default Metrics Example
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This example shows the default behavior, comparing three models
+across R², Mean Absolute Error (MAE), and Root Mean Squared Error
+(RMSE). The ``metric_labels`` parameter is used to provide short,
+clean labels for the plot axes.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
    import numpy as np
    import matplotlib.pyplot as plt
 
    # --- Data Generation ---
-   np.random.seed(101)
-   n_points = 150
-   reference = np.random.normal(0, 1.0, n_points) # Ref std dev approx 1.0
+   np.random.seed(0)
+   n_samples = 200
+   y_true = np.random.rand(n_samples) * 50
 
-   # Model A: High correlation, slightly lower std dev
-   pred_a = reference * 0.8 + np.random.normal(0, 0.4, n_points)
-   # Model B: Lower correlation, higher std dev
-   pred_b = reference * 0.5 + np.random.normal(0, 1.1, n_points)
-   # Model C: Good correlation, similar std dev
-   pred_c = reference * 0.95 + np.random.normal(0, 0.3, n_points)
+   # Models with different performance profiles
+   y_pred_good = y_true + np.random.normal(0, 5, n_samples)
+   y_pred_biased = y_true - 10 + np.random.normal(0, 2, n_samples)
+   y_pred_variance = y_true + np.random.normal(0, 15, n_samples)
 
-   y_preds = [pred_a, pred_b, pred_c]
-   names = ["Model A", "Model B", "Model C"]
+   model_names = ["Good Model", "Biased Model", "High Variance"]
 
    # --- Plotting ---
-   kde.taylor_diagram(
-       y_preds=y_preds,
-       reference=reference,
-       names=names,
-       cmap='Blues',             # Add background shading
-       radial_strategy='rwf',    # Use RWF strategy for background
-       norm_c=True,              # Normalize background colors
-       title='Gallery: Taylor Diagram (RWF Background)',
-       # Save the plot (adjust path relative to this file)
-       savefig="images/gallery_taylor_diagram_rwf.png"
+   kd.plot_regression_performance(
+       y_true,
+       y_pred_good, y_pred_biased, y_pred_variance,
+       names=model_names,
+       title="Performance with Default Metrics",
+       cmap='plasma',
+       metric_labels={
+           'r2': 'R²',
+           'neg_mean_absolute_error': 'MAE',
+           'neg_root_mean_squared_error': 'RMSE'
+       },
+       savefig="gallery/images/gallery_plot_regression_performance_default.png"
    )
    plt.close()
 
-.. image:: ../images/gallery_taylor_diagram_rwf.png
-   :alt: Taylor Diagram with RWF Background Example
+.. image:: ../images/gallery_plot_regression_performance_default.png
+   :alt: Polar Performance Chart with Default Metrics
    :align: center
-   :width: 80%
+   :width: 75%
 
 .. topic:: 🧠 Analysis and Interpretation
    :class: hint
 
-   The **Taylor Diagram** summarizes model skill by plotting
-   standard deviation (radius) vs. correlation (angle) relative
-   to a reference (red marker/arc at reference std dev = 1.0,
-   angle = 0). Points closer to the reference point indicate
-   better overall performance (lower centered RMSD).
+   The **Polar Performance Chart** provides a holistic, multi-metric
+   view of model performance, making it easy to identify trade-offs.
 
-   This implementation uses the **Radial Weighting Function (RWF)**
-   strategy for the background colormap (normalized blues).
+   **Key Features:**
 
-   **Analysis and Interpretation:**
+   * **Angle (θ):** Each angular sector represents a different
+     **evaluation metric** (e.g., R², MAE, RMSE).
+   * **Bars:** Within each sector, the different colored bars represent
+     the different models being compared.
+   * **Radius (r):** The length of each bar represents the model's
+     **normalized score** for that metric. The green circle at the edge
+     is the "Best Performance" line (a score of 1), and the red dashed
+     circle is the "Worst Performance" line (a score of 0).
 
-   * **Reference Point:** The red marker at radius ~1.0 on the
-     horizontal axis represents the reference data's variability.
-   * **Background (RWF):** Darker blue shades highlight regions
-     with both high correlation (small angle) and standard
-     deviation close to the reference (radius near 1.0).
-   * **Model Performance:**
+   **🔍 In this Example:**
 
-     * **Model A** (Red Dot): High correlation (~0.85), slightly
-       low std dev (~0.8). Good pattern match, slightly low variability.
-     * **Model B** (Blue Dot): Low correlation (~0.5), high std
-       dev (~1.2). Poor pattern match and wrong variability.
-     * **Model C** (Green Dot): Very high correlation (~0.95),
-       std dev very close to reference (~1.0). Best overall fit,
-       landing in the darkest blue region.
+   * **Good Model (Dark Blue):** This model has the best (longest) bars for
+     R² and RMSE, indicating strong overall performance. Its MAE score is
+     good but not the best.
+   * **Biased Model (Pink):** This model has the best MAE score, which
+     is expected as it has low error variance. However, its significant
+     bias severely penalizes its R² and RMSE scores, where its
+     performance is the worst.
+   * **High Variance Model (Yellow):** This model performs poorly across
+     all metrics, with the shortest bars for R² and RMSE, confirming
+     that its high error variance leads to a poor overall fit.
 
    **💡 When to Use:**
 
-   * Use this plot (`taylor_diagram`) when you need flexibility:
-     you can provide pre-calculated stats or raw data.
-   * The background (`cmap` + `radial_strategy`) adds context.
-     'rwf' specifically helps identify models that match both
-     correlation *and* standard deviation well.
-   * Ideal for comparing multiple models against observations in
-     fields like climate science or hydrology.
+   * To get a quick, visual summary of how multiple models perform
+     across a range of different metrics.
+   * To identify the strengths and weaknesses of each model (e.g., "Is
+     this model biased or just noisy?").
+   * For model selection when you need to balance trade-offs between
+     different performance criteria.
 
 .. raw:: html
 
-    <hr>
+   <hr>
 
-.. _gallery_plot_taylor_diagram_background_shading_focus: 
+Custom and Added Metrics Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--------------------------------------------
-Taylor Diagram (Background Shading Focus)
--------------------------------------------
-
-Uses :func:`~kdiagram.plot.evaluation.plot_taylor_diagram_in`. This
-example highlights the background colormap feature, here using the
-'convergence' strategy where color intensity relates directly to the
-correlation coefficient. It also demonstrates changing the plot
-orientation (Corr=1 at North, angles increase counter-clockwise).
+This example demonstrates how to add a custom metric (Median
+Absolute Error) to the default set of metrics using the
+``add_to_defaults=True`` parameter.
 
 .. code-block:: python
    :linenos:
 
-   import kdiagram.plot.evaluation as kde
+   import kdiagram as kd
    import numpy as np
    import matplotlib.pyplot as plt
+   from sklearn.metrics import median_absolute_error
 
-   # --- Data Generation (reusing from previous example) ---
-   np.random.seed(101)
-   n_points = 150
-   reference = np.random.normal(0, 1.0, n_points)
-   pred_a = reference * 0.8 + np.random.normal(0, 0.4, n_points)
-   pred_b = reference * 0.5 + np.random.normal(0, 1.1, n_points)
-   pred_c = reference * 0.95 + np.random.normal(0, 0.3, n_points)
-   y_preds = [pred_a, pred_b, pred_c]
-   names = ["Model A", "Model B", "Model C"]
+   # --- Data Generation (same as above) ---
+   np.random.seed(0)
+   n_samples = 200
+   y_true = np.random.rand(n_samples) * 50
+   y_pred_good = y_true + np.random.normal(0, 5, n_samples)
+   y_pred_biased = y_true - 10 + np.random.normal(0, 2, n_samples)
+   y_pred_variance = y_true + np.random.normal(0, 15, n_samples)
+   model_names = ["Good Model", "Biased Model", "High Variance"]
+
+   # A custom metric function (must return a score, not an error)
+   def median_abs_error_scorer(y_true, y_pred):
+       return -median_absolute_error(y_true, y_pred)
 
    # --- Plotting ---
-   kde.plot_taylor_diagram_in(
-       *y_preds,                     # Pass predictions as separate args
-       reference=reference,
-       names=names,
-       radial_strategy='convergence',# Background color shows correlation
-       cmap='viridis',
-       zero_location='N',            # Place Corr=1 at the Top (North)
-       direction=1,                  # Counter-clockwise angles
-       cbar=True,                    # Show colorbar for correlation
-       title='Gallery: Taylor Diagram (Correlation Background, N-oriented)',
-       # Save the plot (adjust path relative to this file)
-       savefig="images/gallery_taylor_diagram_in_conv.png"
+   kd.plot_regression_performance(
+       y_true,
+       y_pred_good, y_pred_biased, y_pred_variance,
+       names=model_names,
+       metrics=[median_abs_error_scorer],
+       add_to_defaults=True,
+       title="Performance with Added Custom Metric",
+       cmap='cividis',
+       metric_labels={
+           'r2': 'R²',
+           'neg_mean_absolute_error': 'MAE',
+           'neg_root_mean_squared_error': 'RMSE',
+           'median_abs_error_scorer': 'MedAE'
+       },
+       savefig="gallery/images/gallery_plot_regression_performance_custom.png"
    )
    plt.close()
 
-.. image:: ../images/gallery_taylor_diagram_in_conv.png
-   :alt: Taylor Diagram with Correlation Background Example
+.. image:: ../images/gallery_plot_regression_performance_custom.png
+   :alt: Polar Performance Chart with a Custom Metric
    :align: center
-   :width: 80%
+   :width: 75%
 
 .. topic:: 🧠 Analysis and Interpretation
    :class: hint
 
-   This version (`plot_taylor_diagram_in`) emphasizes the
-   **background color map** and offers flexible **orientation**.
-   Here, the background uses the `viridis` colormap with the
-   `'convergence'` strategy, meaning color directly maps to the
-   correlation value (yellow = high, purple = low). The plot is
-   oriented with perfect correlation (1.0) at the top ('N').
+   This plot demonstrates how to extend the default analysis with a
+   custom metric, providing a more nuanced view of performance.
 
-   **Analysis and Interpretation:**
+   **Key Features:**
 
-   * **Orientation:** Correlation decreases as the angle increases
-     counter-clockwise from the top 'N' position. Standard
-     deviation increases radially outwards. The red reference arc is
-     at radius ~1.0.
-   * **Background (Convergence):** The yellow region near the top
-     indicates correlations close to 1.0. Colors shift towards
-     green/blue/purple as correlation decreases (angle increases).
-   * **Model Performance:**
-   
-     * **Model A** (Red Dot): Good correlation (in greenish-yellow
-       zone), std dev slightly below reference arc.
-     * **Model B** (Blue Dot): Low correlation (in blue/purple
-       zone), std dev slightly above reference arc.
-     * **Model C** (Green Dot): Excellent correlation (in bright
-       yellow zone), std dev very close to reference arc.
+   * **Custom Axis:** The plot now includes a fourth axis for the
+     custom "MedAE" (Median Absolute Error) metric.
+   * **Combined View:** The ``add_to_defaults=True`` parameter allows
+     for a direct comparison of standard and custom metrics.
+
+   **🔍 In this Example:**
+
+   * The new **MedAE** metric reinforces the findings from the MAE. The
+     "Biased Model" (gray) performs best on both MAE and MedAE. This
+     is because both metrics are less sensitive to large outlier errors
+     than RMSE, highlighting the model's low error variance despite its bias.
+   * The "Good Model" (dark blue) remains the best performer on R² and RMSE,
+     showcasing its superior overall fit.
 
    **💡 When to Use:**
 
-   * Choose `plot_taylor_diagram_in` when you want a strong visual
-     guide for correlation levels provided by the background shading.
-   * Useful for presentations where the background color helps direct
-     the audience's focus to high-correlation regions.
-   * Use the orientation options (`zero_location`, `direction`) to
-     match specific conventions or visual preferences.
+   * When standard metrics don't fully capture the performance
+     aspects you care about (e.g., robustness to outliers).
+   * To create a comprehensive performance profile that includes both
+     standard and domain-specific evaluation criteria.
 
 .. raw:: html
 
-    <hr>
+   <hr>
 
+Pre-calculated Metrics Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _gallery_plot_taylor_diagram_basic: 
-
------------------------------
-Taylor Diagram (Basic Plot)
------------------------------
-
-Uses :func:`~kdiagram.plot.evaluation.plot_taylor_diagram`. This
-example shows a more standard Taylor Diagram layout without
-background shading, focusing purely on the positions of the model
-points relative to the reference. Uses a half-circle layout (90
-degrees, showing positive correlations only) with default West
-orientation for Corr=1.
+This example shows how to generate the plot directly from a
+dictionary of pre-calculated scores using the ``metric_values``
+parameter. This is useful when you have already computed the
+metrics and just want to visualize them. The axis labels are
+muted for a cleaner look.
 
 .. code-block:: python
    :linenos:
 
-   import kdiagram.plot.evaluation as kde
-   import numpy as np
+   import kdiagram as kd
    import matplotlib.pyplot as plt
 
-   # --- Data Generation (reusing from previous example) ---
-   np.random.seed(101)
-   n_points = 150
-   reference = np.random.normal(0, 1.0, n_points)
-   pred_a = reference * 0.8 + np.random.normal(0, 0.4, n_points)
-   pred_b = reference * 0.5 + np.random.normal(0, 1.1, n_points)
-   pred_c = reference * 0.95 + np.random.normal(0, 0.3, n_points)
-   y_preds = [pred_a, pred_b, pred_c]
-   names = ["Model A", "Model B", "Model C"]
+   # --- Pre-calculated Scores ---
+   precalculated_scores = {
+       'R²': [0.85, 0.55, 0.65],
+       'MAE': [-4.0, -10.5, -12.0],
+       'RMSE': [-5.0, -11.0, -15.0]
+   }
+   model_names = ["Good Model", "Biased Model", "High Variance"]
 
    # --- Plotting ---
-   kde.plot_taylor_diagram(
-       *y_preds,
-       reference=reference,
-       names=names,
-       acov='half_circle',      # Use 90-degree layout
-       zero_location='W',       # Place Corr=1 at the Left (West)
-       direction=-1,            # Clockwise angles
-       title='Gallery: Basic Taylor Diagram (Half Circle)',
-       # Save the plot (adjust path relative to this file)
-       savefig="images/gallery_taylor_diagram_basic.png"
+   kd.plot_regression_performance(
+       metric_values=precalculated_scores,
+       names=model_names,
+       title="Performance from Pre-calculated Scores",
+       cmap='Set2',
+       metric_labels=False, # Mute the axis labels
+       savefig="gallery/images/gallery_plot_regression_performance_precalc.png"
    )
    plt.close()
 
-.. image:: ../images/gallery_taylor_diagram_basic.png
-   :alt: Basic Taylor Diagram Example
+.. image:: ../images/gallery_plot_regression_performance_precalc.png
+   :alt: Polar Performance Chart from Pre-calculated Values
    :align: center
-   :width: 80%
+   :width: 75%
 
 .. topic:: 🧠 Analysis and Interpretation
    :class: hint
 
-   This **basic Taylor Diagram** presents a clean comparison of model
-   skill without background shading, using a 90-degree arc
-   (``acov='half_circle'``) focused on positive correlations. Perfect
-   correlation (1.0) is on the left (West axis, ``zero_location='W'``),
-   and correlation decreases clockwise (``direction=-1``).
+   This example showcases the flexibility of the function, allowing it
+   to be used as a pure visualization tool for pre-calculated scores.
 
-   **Analysis and Interpretation:**
+   **Key Features:**
 
-   * **Reference Arc:** The red arc shows the standard deviation of
-     the reference data (approx. 1.0).
-   * **Model Positions:**
-   
-     * **Model A** (Red Dot): High correlation (small angle relative
-       to West axis), standard deviation below the reference arc
-       (~0.8). Underestimates variability.
-     * **Model B** (Blue Dot): Lower correlation (larger angle),
-       standard deviation above the reference arc (~1.2).
-       Overestimates variability and has poorer pattern match.
-     * **Model C** (Green Dot): Highest correlation (smallest angle),
-       standard deviation almost exactly on the reference arc (~1.0).
-       Best overall model in this comparison.
-   * **RMSD:** Model C is closest to the reference point (at radius
-     ~1.0 on the West axis), indicating the lowest centered RMS
-     difference. Model B is furthest away.
+   * **Data Agnostic:** The plot is generated directly from a dictionary
+     of scores via the ``metric_values`` parameter, without needing the
+     original ``y_true`` or ``y_pred`` data.
+   * **Minimalist Display:** By setting ``metric_labels=False``, the
+     angular axis labels are removed, creating a cleaner visual.
+
+   **🔍 In this Example:**
+
+   * The plot accurately reflects the provided scores, with the "Good Model"
+     (purple) dominating on R² and RMSE, and the "Biased Model" (teal)
+     showing the poorest performance on these metrics.
+   * The absence of axis labels creates a less cluttered look, which can
+     be effective for presentations or reports where the axes are
+     explained in the main text or a caption.
 
    **💡 When to Use:**
 
-   * Use this basic plot for a clear, uncluttered view focused purely
-     on the standard deviation and correlation metrics.
-   * Ideal when comparing many models where background shading might
-     become too busy.
-   * Suitable for publications preferring a standard, minimalist
-     Taylor Diagram representation.
-    
+   * When you have already computed performance metrics and simply need
+     a powerful way to visualize them.
+   * To create minimalist, presentation-ready graphics where detailed
+     labels might be distracting.
+     
+Overriding Metric Behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. raw:: html
-
-    <hr> 
-
-.. _gallery_plot_taylor_diagram_in_variant1: 
-
------------------------------------------------------
-Taylor Diagram (NE Orientation, Convergence BG)
------------------------------------------------------
-
-Another variant using :func:`~kdiagram.plot.evaluation.plot_taylor_diagram_in`,
-this time placing perfect correlation (1.0) in the North-East ('NE')
-quadrant, with angles increasing counter-clockwise (`direction=1`).
-The background uses the 'convergence' strategy with the 'Purples'
-colormap, where color intensity maps directly to the correlation
-value, and includes a colorbar.
+This example demonstrates how to use the ``higher_is_better``
+parameter to give the function explicit instructions on how to
+interpret a custom metric. This is crucial when your metric is an
+error score (where lower is better) but does not have a name that
+the function would automatically recognize as an error.
 
 .. code-block:: python
    :linenos:
 
-   import kdiagram.plot.evaluation as kde
+   import kdiagram as kd
    import numpy as np
    import matplotlib.pyplot as plt
 
-   # --- Data Generation (using same data as previous examples) ---
-   np.random.seed(42) # Use same seed for consistency if desired
-   reference = np.random.normal(0, 1, 100)
-   y_preds = [
-       reference + np.random.normal(0, 0.3, 100), # Model A (close)
-       reference * 0.9 + np.random.normal(0, 0.8, 100) # Model B (worse corr/std)
-   ]
-   names = ['Model A', 'Model B']
+   # --- Data Generation ---
+   np.random.seed(0)
+   n_samples = 200
+   y_true = np.random.rand(n_samples) * 50
+   y_pred_good = y_true + np.random.normal(0, 5, n_samples)
+   y_pred_biased = y_true - 10 + np.random.normal(0, 2, n_samples)
+   model_names = ["Good Model", "Biased Model"]
+
+   # A custom error metric with a neutral name
+   def my_custom_deviation(y_true, y_pred):
+       return np.mean(np.abs(y_true - y_pred))
 
    # --- Plotting ---
-   kde.plot_taylor_diagram_in(
-       *y_preds,
-       reference=reference,
-       names=names,
-       acov='half_circle', # 90 degree span
-       zero_location='NE', # Corr = 1.0 at North-East
-       direction=1,        # Angles increase counter-clockwise
-       fig_size=(8, 8),
-       cbar=True,          # Show colorbar for correlation
-       cmap='Purples',       # Use Purples colormap for background
-       radial_strategy='convergence', # Color based on correlation
-       title='Gallery: Taylor Diagram (NE, CCW, Convergence BG)',
-       # Save the plot (adjust path relative to this file)
-       savefig="images/gallery_taylor_diagram_in_ne_ccw_conv.png"
+   kd.plot_regression_performance(
+       y_true,
+       y_pred_good,
+       y_pred_biased,
+       names=model_names,
+       metrics=['r2', my_custom_deviation],
+       title="Performance with Overridden Metric Behavior",
+       cmap='ocean',
+       metric_labels={
+           'r2': 'R²',
+           'my_custom_deviation': 'Custom Deviation'
+       },
+       higher_is_better={
+           'my_custom_deviation': False # Explicitly tell the function lower is better
+       },
+       savefig="gallery/images/gallery_plot_regression_performance_override.png"
    )
    plt.close()
 
-.. image:: ../images/gallery_taylor_diagram_in_ne_ccw_conv.png
-   :alt: Taylor Diagram NE Orientation Convergence BG Example
+.. image:: ../images/gallery_plot_regression_performance_override.png
+   :alt: Polar Performance Chart with Overridden Metric Behavior
    :align: center
-   :width: 80%
+   :width: 75%
 
-.. topic:: 🧠 Analysis and Interpretation Note
-    :class: hint
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
 
-    Compare this plot's orientation to previous examples. Here, the
-    point of perfect correlation (1.0) is at the top-right (45 degrees).
-    The angles increase counter-clockwise, so points further "left"
-    along the arc have lower correlation. The background color intensity
-    directly reflects the correlation value based on the 'Purples' map.
+   This plot demonstrates the power of the ``higher_is_better``
+   parameter for ensuring custom metrics are visualized correctly.
 
+   **Key Features:**
 
-.. raw:: html
+   * **`higher_is_better` Parameter:** This dictionary allows you to
+     manually specify whether a higher or lower score is better for
+     any given metric, overriding the function's default behavior.
+   * **Correct Normalization:** By setting
+     ``'my_custom_deviation': False``, we tell the function that a
+     *lower* score is better for this metric. The function then
+     correctly inverts its score during normalization, so that the
+     model with the lowest deviation gets the longest bar (best
+     performance).
 
-    <hr>
+   **🔍 In this Example:**
 
-.. _gallery_plot_taylor_diagram_in_variant2: 
+   * The "Biased Model" has a lower error variance and therefore a
+     lower (better) score on the "Custom Deviation" metric. Thanks
+     to the ``higher_is_better`` override, it is correctly shown
+     with the longest bar on that axis.
+   * The "Good Model" has a much better R² score, and the plot
+     clearly visualizes this trade-off.
 
-------------------------------------------------------
-Taylor Diagram (SW Orientation, Performance BG)
-------------------------------------------------------
+   **💡 When to Use:**
 
-This variant uses :func:`~kdiagram.plot.evaluation.plot_taylor_diagram_in`
-with perfect correlation (1.0) placed in the South-West ('SW')
-quadrant, counter-clockwise angle increase (`direction=1`), and the
-'performance' background strategy. The 'performance' strategy uses an
-exponential decay centered on the *best performing model* in the input
-(closest correlation and std dev to reference), highlighting the region
-around it. Uses 'gouraud' shading for a smoother background and hides
-the colorbar.
-
-.. code-block:: python
-   :linenos:
-
-   import kdiagram.plot.evaluation as kde
-   import numpy as np
-   import matplotlib.pyplot as plt
-
-   # --- Data Generation (using same data as previous examples) ---
-   np.random.seed(42) # Use same seed for consistency
-   reference = np.random.normal(0, 1, 100)
-   y_preds = [
-       reference + np.random.normal(0, 0.3, 100), # Model A (close)
-       reference * 0.9 + np.random.normal(0, 0.8, 100) # Model B (worse corr/std)
-   ]
-   names = ['Model A', 'Model B']
-
-   # --- Plotting ---
-   kde.plot_taylor_diagram_in(
-       *y_preds,
-       reference=reference,
-       names=names,
-       acov='half_circle',     # 90 degree span
-       zero_location='SW',     # Corr = 1.0 at South-West
-       direction=1,            # Angles increase counter-clockwise
-       fig_size=(8, 8),
-       cbar=False,             # Hide colorbar
-       cmap='twilight_shifted',# Use a cyclic map 
-       shading='gouraud',      # Smoother shading
-       radial_strategy='performance', # Color based on best model proximity
-       title='Gallery: Taylor Diagram (SW, CCW, Performance BG)',
-       # Save the plot (adjust path relative to this file)
-       savefig="images/gallery_taylor_diagram_in_sw_ccw_perf.png"
-   )
-   plt.close()
-
-.. image:: ../images/gallery_taylor_diagram_in_sw_ccw_perf.png
-   :alt: Taylor Diagram SW Orientation Performance BG Example
-   :align: center
-   :width: 80%
-
-.. topic:: 🧠 Analysis and Interpretation Note
-    :class: hint
-
-    Notice the different orientation with Corr=1.0 now at the bottom-left.
-    The 'performance' background strategy creates a "hotspot" (brighter
-    color with this cmap) centered around the best input model (Model A in
-    this case), visually guiding the eye to the top performer relative
-    to the provided dataset. 'gouraud' shading smooths the background
-    colors.
+   * When you are using a **custom error metric** whose name does
+     not contain "error" or "loss".
+   * When you want to ensure that your plot's normalization is
+     unambiguous and correctly reflects the desired interpretation
+     of each metric.

@@ -1,44 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from kdiagram.cli import build_parser
+from kdiagram.cli._utils import _expect_file, _try_parse_and_run
 
 
-# ------------------------ helpers --------------------------------
-def _expect_file(path: Path) -> None:
-    assert path.exists(), f"missing: {path}"
-    assert path.stat().st_size > 0, f"empty: {path}"
-
-
-def _try_parse_and_run(variants: Iterable[list[str]]) -> None:
-    """
-    Try argv variants in order. If one parses and runs, stop.
-    Raise the last error if all fail.
-    """
-    last_err: BaseException | None = None
-    for argv in variants:
-        parser = build_parser()
-        try:
-            ns = parser.parse_args(argv)
-            if not hasattr(ns, "func"):
-                raise SystemExit("no func bound")
-            ns.func(ns)
-            return
-        except SystemExit as e:
-            last_err = e
-        except Exception as e:  # pragma: no cover
-            last_err = e
-    if last_err:
-        raise last_err
-
-
-# ------------------------ fixture --------------------------------
 @pytest.fixture
 def demo_csv_errors(tmp_path: Path) -> Path:
     """

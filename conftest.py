@@ -6,6 +6,8 @@ import warnings
 
 import pytest
 
+import kdiagram.utils._deps as deps
+
 # Force a non-GUI backend before importing pyplot
 os.environ.setdefault("MPLBACKEND", "Agg")
 try:
@@ -15,6 +17,13 @@ try:
     import matplotlib.pyplot as plt
 except Exception:  # Matplotlib might be optional in some envs
     plt = None  # type: ignore[assignment]
+
+
+@pytest.fixture(autouse=True)
+def clear_requirements_cache():
+    deps._REQUIREMENT_CACHE.clear()
+    yield
+    deps._REQUIREMENT_CACHE.clear()
 
 
 @pytest.fixture(scope="session", autouse=True)

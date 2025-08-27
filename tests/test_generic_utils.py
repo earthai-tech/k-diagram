@@ -109,7 +109,7 @@ def _dummy(a, b=2, *, c=None, d=4):
 def test_get_valid_kwargs_filters_and_warns():
     kwargs = {"a": 1, "b": 2, "c": 3, "nope": 99}
     with pytest.warns(UserWarning) as rec:
-        valid = get_valid_kwargs(_dummy, kwargs)
+        valid = get_valid_kwargs(_dummy, kwargs, error="warn")
     assert valid == {"a": 1, "b": 2, "c": 3}
     # Ensure warning mentions the bad key
     assert any("nope" in str(w.message) for w in rec)

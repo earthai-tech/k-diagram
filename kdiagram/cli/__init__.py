@@ -11,17 +11,25 @@ except Exception:  # pragma: no cover
 from .plot_anomalies import add_plot_anomalies
 from .plot_comparison import add_plot_comparison
 from .plot_cond_relationship import add_plot_cond_relationship
+from .plot_confusion_matrices import add_confusion_matrices
+from .plot_context_corr import add_context_corr
+from .plot_context_err import add_context_err
 from .plot_coverages import add_plot_coverages
 from .plot_credibility import add_plot_credibility
 from .plot_drift import add_plot_drift
 from .plot_errors import add_plot_errors
+from .plot_eval_ext import add_eval_extension
 from .plot_eval_relationship import add_plot_eval_relationship
+from .plot_feature_based import add_plot_feature_based
 from .plot_fields import add_plot_fields
 from .plot_intervals import add_plot_intervals
+from .plot_pr_roc import add_pr_roc
 from .plot_probs import add_plot_probs
 from .plot_reliability import add_plot_reliability
 from .plot_sharpness import add_plot_sharpness
+from .plot_taylord import add_plot_taylord
 from .plot_temporal import add_plot_temporal
+from .plot_ts_analyses import add_ts_analyses
 from .plot_velocities import add_plot_velocities
 from .plot_vs import add_plot_vs
 
@@ -86,6 +94,22 @@ def build_parser() -> argparse.ArgumentParser:
     # comparison plots
     add_plot_reliability(sub)
     add_plot_comparison(sub)
+
+    # feature based plot
+    add_plot_feature_based(sub)
+
+    # taylor diagrams
+    add_plot_taylord(sub)
+
+    # add contexts
+    add_ts_analyses(sub)
+    add_context_corr(sub)
+    add_context_err(sub)
+
+    # add evaluations plot
+    add_confusion_matrices(sub)
+    add_pr_roc(sub)
+    add_eval_extension(sub)
 
     return parser
 

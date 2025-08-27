@@ -152,19 +152,39 @@ distribution analysis.
 
 .. _api_evaluation:
 
-Model Evaluation (`kdiagram.plot.evaluation`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Classification Evaluation (`kdiagram.plot.evaluation`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Functions for evaluating model performance, primarily using Taylor
-Diagrams.
+Functions for evaluating the performance of classification models,
+featuring novel polar adaptations of standard diagnostic tools.
 
 .. autosummary::
    :toctree: _autosummary/evaluation
    :nosignatures:
 
-   ~kdiagram.plot.evaluation.taylor_diagram
-   ~kdiagram.plot.evaluation.plot_taylor_diagram_in
-   ~kdiagram.plot.evaluation.plot_taylor_diagram
+   ~kdiagram.plot.evaluation.plot_polar_roc
+   ~kdiagram.plot.evaluation.plot_polar_pr_curve
+   ~kdiagram.plot.evaluation.plot_polar_confusion_matrix
+   ~kdiagram.plot.evaluation.plot_polar_confusion_matrix_in
+   ~kdiagram.plot.evaluation.plot_polar_classification_report
+   ~kdiagram.plot.evaluation.plot_pinball_loss
+   ~kdiagram.plot.evaluation.plot_regression_performance
+
+.. _api_taylor_diagram:
+
+Taylor Diagram (`kdiagram.plot.taylor_diagram`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Functions for evaluating model performance against a reference
+using Taylor Diagrams.
+
+.. autosummary::
+   :toctree: _autosummary/taylor_diagram
+   :nosignatures:
+
+   ~kdiagram.plot.taylor_diagram.taylor_diagram
+   ~kdiagram.plot.taylor_diagram.plot_taylor_diagram_in
+   ~kdiagram.plot.taylor_diagram.plot_taylor_diagram
 
 
 .. _api_utils:

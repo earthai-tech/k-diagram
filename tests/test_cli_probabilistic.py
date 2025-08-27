@@ -1,8 +1,6 @@
-# tests/test_cli_probs.py
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
@@ -10,37 +8,7 @@ import pandas as pd
 import pytest
 
 from kdiagram.cli import build_parser
-
-# --------------------------- helpers ---------------------------------
-
-
-def _expect_file(path: Path) -> None:
-    assert path.exists(), f"missing: {path}"
-    assert path.stat().st_size > 0, f"empty: {path}"
-
-
-def _try_parse_and_run(
-    argv_variants: Iterable[list[str]],
-) -> None:
-    """
-    Try a list of argv variants until one parses, then run it.
-    If none parse, raise the last SystemExit to surface details.
-    """
-    parser = build_parser()
-    last_err: SystemExit | None = None
-    for argv in argv_variants:
-        try:
-            ns = parser.parse_args(argv)
-            assert hasattr(ns, "func"), "subcommand not bound"
-            ns.func(ns)
-            return
-        except SystemExit as e:  # bad argv (unknown flags etc.)
-            last_err = e
-    # If we got here, nothing parsed; re-raise the last failure
-    raise last_err  # type: ignore[misc]
-
-
-# ---------------------------- fixtures --------------------------------
+from kdiagram.cli._utils import _expect_file, _try_parse_and_run
 
 
 @pytest.fixture()

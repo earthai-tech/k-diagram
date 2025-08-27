@@ -15,9 +15,6 @@ from ..utils.handlers import columns_manager
 from ..utils.plot import set_axis_grid
 from ..utils.validator import exist_features
 
-# Lazy import for statsmodels
-_plot_pacf = None
-
 __all__ = [
     "plot_time_series",
     "plot_scatter_correlation",
@@ -48,7 +45,6 @@ def plot_time_series(
     savefig: Optional[str] = None,
     dpi: int = 300,
 ):
-    # --- Input Validation and Preparation ---
     pred_cols = columns_manager(pred_cols, empty_as_none=False)
 
     if not actual_col and not pred_cols:
@@ -893,7 +889,7 @@ def plot_error_pacf(
     dpi: int = 300,
     **pacf_kwargs,
 ):
-    plot_pacf = _lazy_import_pacf()
+    from statsmodels.graphics.tsaplots import plot_pacf
 
     # --- Input Validation and Preparation ---
     required_cols = [actual_col, pred_col]
@@ -902,7 +898,9 @@ def plot_error_pacf(
     data_to_plot = df[required_cols].dropna()
     errors = data_to_plot[actual_col] - data_to_plot[pred_col]
 
-    if len(errors) < 2:
+    n = len(errors)
+
+    if n < 2:
         warnings.warn(
             "Not enough data points to plot partial autocorrelation.",
             stacklevel=2,
@@ -912,9 +910,33 @@ def plot_error_pacf(
     # --- Plotting Setup ---
     fig, ax = plt.subplots(figsize=figsize)
 
-    # --- Generate PACF Plot ---
+    # # --- Generate PACF Plot ---
+    # pacf_kwargs = get_valid_kwargs(plot_pacf, pacf_kwargs)
+    # # set a stable default method unless the user provided one
+    # pacf_kwargs.setdefault("method",  "ywm")
+
+    # plot_pacf(errors, ax=ax, **pacf_kwargs)
+
     pacf_kwargs = get_valid_kwargs(plot_pacf, pacf_kwargs)
-    plot_pacf(errors, ax=ax, **pacf_kwargs)
+    pacf_kwargs.setdefault("method", "ywm")
+
+    # Ensure lags respects statsmodels constraint: lags < n//2
+    max_lags = max(1, n // 2 - 1)
+
+    if (
+        "lags" not in pacf_kwargs
+        or pacf_kwargs["lags"] is None
+        or pacf_kwargs["lags"] >= n // 2
+    ):
+        pacf_kwargs["lags"] = max_lags
+
+    try:
+        plot_pacf(errors, ax=ax, **pacf_kwargs)
+
+    except ValueError:
+        # Fallback once with a safer lags if a user forced something too large
+        pacf_kwargs["lags"] = max_lags
+        plot_pacf(errors, ax=ax, **pacf_kwargs)
 
     # --- Formatting ---
     ax.set_title(
@@ -1027,24 +1049,3 @@ Examples
 ... except ImportError:
 ...     print("Skipping PACF plot: statsmodels is not installed.")
 """
-
-
-def _lazy_import_pacf():
-    """Lazy import for statsmodels plot_pacf."""
-    global _plot_pacf
-    if _plot_pacf is None:
-        try:
-            from statsmodels.graphics.tsaplots import (
-                plot_pacf as sm_plot_pacf,
-            )
-
-            _plot_pacf = sm_plot_pacf
-        except ImportError as e:
-            # This case is handled by the @ensure_pkg decorator,
-            # but we add a fallback for direct calls.
-            raise ImportError(
-                "statsmodels is required for PACF plots. "
-                "Please install it using 'pip install statsmodels'."
-            ) from e
-
-    return _plot_pacf

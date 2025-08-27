@@ -5,11 +5,6 @@ from .comparison import (
     plot_reliability_diagram,
 )
 from .errors import plot_error_bands, plot_error_ellipses, plot_error_violins
-from .evaluation import (
-    plot_taylor_diagram,
-    plot_taylor_diagram_in,
-    taylor_diagram,
-)
 from .feature_based import plot_feature_fingerprint, plot_feature_interaction
 from .probabilistic import (
     plot_calibration_sharpness,
@@ -23,6 +18,11 @@ from .relationship import (
     plot_error_relationship,
     plot_relationship,
     plot_residual_relationship,
+)
+from .taylor_diagram import (
+    plot_taylor_diagram,
+    plot_taylor_diagram_in,
+    taylor_diagram,
 )
 from .uncertainty import (
     plot_actual_vs_predicted,

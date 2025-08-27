@@ -106,8 +106,7 @@ def test_get_valid_kwargs_with_function_and_invalid_keys_warns():
     def f(a, b=2, *, c=None):  # simple callable
         return a + b
 
-    with pytest.warns(UserWarning):
-        valid = gu.get_valid_kwargs(f, {"a": 1, "c": 3, "x": 99})
+    valid = gu.get_valid_kwargs(f, {"a": 1, "c": 3, "x": 99})
     assert valid == {"a": 1, "c": 3}
 
     # class: signature taken from __init__
@@ -117,13 +116,13 @@ def test_get_valid_kwargs_with_function_and_invalid_keys_warns():
             self.bar = bar
 
     with pytest.warns(UserWarning):
-        valid2 = gu.get_valid_kwargs(C, {"foo": 10, "nope": 1})
+        valid2 = gu.get_valid_kwargs(C, {"foo": 10, "nope": 1}, error="warn")
     assert valid2 == {"foo": 10}
 
     # instance -> uses its class
     c = C(1)
-    with pytest.warns(UserWarning):
-        valid3 = gu.get_valid_kwargs(c, {"foo": 2, "zzz": 42})
+
+    valid3 = gu.get_valid_kwargs(c, {"foo": 2, "zzz": 42}, error="ignore")
     assert valid3 == {"foo": 2}
 
 

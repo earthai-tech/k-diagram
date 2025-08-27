@@ -8,7 +8,7 @@ import subprocess
 import sys
 import warnings
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
 # Python 3.8+: importlib.metadata is in the stdlib; provide robust fallback
 try:  # Python 3.8+
@@ -115,6 +115,13 @@ def _pip_install(
         return False, f"pip install failed: {exc}"
     except Exception as exc:  # pragma: no cover
         return False, f"pip install error: {exc}"
+
+
+def is_pkg_installed(pkg: str) -> bool:
+    try:
+        return importlib.util.find_spec(pkg) is not None
+    except Exception:
+        return False
 
 
 def ensure_pkg(  # noqa: D401
@@ -256,7 +263,15 @@ def ensure_pkg(  # noqa: D401
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             ok, msg = _ensure_once()
             _handle_failure(ok, msg)
-            return func(*args, **kwargs)
+            try:
+                return func(*args, **kwargs)
+            except ModuleNotFoundError as e:
+                root = (e.name or "").split(".")[0]
+                if root == (dist_name or _best_base_name(name)):
+                    _handle_failure(
+                        False, f"Cannot import '{name}'. {extra}".strip()
+                    )
+                raise
 
         return wrapper
 
