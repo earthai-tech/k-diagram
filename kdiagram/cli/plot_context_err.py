@@ -108,7 +108,7 @@ def add_plot_error_distribution(
     sub: argparse._SubParsersAction,
 ) -> None:
     p = sub.add_parser(
-        "plot-error-distribution",
+        "plot-error-dist",
         help=("Histogram + KDE of forecast errors " "(actual - predicted)."),
         description=(
             "Compute residuals and plot their distribution using "

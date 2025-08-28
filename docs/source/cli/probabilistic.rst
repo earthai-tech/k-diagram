@@ -1,413 +1,236 @@
 .. _cli_probabilistic:
 
-================================
-Probabilistic diagnostics (CLI)
-================================
+=========================
+Probabilistic Diagnostics
+=========================
 
-Polar diagnostics for probabilistic forecasts: PIT histograms, CRPS 
-comparison, sharpness, and calibration–sharpness trade-offs.
+While point forecasts are useful, probabilistic (or quantile)
+forecasts provide a much richer picture of uncertainty. The commands
+on this page are designed to diagnose the quality of these forecasts,
+helping you assess their calibration (reliability) and sharpness
+(precision) using specialized polar plots.
 
-These commands accept flexible column specs:
+.. contents:: Table of Contents
+   :local:
+   :depth: 1
 
-* **Ground truth**: ``--y-true`` or ``--true-col``.
-* **Prediction groups** (choose one style, repeatable):
-    * ``--model NAME:col1[,col2,...]`` (name + CSV list)
-    * ``--pred col1 col2 col3`` (space-separated)
-    * ``--pred-cols col1,col2,col3`` (single CSV token)
-* **Quantile levels**: ``--q-levels`` or ``--quantiles`` (CSV string).
-* **Names** (optional): ``--names`` supports CSV or space-separated.
+-------------------
+Common Conventions
+-------------------
 
-All commands read a tabular file (CSV/Parquet/…) into a DataFrame. Pass 
-the path as a positional input or via ``-i/--input``. Use ``--format`` 
-to override detection if needed.
+Evaluating probabilistic forecasts requires specifying multiple columns
+for each model. These commands use a flexible system to handle this.
 
-Shared conventions
-------------------
+- **Ground Truth**: Provide the true value with ``--y-true`` or
+  ``--true-col``.
+- **Quantile Levels**: You must specify the quantile levels
+  corresponding to your prediction columns with ``--q-levels`` or
+  ``--quantiles`` (e.g., ``--q-levels 0.1,0.5,0.9``).
+- **Prediction Columns**: Provide the quantile forecast columns for
+  each model using one of these styles:
+  - ``--model NAME:q10,q50,q90`` (repeatable for multiple models)
+  - ``--pred q10 q50 q90`` (repeatable for multiple models)
+  - ``--pred-cols q10,q50,q90`` (repeatable for multiple models)
+- **Saving**: To save a plot, add the ``--savefig out.png`` flag.
 
-* **Column lists** (via ``--pred``/``--pred-cols``/``--q-cols``): either 
-  comma-separated in one token or multiple space-separated tokens 
-  (flexible parsing).
-* **Model specs** (via ``--model``): repeat the flag to add models, e.g. 
-  ``--model M1:q10,q50,q90 --model M2:q10_2024,q50,q90_2024``.
-* **Quantile levels**: one CSV string, e.g. ``--q-levels 0.1,0.5,0.9``. 
-  Every model/group must have the same number of columns as the number of
-   quantile levels.
-* **Figure output**: add ``--savefig out.png`` to write the figure instead 
-  of showing it interactively.
-* **Booleans** use paired flags where available, e.g. 
-  ``--show-grid`` / ``--no-show-grid``.
+---
 
-
-Commands
-========
-
+--------------------
 plot-pit-histogram
-------------------
+--------------------
 
-Synopsis
-^^^^^^^^
+The Probability Integral Transform (PIT) histogram is a key tool for
+assessing calibration. It checks whether the observed outcomes are
+consistent with the predicted distributions. For a perfectly
+calibrated forecast, the PIT histogram should be flat (uniform).
+Deviations from a flat shape indicate systematic biases, such as the
+forecasts being too narrow (U-shaped) or too wide (hump-shaped) 
+:footcite:p:`Gneiting2007b`.
 
-.. code-block:: text
-
-   kdiagram plot-pit-histogram INPUT
-     --y-true Y_TRUE
-     [--model NAME:Q1 | --pred Q1 Q2 ... | --pred-cols Q1,Q2,... | --q-cols Q1,Q2,...]
-     --q-levels Q_LEVELS
-     [--n-bins N] [--title TITLE] [--figsize W,H]
-     [--color COLOR] [--edgecolor COLOR] [--alpha A]
-     [--show-uniform-line | --no-show-uniform-line]
-     [--show-grid | --no-show-grid]
-     [--mask-radius | --no-mask-radius]
-     [--dpi DPI] [--savefig PATH]
-     [-i INPUT] [--format FMT]
-
-Arguments
-^^^^^^^^^
-
-``INPUT / -i, --input``
-  Input table path.
-
-``--format``
-  Explicit format override (e.g. ``csv``, ``parquet``).
-
-``--y-true / --true-col``
-  Ground-truth column.
-
-One prediction group (choose one style; exactly one group)
-  * ``--model NAME:Q1[,Q2,...]``
-  * ``--pred Q1 Q2 ...``
-  * ``--pred-cols Q1,Q2,...``
-  * ``--q-cols Q1,Q2,...`` (legacy alias)
-
-``--q-levels / --quantiles``
-  Quantile levels CSV (e.g. ``0.1,0.5,0.9``).
-
-Style
-
-  * ``--n-bins`` (default: 10)
-  * ``--title`` (default: "PIT Histogram")
-  * ``--figsize`` (default: ``8,8``)
-  * ``--color`` (default: "#3498DB")
-  * ``--edgecolor`` (default: "black")
-  * ``--alpha`` (default: 0.7)
-  * ``--show-uniform-line / --no-show-uniform-line``
-  * ``--show-grid / --no-show-grid``
-  * ``--mask-radius / --no-mask-radius``
-  * ``--dpi`` (default: 300)
-  * ``--savefig PATH``
-
-Notes
-^^^^^
-Computes the Probability Integral Transform (PIT) per observation from a 
-single set of quantile forecasts and renders a polar histogram. The flat 
-(uniform) reference line indicates perfect calibration.
-
-Examples
-^^^^^^^^
-
-Using space-separated columns:
+The command's general structure is:
 
 .. code-block:: bash
 
-   kdiagram plot-pit-histogram demo.csv \
+   k-diagram plot-pit-histogram INPUT
+     --y-true Y_TRUE
+     --q-levels 0.1,0.5,0.9
+     --pred q10 q50 q90
+     [--n-bins 10]
+     [--show-uniform-line]
+
+Here is an example using space-separated prediction columns:
+
+.. code-block:: bash
+
+   k-diagram plot-pit-histogram demo.csv \
      --true-col actual \
      --pred q10 q50 q90 \
      --q-levels 0.1,0.5,0.9 \
+     --title "PIT Calibration Histogram" \
      --savefig pit.png
 
-Using a model spec:
+---
 
-.. code-block:: bash
-
-   kdiagram plot-pit-histogram demo.csv \
-     --y-true actual \
-     --model PRED:q10,q50,q90 \
-     --q-levels 0.1,0.5,0.9
-
+----------------------
 plot-crps-comparison
---------------------
-
-Synopsis
-^^^^^^^^
-
-.. code-block:: text
-
-   kdiagram plot-crps-comparison INPUT
-     --y-true Y_TRUE
-     [--model NAME:Q1 ... | --pred Q1 Q2 ... --pred ...]
-     --q-levels Q_LEVELS
-     [--names N1 [N2 ...]]
-     [--title TITLE] [--figsize W,H] [--cmap CMAP]
-     [--marker M] [--s SIZE]
-     [--show-grid | --no-show-grid]
-     [--mask-radius | --no-mask-radius]
-     [--dpi DPI] [--savefig PATH]
-     [-i INPUT] [--format FMT]
-
-Arguments
-^^^^^^^^^
-
-``INPUT / -i, --input / --format``
-  As above.
-
-``--y-true / --true-col``
-  Ground-truth column.
-
-One or more prediction groups, using either
-  * repeated ``--model NAME:Q1[,Q2,...]``
-  * repeated ``--pred …`` and/or ``--pred-cols …``
-
-``--q-levels / --quantiles``
-  Quantile levels CSV (must match each group’s number of columns).
-
-``--names``
-  Optional model names (CSV or space-separated). If not given, names 
-  come from ``--model`` or defaults.
-
-Style
-  * ``--title`` (default: "Probabilistic Forecast Performance (CRPS)")
-  * ``--figsize`` (default: ``8,8``)
-  * ``--cmap`` (default: "viridis")
-  * ``--marker`` (default: "o")
-  * ``--s`` (default: 100)
-  * ``--show-grid / --no-show-grid``
-  * ``--mask-radius / --no-mask-radius``
-  * ``--dpi`` (default: 300)
-  * ``--savefig PATH``
-
-Notes
-^^^^^
-Computes average CRPS per model (lower is better) and places each model 
-as a point in polar coordinates (radius = CRPS). All models must share 
-API the same quantile levels.
-
-Examples
-^^^^^^^^
-
-Two ``--pred`` groups + explicit names:
-
-.. code-block:: bash
-
-   kdiagram plot-crps-comparison demo.csv \
-     --true-col actual \
-     --pred q10 q50 q90 \
-     --pred q10_2024 q50 q90_2024 \
-     --names M1 M2 \
-     --q-levels 0.1,0.5,0.9 \
-     --savefig crps.png
-
-Two models via ``--model``:
-
-.. code-block:: bash
-
-   kdiagram plot-crps-comparison demo.csv \
-     --y-true actual \
-     --model M1:q10,q50,q90 \
-     --model M2:q10_2024,q50,q90_2024 \
-     --q-levels 0.1,0.5,0.9
-
-plot-polar-sharpness
---------------------
-
-Synopsis
-^^^^^^^^
-
-.. code-block:: text
-
-   kdiagram plot-polar-sharpness INPUT
-     [--model NAME:Q1 ... | --pred Q1 Q2 ... --pred ...]
-     --q-levels Q_LEVELS
-     [--names N1 [N2 ...]]
-     [--title TITLE] [--figsize W,H] [--cmap CMAP]
-     [--marker M] [--s SIZE]
-     [--show-grid | --no-show-grid]
-     [--mask-radius | --no-mask-radius]
-     [--dpi DPI] [--savefig PATH]
-     [-i INPUT] [--format FMT]
-
-Arguments
-^^^^^^^^^
-
-``INPUT / -i, --input / --format``
-  As above.
-
-One or more prediction groups, via ``--model`` or ``--pred``.
-
-``--q-levels / --quantiles``
-  Shared quantile levels.
-
-``--names``
-  Optional model names (CSV or space-separated).
-
-Style
-  * ``--title`` (default: "Forecast Sharpness Comparison")
-  * ``--figsize`` (default: ``8,8``)
-  * ``--cmap`` (default: "viridis")
-  * ``--marker`` (default: "o")
-  * ``--s`` (default: 100)
-  * ``--show-grid / --no-show-grid``
-  * ``--mask-radius / --no-mask-radius``
-  * ``--dpi`` (default: 300)
-  * ``--savefig PATH``
-
-Notes
-^^^^^
-Plots models by average interval width (sharpness) as the radial coordinate. 
-Lower radius ⇒ sharper forecasts. Quantile levels are used to derive 
-the lower/upper bounds per sample.
-
-Examples
-^^^^^^^^
-
-.. code-block:: bash
-
-   kdiagram plot-polar-sharpness demo.csv \
-     --model A:q10,q50,q90 \
-     --model B:q10_2024,q50,q90_2024 \
-     --q-levels 0.1,0.5,0.9 \
-     --savefig sharpness.png
-
-plot-calibration-sharpness
---------------------------
-
-Synopsis
-^^^^^^^^
-
-.. code-block:: text
-
-   kdiagram plot-calibration-sharpness INPUT
-     --y-true Y_TRUE
-     [--model NAME:Q1 ...]
-     --q-levels Q_LEVELS
-     [--names N1 [N2 ...]]
-     [--title TITLE] [--figsize W,H] [--cmap CMAP]
-     [--marker M] [--s SIZE]
-     [--show-grid | --no-show-grid]
-     [--mask-radius | --no-mask-radius]
-     [--dpi DPI] [--savefig PATH]
-     [-i INPUT] [--format FMT]
-
-Arguments
-^^^^^^^^^
-
-``INPUT / -i, --input / --format``
-  As above.
-
-``--y-true / --true-col``
-  Ground-truth column.
-
-One or more models via ``--model NAME:Q1[,Q2,...]``.
-
-``--q-levels / --quantiles``
-  Quantile levels CSV.
-
-``--names``
-  Optional names (CSV or space-separated).
-
-Style
-  * ``--title`` (default: "Calibration vs. Sharpness Trade-off")
-  * ``--figsize`` (default: ``8,8``)
-  * ``--cmap`` (default: "viridis")
-  * ``--marker`` (default: "o")
-  * ``--s`` (default: 150)
-  * ``--show-grid / --no-show-grid``
-  * ``--mask-radius / --no-mask-radius``
-  * ``--dpi`` (default: 300)
-  * ``--savefig PATH``
-
-Notes
-^^^^^
-Quarter-circle plot:
-
-* **Angle (θ)** encodes calibration error (KS distance of PIT values from uniform). 
-  0 ⇒ perfectly calibrated; larger ⇒ worse calibration.
-* **Radius (r)** encodes sharpness (average width). Lower ⇒ sharper.
-
-Examples
-^^^^^^^^
-
-.. code-block:: bash
-
-   kdiagram plot-calibration-sharpness demo.csv \
-     --true-col actual \
-     --model Good:q10,q50,q90 \
-     --model Wide:q10_2024,q50,q90_2024 \
-     --q-levels 0.1,0.5,0.9 \
-     --names Good Wide \
-     --savefig cal_sharp.png
-
-plot-credibility-bands
 ----------------------
 
-Synopsis
-^^^^^^^^
+The Continuous Ranked Probability Score (CRPS) is a popular metric
+that summarizes the overall skill of a probabilistic forecast into a
+single number (where lower is better) :footcite:p:`scikit-learn`. This command 
+calculates the average CRPS for one or more models and plots them as points in polar
+space, where the radius is equal to the CRPS. It's a great way to get
+a quick, quantitative comparison of competing models :footcite:p:`Gneiting2007b, Jolliffe2012`.
 
-.. code-block:: text
-
-   kdiagram plot-credibility-bands INPUT
-     --q-cols LOW MED UP
-     --theta-col THETA
-     [--theta-period P] [--theta-bins K]
-     [--title TITLE] [--figsize W,H] [--color COLOR]
-     [--show-grid | --no-show-grid]
-     [--mask-radius | --no-mask-radius]
-     [--dpi DPI] [--savefig PATH]
-     [-i INPUT] [--format FMT]
-
-Arguments
-^^^^^^^^^
-
-``INPUT / -i, --input / --format``
-  As above.
-
-``--q-cols``
-  Three columns (lower, median (Q50), upper), e.g. ``--q-cols q10 q50 q90`` 
-  (CSV or space-separated accepted).
-
-``--theta-col``
-  Column to bin on for the angular axis (e.g., month, hour, or any cyclic driver).
-
-``--theta-period``
-  Wrap period for cyclic variables (e.g. 12 for months, 24 for hours). 
-  If omitted, the column range is scaled to [0, 2π].
-
-``--theta-bins``
-  Number of angular bins (default: 24).
-
-Style
-
-  * ``--title`` (default: "Forecast Credibility Bands")
-  * ``--figsize`` (default: ``8,8``)
-  * ``--color`` (default: "#3498DB")
-  * ``--show-grid / --no-show-grid``
-  * ``--mask-radius / --no-mask-radius``
-  * ``--dpi`` (default: 300)
-  * ``--savefig PATH``
-
-Notes
-^^^^^
-Displays mean median forecast per angular bin and a shaded band between mean 
-lower/upper quantiles. Useful to visualize conditional structure and 
-uncertainty versus a driver (seasonality, time of day, etc.).
-
-Examples
-^^^^^^^^
+To use it, provide the quantile forecasts for each model you want to
+compare:
 
 .. code-block:: bash
 
-   kdiagram plot-credibility-bands demo.csv \
+   k-diagram plot-crps-comparison INPUT
+     --y-true Y_TRUE
+     --q-levels 0.1,0.5,0.9
+     --model M1:q10a,q50a,q90a
+     --model M2:q10b,q50b,q90b
+
+Here's a practical example comparing two models, "M1" and "M2":
+
+.. code-block:: bash
+
+   k-diagram plot-crps-comparison demo.csv \
+     --true-col actual \
+     --pred q10_m1 q50_m1 q90_m1 \
+     --pred q10_m2 q50_m2 q90_m2 \
+     --names "Model 1" "Model 2" \
+     --q-levels 0.1,0.5,0.9 \
+     --savefig crps_comparison.png
+
+---
+
+----------------------
+plot-polar-sharpness
+----------------------
+
+A sharp forecast is a confident one, meaning its prediction intervals
+are narrow. While sharpness is desirable, it must be balanced with
+calibration. This command isolates the sharpness component by plotting
+the average interval width for each model as a point in polar space.
+The radius corresponds to the width, so models closer to the center
+are sharper (more precise) :footcite:p:`Gneiting2007b`.
+
+The usage is very similar to the CRPS comparison:
+
+.. code-block:: bash
+
+   k-diagram plot-polar-sharpness INPUT
+     --q-levels 0.1,0.5,0.9
+     --model M1:q10a,q50a,q90a
+     --model M2:q10b,q50b,q90b
+
+This example compares the sharpness of two models, A and B:
+
+.. code-block:: bash
+
+   k-diagram plot-polar-sharpness demo.csv \
+     --model A:q10_a,q50_a,q90_a \
+     --model B:q10_b,q50_b,q90_b \
+     --q-levels 0.1,0.5,0.9 \
+     --savefig sharpness_comparison.png
+
+---
+
+----------------------------
+plot-calibration-sharpness
+----------------------------
+
+This plot visualizes the fundamental trade-off between calibration and
+sharpness. It places each model on a quarter-circle where the **angle
+(θ)** represents the calibration error (0° is perfect) and the
+**radius (r)** represents the sharpness (lower is sharper). The ideal
+model would be located at the bottom-left corner (low radius, near-zero
+angle).
+
+The command synopsis is as follows:
+
+.. code-block:: bash
+
+   k-diagram plot-calibration-sharpness INPUT
+     --y-true Y_TRUE
+     --q-levels 0.1,0.5,0.9
+     --model M1:q10a,q50a,q90a
+     --model M2:q10b,q50b,q90b
+
+Let's compare a "Good" model with a "Wide" (but possibly well-calibrated) model:
+
+.. code-block:: bash
+
+   k-diagram plot-calibration-sharpness demo.csv \
+     --true-col actual \
+     --model Good:q10_good,q50_good,q90_good \
+     --model Wide:q10_wide,q50_wide,q90_wide \
+     --q-levels 0.1,0.5,0.9 \
+     --savefig calibration_vs_sharpness.png
+
+---
+
+------------------------
+plot-credibility-bands
+------------------------
+
+This command helps you visualize how a model's uncertainty changes in
+response to a cyclical driver, like seasonality or time of day. It
+plots the mean median forecast as a line and shades the area between
+the mean lower and upper quantiles, creating a "credibility band" that
+can reveal conditional patterns in the forecast's uncertainty 
+:footcite:p:`Gneiting2007b, kouadiob2025`.
+
+To generate the plot, you provide three quantile columns and the
+cyclic feature:
+
+.. code-block:: bash
+
+   k-diagram plot-credibility-bands INPUT
+     --q-cols LOW_Q MED_Q HIGH_Q
+     --theta-col CYCLIC_FEATURE
+     [--theta-period 12]
+     [--theta-bins 12]
+
+Here's an example showing seasonal forecast credibility, binned by month:
+
+.. code-block:: bash
+
+   k-diagram plot-credibility-bands demo.csv \
      --q-cols q10 q50 q90 \
      --theta-col month \
      --theta-period 12 \
      --theta-bins 12 \
      --title "Seasonal Forecast Credibility" \
-     --savefig cred_bands.png
+     --savefig credibility_bands.png
 
-See also
-========
+---
 
-:ref:`cli-uncertainty` for interval consistency, coverage, temporal 
-uncertainty, and drift plots.
+-------------------------
+Troubleshooting & Tips
+-------------------------
 
-Python API: ``kdiagram.plot.probabilistic`` for the function docstrings 
-and usage in notebooks or scripts.
+- **Column Count Mismatch?** Ensure that for every model you provide,
+  the number of prediction columns exactly matches the number of
+  levels in your ``--q-levels`` flag.
+- **Understanding the Plots**: A perfectly calibrated model has a
+  flat PIT histogram. A skillful model has a low CRPS. A sharp model
+  has narrow intervals. A good model balances both calibration and
+  sharpness.
+- **Need more help?** Run any command with the ``-h`` or ``--help``
+  flag to see its full list of options.
+- **See Also**: These plots provide a deep dive into probabilistic
+  skill. For other ways to look at uncertainty, see the commands in
+  the :doc:`uncertainty` guide.
+  
+
+.. raw:: html
+
+    <hr>
+    
+.. rubric:: References
+
+.. footbibliography::

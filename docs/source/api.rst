@@ -239,3 +239,16 @@ for examples and testing.
    ~kdiagram.datasets.make_multi_model_quantile_data
    ~kdiagram.datasets.make_taylor_data
    ~kdiagram.datasets.make_uncertainty_data
+   
+.. _api_cli:
+
+Command-Line Interface (CLI)
+----------------------------
+
+In addition to the Python API, ``k-diagram`` also provides a 
+command-line interface for generating plots directly from your
+terminal. This is an option for quick exploration and batch
+processing without writing any Python code.
+
+For a full guide to all available commands and their options, please
+see the :doc:`CLI Reference <cli/index>`.

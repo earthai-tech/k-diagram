@@ -108,7 +108,7 @@ def add_plot_scatter_correlation(
     sub: argparse._SubParsersAction,
 ) -> None:
     p = sub.add_parser(
-        "plot-scatter-correlation",
+        "plot-scatter-corr",
         help=(
             "Scatter of true vs predicted values for one or " "more models."
         ),
@@ -220,7 +220,7 @@ def add_plot_error_autocorrelation(
     sub: argparse._SubParsersAction,
 ) -> None:
     p = sub.add_parser(
-        "plot-error-autocorrelation",
+        "plot-error-autocorr",
         help=(
             "Autocorrelation (ACF) of forecast errors for a " "single model."
         ),

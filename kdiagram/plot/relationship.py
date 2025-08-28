@@ -765,7 +765,7 @@ def plot_relationship(
             ):
                 # Use colors directly from discrete map if enough
                 color_palette = cmap_obj.colors[:num_preds]
-            else:  # Sample from continuous map or discrete map with fewer colors
+            else:
                 color_palette = [
                     (
                         cmap_obj(i / max(1, num_preds - 1))
@@ -795,7 +795,8 @@ def plot_relationship(
     elif acov == "eighth_circle":
         angular_range = np.pi / 4
     else:
-        # This case should be caught by @validate_params, but keep as safeguard
+        # This case should be caught by @validate_params,
+        # but keep as safeguard
         raise ValueError(
             "Invalid value for `acov`. Choose from 'default',"
             " 'half_circle', 'quarter_circle', or 'eighth_circle'."
@@ -890,7 +891,7 @@ def plot_relationship(
 
         ax.set_xticks(theta_ticks)
         ax.set_xticklabels(z_tick_labels)
-        # Optional: Set label for z-axis if z_label is provided
+        # Set label for z-axis if z_label is provided
         if z_label:
             ax.text(
                 1.1,
@@ -900,22 +901,17 @@ def plot_relationship(
                 rotation=90,
                 va="center",
                 ha="left",
-            )  # Adjust position as needed
+            )
 
     # Add labels for radial and angular axes (only if z_values are not used for angles)
     if z_values is None:
-        ax.set_ylabel(
-            ylabel or "Angular Mapping (θ)", labelpad=15
-        )  # Use labelpad
+        ax.set_ylabel(ylabel or "Angular Mapping (θ)", labelpad=15)
     # Radial label
     ax.set_xlabel(xlabel or "Normalized Predictions (r)", labelpad=15)
     # Position radial labels better
     ax.set_rlabel_position(22.5)  # Adjust angle for radial labels
 
-    # Add title
-    ax.set_title(
-        title or "Relationship Visualization", va="bottom", pad=20
-    )  # Add padding
+    ax.set_title(title or "Relationship Visualization", va="bottom", pad=20)
 
     # Add grid using helper or directly
     set_axis_grid(ax, show_grid, grid_props=grid_props)

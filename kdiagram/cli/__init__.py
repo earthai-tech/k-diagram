@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-try:
-    from .. import __version__ as _VERSION
-except Exception:  # pragma: no cover
-    _VERSION = "1.3.0"
+from .. import __version__ as _VERSION
 
 # subcommand registrars
 from .plot_anomalies import add_plot_anomalies
@@ -19,6 +16,7 @@ from .plot_credibility import add_plot_credibility
 from .plot_drift import add_plot_drift
 from .plot_errors import add_plot_errors
 from .plot_eval_ext import add_eval_extension
+from .plot_eval_performance import add_plot_regression_performance
 from .plot_eval_relationship import add_plot_eval_relationship
 from .plot_feature_based import add_plot_feature_based
 from .plot_fields import add_plot_fields
@@ -42,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands from kdiagram/cli/* modules.
     """
     parser = argparse.ArgumentParser(
-        prog="kdiagram",
+        prog="k-diagram",
         description=(
             "KDiagram CLI — polar diagnostics for "
             "uncertainty, drift, fields, and more."
@@ -106,10 +104,11 @@ def build_parser() -> argparse.ArgumentParser:
     add_context_corr(sub)
     add_context_err(sub)
 
-    # add evaluations plot
+    # add evaluations plots
     add_confusion_matrices(sub)
     add_pr_roc(sub)
     add_eval_extension(sub)
+    add_plot_regression_performance(sub)
 
     return parser
 

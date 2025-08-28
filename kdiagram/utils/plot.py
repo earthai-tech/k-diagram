@@ -2,12 +2,14 @@
 #   Author: LKouadio <etanoyau@gmail.com>
 
 import re
-from typing import Optional
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import Colormap
 from scipy.stats import gaussian_kde
 
+from ..compat.matplotlib import get_cmap
 from .generic_utils import get_valid_kwargs
 
 
@@ -568,3 +570,125 @@ def setup_polar_plot(
     ax.set_title(title, fontsize=14)
 
     return ax
+
+
+def _sample_colors(
+    cm: Union[str, Colormap, None],
+    n: int,
+    *,
+    trim: float = 0.08,
+    default: str = "tab10",
+) -> list[tuple[float, float, float, float]]:
+    r"""
+    Return *n* visually separated colors from a colormap.
+
+    The function accepts either a colormap **name** or a Matplotlib
+    :class:`~matplotlib.colors.Colormap` instance.  For short listed
+    palettes it spreads selections over the available swatches,
+    instead of taking the first ones.  For continuous maps it samples
+    the colormap on an evenly spaced grid, trimming the darkest and
+    lightest extremes to keep lines readable on typical backgrounds.
+
+    Parameters
+    ----------
+    cm : str or Colormap or None
+        The input colormap.  If a string, it is resolved using
+        :func:`get_cmap`.  If ``None``, the *default* colormap is
+        used.
+    n : int
+        Number of colors to return.  Must be a positive integer.
+    trim : float, optional
+        Fraction of the continuous colormap to trim at each end.
+        Values are clipped to ``[0.0, 0.49]``.  The default is
+        ``0.08``, which avoids near-black and near-white tones.
+    default : str, optional
+        Fallback colormap name when *cm* is invalid or ``None``.
+        Defaults to ``"tab10"``.
+
+    Returns
+    -------
+    list of tuple of float
+        A list of length *n*.  Each element is an ``(r, g, b, a)``
+        tuple with components in ``[0, 1]``.
+
+    Notes
+    -----
+    *Short listed palettes.*  Palettes such as ``tab10`` or ``tab20``
+    are "listed colormaps".  Taking the first *k* colors can bunch
+    hues.  This function selects indices that are evenly spaced across
+    the palette.  If *n* exceeds the palette size, it cycles while
+    maintaining the spread for the residual part.
+
+    *Continuous colormaps.*  Perceptual maps like ``viridis`` or
+    ``magma`` begin with very dark tones and may end very light.  The
+    *trim* parameter keeps lines visible by avoiding those extremes.
+
+    Examples
+    --------
+    >>> from kdiagram.utils.plot import _sample_colors
+    >>> # 4 colors from a continuous map, trimmed at both ends
+    >>> _sample_colors("magma", 4)
+    [(...), (...), (...), (...)]
+
+    >>> # 12 colors from a short listed palette, spaced across entries
+    >>> _sample_colors("tab10", 12)
+    [(...), ..., (...)]
+
+    See Also
+    --------
+    matplotlib.colormaps : Registry of available colormaps.
+    matplotlib.colors.Colormap : Base class for colormaps.
+
+    References
+    ----------
+    .. [1] Matplotlib Colormap Guide.
+           https://matplotlib.org/stable/users/explain/colors/colormaps.html
+    .. [2] Smith, K., van der Walt, S. (2015).  A better default
+           colormap for Matplotlib.
+           https://bids.github.io/colormap/
+    """
+    # ---- validate inputs
+    if not isinstance(n, int) or n <= 0:
+        raise ValueError("`n` must be a positive integer.")
+
+    # Resolve to a Colormap object using the project helper.
+    if isinstance(cm, Colormap):
+        cmap_obj = cm
+    else:
+        cmap_obj = get_cmap(cm, default=default)
+
+    # Defensive bounds for trim
+    trim = float(np.clip(trim, 0.0, 0.49))
+
+    # Listed colormap path: prefer even index spacing over "first N"
+    if hasattr(cmap_obj, "colors") and isinstance(
+        cmap_obj.colors, (list, tuple)
+    ):
+        colors = list(cmap_obj.colors)
+        m = len(colors)
+
+        if m == 0:
+            # Fall back to continuous sampling if something is odd
+            xs = np.linspace(0.0 + trim, 1.0 - trim, n)
+            return [tuple(cmap_obj(float(x))) for x in xs]
+
+        if n <= m:
+            # Evenly spaced integer indices in [0, m-1]
+            idx = np.floor(np.linspace(0, m - 1, n)).astype(int)
+            return [tuple(colors[i]) for i in idx]
+
+        # n > m: take full cycles, then distribute the remainder evenly
+        q, r = divmod(n, m)
+        out: list[tuple[float, float, float, float]] = []
+        out.extend([tuple(c) for c in colors] * q)
+        if r:
+            idx = np.floor(np.linspace(0, m - 1, r)).astype(int)
+            out.extend([tuple(colors[i]) for i in idx])
+        return out
+
+    # Continuous colormap path: sample evenly with end trimming
+    if n == 1:
+        xs = np.array([(1.0 - 2.0 * trim) * 0.5 + trim], dtype=float)
+    else:
+        xs = np.linspace(trim, 1.0 - trim, n)
+    return [tuple(cmap_obj(float(x))) for x in xs]

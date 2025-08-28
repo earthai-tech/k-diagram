@@ -1,321 +1,224 @@
+.. _cli_comparison:
+
 ==============================
 Comparison & Calibration CLI
 ==============================
 
-This page documents the model comparison and calibration
-command-line interfaces shipped with kdiagram. These commands read
-a flat table (CSV, Parquet, …), compute diagnostics, and render
-figures to file or screen.
+This page covers the command-line tools for model comparison and
+calibration diagnostics. These commands help you answer key questions:
+"Are my model's probabilities trustworthy?" and "Which of my models
+is best, and in what ways?" Like other tools in this suite, they
+read a tabular data file (CSV, Parquet, etc.) and generate insightful
+visualizations.
 
-.. contents::
+.. contents:: Table of Contents
    :local:
-   :depth: 2
+   :depth: 1
 
-General Notes
--------------
+-------------------
+Common Conventions
+-------------------
 
-All commands accept a path to an input table either positionally or
-via ``--input``. The parser infers the format from the extension
-unless you override with ``--format``.
+The commands on this page share a few common patterns.
 
-Many flags are offered in both primary and alias forms (e.g.
-``--y-true`` and ``--true-col``).
+- **Input Data**: A path to your data table can be passed as the first
+  argument or with the ``--input`` flag. The format is detected from
+  the file extension.
+- **Specifying Models**: You can provide prediction columns using
+  either the named ``--model NAME:COL`` syntax or by repeating the
+  ``--pred`` flag and supplying ``--names`` for the legend.
+- **Saving Plots**: All commands will save the figure to a file if you
+  provide the ``--savefig out.png`` flag; otherwise, they display it
+  in an interactive window.
 
-You can pass model inputs as:
+---
 
-* ``--model NAME:col1[,col2,...]`` (repeat per model), or
-* ``--pred colA[,colB,...]`` / ``--pred-cols colA[,colB,...]``
-  (repeat), with optional ``--names`` to label the groups.
-
-Use ``--savefig out.png`` to write the figure; omit to show
-interactively.
-
+--------------------------
 plot-reliability-diagram
-------------------------
+--------------------------
 
-Rectangular reliability (calibration) diagram. Compares predicted
-probabilities to observed frequencies in bins.
+A reliability diagram is the go-to tool for assessing if a model's
+predicted probabilities are well-calibrated :footcite:p:`Jolliffe2012`. 
+It plots the observed frequency of an event against the predicted probability. 
+For a perfectly calibrated model, all points should lie on the diagonal
+line.
 
-Synopsis
-^^^^^^^^
+The command offers a rich set of options for customization:
 
 .. code-block:: bash
 
-   kdiagram plot-reliability-diagram INPUT
+   k-diagram plot-reliability-diagram INPUT
      --y-true Y
      [--model NAME:col | --pred col[,col...] [--names ...]]...
-     [--n-bins 10] [--strategy {uniform,quantile}]
+     [--n-bins 10]
+     [--strategy {uniform,quantile}]
      [--positive-label 1] [--class-index N]
-     [--clip-probs 0,1] [--normalize-probs/--no-normalize-probs]
      [--error-bars {wilson,normal,none}] [--conf-level 0.95]
      [--show-diagonal/--no-show-diagonal]
      [--show-ece/--no-show-ece] [--show-brier/--no-show-brier]
      [--counts-panel {bottom,none}] [--counts-norm {fraction,count}]
      [--counts-alpha 0.35]
-     [--figsize 9,7] [--title TITLE] [--cmap tab10]
-     [--marker o] [--s 40] [--linewidth 2.0] [--alpha 0.9]
      [--connect/--no-connect] [--legend/--no-legend] [--legend-loc best]
      [--xlim 0,1] [--ylim 0,1]
-     [--savefig out.png] [--dpi 300]
+     
 
-Required columns
-^^^^^^^^^^^^^^^^
-
-``Y``
-  Ground-truth labels (binary for now).
-
-For each model
-  Either a single probability column (positive class), or a
-  multi-column probability matrix from which a column is selected
-  via ``--class-index`` (defaults to the last column).
-
-Examples
-^^^^^^^^
-
-Two models, quantile binning, Wilson intervals, counts panel:
+For example, let's compare two models using quantile binning, add
+Wilson confidence intervals for the error bars, and show a panel with
+the counts in each bin:
 
 .. code-block:: bash
 
-   kdiagram plot-reliability-diagram rel.csv \
+   k-diagram plot-reliability-diagram rel.csv \
      --y-true y \
-     --pred p_m1 --pred p_m2 \
-     --names "Wide" "Tight" \
-     --strategy quantile --n-bins 12 \
-     --error-bars wilson --counts-panel bottom \
+     --pred p_m1 p_m2 \
+     --names "Wide Model" "Tight Model" \
+     --strategy quantile \
+     --n-bins 12 \
+     --error-bars wilson \
+     --counts-panel bottom \
      --show-ece --show-brier \
      --savefig reliability.png
 
-Same with ``--model`` (names embedded):
+A key option is ``--strategy``, which controls the binning method.
+Use ``uniform`` for equal-width bins or ``quantile`` to ensure each
+bin has a similar number of samples.
 
-.. code-block:: bash
+---
 
-   kdiagram plot-reliability-diagram rel.csv \
-     --true-col y \
-     --model M1:p_m1 --model M2:p_m2 \
-     --savefig rel.png
-
-Key options
-^^^^^^^^^^^
-
-``--strategy``
-  ``uniform`` uses equal-width bins on [0,1]; ``quantile`` uses
-  empirical quantiles of pooled predictions (falls back to
-  ``uniform`` if edges collapse).
-
-``--error-bars``
-  ``wilson`` or ``normal`` CIs for observed frequency; use
-  ``--conf-level`` to set confidence.
-
-``--show-ece``, ``--show-brier``
-  Append summary metrics to legend labels.
-
-``--clip-probs`` + ``--normalize-probs``
-  Gently repair near-range values before clipping to [0,1].
-
+--------------------------
 plot-polar-reliability
-----------------------
+--------------------------
 
-Polar reliability (calibration spiral). Maps predicted probability
-to angle (0°→90°) and observed frequency to radius (0→1). Perfect
-calibration appears as a dashed spiral.
+This command presents the same calibration data in a different light,
+mapping it onto a polar "spiral." The predicted probability is mapped
+to the angle (from 0° to 90°), and the observed frequency is mapped to
+the radius. A perfectly calibrated model will trace the dashed spiral
+perfectly :footcite:p:`kouadiob2025`. This view makes over- and 
+under-confidence immediately apparent.
 
-Synopsis
-^^^^^^^^
+The usage is simpler than its rectangular counterpart:
 
 .. code-block:: bash
 
-   kdiagram plot-polar-reliability INPUT
+   k-diagram plot-polar-reliability INPUT
      --y-true Y
-     [--model NAME:col | --pred col ...]...
-     [--n-bins 10] [--strategy {uniform,quantile}]
-     [--title TITLE] [--figsize 8,8] [--cmap coolwarm]
-     [--show-cbar/--no-show-cbar]
-     [--show-grid/--no-show-grid] [--mask-radius/--no-mask-radius]
-     [--savefig out.png] [--dpi 300]
+     [--model NAME:col | --pred col ...]
+     [--n-bins 10]
+     [--strategy {uniform,quantile}]
 
-Examples
-^^^^^^^^
+Here's an example comparing a calibrated model with one that is
+over-confident:
 
 .. code-block:: bash
 
-   kdiagram plot-polar-reliability rel.csv \
+   k-diagram plot-polar-reliability rel.csv \
      --y-true y \
-     --model Calibrated:p_m1 --model Over:p_m2 \
-     --n-bins 15 --strategy uniform \
-     --cmap coolwarm --savefig polar_reliability.png
+     --model Calibrated:p_m1 --model Over-confident:p_m2 \
+     --n-bins 15 \
+     --strategy uniform \
+     --cmap coolwarm \
+     --savefig polar_reliability.png
 
-Notes
-^^^^^
+---
 
-* Diverging colormap highlights under-confidence vs
-  over-confidence (observed minus predicted).
-* Uses the same binning logic as the rectangular diagram.
-
+-----------------------
 plot-model-comparison
----------------------
+-----------------------
 
-Radar (spider) chart comparing multiple metrics across models.
+This command generates a classic radar (or spider) chart, providing a
+holistic, multi-metric comparison of several models. It's an excellent
+way to visualize the trade-offs between different models across various
+performance axes like accuracy, speed, and error metrics.
 
-Synopsis
-^^^^^^^^
+The command can automatically select metrics or use ones you provide:
 
 .. code-block:: bash
 
-   kdiagram plot-model-comparison INPUT
+   k-diagram plot-model-comparison INPUT
      --y-true Y
      [--model NAME:col | --pred col]...
      [--metrics auto | MET1 [MET2 ...]]
      [--train-times t1 [t2 ...]]
-     [--names N1 N2 ...]
-     [--title TITLE] [--figsize 8,8]
-     [--colors C1 C2 ...] [--alpha 0.7]
-     [--legend/--no-legend] [--loc "upper right"]
-     [--show-grid/--no-show-grid]
-     [--scale {norm,min-max,std,standard,none}]
-     [--lower-bound 0]
-     [--savefig out.png] [--dpi 300]
+     [--scale {norm,min-max,std,none}]
 
-Required columns
-^^^^^^^^^^^^^^^^
-
-``Y``
-  Ground-truth numeric (regression) or class labels
-  (classification).
-
-One point prediction column per model
-  Typical use: point estimates.
-
-Examples
-^^^^^^^^
-
-Regression with explicit metrics and training times:
+Here, we compare two regression models on R², MAE, and RMSE, also
+including their training times as a performance axis:
 
 .. code-block:: bash
 
-   kdiagram plot-model-comparison reg.csv \
+   k-diagram plot-model-comparison reg.csv \
      --true-col y \
-     --model Lin:m1 --model Tree:m2 \
+     --model "Linear Model":m1 --model "Tree Model":m2 \
      --metrics r2 mae rmse \
      --train-times 0.1 0.5 \
      --scale norm \
      --title "Regression Model Comparison" \
      --savefig model_comparison.png
 
-Auto metric selection (uses ``y`` type to choose sensible
-defaults):
+---
 
-.. code-block:: bash
-
-   kdiagram plot-model-comparison reg.csv \
-     --y-true y \
-     --pred m1 --pred m2 \
-     --metrics auto \
-     --savefig radar.png
-
-Key options
-^^^^^^^^^^^
-
-``--metrics``
-  * ``auto`` chooses defaults by target type (e.g., ``r2``,
-    ``mae``, ``mape``, ``rmse`` for regression; ``accuracy``,
-    ``precision``, ``recall`` for classification).
-  * You can pass any scorers supported by your environment; custom
-    callables are supported in the Python API (CLI uses names).
-
-``--scale``
-  * ``norm``/``min-max`` maps each axis to [0,1] across models.
-  * ``std``/``standard`` uses Z-scores.
-  * ``none`` plots raw values (be careful with differing scales).
-
-``--train-times``
-  Adds an extra axis (one value per model, or a single value
-  broadcast to all).
-
+------------------------
 plot-horizon-metrics
---------------------
+------------------------
 
-Polar bar chart summarizing a primary metric (bar height) and
-optional secondary metric (color) across horizons or categories
-(one row per bar).
+This plot is designed to summarize how a metric changes across different
+forecast horizons or categories. It uses a polar bar chart where each
+bar's height represents a primary metric (like mean interval width),
+and its color can represent an optional secondary metric (like mean
+error).
 
-Synopsis
-^^^^^^^^
+To use it, you provide columns corresponding to each horizon/category:
 
 .. code-block:: bash
 
-   kdiagram plot-horizon-metrics INPUT
+   k-diagram plot-horizon-metrics INPUT
      --q-low COL1 [COL2 ...]
      --q-up  COL1 [COL2 ...]
      [--q50  COL1 [COL2 ...]]
      [--xtick-labels L1 [L2 ...]]
-     [--normalize-radius/--no-normalize-radius]
-     [--show-value-labels/--no-show-value-labels]
-     [--cbar-label LABEL] [--r-label LABEL]
-     [--cmap coolwarm] [--acov {default,half_circle,quarter_circle,eighth_circle}]
-     [--title TITLE] [--figsize 8,8] [--alpha 0.85]
-     [--show-grid/--no-show-grid] [--mask-angle/--no-mask-angle]
-     [--savefig out.png] [--dpi 300] [--no-cbar]
 
-Input expectations
-^^^^^^^^^^^^^^^^^^
-
-* Each row corresponds to a horizon/category to compare.
-* ``--q-low`` and ``--q-up`` lists must have the same length; bars
-  use the mean interval width across those columns for that row.
-* If ``--q50`` is provided, the color encodes its row-wise mean;
-  otherwise the color follows the bar height.
-
-Examples
-^^^^^^^^
+In this example, we visualize how the mean prediction interval width
+(bar height) and the mean median forecast (color) change across six
+forecast horizons:
 
 .. code-block:: bash
 
-   kdiagram plot-horizon-metrics horizons.csv \
+   k-diagram plot-horizon-metrics horizons.csv \
      --q-low  q10_s1 q10_s2 \
      --q-up   q90_s1 q90_s2 \
      --q50    q50_s1 q50_s2 \
-     --xtick-labels H+1 H+2 H+3 H+4 H+5 H+6 \
+
+     --xtick-labels "H+1" "H+2" "H+3" "H+4" "H+5" "H+6" \
      --title "Mean Interval Width Across Horizons" \
      --r-label "Mean (Q90 - Q10)" \
      --cbar-label "Mean Q50" \
      --savefig horizons.png
 
-Input Schema Hints
-------------------
+-------------------------
+Troubleshooting & Tips
+-------------------------
 
-Below is a minimal CSV sketch for the above commands:
-
-.. code-block:: text
-
-   # reliability (binary)
-   y,p_m1,p_m2
-   0,0.15,0.08
-   1,0.62,0.44
-   ...
-
-   # model comparison (point predictions)
-   y,m1,m2
-   12.3,12.0,12.5
-   ...
-
-   # horizon metrics (row per horizon, columns are samples/realizations)
-   q10_s1,q10_s2,q90_s1,q90_s2,q50_s1,q50_s2
-   1.0,1.2,3.0,3.1,2.0,2.1
-   ...
-
-See Also
---------
-
-:doc:`probabilistic` — PIT, CRPS, sharpness, credibility
-
-:doc:`errors` — polar error bands, violins, ellipses
-
-:doc:`relationship` — polar truth–prediction relationships
-
-Feedback & Issues
------------------
+- **"Missing columns" error?** Double-check that the column names in
+  your command exactly match the headers in your data file.
+- **Unexpected binning behavior?** In reliability plots, the
+  ``quantile`` strategy can fall back to ``uniform`` if there are too
+  few unique prediction values. Check your data's distribution.
+- **Need more help?** Run any command with the ``-h`` or ``--help``
+  flag to see its full list of options and their descriptions.
+- **See Also**: After comparing models, you might want to explore the
+  best one's error properties using the tools in :doc:`errors` or
+  examine its probabilistic forecasts with the tools in
+  :doc:`probabilistic`.
 
 If a command’s behavior surprises you (e.g., binning fallback or
 column selection), re-run with fewer options and verify input
-columns. Feel free to file issues with a small CSV illustrating the
-problem.
+columns. Feel free to file :ref:`issues <https://github.com/earthai-tech/k-diagram/issues>`_
+with a small CSV illustrating the problem.
+
+.. raw:: html
+
+   <hr>
+
+.. rubric:: References
+
+.. footbibliography::

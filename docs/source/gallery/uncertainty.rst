@@ -865,7 +865,7 @@ showing the relative uncertainty width at each angle (location).
        qup_cols=qup_cols,
        dt_labels=[str(y) for y in years],
        title='Gallery: Uncertainty Drift (Rings)',
-       cmap='magma',
+       cmap='tab10',
        base_radius=0.1, band_height=0.1,
        # Save the plot (adjust path relative to docs/source/)
        savefig="gallery/images/gallery_uncertainty_drift_rings.png"

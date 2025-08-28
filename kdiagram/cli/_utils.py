@@ -10,7 +10,7 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import numpy as np  # noqa
 import pandas as pd
@@ -874,7 +874,132 @@ def _parse_norm_range(
     return (lo, hi)
 
 
+def _parse_name_bool_map(
+    tokens: list[str] | None,
+) -> dict[str, bool] | None:
+    """
+    Parse items like 'r2:true' 'rmse:false' into a dict.
+    """
+    if not tokens:
+        return None
+
+    out: dict[str, bool] = {}
+    for tok in tokens:
+        s = str(tok).strip()
+        if not s:
+            continue
+        if ":" not in s:
+            # ignore malformed token silently
+            # keeps CLI forgiving
+            continue
+        name, val = s.split(":", 1)
+        name = name.strip()
+        val = val.strip().lower()
+        if not name:
+            continue
+        if val in {"1", "true", "t", "yes", "y"}:
+            out[name] = True
+        elif val in {"0", "false", "f", "no", "n"}:
+            out[name] = False
+        # else ignore malformed boolean silently
+    return out if out else None
+
+
+def _parse_metric_values(
+    items: list[str] | None,
+) -> dict[str, list[float]]:
+    """
+    Parse --metric-values entries of the form:
+      METRIC:val1,val2[,val3...]
+    Robust to comma-splitting (ColumnsListAction).
+    Returns {metric: [floats,...]} with equal-length validation.
+    """
+    if not items:
+        return {}
+
+    # Reassemble chunks: start a new pair on token with ':',
+    # append subsequent no-':' tokens to current pair as
+    # comma-continued values (because ColumnsListAction split them).
+    merged: list[str] = []
+    buf: str | None = None
+    for tok in items:
+        s = str(tok).strip()
+        if not s:
+            continue
+        if ":" in s:
+            if buf is not None:
+                merged.append(buf)
+            buf = s
+        else:
+            if buf is None:
+                # Skip stray token (defensive)
+                continue
+            sep = "" if buf.endswith(",") else ","
+            buf = f"{buf}{sep}{s}"
+    if buf is not None:
+        merged.append(buf)
+
+    out: dict[str, list[float]] = {}
+    n_models: int | None = None
+
+    for it in merged:
+        if ":" not in it:
+            raise SystemExit(
+                f"invalid --metric-values item '{it}'; "
+                "expected 'name:comma,separated,values'"
+            )
+        name, rhs = it.split(":", 1)
+        name = name.strip()
+        vals = [float(x) for x in split_csv(rhs)]
+        if not vals:
+            raise SystemExit(
+                f"no values parsed for metric '{name}' in '{it}'"
+            )
+        if n_models is None:
+            n_models = len(vals)
+        elif len(vals) != n_models:
+            raise SystemExit(
+                "all --metric-values metrics must have the same "
+                f"number of values: first metric has {n_models}, "
+                f"'{name}' has {len(vals)}"
+            )
+        out[name] = vals
+
+    return out
+
+
+def _resolve_metric_labels(ns: argparse.Namespace) -> Any:
+    """
+    Build the 'metric_labels' argument for the plotting API.
+
+    Priority:
+      - if --no-metric-labels: return False
+      - else if --metric-label provided: dict mapping
+      - else: None (default behavior in plot fn)
+    """
+    if ns.no_metric_labels:
+        return False
+
+    pairs = _flatten_cols(ns.metric_label) if ns.metric_label else None
+    if not pairs:
+        return None
+
+    out: dict[str, str] = {}
+    for p in pairs:
+        sp = str(p)
+        if ":" not in sp:
+            continue
+        k, v = sp.split(":", 1)
+        k = k.strip()
+        v = v.strip()
+        if k:
+            out[k] = v
+    return out if out else None
+
+
 # ------------------------ test helpers  --------------------------------
+
+
 def _expect_file(path: Path) -> None:
     assert path.exists(), f"missing: {path}"
     assert path.stat().st_size > 0, f"empty: {path}"

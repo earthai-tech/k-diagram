@@ -1,176 +1,224 @@
-.. _introduction_cli:
-    
-======================================
-kdiagram command-line interface (CLI)
-======================================
+.. _cli_introduction:
 
-The **kdiagram** CLI lets you build the package’s polar diagnostics
-straight from tabular data (CSV/Parquet/Feather/…)
-without writing Python. It focuses on uncertainty, drift and
-vector/scalar fields visualizations.
+====================================
+Welcome to the kdiagram CLI
+====================================
+
+Ever feel like your standard charts are missing the full story?
+Welcome to ``kdiagram``—a powerful suite of command-line tools
+designed to give you a fresh, insightful perspective on your models
+and data. We leverage the power of **polar coordinates** to turn
+complex diagnostics into beautiful, intuitive visualizations. Think of
+it as a new set of lenses for spotting patterns in performance,
+uncertainty, and feature relationships that you might otherwise miss.
+
+This page is your starting point. We'll cover the core concepts that
+apply to all commands and then give you a guided tour to help you find
+the perfect plot for your task.
+
+.. tip:: A Note on Command Naming
+
+   Throughout this documentation, you will see the main command written
+   as ``k-diagram`` (with a hyphen). However, a convenient alias
+   ``kdiagram`` (without a hyphen) is also configured.
+
+   Feel free to use whichever you prefer—they are completely
+   interchangeable! For example, the following two commands are
+   identical:
+
+   .. code-block:: bash
+
+      k-diagram plot-time-series data.csv --savefig plot.png
+
+      kdiagram plot-time-series data.csv --savefig plot.png
+      
+      
+------------------------------------------
+The Core Philosophy: A Shared Grammar
+------------------------------------------
+
+The best part of the ``kdiagram`` CLI is that once you learn a few
+simple patterns, you've learned the whole suite. Most commands share a
+common "grammar" for handling data, selecting columns, and styling plots.
+
+A typical command is as simple as this:
+
+.. code-block:: bash
+
+   kdiagram <COMMAND> your_data.csv --flag VALUE --savefig my_plot.png
+
+**Input Data**
+^^^^^^^^^^^^^^
+All commands work directly with your tabular data files. Just provide
+the path to your ``.csv`` or ``.parquet`` file as the first argument.
+The format is detected automatically, but you can always override it
+with ``--format``.
+
+**Selecting Columns**
+^^^^^^^^^^^^^^^^^^^^^
+You'll often need to tell a command which columns to plot. We provide 
+a few flexible ways to do this:
+
+- For quick comparisons, you can repeat the ``--pred`` flag:
+
+  .. code-block:: bash
+
+     # Quickly plot two prediction columns
+     --pred model_a_preds --pred model_b_preds
+
+- For more structured plots, the named ``--model`` flag is clearer,
+  especially when you have many models:
+
+  .. code-block:: bash
+
+     # Name your models for a clean legend
+     --model "Linear Model":lm_preds --model "Tree Model":tree_preds
+
+**Customizing & Saving Your Plots**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Every plot can be customized and saved with a shared set of intuitive
+flags. By default, plots are shown in an interactive window, but you
+can easily save them for reports or presentations.
+
+While each command has unique options, most respond to a common set of
+styling flags. A typical synopsis for these shared options looks like
+this:
 
 .. code-block:: text
 
-   kdiagram --help
-   kdiagram <command> --help
+   # General Appearance
+   --title "My Plot Title"
+   --figsize 10,8
+   --cmap viridis
 
-You can run it either via the console script:
+   # Scatter Plot Specifics (where applicable)
+   [--s 50] [--alpha 0.7] [--marker "o"]
 
-.. code-block:: bash
+   # Grid and Axis Toggles
+   --show-grid | --no-show-grid
+   [--mask-angle | --no-mask-angle]
+   [--mask-radius | --no-mask-radius]
 
-   kdiagram --version
+   # Saving to a File
+   --savefig my_figure.png
+   [--dpi 300]
 
-or via Python:
+Now that you know the basic grammar, let's explore what you can build
+with it.
 
-.. code-block:: bash
+---------------------------------------------------
+Find the Right Tool: A Tour of the Commands
+---------------------------------------------------
 
-   python -m kdiagram --version
+The commands are organized into thematic groups based on the questions
+they help you answer. Many of these visualizations are rooted in
+specific statistical concepts like forecast verification, calibration,
+and error analysis. For a deeper dive into the theory behind the
+plots, please refer to our detailed :doc:`user_guide/mathematical_concepts`.
 
-Quick start
------------
+Where would you like to begin?
 
-Assume you have a table with at least ``q10``, ``q50``, ``q90``:
+**General & Contextual Plots**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Start here.** These are your essential, first-look tools for
+visualizing raw time series, checking correlations, and getting a
+baseline understanding of your model's errors. Effective visualization
+is the cornerstone of data analysis :footcite:p:`Hunter:2007`.
 
-.. code-block:: bash
+- **CLI Reference**: :doc:`cli/context`
+- **User Guide**: :doc:`user_guide/context`
+- **Examples Gallery**: :doc:`gallery/context`
 
-   kdiagram plot-interval-width data.csv \
-     --q-cols q10,q90 \
-     --z-col q50 \
-     --savefig interval_width.png
+**Model Evaluation**
+^^^^^^^^^^^^^^^^^^^^
+**Ready to see which model wins?** These plots go beyond a single
+score, offering classic evaluation metrics like ROC/PR curves
+:footcite:p:`Powers2011`, confusion matrices, and the famous Taylor
+diagram :footcite:p:`Taylor2001` for a holistic performance summary.
 
-Data input
-----------
+- **CLI Reference**: :doc:`cli/evaluation` and :doc:`cli/taylor`
+- **User Guide**: :doc:`user_guide/evaluation` and :doc:`user_guide/taylor_diagram`
+- **Examples Gallery**: :doc:`gallery/evaluation` and :doc:`gallery/taylor_diagram`
 
-* **Input file**: most commands take the input path as the first
-  positional argument (some also accept ``-i/--input``).
-* **Format**: inferred from the extension or forced with ``--format``
-  (e.g. ``csv``, ``parquet``, ``feather``).
-* **NaNs**: many commands support a ``--dropna/--no-dropna`` toggle. By
-  default we drop rows missing any **essential** columns for the plot.
+**Comparison & Calibration**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**How trustworthy are your model's predictions?** This group includes
+tools like reliability diagrams to check if your forecast probabilities
+are well-calibrated, alongside radar charts for direct,
+multi-metric model comparisons.
 
-Column notation (friendly parsers)
-----------------------------------
+- **CLI Reference**: :doc:`cli/comparison`
+- **User Guide**: :doc:`user_guide/comparison`
+- **Examples Gallery**: :doc:`gallery/comparison`
 
-To avoid brittle quoting, the CLI accepts both comma-separated and
-space-separated styles.
+**Probabilistic Forecast Diagnostics**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**When a single number isn't enough.** A great probabilistic forecast
+is both reliable (calibrated) and precise (sharp)
+:footcite:p:`Gneiting2007b`. These advanced tools let you check if your
+model's uncertainty estimates are actually trustworthy using methods
+like PIT histograms and CRPS comparisons :footcite:p:`Jolliffe2012`.
 
-* **Single column**
-  Example: ``--actual-col actual`` or ``--y-true actual`` (synonyms are
-  provided where helpful).
+- **CLI Reference**: :doc:`cli/probabilistic`
+- **User Guide**: :doc:`user_guide/probabilistic`
+- **Examples Gallery**: :doc:`gallery/probabilistic`
 
-* **Pairs (lower,upper)**
-  Use either one token with a comma, **or** two tokens:
+**Uncertainty Analysis**
+^^^^^^^^^^^^^^^^^^^^^^^^
+**How does your model's uncertainty behave?** Does it drift over time?
+Are you capturing the outcomes you expect? These commands are dedicated
+to diagnosing the quality and characteristics of your prediction
+intervals, a key feature of modern forecasting systems
+:footcite:p:`Lim2021, kouadiob2025`.
 
-  .. code-block:: bash
+- **CLI Reference**: :doc:`cli/uncertainty`
+- **User Guide**: :doc:`user_guide/uncertainty`
+- **Examples Gallery**: :doc:`gallery/uncertainty`
 
-     --q-cols q10,q90
-     # or
-     --q-cols q10 q90
+**Relationship & Error Analysis**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Dive deep into the mistakes.** A truly "good" forecast requires a
+thorough understanding of its errors :footcite:p:`Murphy1993What`.
+These plots help you uncover hidden biases and systematic patterns by
+exploring the relationships between your model's errors, its
+predictions, and the true values.
 
-  Internally handled by a custom action, so both are equivalent.
+- **CLI Reference**: :doc:`cli/relationship` and :doc:`cli/errors`
+- **User Guide**: :doc:`user_guide/relationship_and_errors`
+- **Examples Gallery**: :doc:`gallery/relationship_and_errors`
 
-* **Lists (multiple columns)**
-  Again, one token with commas **or** several tokens:
+**Feature-Based Visualization**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Look beyond predictions to the features themselves.** Organizing your
+data effectively is crucial :footcite:p:`Wickham2014`. These commands
+leverage that structure to help you understand which features are most
+important with "fingerprint" charts and how different features
+interact to influence the outcome.
 
-  .. code-block:: bash
+- **CLI Reference**: :doc:`cli/feature_based`
+- **User Guide**: :doc:`user_guide/feature_based`
+- **Examples Gallery**: :doc:`gallery/feature_based`
 
-     --qlow-cols q10_2023,q10_2024,q10_2025
-     # or
-     --qlow-cols q10_2023 q10_2024 q10_2025
+-------------------
+Ready to Dive In?
+-------------------
 
-* **Model specs (coverage plots)**
-  Coverage commands accept one or more ``--model`` specs:
-
-  .. code-block:: bash
-
-     --model NAME:col1[,col2,...]   # repeat for multiple models
-     --names M1 M2                  # or: --names M1,M2
-
-  Where a model may be a single prediction column (*point*) or a set of
-  quantile columns (*q-set*).
+You now have a map of the entire ``kdiagram`` CLI. The best way to
+learn is to try one out! Pick a section that matches your current task
+and explore the commands within.
 
 .. tip::
+   Don't forget, you can get a full list of options and detailed help
+   for any command by running it with the ``-h`` or ``--help`` flag.
 
-   For long lists, prefer the “space tokens” form to avoid shell
-   quoting issues on Windows.
+   .. code-block:: bash
 
-Figure & styling options
-------------------------
+      kdiagram plot-time-series --help
+      
+.. raw:: html
 
-* **Figure size**: ``--figsize 8,8`` or ``--figsize 8x8``
+   <hr>
 
-* **Colormaps**: ``--cmap viridis`` (or any Matplotlib cmap), plus
-  command-specific options like ``--cmap-under/--cmap-over``.
-
-* **Toggles** follow the consistent ``--flag`` / ``--no-flag`` pattern:
-
-  * ``--show-grid`` / ``--no-show-grid``
-  * ``--cbar`` / ``--no-cbar``
-  * ``--mask-angle`` / ``--no-mask-angle``
-  * (and others, per command)
-
-* **Saving vs showing**:
-  ``--savefig out.png`` saves the figure; if omitted, the plot is shown
-  interactively.
-
-Angular coverage (polar span)
------------------------------
-
-Most polar plots accept ``--acov`` to control the angular span:
-``default`` (full), ``half_circle``, ``quarter_circle``, ``eighth_circle``.
-
-.. code-block:: bash
-
-   --acov quarter_circle
-
-Error handling
---------------
-
-* Missing columns → clear error message listing the missing names.
-* Non-numeric data where numeric is required → explicit type error.
-* Invalid flag values → ``argparse`` error with usage help.
-
-Command summary
------------------
-
-Below is the index of CLI commands you can explore. Use
-``kdiagram <command> --help`` for full details.
-
-* ``plot-actual-vs-predicted`` — Compare actual vs predicted in polar.
-* ``plot-anomaly-magnitude`` — Magnitude of violations of prediction
-  intervals (under/over).
-* ``plot-coverage`` — Aggregated coverage scores for one or more models.
-* ``plot-coverage-diagnostic`` — Point-wise coverage diagnostics on polar.
-* ``plot-interval-consistency`` — Temporal consistency of interval widths
-  (CV/Std) per location.
-* ``plot-interval-width`` — Polar scatter of interval width (Qup − Qlow).
-* ``plot-model-drift`` — Drift across forecast horizons (polar bars).
-* ``plot-temporal-uncertainty`` — Multi-series polar scatter (quantiles
-  or arbitrary columns), optional normalization.
-* ``plot-uncertainty-drift`` — Ring lines showing how widths change over
-  time steps.
-* ``plot-velocity`` — Temporal velocity (first differences) on polar.
-* ``plot-radial-density-ring`` — Radial density ring from widths/velocity
-  or direct data.
-* ``plot-polar-heatmap`` — 2D polar histogram/heatmap (r × θ).
-* ``plot-polar-quiver`` — Polar vector field (quiver) with optional
-  colorization.
-
-Conventions & compatibility
------------------------------
-
-* We keep common synonyms to ease migration:
-
-  * ``--y-true`` and ``--true-col`` are accepted where relevant.
-  * Some legacy flags like ``--pred`` may be mapped to ``--model``
-    internally.
-* Column order and angular position: unless stated otherwise,
-  angles follow row order after filtering/``dropna``.
-
-What’s next
------------
-
-Head to the **Uncertainty** section for detailed usage and examples of:
-``plot-interval-width``, ``plot-interval-consistency``,
-``plot-anomaly-magnitude``, ``plot-temporal-uncertainty``,
-``plot-uncertainty-drift``, and ``plot-model-drift``.
+References
+----------
+.. footbibliography::

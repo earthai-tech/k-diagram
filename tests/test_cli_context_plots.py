@@ -46,7 +46,7 @@ def test_plot_scatter_correlation_cli(
     out = tmp_path / "scatter_corr.png"
 
     v1 = [
-        "plot-scatter-correlation",
+        "plot-scatter-corr",
         str(demo_csv_context),
         "--actual-col",
         "actual",
@@ -65,7 +65,7 @@ def test_plot_scatter_correlation_cli(
         str(out),
     ]
     v2 = [
-        "plot-scatter-correlation",
+        "plot-scatter-corr",
         str(demo_csv_context),
         "--actual-col",
         "actual",
@@ -89,7 +89,7 @@ def test_plot_error_autocorrelation_cli(
     out = tmp_path / "acf_errors.png"
 
     v1 = [
-        "plot-error-autocorrelation",
+        "plot-error-autocorr",
         str(demo_csv_context),
         "--actual-col",
         "actual",
@@ -101,7 +101,7 @@ def test_plot_error_autocorrelation_cli(
         str(out),
     ]
     v2 = [
-        "plot-error-autocorrelation",
+        "plot-error-autocorr",
         str(demo_csv_context),
         "--actual-col",
         "actual",
@@ -123,7 +123,7 @@ def test_plot_error_distribution_cli(
     out = tmp_path / "err_dist.png"
 
     v1 = [
-        "plot-error-distribution",
+        "plot-error-dist",
         str(demo_csv_context),
         "--actual-col",
         "actual",
@@ -144,7 +144,7 @@ def test_plot_error_distribution_cli(
     ]
     # Second variant with the other model
     v2 = [
-        "plot-error-distribution",
+        "plot-error-dist",
         str(demo_csv_context),
         "--actual-col",
         "actual",

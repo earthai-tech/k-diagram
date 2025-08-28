@@ -74,7 +74,7 @@ k-diagram: Polar Insights for Forecasting
    quickstart
    motivation
    user_guide/index      
-   cli_usage
+   cli/index
    gallery/index         
    api                   
    contributing

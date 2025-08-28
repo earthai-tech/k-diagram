@@ -1,233 +1,167 @@
-Taylor Diagram (CLI)
-====================
+.. _cli_taylor:
 
-Overview
---------
+===============
+Taylor Diagram
+===============
 
-The Taylor diagram summarizes how closely one or more prediction
-series match a reference series by combining *standard deviation*
-and *correlation* in a polar plot. kdiagram exposes three CLI
-commands:
+How can you summarize multiple aspects of a model's performance in a
+single, intuitive plot? The Taylor diagram is a classic solution,
+brilliantly summarizing how closely a model's predictions match a
+reference series by plotting their standard deviation and correlation
+on a polar axis :footcite:p:`Taylor2001`. This allows for a quick
+assessment of model fidelity.
 
-- ``plot-taylor-diagram``: Standard diagram (points/lines +
-  reference arc).
-- ``plot-taylor-diagram-in``: Diagram with a background
-  colormap (pcolormesh) showing a chosen diagnostic.
-- ``taylor-diagram``: Flexible entry-point that supports either
-  precomputed statistics (*stats-mode*) or raw data columns
-  (*data-mode*).
+The ``k-diagram`` library provides three commands for creating them:
 
-All commands save a figure when ``--savefig`` is given; otherwise
-they display the plot interactively.
+- ``plot-taylor-diagram``: For a standard, clean diagram.
+- ``plot-taylor-diagram-in``: Adds a colored background for context.
+- ``taylor-diagram``: A flexible command that can take either raw data
+  or pre-computed statistics.
+
+.. contents:: Table of Contents
+   :local:
+   :depth: 1
+
+-------------------
+Common Conventions
+-------------------
+
+All commands on this page read a tabular data file (e.g., ``data.csv``)
+and require you to specify the ground-truth column with ``--y-true``.
+You can provide prediction columns using the ``--pred`` or the named
+``--model NAME:COL`` syntax. To save a plot, simply add the
+``--savefig out.png`` flag.
 
 .. note::
+   In a Taylor diagram, the correlation :math:`\rho` is mapped to the
+   angle via :math:`\theta=\arccos(\rho)`, while the model's standard
+   deviation is mapped to the radius.
 
-   Correlation :math:`\rho` is mapped to the angle via
-   :math:`\theta=\arccos(\rho)`. Radius encodes the prediction
-   standard deviation. The reference standard deviation is drawn as
-   an arc (or point/line).
+---
 
-Quick start
------------
+-----------------------
+plot-taylor-diagram
+-----------------------
 
-From a CSV with columns ``y``, ``m1``, and ``m2``:
+This is the primary command for creating a standard Taylor diagram. It
+plots each model as a point and includes a reference arc representing
+the standard deviation of the true data, making it easy to see which
+models are closest to the reference.
 
-.. code-block:: bash
-
-   # Standard diagram
-   kdiagram plot-taylor-diagram data.csv \
-     --y-true y \
-     --pred m1 --pred m2 \
-     --names "Model A" "Model B" \
-     --savefig taylor.png
-
-   # Diagram with background
-   kdiagram plot-taylor-diagram-in data.csv \
-     --y-true y \
-     --model "A:m1" --model "B:m2" \
-     --cmap viridis --radial-strategy convergence \
-     --cbar --savefig taylor_in.png
-
-   # Stats-mode (no dataset needed)
-   kdiagram taylor-diagram \
-     --stddev 1.10 0.85 \
-     --corrcoef 0.92 0.68 \
-     --names A B \
-     --draw-ref-arc --cmap plasma \
-     --radial-strategy rwf \
-     --savefig taylor_stats.png
-
-Commands and options
---------------------
-
-``plot-taylor-diagram``
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Standard Taylor diagram comparing predictions to a reference.
-
-**I/O**
-
-- ``input`` (positional) or ``-i/--input``: Table path.
-- ``--format``: Optional format override (``csv``, ``parquet``,
-  ...).
-- ``--y-true`` / ``--true-col``: Reference column (required).
-
-**Predictions**
-
-Provide one column per model:
-
-- ``--model NAME:COL`` (repeatable)
-- ``--pred COL`` (repeatable) or ``--pred-cols COL`` (alias)
-- ``--names NAME1 NAME2 ...`` (optional)
-
-**Diagram settings**
-
-- ``--acov``: Angular coverage; one of ``default``, ``half_circle``
-  (default: ``half_circle``).
-- ``--zero-location``: Where correlation 1 sits. Choices:
-  ``N``, ``NE``, ``E``, ``S``, ``SW``, ``W``, ``NW``, ``SE``.
-  (default: ``W``)
-- ``--direction``: Angle direction; ``1`` CCW or ``-1`` CW
-  (default: ``-1``).
-- ``--only-points``: Plot only markers (no radial lines).
-- ``--ref-color``: Reference color (default: ``red``).
-- ``--draw-ref-arc / --no-draw-ref-arc``: Show/hide reference arc.
-- ``--angle-to-corr / --no-angle-to-corr``: Label angles with
-  correlations or with degrees.
-- ``--marker``: Marker style (default: ``o``).
-- ``--corr-steps``: Correlation tick count (default: ``6``).
-
-**Figure**
-
-- ``--figsize W,H`` (e.g., ``10,8``), ``--title``, ``--dpi``,
-  ``--savefig PATH``.
-
-``plot-taylor-diagram-in``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Taylor diagram with a background colormap.
-
-Same **I/O** and **Predictions** as above, plus:
-
-**Diagram settings**
-
-- ``--acov``: ``default`` or ``half_circle`` (default: ``None`` →
-  ``half_circle`` internally).
-- ``--zero-location`` (default: ``E``), ``--direction``,
-  ``--only-points``, ``--draw-ref-arc``, ``--angle-to-corr``,
-  ``--marker``, ``--corr-steps``.
-
-**Background**
-
-- ``--cmap``: Colormap (default: ``viridis``).
-- ``--shading``: ``auto`` | ``gouraud`` | ``nearest`` (default:
-  ``auto``).
-- ``--shading-res``: Grid resolution (default: ``300``).
-- ``--radial-strategy``:
-  - ``convergence``: color ~ :math:`\cos(\theta)` (correlation).
-  - ``norm_r``: color ~ normalized radius (std dev).
-  - ``performance``: highlights near best model.
-  - ``rwf`` / ``center_focus``: accepted, but degrade to
-    ``performance`` with a warning in this CLI.
-- ``--norm-c / --no-norm-c``: Normalize background values.
-- ``--norm-range LO,HI``: Range when normalizing (e.g., ``0,1``).
-- ``--cbar / --no-cbar``: Show/hide colorbar.
-
-**Figure**
-
-- ``--figsize W,H``, ``--title``, ``--dpi``, ``--savefig PATH``.
-
-``taylor-diagram`` (flexible)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Two modes:
-
-**A) Stats-mode (no dataset)**
-
-- ``--stddev v1 v2 ...`` and ``--corrcoef r1 r2 ...`` (same length).
-- Optional: ``--names ...``, ``--ref-std``, ``--draw-ref-arc``.
-- Background (optional): ``--cmap``, ``--radial-strategy``
-  (``rwf`` | ``convergence`` | ``center_focus`` | ``performance``),
-  ``--norm-c``, ``--power-scaling``.
-- Visual: ``--marker``, ``--tick-size``, ``--label-size``,
-  ``--figsize W,H``, ``--title``, ``--dpi``, ``--savefig``.
-
-**B) Data-mode (dataset)**
-
-- Provide ``input`` (or ``--input``), ``--y-true``, and predictions
-  via ``--model`` / ``--pred`` / ``--pred-cols``. You may also pass
-  ``--names``.
-- The remaining options mirror stats-mode for styling and background.
-
-Examples
---------
-
-Standard diagram (points + reference arc)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The command usage is as follows:
 
 .. code-block:: bash
 
-   kdiagram plot-taylor-diagram data.csv \
-     --y-true y \
-     --pred m1 --pred m2 \
+   k-diagram plot-taylor-diagram INPUT
+     --y-true Y_TRUE
+     [--pred COL | --model NAME:COL]...
+     [--names NAME1 NAME2 ...]
+     [--acov half_circle]
+     [--zero-location W]
+     [--direction -1]
+
+Here's a typical example comparing two models, "Model A" and "Model B":
+
+.. code-block:: bash
+
+   k-diagram plot-taylor-diagram data.csv \
+     --y-true y_actual \
+     --pred model_a_preds model_b_preds \
      --names "Model A" "Model B" \
      --acov half_circle \
-     --zero-location W \
-     --direction -1 \
      --savefig taylor_basic.png
 
-Background: correlation field
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
+
+--------------------------
+plot-taylor-diagram-in
+--------------------------
+
+This command enhances the standard diagram by adding a shaded
+background colormap. The color can represent a diagnostic metric, such
+as the correlation itself, providing an extra layer of visual context
+for interpreting the model points.
+
+To generate this plot, you can add background-specific flags:
 
 .. code-block:: bash
 
-   kdiagram plot-taylor-diagram-in data.csv \
+   k-diagram plot-taylor-diagram-in INPUT
+     --y-true Y_TRUE
+     [--pred COL | --model NAME:COL]...
+     [--radial-strategy convergence]
+     [--cmap viridis]
+     [--cbar]
+
+For example, let's create a diagram where the background color shows
+the correlation field:
+
+.. code-block:: bash
+
+   k-diagram plot-taylor-diagram-in data.csv \
      --y-true y \
      --model A:m1 --model B:m2 \
      --radial-strategy convergence \
-     --cmap viridis --cbar \
-     --savefig taylor_bg.png
+     --cmap viridis \
+     --cbar \
+     --savefig taylor_with_background.png
 
-Stats-mode with custom background
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
+
+------------------
+taylor-diagram
+------------------
+
+This is a highly flexible command that can operate in two distinct
+modes, making it useful in a wide variety of situations.
+
+**1. Data-mode (from a dataset)**
+This mode works just like the other commands, calculating statistics
+directly from your data columns.
+
+**2. Stats-mode (from pre-computed values)**
+This mode is incredibly useful when you don't have the raw data but
+already know the statistics (standard deviation and correlation). It
+allows you to generate a Taylor diagram without needing an input file.
+
+Here is an example of using **stats-mode** to plot the performance of
+three models for which we have pre-computed scores:
 
 .. code-block:: bash
 
-   kdiagram taylor-diagram \
+   k-diagram taylor-diagram \
      --stddev 1.05 0.88 0.75 \
      --corrcoef 0.91 0.72 0.60 \
-     --names LR SVR RF \
+     --names "Linear Regression" "SVR" "Random Forest" \
      --draw-ref-arc \
      --cmap plasma \
      --radial-strategy rwf \
-     --norm-c --power-scaling 1.2 \
-     --savefig stats_mode.png
+     --savefig taylor_from_stats.png
 
-Tips
-----
+---
 
-- **Predictions as columns**: each model must map to exactly one
-  numeric column (use ``--model NAME:COL`` or ``--pred COL``).
-- **Correlation ticks**: increase ``--corr-steps`` for finer angular
-  labeling when using ``--angle-to-corr`` (default: on).
-- **Orientation**: adjust ``--zero-location`` (e.g., ``E``, ``W``)
-  and ``--direction`` (``1`` CCW or ``-1`` CW) to fit your reading
-  convention.
-- **Background strategies**: in the ``plot-taylor-diagram-in`` CLI,
-  unsupported strategies (``rwf``/``center_focus``) downgrade to
-  ``performance`` with a warning.
+-------------------------
+Troubleshooting & Tips
+-------------------------
 
-See also
---------
+- **Orientation**: The diagram's orientation can be confusing at
+  first. Use the ``--zero-location`` (where correlation=1 sits, e.g.,
+  'E' for East) and ``--direction`` (``-1`` for clockwise) flags to
+  match your preferred convention.
+- **Correlation Labels**: By default, the angular axis is labeled
+  with correlation values. If you'd rather see degrees, use the
+  ``--no-angle-to-corr`` flag.
+- **Need more help?** Run any command with the ``-h`` or ``--help``
+  flag to see its full list of options.
+- **See Also**: The Taylor diagram is a great summary tool. For more
+  detailed comparisons, you might use the radar charts in
+  :doc:`comparison` or dive into feature analysis with the tools in
+  :doc:`feature_based`.
 
-- :doc:`comparison` — radar comparison & reliability diagrams.
-- :doc:`feature_based` — feature fingerprints and interactions.
-- :doc:`errors` — error bands/violins/ellipses.
+.. raw:: html
 
-Reference
----------
+    <hr>
+    
+.. rubric:: References
 
-- Taylor, K. E. (2001). Summarizing multiple aspects of model
-  performance in a single diagram. *J. Geophysical Research*,
-  **106**(D7), 7183–7192.
-
+.. footbibliography::

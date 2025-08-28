@@ -1,344 +1,217 @@
-==============================
+.. _cli_relationship:
+
+=============================
 Relationship (Polar) Commands
-==============================
+=============================
 
-Overview
-========
-These commands visualize how predictions relate to the truth on
-polar axes. They help you spot bias, heteroscedasticity, and other
-systematic patterns in a compact, cyclical view.
+How do your model's predictions relate to the ground truth? The
+commands on this page are designed to answer that question by
+visualizing these relationships on polar axes. They provide a compact,
+cyclical view that is excellent for spotting bias, heteroscedasticity
+(errors that change with magnitude), and other systematic patterns
+that might be missed in a standard Cartesian plot.
 
-Command summary
----------------
+.. contents:: Table of Contents
+   :local:
+   :depth: 1
 
-- ``plot-relationship``:
-  Truth vs. one or more **point prediction** series on a polar
-  scatter.
-
-- ``plot-conditional-quantiles``:
-  Truth vs. a **quantile set** (e.g., q10/q50/q90) with shaded
-  uncertainty bands.
-
-- ``plot-residual-relationship``:
-  **Residuals vs. predictions** per model on polar axes.
-
-- ``plot-error-relationship``:
-  **Errors vs. true values** per model on polar axes.
-
-Common CLI patterns
+-------------------
+Common Conventions
 -------------------
 
-- Ground truth can be passed with either flag::
+The commands here share a common approach for specifying the essential
+data columns.
 
-    --y-true actual    # or: --true-col actual
+- **Ground Truth**: The true, observed values are always required and
+  can be passed with either ``--y-true`` or its alias ``--true-col``.
+- **Point Predictions**: For commands that use point predictions
+  (like the median), you can specify model columns with the named
+  ``--model NAME:COL`` syntax or by repeating ``--pred``.
+- **Quantile Predictions**: For ``plot-conditional-quantiles``, you
+  must provide the set of quantile columns (e.g., ``q10,q50,q90``) and
+  the corresponding quantile levels via ``--q-levels``.
+- **Saving**: To save a plot, add the ``--savefig out.png`` flag.
 
-- Provide point-pred columns with **either**:
-
-  * Repeating ``--pred`` / ``--pred-cols`` (CSV or space-separated
-    tokens), one group per model, e.g.::
-
-      --pred q50           --pred q50_2024
-
-  * Or named specs via ``--model`` (repeatable)::
-
-      --model M1:q50      --model M2:q50_2024
-
-- Provide quantile sets (for *conditional quantiles*) with one group
-  of columns (e.g. ``q10,q50,q90``) and the matching levels via
-  ``--q-levels`` / ``--quantiles`` (e.g. ``0.1,0.5,0.9``).
-
-- ``--names`` accepts CSV **or** space-separated tokens and overrides
-  auto names inferred from ``--model`` or group order.
-
-- ``--figsize`` accepts ``W,H`` (e.g. ``8,8``) or ``WxH`` (e.g. ``8x8``).
-
-- Any command can save a figure with ``--savefig out.png`` (and set
-  DPI via ``--dpi``). If ``--savefig`` is omitted, the figure is shown.
+---
 
 .. _cli-plot-relationship:
 
+-------------------
 plot-relationship
-=================
+-------------------
 
-Synopsis
---------
+This command creates a polar scatter plot of true values versus one
+or more point prediction series. The angle is determined by the true
+values, while the radius is determined by the predictions. It's a great
+way to see if different models behave differently across the range of
+the target variable.
+
+The command offers a flexible set of options for controlling the
+angular mapping:
+
 .. code-block:: bash
 
-  kdiagram plot-relationship INPUT
-    --y-true Y_TRUE
-    [--pred COLS ... | --model NAME:COLS [--model ...] | --pred-cols COLS ...]
-    [--names NAMES ...]
-    [--theta-offset THETA]
-    [--theta-scale {proportional,uniform}]
-    [--acov {default,half_circle,quarter_circle,eighth_circle}]
-    [--title TITLE] [--figsize W,H] [--cmap CMAP]
-    [--s S] [--alpha ALPHA]
-    [--legend | --no-legend]
-    [--show-grid | --no-show-grid]
-    [--xlabel XLABEL] [--ylabel YLABEL]
-    [--z-values COL | --z-label LABEL]
-    [--dpi DPI] [--savefig PATH]
-    [-i INPUT] [--format FORMAT]
+   k-diagram plot-relationship INPUT
+     --y-true Y_TRUE
+     [--pred COLS ... | --model NAME:COLS ...]
+     [--names NAMES ...]
+     [--theta-scale {proportional,uniform}]
+     [--acov {default,half_circle,quarter_circle}]
 
-Arguments
----------
+Here is a simple example comparing two models, ``M1`` and ``M2``:
 
-- **INPUT** / ``-i, --input``: Path to input table (CSV/Parquet, etc.).
-  Use ``--format`` to force the loader.
+.. code-block:: bash
 
-- ``--y-true, --true-col`` (required): Name of the ground-truth column.
+   k-diagram plot-relationship data.csv \
+     --y-true actual \
+     --pred q50_m1 q50_m2 \
+     --names "Model 1" "Model 2" \
+     --savefig relationship.png
 
-- ``--pred`` / ``--pred-cols`` (repeatable): Prediction columns per
-  model (CSV or space-separated). Use multiple times to add models.
+In this next example, we map the true values to a half-circle and use
+a "month" column to label the angular ticks, which can help reveal
+seasonality in the relationship:
 
-- ``--model`` (repeatable): Named spec in the form
-  ``NAME:col1[,col2,...]`` for each model. For point predictions,
-  a single column per model is typical (e.g. ``q50``).
+.. code-block:: bash
 
-- ``--names``: Model names (CSV or space-separated). Defaults to
-  names derived from ``--model`` or auto-generated.
+   k-diagram plot-relationship data.csv \
+     --y-true actual \
+     --pred q50 \
+     --theta-scale uniform \
+     --acov half_circle \
+     --z-values month \
+     --z-label "Month of Year" \
+     --title "Truth–Prediction Relationship by Month" \
+     --savefig half_circle_relationship.png
 
-- ``--theta-offset``: Angular shift (radians) applied to all points
-  after mapping.
-
-- ``--theta-scale``: ``proportional`` (value-aware) or ``uniform``
-  (index/order-based) angle mapping from ``y_true``.
-
-- ``--acov``: Angular coverage (span). One of:
-  ``default`` (``2π``), ``half_circle`` (``π``),
-  ``quarter_circle`` (``π/2``), ``eighth_circle`` (``π/4``).
-
-- ``--title`` / ``--figsize`` / ``--cmap`` / ``--s`` / ``--alpha``:
-  Figure title, size, colormap, marker size, and marker alpha.
-
-- ``--legend`` / ``--no-legend``: Toggle legend.
-
-- ``--show-grid`` / ``--no-show-grid``: Toggle polar grid.
-
-- ``--xlabel`` / ``--ylabel``: Axis labels. If omitted, sensible
-  defaults are used.
-
-- ``--z-values``: Column to use for angular tick labels (e.g., month).
-
-- ``--z-label``: Text label describing the ``--z-values``.
-
-- ``--dpi`` / ``--savefig``: Save configuration.
-
-Notes
------
-
-- With ``theta_scale=proportional``, angles reflect the *value* of
-  ``y_true`` over the chosen angular span. With ``uniform``, angles
-  reflect *order* only.
-
-- Radii are normalized per series so models with different scales are
-  comparable in one view.
-
-Examples
---------
-
-Minimal two-model comparison (point predictions)::
-
-  kdiagram plot-relationship data.csv \
-    --y-true actual \
-    --pred q50 --pred q50_2024 \
-    --names M1 M2 \
-    --savefig relationship.png
-
-Half-circle, uniform angles, custom ticks and labels::
-
-  kdiagram plot-relationship data.csv \
-    --y-true actual \
-    --pred q50 \
-    --theta-scale uniform \
-    --acov half_circle \
-    --z-values month \
-    --z-label "Month" \
-    --title "Truth–Prediction (Half Circle)" \
-    --savefig half.png
-
+---
 
 .. _cli-plot-conditional-quantiles:
 
+----------------------------
 plot-conditional-quantiles
-==========================
+----------------------------
 
-Synopsis
---------
+This plot visualizes a full set of quantile predictions against the
+true values. The data is sorted by the true values to produce a smooth
+spiral, with shaded bands representing the uncertainty intervals (e.g.,
+the 80% interval between Q10 and Q90). It's a fantastic tool for
+assessing if your model's uncertainty estimates are reasonable across
+the entire range of outcomes.
+
+To use this command, you provide one set of quantile columns and their
+corresponding levels:
+
 .. code-block:: bash
 
-  kdiagram plot-conditional-quantiles INPUT
-    --y-true Y_TRUE
-    [--pred COLS ... | --pred-cols COLS ...]
-    --q-levels Q_LEVELS
-    [--bands PCTS]
-    [--title TITLE] [--figsize W,H] [--cmap CMAP]
-    [--alpha-min A_MIN] [--alpha-max A_MAX]
-    [--show-grid | --no-show-grid]
-    [--mask-radius | --no-mask-radius]
-    [--dpi DPI] [--savefig PATH]
-    [-i INPUT] [--format FORMAT]
+   k-diagram plot-conditional-quantiles INPUT
+     --y-true Y_TRUE
+     --pred q10,q50,q90
+     --q-levels 0.1,0.5,0.9
+     [--bands 80,50]
 
-Arguments
----------
+Here, we plot a model's forecasts and shade the 80% and 50% prediction
+intervals:
 
-- **INPUT** / ``-i, --input`` / ``--format``: As above.
+.. code-block:: bash
 
-- ``--y-true, --true-col`` (required): Ground-truth column.
+   k-diagram plot-conditional-quantiles data.csv \
+     --y-true actual \
+     --pred q10,q50,q90 \
+     --q-levels 0.1,0.5,0.9 \
+     --bands 80,50 \
+     --savefig conditional_quantiles.png
 
-- ``--pred`` / ``--pred-cols`` (required): **One** group of quantile
-  columns (CSV or space-separated), e.g. ``q10,q50,q90``.
-
-- ``--q-levels, --quantiles`` (required): Matching quantile levels,
-  e.g. ``0.1,0.5,0.9``.
-
-- ``--bands``: Interval percentages to shade (CSV), e.g. ``80,50``.
-  If omitted, the widest available interval is shown.
-
-- ``--alpha-min`` / ``--alpha-max``: Opacity range for bands
-  (outer → inner).
-
-- ``--title`` / ``--figsize`` / ``--cmap``: Figure options.
-
-- ``--show-grid`` / ``--no-show-grid``: Toggle polar grid.
-
-- ``--mask-radius`` / ``--no-mask-radius``: Hide/show radial tick
-  labels.
-
-- ``--dpi`` / ``--savefig``: Save configuration.
-
-Notes
------
-
-- Data are sorted by ``y_true`` to produce a smooth radial spiral.
-
-- Bands use the matching lower/upper quantiles implied by the
-  requested percentage(s). The median (0.5) line is drawn when
-  available.
-
-Examples
---------
-
-One set of quantiles + bands::
-
-  kdiagram plot-conditional-quantiles data.csv \
-    --y-true actual \
-    --pred q10,q50,q90 \
-    --q-levels 0.1,0.5,0.9 \
-    --bands 80,50 \
-    --savefig cond_quant.png
-
+---
 
 .. _cli-plot-residual-relationship:
 
+----------------------------
 plot-residual-relationship
-==========================
+----------------------------
 
-Synopsis
---------
+This command helps you find patterns in your model's mistakes. It
+creates a polar scatter plot of the **residuals (actual - prediction)
+versus the predicted values**. The angle is based on the predicted
+value, while the radius shows the residual see :footcite:t:`Murphy1993What, Jolliffe2012`). 
+An ideal plot would show points randomly scattered around the zero-residual 
+circle, indicating that the errors are not dependent on the magnitude 
+of the prediction.
+
+The synopsis is as follows:
+
 .. code-block:: bash
 
-  kdiagram plot-residual-relationship INPUT
-    --y-true Y_TRUE
-    [--pred COLS ... | --model NAME:COLS ... | --pred-cols COLS ...]
-    [--names NAMES ...]
-    [--title TITLE] [--figsize W,H] [--cmap CMAP]
-    [--s S] [--alpha ALPHA]
-    [--show-zero-line | --no-show-zero-line]
-    [--show-grid | --no-show-grid]
-    [--dpi DPI] [--savefig PATH]
-    [-i INPUT] [--format FORMAT]
+   k-diagram plot-residual-relationship INPUT
+     --y-true Y_TRUE
+     [--pred COLS ... | --model NAME:COLS ...]
+     [--show-zero-line]
 
-Arguments
----------
+Let's compare the residuals for two models, "Baseline" and "Wide":
 
-- **INPUT** / ``-i, --input`` / ``--format``: As above.
+.. code-block:: bash
 
-- ``--y-true, --true-col`` (required): Ground-truth column.
+   k-diagram plot-residual-relationship data.csv \
+     --y-true actual \
+     --pred q50_baseline q50_wide \
+     --names "Baseline" "Wide" \
+     --show-zero-line \
+     --savefig residuals_vs_predicted.png
 
-- Predictions (choose a style):
-
-  * ``--pred`` / ``--pred-cols`` (repeatable): one point-pred column
-    per model; repeat to add models.
-
-  * ``--model`` (repeatable): ``NAME:q50`` (one column per model).
-
-- ``--names``: Model names, overrides defaults.
-
-- ``--s`` / ``--alpha``: Marker size and alpha.
-
-- ``--show-zero-line`` / ``--no-show-zero-line``: Toggle the
-  zero-residual ring.
-
-- ``--show-grid`` / ``--no-show-grid``: Toggle polar grid.
-
-- ``--title`` / ``--figsize`` / ``--cmap`` / ``--dpi`` / ``--savefig``:
-  Figure/save options.
-
-Notes
------
-
-- Residuals are computed as ``actual - prediction``. The plot shifts
-  radii to handle negative values; the zero line appears as a circle
-  when enabled.
-
-Examples
---------
-
-Two models with explicit names::
-
-  kdiagram plot-residual-relationship data.csv \
-    --y-true actual \
-    --pred q50 --pred q50_2024 \
-    --names Baseline Wide \
-    --show-zero-line \
-    --savefig residuals.png
-
+---
 
 .. _cli-plot-error-relationship:
 
+-------------------------
 plot-error-relationship
-=======================
+-------------------------
 
-Synopsis
---------
+This plot is subtly different from the residual plot but equally
+important. It shows the **errors (actual - prediction) versus the
+true values**. Here, the angle is based on the true value. This view
+is essential for diagnosing heteroscedasticity—a common issue where
+the variance of the error changes as the true outcome value changes.
+
+The command usage is very similar to the residual plot:
+
 .. code-block:: bash
 
-  kdiagram plot-error-relationship INPUT
-    --y-true Y_TRUE
-    [--pred COLS ... | --model NAME:COLS ... | --pred-cols COLS ...]
-    [--names NAMES ...]
-    [--title TITLE] [--figsize W,H] [--cmap CMAP]
-    [--s S] [--alpha ALPHA]
-    [--show-zero-line | --no-show-zero-line]
-    [--show-grid | --no-show-grid]
-    [--mask-radius | --no-mask-radius]
-    [--dpi DPI] [--savefig PATH]
-    [-i INPUT] [--format FORMAT]
+   k-diagram plot-error-relationship INPUT
+     --y-true Y_TRUE
+     [--pred COLS ... | --model NAME:COLS ...]
+     [--show-zero-line]
 
-Arguments
----------
+Here is an example comparing two models, A and B:
 
-- Same as :ref:`cli-plot-residual-relationship`, plus:
+.. code-block:: bash
 
-  * ``--mask-radius`` / ``--no-mask-radius``: Hide/show radial tick
-    labels.
+   k-diagram plot-error-relationship data.csv \
+     --y-true actual \
+     --model A:q50_a --model B:q50_b \
+     --mask-radius \
+     --savefig error_vs_true.png
 
-Notes
------
+---
 
-- Errors are also ``actual - prediction``, but angles are based on the
-  *true* value ordering; useful for seeing how error changes across the
-  domain of ``y_true`` (e.g., heteroscedasticity with magnitude).
+-------------------------
+Troubleshooting & Tips
+-------------------------
 
-Examples
---------
+- **"Missing columns" error?** Double-check that the column names in
+  your command exactly match the headers in your data file.
+- **Plot looks strange?** The ``--theta-scale`` option in
+  ``plot-relationship`` can have a big impact. Try switching between
+  ``proportional`` and ``uniform`` to see which reveals more insight.
+- **Need more help?** Run any command with the ``-h`` or ``--help``
+  flag to see its full list of options and their descriptions.
+- **See Also**: These plots are powerful on their own, but they pair
+  well with the tools in :doc:`errors` for a complete picture of your
+  model's error behavior.
+  
+.. raw:: html
 
-Two models, hide radial ticks::
+    <hr>
+    
+.. rubric:: References
 
-  kdiagram plot-error-relationship data.csv \
-    --y-true actual \
-    --model A:q50 --model B:q50_2024 \
-    --mask-radius \
-    --savefig error_rel.png
-
+.. footbibliography::

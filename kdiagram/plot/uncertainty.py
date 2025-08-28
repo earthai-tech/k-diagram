@@ -31,7 +31,7 @@ from ..utils.diagnose_q import (
     validate_qcols,
 )
 from ..utils.handlers import columns_manager
-from ..utils.plot import set_axis_grid
+from ..utils.plot import _sample_colors, set_axis_grid
 from ..utils.validator import (
     _assert_all_types,
     exist_features,
@@ -2601,7 +2601,7 @@ def plot_uncertainty_drift(
         np.linspace(0.0, 1.0, N, endpoint=True)  # Linear space [0, 1]
         * angular_range_rad  # Scale to range width
         + theta_min_rad
-    )  # Add start angle offset
+    )
 
     # --- Plotting Setup ---
     fig, ax = plt.subplots(
@@ -2622,26 +2622,14 @@ def plot_uncertainty_drift(
     ax.set_yticks([])
 
     # Get color palette
-    try:
-        cmap_obj = get_cmap(cmap)
-        # Sample colors - handle discrete vs continuous cmaps
-        if hasattr(cmap_obj, "colors"):  # Discrete colormap
-            color_palette = cmap_obj.colors
-        else:  # Continuous colormap
-            color_palette = cmap_obj(np.linspace(0, 1, num_time_steps))
-    except ValueError:
-        warnings.warn(
-            f"Invalid `cmap` name '{cmap}'. Falling back to 'tab10'.",
-            stacklevel=2,
-        )
-        cmap_obj = get_cmap("tab10")  # Fallback cmap
-        color_palette = cmap_obj.colors
+    color_palette = _sample_colors(
+        cmap, num_time_steps, trim=0.08, default="tab10"
+    )
 
     # --- Draw Rings for Each Time Step ---
     for i, (w_norm, step_label) in enumerate(
         zip(normalized_widths, time_labels)
     ):
-
         # XXX TODO
         # Calculate base radius for this ring (increases for later years)
         # base_r = base_radius + i * some_increment # Alternative logic

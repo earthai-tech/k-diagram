@@ -5,6 +5,16 @@ from .comparison import (
     plot_reliability_diagram,
 )
 from .errors import plot_error_bands, plot_error_ellipses, plot_error_violins
+from .evaluation import (
+    plot_pinball_loss,
+    plot_polar_classification_report,
+    plot_polar_confusion_matrix,
+    plot_polar_confusion_matrix_in,
+    plot_polar_confusion_multiclass,
+    plot_polar_pr_curve,
+    plot_polar_roc,
+    plot_regression_performance,
+)
 from .feature_based import plot_feature_fingerprint, plot_feature_interaction
 from .probabilistic import (
     plot_calibration_sharpness,
@@ -75,4 +85,12 @@ __all__ = [
     "plot_error_relationship",
     "plot_residual_relationship",
     "plot_conditional_quantiles",
+    "plot_pinball_loss",
+    "plot_polar_classification_report",
+    "plot_polar_confusion_matrix",
+    "plot_polar_confusion_matrix_in",
+    "plot_polar_confusion_multiclass",
+    "plot_polar_pr_curve",
+    "plot_polar_roc",
+    "plot_regression_performance",
 ]
