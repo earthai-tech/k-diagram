@@ -1,19 +1,31 @@
 .. _cli_comparison:
 
 ==============================
-Comparison & Calibration CLI
+Comparison & Calibration 
 ==============================
 
 This page covers the command-line tools for model comparison and
 calibration diagnostics. These commands help you answer key questions:
-"Are my model's probabilities trustworthy?" and "Which of my models
-is best, and in what ways?" Like other tools in this suite, they
+*"Are my model's probabilities trustworthy?"* and *"Which of my models
+is best, and in what ways?"* Like other tools in this suite, they
 read a tabular data file (CSV, Parquet, etc.) and generate insightful
 visualizations.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: Available Commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-reliability-diagram <cli_plot_reliability_diagram>`
+     - Compares predicted probabilities to observed frequencies.
+   * - :ref:`plot-polar-reliability <cli_plot_polar_reliability>`
+     - A polar version of the reliability diagram.
+   * - :ref:`plot-model-comparison <cli_plot_model_comparison>`
+     - A radar chart for multi-metric model comparison.
+   * - :ref:`plot-horizon-metrics <cli_plot_horizon_metrics>`
+     - Compares metrics across different forecast horizons.
+
 
 -------------------
 Common Conventions
@@ -31,7 +43,8 @@ The commands on this page share a few common patterns.
   provide the ``--savefig out.png`` flag; otherwise, they display it
   in an interactive window.
 
----
+
+.. _cli_plot_reliability_diagram:
 
 --------------------------
 plot-reliability-diagram
@@ -83,7 +96,8 @@ A key option is ``--strategy``, which controls the binning method.
 Use ``uniform`` for equal-width bins or ``quantile`` to ensure each
 bin has a similar number of samples.
 
----
+
+.. _cli_plot_polar_reliability: 
 
 --------------------------
 plot-polar-reliability
@@ -119,7 +133,8 @@ over-confident:
      --cmap coolwarm \
      --savefig polar_reliability.png
 
----
+
+.. _cli_plot_model_comparison: 
 
 -----------------------
 plot-model-comparison
@@ -155,7 +170,8 @@ including their training times as a performance axis:
      --title "Regression Model Comparison" \
      --savefig model_comparison.png
 
----
+
+.. _cli_plot_horizon_metrics: 
 
 ------------------------
 plot-horizon-metrics
@@ -210,9 +226,9 @@ Troubleshooting & Tips
   examine its probabilistic forecasts with the tools in
   :doc:`probabilistic`.
 
-If a command’s behavior surprises you (e.g., binning fallback or
+If a command's behavior surprises you (e.g., binning fallback or
 column selection), re-run with fewer options and verify input
-columns. Feel free to file :ref:`issues <https://github.com/earthai-tech/k-diagram/issues>`_
+columns. Feel free to file `issues <https://github.com/earthai-tech/k-diagram/issues>`_
 with a small CSV illustrating the problem.
 
 .. raw:: html

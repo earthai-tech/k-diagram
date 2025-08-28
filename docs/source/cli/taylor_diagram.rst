@@ -18,9 +18,18 @@ The ``k-diagram`` library provides three commands for creating them:
 - ``taylor-diagram``: A flexible command that can take either raw data
   or pre-computed statistics.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: Available Commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-taylor-diagram <cli_plot_taylor_diagram>`
+     - Generates a standard Taylor Diagram from pre-calculated statistics.
+   * - :ref:`plot-taylor-diagram-in <cli_plot_taylor_diagram_in>`
+     - Generates a Taylor Diagram with background shading from raw data.
+   * - :ref:`taylor-diagram <cli_taylor_diagram>`
+     - An alias for the `plot-taylor-diagram` command.
 
 -------------------
 Common Conventions
@@ -37,7 +46,8 @@ You can provide prediction columns using the ``--pred`` or the named
    angle via :math:`\theta=\arccos(\rho)`, while the model's standard
    deviation is mapped to the radius.
 
----
+
+.. _cli_plot_taylor_diagram:
 
 -----------------------
 plot-taylor-diagram
@@ -71,7 +81,8 @@ Here's a typical example comparing two models, "Model A" and "Model B":
      --acov half_circle \
      --savefig taylor_basic.png
 
----
+
+.. _cli_plot_taylor_diagram_in:
 
 --------------------------
 plot-taylor-diagram-in
@@ -106,7 +117,8 @@ the correlation field:
      --cbar \
      --savefig taylor_with_background.png
 
----
+
+.. _cli_taylor_diagram:
 
 ------------------
 taylor-diagram

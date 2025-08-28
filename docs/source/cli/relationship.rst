@@ -1,7 +1,7 @@
 .. _cli_relationship:
 
 =============================
-Relationship (Polar) Commands
+Relationship Commands
 =============================
 
 How do your model's predictions relate to the ground truth? The
@@ -11,9 +11,20 @@ cyclical view that is excellent for spotting bias, heteroscedasticity
 (errors that change with magnitude), and other systematic patterns
 that might be missed in a standard Cartesian plot.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: Available Commands 
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-relationship <cli_plot_relationship>`
+     - Creates a polar scatter plot of true vs. predicted values.
+   * - :ref:`plot-conditional-quantiles <cli_plot_conditional_quantiles>`
+     - Visualizes how forecast uncertainty bands change with the true value.
+   * - :ref:`plot-error-relationship <cli_plot_error_relationship>`
+     - Plots the forecast error against the true value.
+   * - :ref:`plot-residual-relationship <cli_plot_residual_relationship>`
+     - Plots the forecast error (residual) against the predicted value.
 
 -------------------
 Common Conventions
@@ -32,9 +43,8 @@ data columns.
   the corresponding quantile levels via ``--q-levels``.
 - **Saving**: To save a plot, add the ``--savefig out.png`` flag.
 
----
 
-.. _cli-plot-relationship:
+.. _cli_plot_relationship:
 
 -------------------
 plot-relationship
@@ -84,9 +94,8 @@ seasonality in the relationship:
      --title "Truth–Prediction Relationship by Month" \
      --savefig half_circle_relationship.png
 
----
 
-.. _cli-plot-conditional-quantiles:
+.. _cli_plot_conditional_quantiles:
 
 ----------------------------
 plot-conditional-quantiles
@@ -122,9 +131,8 @@ intervals:
      --bands 80,50 \
      --savefig conditional_quantiles.png
 
----
 
-.. _cli-plot-residual-relationship:
+.. _cli_plot_residual_relationship:
 
 ----------------------------
 plot-residual-relationship
@@ -158,9 +166,8 @@ Let's compare the residuals for two models, "Baseline" and "Wide":
      --show-zero-line \
      --savefig residuals_vs_predicted.png
 
----
 
-.. _cli-plot-error-relationship:
+.. _cli_plot_error_relationship:
 
 -------------------------
 plot-error-relationship
@@ -191,7 +198,6 @@ Here is an example comparing two models, A and B:
      --mask-radius \
      --savefig error_vs_true.png
 
----
 
 -------------------------
 Troubleshooting & Tips

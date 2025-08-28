@@ -11,8 +11,10 @@ the `k-diagram` package, particularly those focused on uncertainty.
 """
 from __future__ import annotations
 
+import re
 import textwrap
 import warnings
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -24,6 +26,8 @@ __all__ = [
     "make_taylor_data",
     "make_multi_model_quantile_data",
     "make_cyclical_data",
+    "make_regression_data",
+    "make_classification_data",
 ]
 
 
@@ -1395,6 +1399,9 @@ def make_multi_model_quantile_data(
     if not bias_range[0] <= bias_range[1]:
         raise ValueError("bias_range must be (min, max) with min <= max.")
 
+    bias_ranges = _expand_param(bias_range, n_models, "bias_range")
+    width_ranges = _expand_param(width_range, n_models, "width_range")
+
     # --- Setup ---
     # Ensure unique and sorted quantiles
     quantiles_sorted = sorted(list(set(quantiles)))
@@ -1442,9 +1449,14 @@ def make_multi_model_quantile_data(
 
     # --- Generate predictions for each model ---
     for _i, model_name in enumerate(model_names_list):
-        # Sample model-specific parameters
-        model_bias = rng.uniform(bias_range[0], bias_range[1])
-        model_width = rng.uniform(width_range[0], width_range[1])
+        # Sample model-specific parameters from the expanded lists
+        current_bias_range = bias_ranges[_i]
+        current_width_range = width_ranges[_i]
+
+        model_bias = rng.uniform(current_bias_range[0], current_bias_range[1])
+        model_width = rng.uniform(
+            current_width_range[0], current_width_range[1]
+        )
 
         # Store generated quantiles temporarily before sorting
         temp_model_quantiles = {}
@@ -1724,3 +1736,1010 @@ References
 ----------
 .. footbibliography::
 """
+
+
+def make_regression_data(
+    n_samples: int = 200,
+    n_features: int = 1,
+    feature_range: tuple[float, float] = (0.0, 10.0),
+    n_models: int = 3,
+    model_profiles: dict[str, dict[str, Any]] | None = None,
+    true_func: Callable[[np.ndarray], np.ndarray] | None = None,
+    true_kind: str = "linear",  # 'linear'|'quadratic'|'sine'
+    true_coeff_range: tuple[float, float] = (-5.0, 5.0),
+    intercept: float = 5.0,
+    noise_on_true: float | Callable[[np.ndarray], np.ndarray] = 1.0,
+    heteroskedastic: bool = False,
+    hetero_strength: float = 0.5,
+    prefix: str = "pred_",
+    seed: int | None = 0,
+    as_frame: bool = False,
+    clip_negative: bool = False,
+    shuffle: bool = True,
+    model_names: list[str] | None = None,
+    feature_names: list[str] | None = None,
+) -> Bunch | pd.DataFrame:
+
+    # ---------- RNG ----------
+    rng = np.random.default_rng(seed)
+
+    # ---------- features ----------
+    lo, hi = float(feature_range[0]), float(feature_range[1])
+    if hi <= lo:
+        raise ValueError("feature_range must satisfy hi > lo.")
+
+    X = rng.uniform(lo, hi, size=(n_samples, n_features))
+
+    if not feature_names:
+        feature_names = [f"feature_{i+1}" for i in range(n_features)]
+    elif len(feature_names) != n_features:
+        raise ValueError("len(feature_names) must equal n_features.")
+
+    # ---------- true signal ----------
+    # allow user supplied function(X) -> shape (n_samples,)
+    if true_func is not None:
+        y_signal = np.asarray(true_func(X))
+        if y_signal.shape != (n_samples,):
+            raise ValueError("true_func(X) must return shape (n_samples,).")
+    else:
+        # built-in shapes controlled by true_kind
+        if true_kind not in {"linear", "quadratic", "sine"}:
+            raise ValueError("true_kind must be linear|quadratic|sine")
+
+        # random coefficients for shapes needing them
+        a = rng.uniform(true_coeff_range[0], true_coeff_range[1], n_features)
+        b = rng.uniform(true_coeff_range[0], true_coeff_range[1], n_features)
+
+        if true_kind == "linear":
+            y_signal = X @ a + intercept
+        elif true_kind == "quadratic":
+            # sum_i (a_i * x_i^2 + b_i * x_i) + intercept
+            y_signal = (
+                (a * (X**2)).sum(axis=1) + (b * X).sum(axis=1) + intercept
+            )
+        else:  # "sine"
+            # sine on the first feature; add small linear mix if >1 feat
+            base = np.sin(X[:, 0] / max(1.0, (hi - lo) / np.pi))
+            if n_features > 1:
+                mix = (b * X).sum(axis=1) / max(1.0, n_features)
+            else:
+                mix = 0.0
+            y_signal = 10.0 * base + mix + intercept
+
+    # ---------- irreducible noise on truth ----------
+    if callable(noise_on_true):
+        noise = np.asarray(noise_on_true(X))
+        if noise.shape != (n_samples,):
+            raise ValueError(
+                "noise_on_true(X) must return shape (n_samples,)."
+            )
+    else:
+        scale = float(noise_on_true)
+        if scale < 0:
+            raise ValueError("noise_on_true must be >= 0.")
+        # optional heteroskedasticity w.r.t. first feature
+        if heteroskedastic:
+            f1 = X[:, 0] if n_features > 0 else np.zeros(n_samples)
+            f1n = (f1 - lo) / max(1e-9, (hi - lo))
+            mult = 1.0 + hetero_strength * (f1n - 0.5) * 2.0
+            noise = rng.normal(0.0, scale * np.clip(mult, 0.1, 5.0))
+        else:
+            noise = rng.normal(0.0, scale, n_samples)
+
+    y_true = y_signal + noise
+
+    # clip negatives if requested
+    if clip_negative:
+        y_true = np.clip(y_true, 0.0, None)
+
+    # ---------- default model profiles ----------
+    # fields: bias (float), noise_std (float),
+    #         error_type: "additive"|"multiplicative"|"hetero"
+    if model_profiles is None:
+        base = [
+            (
+                "Good Model",
+                {
+                    "bias": 0.0,
+                    "noise_std": 5.0,
+                    "error_type": "additive",
+                },
+            ),
+            (
+                "Biased Model",
+                {
+                    "bias": -10.0,
+                    "noise_std": 2.0,
+                    "error_type": "additive",
+                },
+            ),
+            (
+                "High Variance",
+                {
+                    "bias": 0.0,
+                    "noise_std": 15.0,
+                    "error_type": "additive",
+                },
+            ),
+        ]
+        model_profiles = {k: v for k, v in base[:n_models]}
+        if n_models > 3:
+            # pad with reasonable defaults for extra models
+            for i in range(3, n_models):
+                model_profiles[f"Model_{i+1}"] = {
+                    "bias": 0.0,
+                    "noise_std": 10.0,
+                    "error_type": "additive",
+                }
+
+    # preserve insertion order for deterministic behavior
+    base_names = list(model_profiles.keys())
+    profiles_list = [model_profiles[k] for k in base_names]
+
+    # resolve display vs column names
+    display_names, column_names = _resolve_model_labels(
+        base_names=base_names,
+        user_names=model_names,
+        prefix=prefix,
+    )
+
+    # ---------- predictions per model ----------
+    data_dict: dict[str, Any] = {}
+    for i, fn in enumerate(feature_names):
+        data_dict[fn] = X[:, i]
+    data_dict["y_true"] = y_true
+
+    pred_cols: list[str] = []
+    for i, prof in enumerate(profiles_list):
+        # name = display_names[i]          # human-facing # noqa
+        col = column_names[i]  # DataFrame column label
+
+        bias = float(prof.get("bias", 0.0))
+        noise_std = float(prof.get("noise_std", 5.0))
+        error_type = str(prof.get("error_type", "additive"))
+
+        if error_type not in ("additive", "multiplicative", "hetero"):
+            raise ValueError(
+                "unknown error_type "
+                f"'{error_type}' for model '{base_names[i]}'"
+            )
+
+        if error_type == "additive":
+            err = bias + rng.normal(0.0, noise_std, n_samples)
+            y_pred = y_true + err
+        elif error_type == "multiplicative":
+            mul = 1.0 + rng.normal(bias, noise_std, n_samples)
+            y_pred = y_true * mul
+        else:  # "hetero"
+            scale = 1.0 + hetero_strength * (X[:, 0] - X[:, 0].min()) / (
+                max(X[:, 0].ptp(), 1e-9)
+            )
+            err = bias + rng.normal(0.0, noise_std * scale, n_samples)
+            y_pred = y_true + err
+
+        if clip_negative:
+            y_pred = np.clip(y_pred, 0.0, None)
+
+        data_dict[col] = y_pred
+        pred_cols.append(col)
+
+    # ---------- dataframe ----------
+    df = pd.DataFrame(data_dict)
+
+    # place columns in a tidy order
+    ordered = ["y_true"] + feature_names + pred_cols
+    # ordered = sorted(ordered)
+    df = df[ordered]
+
+    # shuffle rows if requested
+    if shuffle:
+        df = df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+
+    # ---------- return ----------
+    if as_frame:
+        return df
+
+    # names to report (respect user names if provided)
+    _mnames = (
+        model_names
+        if model_names
+        else (
+            list(model_profiles.keys())[:n_models]
+            if model_profiles
+            else [f"Model_{i + 1}" for i in range(n_models)]
+        )
+    )
+
+    def _pv(seq, k=4):
+        seq = [str(s) for s in seq]
+        return ", ".join(seq[:k]) + (" …" if len(seq) > k else "")
+
+    _noise_tag = (
+        "callable" if callable(noise_on_true) else f"{float(noise_on_true):g}"
+    )
+    _truth_tag = "custom" if true_func is not None else true_kind
+    _lo, _hi = float(feature_range[0]), float(feature_range[1])
+
+    descr = textwrap.dedent(
+        f"""
+        Synthetic regression dataset.
+        samples : {n_samples}
+        feats   : {n_features}  range=({_lo:g}, {_hi:g})
+        truth   : {_truth_tag}  intercept={intercept:g}
+        noise   : {_noise_tag}
+        hetero  : {heteroskedastic}  strength={hetero_strength:g}
+        models  : {len(_mnames)}  names=[{_pv(_mnames)}]
+        prefix  : {prefix}  clipped={clip_negative}
+        shuffle : {shuffle}  seed={seed}
+        """
+    ).strip()
+
+    return Bunch(
+        frame=df,
+        data=df[pred_cols].values,
+        feature_names=feature_names,
+        target_names=["y_true"],
+        target=df["y_true"].values,
+        model_names=display_names,
+        prediction_columns=pred_cols,
+        prefix=prefix,
+        DESCR=descr,
+    )
+
+
+make_regression_data.__doc__ = r"""
+Generate a synthetic regression dataset with a configurable
+true process and multiple model prediction profiles.
+
+This helper builds features, a noisy ground truth, and one
+or more model predictions with user-controlled bias and
+noise. It supports additive, multiplicative, and hetero-
+skedastic error, custom true functions, and deterministic
+column naming when ``model_names`` is provided.
+
+Parameters
+----------
+n_samples : int, default=200
+    Number of rows to generate.
+
+n_features : int, default=1
+    Number of feature columns.
+
+feature_range : tuple of float, default=(0.0, 10.0)
+    Closed interval for uniform feature sampling. Must
+    satisfy ``hi > lo``.
+
+n_models : int, default=3
+    Number of model prediction columns to create. If
+    ``model_profiles`` is given, only the first ``n_models``
+    entries (in insertion order) are used.
+
+model_profiles : dict or None, default=None
+    Per-model configuration. Keys are base model names and
+    values are dicts with fields:
+    ``bias`` (float), ``noise_std`` (float), and
+    ``error_type`` in ``{"additive","multiplicative",
+    "hetero"}``. If ``None``, built-in defaults are used.
+
+true_func : callable or None, default=None
+    Custom function with signature
+    ``true_func(X: ndarray) -> ndarray shape (n_samples,)``.
+    If ``None``, a built-in shape is chosen via
+    ``true_kind``.
+
+true_kind : {"linear","quadratic","sine"}, default="linear"
+    Family of the built-in true process when ``true_func``
+    is ``None``.
+
+true_coeff_range : tuple of float, default=(-5.0, 5.0)
+    Range used to draw coefficients for built-in shapes.
+
+intercept : float, default=5.0
+    Intercept term added to the true process.
+
+noise_on_true : float or callable, default=1.0
+    If float, standard deviation of additive Gaussian
+    noise on the ground truth. If callable, it must accept
+    ``X`` and return an array of shape ``(n_samples,)``.
+
+heteroskedastic : bool, default=False
+    If ``True`` and ``noise_on_true`` is a float, scales the
+    ground-truth noise by a function of the first feature.
+
+hetero_strength : float, default=0.5
+    Strength parameter used for hetero scaling (both for
+    ground-truth noise when ``heteroskedastic=True`` and for
+    ``error_type="hetero"`` in model profiles).
+
+prefix : str, default="pred_"
+    Prefix used for auto-named prediction columns when a
+    user name is not supplied for a model.
+
+seed : int or None, default=0
+    Seed for the internal random generator. ``None`` uses
+    non-deterministic entropy.
+
+as_frame : bool, default=False
+    If ``True``, return a ``pandas.DataFrame`` with tidy
+    columns. Otherwise return a ``sklearn.utils.Bunch``.
+
+clip_negative : bool, default=False
+    If ``True``, clip the ground truth and predictions at
+    zero.
+
+shuffle : bool, default=True
+    If ``True``, row-shuffle the output with ``seed``.
+
+model_names : list of str or None, default=None
+    Explicit display names for the first ``k`` models, where
+    ``k = len(model_names)``. When provided, the prediction
+    columns for those models are named **exactly** as given,
+    without ``prefix``. Remaining models (if any) use
+    ``f"{prefix}{snake_case(base_name)}"``. Extra names
+    beyond the number of models are ignored with a warning.
+
+feature_names : list of str or None, default=None
+    Names for feature columns. Must have length equal to
+    ``n_features``. If ``None``, uses ``["feature_1", ...]``.
+
+Returns
+-------
+pandas.DataFrame or sklearn.utils.Bunch
+    If ``as_frame=True``:
+        
+        A DataFrame with columns
+        ``["y_true"] + feature_names + prediction_cols``.
+        
+    If ``as_frame=False``:
+        A Bunch with fields:
+            
+            ``frame`` : the same DataFrame,
+            ``data`` : ndarray of shape
+            ``(n_samples, n_models)``, containing predictions
+            ordered as in ``prediction_columns``,
+            ``feature_names`` : list of str,
+            ``target_names`` : ``["y_true"]``,
+            ``target`` : ndarray of shape ``(n_samples,)``,
+            ``model_names`` : list of display names,
+            ``prediction_columns`` : list of column labels,
+            ``prefix`` : str,
+            ``DESCR`` : short description.
+
+Raises
+------
+ValueError
+    If ``feature_range`` is invalid, if shapes returned by
+    ``true_func`` or a noise callable are not
+    ``(n_samples,)``, if ``true_kind`` is unknown, if a
+    ``model_profiles`` entry has an unknown ``error_type``,
+    or if ``feature_names`` length mismatches ``n_features``.
+
+Notes
+-----
+- Python dicts preserve insertion order. The order of
+  models is taken from ``model_profiles`` keys, or from the
+  built-in defaults when profiles are not supplied.
+
+- When ``model_names`` is provided, those names are used as
+  the **column labels** verbatim for the first ``k`` models.
+  This allows clean, human-readable headers in a DataFrame
+  and consistent legend labels downstream.
+
+- For ``error_type="multiplicative"``, prediction noise is
+  applied as a multiplicative factor around 1 [1]_. For
+  ``"hetero"``, the model’s noise is scaled by a normalized
+  transform of the first feature and ``hetero_strength`` [2]_.
+
+- Reproducibility is controlled by ``seed``. Set it to an
+  integer for deterministic output.
+
+Examples
+--------
+Create two models with explicit names and return a frame.
+
+>>> from kdiagram.datasets.make import make_regression_data
+>>> profiles = {
+...     "Good Model": {"bias": 0.0, "noise_std": 5.0,
+...                    "error_type": "additive"},
+...     "Biased Model": {"bias": -10.0, "noise_std": 2.0,
+...                      "error_type": "additive"},
+... }
+>>> df = make_regression_data(
+...     n_samples=200,
+...     n_features=1,
+...     n_models=2,
+...     model_profiles=profiles,
+...     model_names=["Good Model", "Biased Model"],
+...     as_frame=True,
+...     seed=42,
+... )
+>>> list(df.columns)[:3]
+['y_true', 'feature_1', 'Good Model']
+
+Use a custom true function and heteroskedastic noise.
+
+>>> def ftrue(X):
+...     return 3.0 * X[:, 0] + 2.0
+>>> df = make_regression_data(
+...     n_samples=100,
+...     true_func=ftrue,
+...     noise_on_true=1.5,
+...     heteroskedastic=True,
+...     as_frame=True,
+... )
+
+Return a Bunch for direct array access.
+
+>>> b = make_regression_data(
+...     n_samples=50,
+...     n_models=3,
+...     as_frame=False,
+... )
+>>> b.data.shape
+(50, 3)
+
+See Also
+--------
+sklearn.datasets.make_regression
+    Classic linear regression toy dataset.
+numpy.random.Generator
+    Modern NumPy RNG used for reproducibility.
+
+References
+----------
+.. [1] Hastie, Tibshirani, Friedman.
+       The Elements of Statistical Learning.
+       Springer, 2009.
+.. [2] Hyndman, Athanasopoulos.
+       Forecasting: Principles and Practice.
+       OTexts, 3rd ed., 2021.
+"""
+
+
+def make_classification_data(
+    n_samples: int = 600,
+    n_features: int = 10,
+    n_classes: int = 2,
+    weights: list[float] | None = None,
+    class_sep: float = 1.0,
+    flip_y: float = 0.0,
+    informative_frac: float = 0.6,
+    redundant_frac: float = 0.2,
+    seed: int | None = 42,
+    # models / output shape
+    n_models: int = 2,
+    model_profiles: dict[str, dict[str, Any]] | None = None,
+    model_names: list[str] | None = None,
+    true_col: str = "y",
+    prefix_label: str = "pred",
+    prefix_proba: str = "proba",
+    add_compat_cols: bool = False,
+    include_binary_pred_cols: bool = False,
+    as_frame: bool = False,
+) -> Bunch | pd.DataFrame:
+
+    rng = np.random.default_rng(seed)
+
+    # -------- class priors --------
+    if weights is None:
+        weights = [1.0 / float(n_classes)] * n_classes
+    w_sum = float(sum(weights))
+    if w_sum <= 0:
+        raise ValueError("weights must sum to > 0.")
+    weights = [float(x) / w_sum for x in weights]
+    if len(weights) != n_classes:
+        raise ValueError("len(weights) must equal n_classes.")
+
+    # -------- features ----------
+    X = rng.normal(0.0, 1.0, size=(n_samples, n_features))  # noqa
+
+    # mark informative/redundant feature masks
+    n_inf = max(1, int(round(n_features * informative_frac)))
+    n_inf = min(n_inf, n_features)
+    n_red = max(0, int(round(n_features * redundant_frac)))
+    n_red = min(n_red, max(0, n_features - n_inf))
+    n_noise = n_features - n_inf - n_red
+
+    # build informative subspace that separates classes
+    # use class means spaced along a random direction
+    dir_vec = rng.normal(0.0, 1.0, size=(n_inf,))
+    dir_vec /= np.clip(np.linalg.norm(dir_vec), 1e-9, None)
+
+    # assign class centers on a line, scaled by class_sep
+    centers = np.linspace(-1.0, 1.0, n_classes) * class_sep
+    Z_inf = rng.normal(0.0, 1.0, size=(n_samples, n_inf))
+
+    # initial labels by priors
+    y = rng.choice(np.arange(n_classes), size=n_samples, p=weights)
+
+    # push informative dims towards class centers
+    Z_inf = Z_inf + np.outer(centers[y], dir_vec)
+
+    # redundant features = noisy linear combos of informative
+    if n_red > 0:
+        A = rng.normal(0.0, 0.5, size=(n_inf, n_red))
+        Z_red = Z_inf @ A + rng.normal(0.0, 0.3, size=(n_samples, n_red))
+    else:
+        Z_red = np.zeros((n_samples, 0))
+
+    # noise features (pure noise)
+    if n_noise > 0:
+        Z_noise = rng.normal(0.0, 1.0, size=(n_samples, n_noise))
+    else:
+        Z_noise = np.zeros((n_samples, 0))
+
+    # assemble final design matrix (permute cols for realism)
+    Z = np.concatenate([Z_inf, Z_red, Z_noise], axis=1)
+    perm = rng.permutation(Z.shape[1])
+    Z = Z[:, perm]
+
+    # flip labels (label noise)
+    if flip_y > 0.0:
+        mask = rng.random(n_samples) < float(flip_y)
+        if n_classes == 2:
+            y[mask] = 1 - y[mask]
+        else:
+            # random other class
+            alt = rng.integers(0, n_classes - 1, mask.sum())
+            y[mask] = (y[mask] + 1 + alt) % n_classes
+
+    # -------- model profiles ----------
+    # fields:
+    #  - logit_scale : float (larger => better separation)
+    #  - noise_std   : float (logit noise)
+    #  - bias        : float or list/ndarray per-class
+    #  - temp        : float > 0 (temperature scaling)
+    if model_profiles is None:
+        model_profiles = {}
+        scales = np.linspace(0.8, 1.6, n_models)
+        stdevs = np.linspace(0.6, 0.2, n_models)
+        temps = np.linspace(1.2, 0.8, n_models)
+        for i in range(n_models):
+            model_profiles[f"Model_{i+1}"] = {
+                "logit_scale": float(scales[i]),
+                "noise_std": float(stdevs[i]),
+                "bias": 0.0 if n_classes == 2 else [0.0] * n_classes,
+                "temp": float(temps[i]),
+            }
+
+    if model_names is None:
+        # convenient names for CLI tests (m1, m2, ...)
+        model_names = [f"m{i+1}" for i in range(n_models)]
+    if len(model_names) != len(model_profiles):
+        raise ValueError("len(model_names) must match model_profiles.")
+
+    # base linear weights for logits
+    if n_classes == 2:
+        w = rng.normal(0.0, 1.0, size=(n_features,))
+        w /= np.clip(np.linalg.norm(w), 1e-9, None)
+        base_logit = Z @ w
+    else:
+        W = rng.normal(0.0, 1.0, size=(n_features, n_classes))
+        # normalize columns
+        W = W / np.clip(np.linalg.norm(W, axis=0, keepdims=True), 1e-9, None)
+        base_logits = Z @ W
+
+    # -------- build dataframe --------
+    df = pd.DataFrame(Z, columns=[f"x{i+1}" for i in range(n_features)])
+    df[true_col] = y.astype(int)
+
+    pred_label_cols: list[str] = []
+    proba_cols: list[str] = []
+
+    for name, prof in zip(model_names, model_profiles.values()):
+        scale = float(prof.get("logit_scale", 1.0))
+        nstd = float(prof.get("noise_std", 0.4))
+        temp = max(1e-6, float(prof.get("temp", 1.0)))
+        bias = prof.get("bias", 0.0)
+
+        if n_classes == 2:
+            # z = scaled + noise + bias
+            z = scale * base_logit + rng.normal(0.0, nstd, n_samples)
+            z = z + float(bias)
+            p1 = _sigmoid(z / temp)
+            # probability column named like tests (m1, m2)
+            df[name] = p1
+            proba_cols.append(name)
+
+            if include_binary_pred_cols:
+                lbl = (p1 > 0.5).astype(int)
+                df[f"{prefix_label}_{name}"] = lbl
+                pred_label_cols.append(f"{prefix_label}_{name}")
+        else:
+            # logits per class
+            B = (
+                np.asarray(bias)
+                if np.ndim(bias)
+                else np.full((n_classes,), float(bias))
+            )
+            noise = rng.normal(0.0, nstd, size=(n_samples, n_classes))
+            logits = scale * base_logits + noise + B
+            probs = _softmax(logits / temp)
+            # per-class probs
+            for k in range(n_classes):
+                col = f"{prefix_proba}_{name}_{k}"
+                df[col] = probs[:, k]
+                proba_cols.append(col)
+            # predicted labels
+            lbl = probs.argmax(axis=1).astype(int)
+            col_lbl = f"{prefix_label}_{name}"
+            df[col_lbl] = lbl
+            pred_label_cols.append(col_lbl)
+
+    # add yt/yp aliases for the first model if requested
+    if add_compat_cols and n_classes > 2:
+        if true_col != "yt":
+            df["yt"] = df[true_col]
+        first_pred = f"{prefix_label}_{model_names[0]}"
+        if first_pred in df.columns and "yp" not in df.columns:
+            df["yp"] = df[first_pred]
+
+    # -------- return -----------
+    if as_frame:
+        return df
+
+    # names to report (respect user names if provided)
+    _cmnames = (
+        model_names
+        if model_names
+        else (
+            list(model_profiles.keys())[:n_models]
+            if model_profiles
+            else [f"Model_{i + 1}" for i in range(n_models)]
+        )
+    )
+
+    def _pv(seq, k=4):
+        seq = [str(s) for s in seq]
+        return ", ".join(seq[:k]) + (" …" if len(seq) > k else "")
+
+    def _pw(ws, k=5):
+        if ws is None:
+            return "auto"
+        vals = [f"{float(w):.3f}" for w in ws]
+        return ", ".join(vals[:k]) + (" …" if len(vals) > k else "")
+
+    descr = textwrap.dedent(
+        f"""
+        Synthetic classification dataset.
+        samples : {n_samples}  feats={n_features}
+        classes : {n_classes}  weights={_pw(weights)}
+        sep     : {class_sep:g}  flip_y={flip_y:g}
+        info/fr : {informative_frac:g}/{redundant_frac:g}
+        models  : {len(_cmnames)}  names=[{_pv(_cmnames)}]
+        labels  : {true_col}
+        prefix  : lbl={prefix_label}  proba={prefix_proba}
+        options : binpred={include_binary_pred_cols}
+                  compat={add_compat_cols}
+        seed    : {seed}
+        """
+    ).strip()
+
+    return Bunch(
+        frame=df,
+        data=df.drop(columns=[true_col]).values,
+        feature_names=[f"x{i+1}" for i in range(n_features)],
+        target_names=[true_col],
+        target=df[true_col].values,
+        model_names=model_names,
+        # for binary, probas live in names (m1, m2, ...)
+        # for multiclass, they live under prefix_proba_*.
+        prediction_columns=proba_cols,
+        label_columns=pred_label_cols,
+        n_classes=n_classes,
+        DESCR=descr,
+    )
+
+
+make_classification_data.__doc__ = r"""
+Generate a synthetic classification dataset with a configurable
+feature process and multiple model outputs (labels and/or
+probabilities).
+
+This helper wraps a standard separable feature generator and
+then synthesizes the outputs of one or more "models" whose
+behavior can be controlled via ``model_profiles`` or via a
+simple count ``n_models``. It supports binary and multiclass
+targets, class imbalance, label noise, explicit model names,
+and convenient, deterministic column naming.
+
+Parameters
+----------
+n_samples : int, default=600
+    Number of rows to generate.
+
+n_features : int, default=10
+    Total number of feature columns.
+
+n_classes : int, default=2
+    Number of classes. Use ``2`` for binary classification
+    and values greater than 2 for multiclass.
+
+weights : list of float or None, default=None
+    Class priors that should sum (approximately) to 1. If
+    ``None``, classes are (approximately) balanced.
+
+class_sep : float, default=1.0
+    Separation between classes in feature space. Larger
+    values create an easier problem.
+
+flip_y : float, default=0.0
+    Fraction of labels to randomly flip as label noise.
+    Must be in ``[0, 1]``.
+
+informative_frac : float, default=0.6
+    Fraction of features that are informative. Must be in
+    ``[0, 1]`` and should satisfy
+    ``informative_frac + redundant_frac <= 1`` [1]_.
+
+redundant_frac : float, default=0.2
+    Fraction of features that are linear combinations of
+    informative features. Must be in ``[0, 1]`` and should
+    satisfy
+    ``informative_frac + redundant_frac <= 1``.
+
+seed : int or None, default=42
+    Random seed for reproducibility. ``None`` uses
+    non-deterministic entropy.
+
+n_models : int, default=2
+    Number of model outputs to synthesize. If
+    ``model_profiles`` is provided, only the first
+    ``n_models`` entries (in insertion order) are used.
+
+model_profiles : dict or None, default=None
+    Optional per-model configuration. Keys are base model
+    names and values are dicts describing behavior (e.g.,
+    logit bias, noise level, calibration skew, thresholding
+    policy). The exact keys supported depend on the
+    implementation. If ``None``, built-in defaults are used.
+
+model_names : list of str or None, default=None
+    Display names for the first ``k`` models, where
+    ``k = len(model_names)``. When provided, the probability
+    and (for binary) label columns for those models are
+    named **exactly** as given (no prefixes). Remaining
+    models (if any) use prefixed, sanitized names. Extra
+    names beyond ``n_models`` are ignored with a warning.
+
+true_col : str, default="y"
+    Column name for the ground-truth labels.
+
+prefix_label : str, default="pred"
+    Prefix for auto-named discrete label columns (only used
+    when a user name is not supplied or when multiclass
+    compat columns are requested).
+
+prefix_proba : str, default="proba"
+    Prefix for auto-named probability columns (only used
+    when a user name is not supplied).
+
+add_compat_cols : bool, default=False
+    If ``True`` and multiclass, add lightweight
+    compatibility columns that some plotting utilities
+    expect (e.g., ``yt`` as an alias of ``true_col`` and
+    one ``yp_<model>`` column per model with the argmax
+    prediction). Has no effect for pure binary unless the
+    implementation chooses to add aliases.
+
+include_binary_pred_cols : bool, default=False
+    If ``True`` and ``n_classes == 2``, add one discrete
+    label column per model in addition to probabilities.
+    Column names follow the explicit ``model_names`` when
+    available, otherwise use ``f"{prefix_label}_<name>"``.
+
+as_frame : bool, default=False
+    If ``True``, return a ``pandas.DataFrame`` with tidy
+    columns. Otherwise return a ``sklearn.utils.Bunch``.
+
+Returns
+-------
+pandas.DataFrame or sklearn.utils.Bunch
+    If ``as_frame=True``:
+        
+        A DataFrame with columns:
+            
+        ``[true_col] + feature_names + proba/label columns``.
+        For binary, each model typically contributes a
+        single probability column interpreted as the
+        positive-class probability. For multiclass, each
+        model contributes one probability column per class
+        (e.g., ``name_0, name_1, ...``), plus optional
+        compatibility columns if requested.
+        
+    If ``as_frame=False``:
+        
+        A Bunch with fields:
+            
+            ``frame`` : the same DataFrame,
+            ``data`` : ndarray containing model outputs
+            (shape and content depend on configuration),
+            ``feature_names`` : list of str,
+            ``target_names`` : list of class labels or
+            integers,
+            ``target`` : ndarray of shape ``(n_samples,)``,
+            ``model_names`` : list of display names,
+            ``proba_columns`` : list of probability column
+            labels (if available),
+            ``label_columns`` : list of discrete label
+            column labels (if available),
+            ``DESCR`` : short description.
+
+Raises
+------
+ValueError
+    If class priors are invalid, if fractions are outside
+    ``[0, 1]`` or sum to more than 1, if
+    ``model_names`` length exceeds ``n_models`` in an
+    incompatible way, or if other shape checks fail.
+
+Notes
+-----
+- Dicts preserve insertion order. Model order follows
+  ``model_profiles`` keys, or built-in defaults if profiles
+  are not provided.
+- When ``model_names`` is given, those names are used as
+  **column labels** verbatim for the first ``k`` models,
+  allowing clean DataFrames and legends downstream.
+- Probability column layout differs between binary and
+  multiclass. In binary, one column per model is typical.
+  In multiclass, one column per class per model is common,
+  using class indices ``0..n_classes-1`` unless the
+  implementation defines another convention [2]_.
+
+Examples
+--------
+Binary classification with two named models and explicit
+label columns.
+
+>>> df = make_classification_data(
+...     n_samples=400,
+...     n_features=8,
+...     n_classes=2,
+...     n_models=2,
+...     model_names=["Good", "Biased"],
+...     include_binary_pred_cols=True,
+...     as_frame=True,
+...     seed=7,
+... )
+>>> [c for c in df.columns if c.startswith("Good")][:1]
+['Good']
+
+Multiclass with three models and compatibility columns.
+
+>>> df = make_classification_data(
+...     n_samples=600,
+...     n_features=12,
+...     n_classes=4,
+...     n_models=3,
+...     add_compat_cols=True,
+...     as_frame=True,
+... )
+>>> any(c.startswith("yp_") for c in df.columns)
+True
+
+See Also
+--------
+sklearn.datasets.make_classification
+    Classic feature generator for classification problems.
+sklearn.metrics
+    Utilities to evaluate classification (e.g., AUC,
+    log-loss, accuracy, F1).
+
+References
+----------
+
+.. [1] Bishop, C.
+       Pattern Recognition and Machine Learning.
+       Springer, 2006.
+.. [2] Pedregosa et al.
+       Scikit-learn: Machine Learning in Python.
+       JMLR 12, 2825–2830, 2011.
+"""
+
+
+# --- helpers -----
+def _resolve_model_labels(
+    base_names: list[str],
+    user_names: list[str] | None,
+    prefix: str,
+) -> tuple[list[str], list[str]]:
+    """
+    Map model display names and column names.
+
+    - If a user name exists for index i -> use it as display *and* column.
+    - If missing -> display = base name; column = prefix + snake(base name).
+    - Extra user names are ignored with a warning.
+    """
+    disp: list[str] = []
+    cols: list[str] = []
+
+    def _snake(name: str) -> str:
+        s = "".join(ch if ch.isalnum() else "_" for ch in str(name))
+        while "__" in s:
+            s = s.replace("__", "_")
+        return s.strip("_")
+
+    n = len(base_names)
+    m = len(user_names) if user_names else 0
+    if user_names and m > n:
+        warnings.warn(
+            (
+                "Received more model_names than models. "
+                "Extra names will be ignored."
+            ),
+            stacklevel=2,
+        )
+
+    for i, bname in enumerate(base_names):
+        if user_names and i < m and user_names[i]:
+            name = str(user_names[i])
+            disp.append(name)
+            cols.append(name)  # <-- exact, no prefix
+        else:
+            disp.append(bname)
+            cols.append(f"{prefix}{_safe_name(bname)}")
+
+    return disp, cols
+
+
+def _softmax(z: np.ndarray) -> np.ndarray:
+    z = z - z.max(axis=1, keepdims=True)
+    e = np.exp(z)
+    s = e.sum(axis=1, keepdims=True)
+    return e / np.clip(s, 1e-12, None)
+
+
+def _sigmoid(z: np.ndarray) -> np.ndarray:
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+def _expand_param(
+    param_value: Any, n_models: int, param_name: str
+) -> list[Any]:
+    """
+    Expands a single parameter value to a list for each model.
+
+    If the parameter is already a list, it validates its length, issues a
+    warning on mismatch, and handles it by padding or truncating.
+    """
+    if not isinstance(param_value, list):
+        # It's a single value, so we broadcast it for each model.
+        return [param_value] * n_models
+
+    # It's a list, so we check the length.
+    current_len = len(param_value)
+
+    if current_len == n_models:
+        # The length is perfect, return as is.
+        return param_value
+
+    elif current_len < n_models:
+        # The list is too short.
+        warnings.warn(
+            f"Length of `{param_name}` ({current_len}) is less than "
+            f"`n_models` ({n_models}). Padding with the last value.",
+            UserWarning,
+            stacklevel=2,
+        )
+        # Pad the list by repeating the last element.
+        padding_needed = n_models - current_len
+        last_value = param_value[-1] if current_len > 0 else None
+        return param_value + [last_value] * padding_needed
+
+    else:  # current_len > n_models
+        # The list is too long.
+        warnings.warn(
+            f"Length of `{param_name}` ({current_len}) is greater than "
+            f"`n_models` ({n_models}). Truncating the extra values.",
+            UserWarning,
+            stacklevel=2,
+        )
+        # Truncate the list to the correct length.
+        return param_value[:n_models]
+
+
+def _safe_name(s: str) -> str:
+    # turn any string into a simple identifier for column names
+    s = re.sub(r"\W+", "_", str(s).strip())
+    return s.strip("_") or "model"

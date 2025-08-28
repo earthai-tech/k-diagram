@@ -1,122 +1,144 @@
 .. _lab_quickstart:
 
-==================
-Quick Start Guide
-==================
+=======================================================
+Quick Start: Comparing Two Models with a Radar Chart
+=======================================================
 
-This guide provides a minimal, runnable example to get you started
-with `k-diagram`. We'll generate some sample data and create our
-first diagnostic polar plot: the **Anomaly Magnitude** plot.
+Welcome to `k-diagram`! This guide provides a fast, hands-on
+introduction to the library by tackling a common, real-world task:
+**comparing two competing forecast models to see which one is better.**
 
-This plot helps identify where actual values fall outside predicted
-uncertainty intervals and visualizes the magnitude of those errors.
+We'll use one of ``k-diagram``'s most powerful visualizations—the
+polar regression performance plot (or "radar chart")—to see the
+strengths and weaknesses of each model at a glance.
 
-Setup and Example
------------------
+This guide demonstrates how to create the exact same plot using both
+the **Python API** and the **Command-Line Interface (CLI)**.
 
-1.  **Import Libraries:**
-    We need `kdiagram`, `pandas` for data handling, and `numpy` for
-    data generation.
+---------------------------
+Part 1: The Python API
+---------------------------
 
-2.  **Generate Sample Data:**
-    We create a simple DataFrame with actual values and corresponding
-    prediction interval bounds (e.g., 10th and 90th percentiles).
-    Crucially, we'll ensure some 'actual' values fall outside these
-    bounds to simulate prediction anomalies.
+The most flexible way to use ``k-diagram`` is within a Python script
+or notebook.
 
-3.  **Create the Plot:**
-    Call `kd.plot_anomaly_magnitude`, specifying the columns for
-    actual values and the interval bounds.
+**Code**
+^^^^^^^^
+The code below performs three simple steps:
 
-Copy and run the following Python code:
+1.  Generates a sample dataset for two models ("Baseline" and
+    "Upgraded") using a helpful function from our ``datasets`` module.
+2.  Saves the data to a CSV file, which we'll use later with the CLI.
+3.  Calls ``kd.plot_regression_performance`` to generate our comparison
+    chart.
 
 .. code-block:: python
    :linenos:
 
    import kdiagram as kd
-   import pandas as pd
-   import numpy as np
-   import matplotlib.pyplot as plt # Often needed alongside plotting libs
+   import matplotlib.pyplot as plt
 
-   # 1. Generate Sample Data
-   np.random.seed(42) # for reproducible results
-   n_points = 180
-   data = pd.DataFrame({'sample_id': range(n_points)})
-
-   # Create base actual values and interval bounds
-   data['actual'] = np.random.normal(loc=20, scale=5, size=n_points)
-   data['q10'] = data['actual'] - np.random.uniform(2, 6, size=n_points)
-   data['q90'] = data['actual'] + np.random.uniform(2, 6, size=n_points)
-
-   # Introduce some anomalies (points outside the interval)
-   # Make ~10% under-predictions
-   under_indices = np.random.choice(n_points, size=n_points // 10, replace=False)
-   data.loc[under_indices, 'actual'] = data.loc[under_indices, 'q10'] - \
-                                       np.random.uniform(1, 5, size=len(under_indices))
-
-   # Make ~10% over-predictions (avoiding indices already used)
-   available_indices = list(set(range(n_points)) - set(under_indices))
-   over_indices = np.random.choice(available_indices, size=n_points // 10, replace=False)
-   data.loc[over_indices, 'actual'] = data.loc[over_indices, 'q90'] + \
-                                      np.random.uniform(1, 5, size=len(over_indices))
-
-   print("Sample Data Head:")
-   print(data.head())
-   print(f"\nTotal points: {len(data)}")
-
-   # 2. Create the Anomaly Magnitude Plot
-   print("\nGenerating Anomaly Magnitude plot...")
-   ax = kd.plot_anomaly_magnitude(
-       df=data,
-       actual_col='actual',
-       q_cols=['q10', 'q90'], # Provide lower and upper bounds as a list
-       title="Quick Start: Anomaly Magnitude Example",
-       cbar=True,            # Show color bar indicating magnitude
-       verbose=1             # Print summary of anomalies found
+   # 1. Generate sample data for two competing models
+   # This single function replaces 20+ lines of manual data creation!
+   import kdiagram as kd
+   import matplotlib.pyplot as plt
+   
+   # 1. Generate sample data for two competing models
+   # We call the function with `as_frame=True` to get a pandas DataFrame.
+   data = kd.datasets.make_multi_model_quantile_data(
+       n_models=2,
+       model_names=['Baseline', 'Upgraded'],
+       seed=42,
+       as_frame=True
    )
 
-   # The plot is displayed automatically by default
-   # Alternatively, save it using savefig:
-   # kd.plot_anomaly_magnitude(..., savefig="quickstart_anomaly.png")
+   # 2. Save the data so we can use it with the CLI in Part 2
+   data.to_csv("quickstart_data.csv", index=False)
+   print("Sample data created and saved to quickstart_data.csv")
 
-   # Optional: Explicitly show plot if needed in some environments
-   # plt.show()
+   # 3. Create the comparison plot and display it
+   # The plot function takes NumPy arrays, so we extract them from the DataFrame.
+   # We'll use the median (q0.5) as the point prediction for each model.
+   print("\nGenerating plot from Python API...")
+   ax = kd.plot_regression_performance(
+       y_true=data['y_true'].values,
+       # Pass each prediction series as a separate argument
+       y_preds=[
+           data['pred_Baseline_q0.5'].values,
+           data['pred_Upgraded_q0.5'].values
+       ],
+       names=['Baseline', 'Upgraded'],
+       # No need to specify metrics, 'auto' will select them!
+       title="Model Comparison: Baseline vs. Upgraded", 
+       metric_labels={
+       'r2': 'R²', # renamed  for a clear interpretation 
+       'neg_mean_absolute_error': 'MAE',
+       'neg_root_mean_squared_error': 'RMSE',}
+   )
+   )
 
-Expected Output
----------------
+   plt.show()
 
-Running the code above will first print the head of the generated
-DataFrame and a summary of detected anomalies. It will then display
-a polar plot similar to this:
 
-.. image:: /images/quickstart_anomaly_magnitude.png
-   :alt: Example Anomaly Magnitude Plot
+**Expected Output**
+^^^^^^^^^^^^^^^^^^^
+Running this script will print a confirmation message and then display
+a polar radar chart similar to this one:
+
+.. image:: /images/quickstart_radar_chart.png
+   :alt: Example Regression Performance Radar Chart
    :align: center
    :width: 80%
 
 
-**Interpreting the Plot:**
 
-* **Angles:** Each point around the circle represents a sample from
-  the DataFrame (ordered by index in this case).
-* **Radius:** The distance from the center indicates the magnitude of
-  the anomaly (how far the actual value was from the interval bound).
-  Points perfectly within the interval are not shown.
-* **Color:** Points are colored based on the type of anomaly:
+------------------------------------------
+Part 2: The Command-Line (CLI) Alternative
+------------------------------------------
 
-  * Blue tones (default) indicate **under-predictions** (actual < q10).
-  * Red tones (default) indicate **over-predictions** (actual > q90).
-  * The color intensity corresponds to the anomaly magnitude shown
-    on the color bar.
+Prefer the command line for quick tasks? You can create the exact same
+plot without writing any Python. Since we already saved our data to
+``quickstart_data.csv``, just run the following command in your
+terminal:
 
+.. code-block:: bash
+
+   k-diagram plot-regression-performance quickstart_data.csv \
+     --y-true actual \
+     --pred Baseline Upgraded \
+     --title "Model Comparison (from CLI)" \
+     --savefig quickstart_cli_plot.png
+
+This will save the plot directly to a file named
+``quickstart_cli_plot.png``.
+
+
+
+-------------------------
+Interpreting the Plot
+-------------------------
+
+This radar chart provides a holistic view of model performance:
+
+* **Axes**: Each axis represents a different performance metric (like
+  R², MAE, RMSE). For error-based metrics, lower is better, so the
+  scores are inverted to ensure **outward is always better**.
+* **Shape**: Each colored shape represents a model. A model with a
+  **larger overall area** is a better all-around performer.
+* **Analysis**: From the plot, we can see the "Upgraded" model (in
+  yellow) outperforms the "Baseline" model on every single metric.
+
+
+-------------
 Next Steps
-----------
+-------------
 
-Congratulations! You've created your first k-diagram plot.
+Congratulations! You've created your first k-diagram plot and seen
+how easy it is to compare models.
 
 * Explore more plot types and their capabilities in the
-  :doc:`Plot Gallery <gallery/index>`
+  :doc:`Plot Gallery <gallery/index>`.
 * Learn about the concepts behind the visualizations in the
-  :doc:`User Guide <user_guide/index>`
-* Refer to the :doc:`API Reference <api>` documentation for detailed function
+  :doc:`User Guide <user_guide/index>`.
+* Refer to the :doc:`API Reference <api>` for detailed function
   signatures and parameters.

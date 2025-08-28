@@ -8,11 +8,18 @@ Beyond evaluating model predictions, it's often crucial to understand
 the features themselves. The commands on this page provide powerful,
 feature-centric visualizations. They help you explore how features
 interact to influence a target and compare feature importance
-profiles across different models or datasets :footcite:p:`kouadiob2025.
+profiles across different models or datasets :footcite:p:`kouadiob2025`.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: List of Commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-feature-fingerprint <cli_plot_feature_fingerprint>`
+     - Creates a radar chart comparing feature importance profiles.
+   * - :ref:`plot-feature-interaction <cli_plot_feature_interaction>`
+     - Creates a polar heatmap to visualize feature interactions.
 
 -------------------
 Common Conventions
@@ -23,7 +30,8 @@ specified as a positional argument or via ``-i/--input``. To save a
 plot, simply add the ``--savefig out.png`` flag. For detailed help on
 any command, run it with the ``-h`` flag.
 
----
+
+.. _cli_plot_feature_interaction: 
 
 --------------------------
 plot-feature-interaction
@@ -65,7 +73,8 @@ interaction of the hour of the day and the amount of cloud cover:
      --title "Solar Output by Hour and Cloud Cover" \
      --savefig solar_interaction.png
 
----
+
+.. _cli_plot_feature_fingerprint: 
 
 --------------------------
 plot-feature-fingerprint
@@ -132,7 +141,6 @@ just add the ``--transpose`` flag.
      --title "Transposed Fingerprint" \
      --savefig fingerprint_transposed.png
 
----
 
 -------------------------
 Troubleshooting & Tips

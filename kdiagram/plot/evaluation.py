@@ -2,7 +2,7 @@
 #   Author: LKouadio <etanoyau@gmail.com>
 
 import warnings
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -191,6 +191,7 @@ Positive Rate (FPR) at various threshold settings.
    \text{FPR} = \frac{FP}{FP + TN}
 
 This function adapts the concept to a polar plot:
+    
 - The **angle (θ)** is mapped to the False Positive Rate,
   spanning from 0 at 0° to 1 at 90°.
 - The **radius (r)** is mapped to the True Positive Rate,
@@ -780,6 +781,7 @@ various threshold settings.
    \text{Recall} = \frac{TP}{TP + FN}
 
 This function adapts the concept to a polar plot:
+    
 - The **angle (θ)** is mapped to **Recall**, spanning from 0
   at 0° to 1 at 90°.
 - The **radius (r)** is mapped to **Precision**, spanning from 0
@@ -1280,6 +1282,10 @@ def plot_regression_performance(
     add_to_defaults: bool = False,
     metric_labels: Optional[Union[dict[str, str], bool, list]] = None,
     higher_is_better: Optional[dict[str, bool]] = None,
+    norm: Literal["per_metric", "global", "none"] = "per_metric",
+    global_bounds: Optional[dict[str, tuple[float, float]]] = None,
+    min_radius: float = 0.02,
+    clip_to_bounds: bool = True,
     title: str = "Regression Model Performance",
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
@@ -1289,18 +1295,25 @@ def plot_regression_performance(
     savefig: Optional[str] = None,
     dpi: int = 300,
 ):
-    # --- Input Validation and Data Preparation ---
+    # --- 1. Determine Mode and Calculate Scores ---
+    # The function operates in two modes:
+    # a) "Values Mode": Pre-computed scores are provided.
+    # b) "Data Mode": Scores are computed from y_true and y_preds.
+
     if metric_values is not None:
-        if y_true is not None or y_preds:
+        # --- a) Values Mode: Use pre-computed scores ---
+        if (y_true is not None) or y_preds:
             raise ValueError(
-                "If `metric_values` is provided, `y_true`"
-                " and `y_preds` must be None."
+                "If `metric_values` is provided, `y_true` and "
+                "`y_preds` must be None."
             )
         scores = metric_values
         metric_names = list(scores.keys())
-        # Infer number of models from the first metric's list of scores
-        n_models = len(list(scores.values())[0])
-    elif y_true is not None and y_preds:
+        # Infer number of models from the first metric's list
+        n_models = len(next(iter(scores.values())))
+
+    elif (y_true is not None) and y_preds:
+        # --- b) Data Mode: Compute scores from data ---
         n_models = len(y_preds)
         default_metrics = [
             "r2",
@@ -1312,59 +1325,123 @@ def plot_regression_performance(
             metrics_to_use = default_metrics
         else:
             user_metrics = columns_manager(metrics)
-            if add_to_defaults:
-                metrics_to_use = default_metrics + user_metrics
-            else:
-                metrics_to_use = user_metrics
-
+            metrics_to_use = (
+                default_metrics + user_metrics
+                if add_to_defaults
+                else user_metrics
+            )
+        # Helper function calculates scores, ensuring higher is better
         scores = _get_scores(
-            y_true, y_preds, metrics_to_use, higher_is_better
+            y_true,
+            list(y_preds),
+            metrics_to_use,
+            higher_is_better,
         )
         metric_names = list(scores.keys())
     else:
         raise ValueError(
-            "Either `metric_values` or both `y_true`"
-            " and `y_preds` must be provided."
+            "Either `metric_values` or both `y_true` and "
+            "`y_preds` must be provided."
         )
 
+    # Generate default model names if not provided
     if not names:
-        names = [f"Model {i+1}" for i in range(n_models)]
+        names = [f"Model {i + 1}" for i in range(n_models)]
 
-    # --- Score Normalization ---
-    # Normalize scores for each metric so
-    # that 0 is the worst and 1 is the best
-    normalized_scores = {}
-    for metric, values in scores.items():
-        values = np.asarray(values)
-        min_val, max_val = values.min(), values.max()
-        if (max_val - min_val) > 1e-9:
-            # Since _get_scores ensures higher is better, we no longer need to
-            # check for 'neg' or 'error' in the metric name here.
+    # --- 2. Normalize Scores to Determine Bar Radii ---
+    # This section translates raw scores into radii for the bars,
+    # based on the chosen normalization strategy.
+    if norm not in {"per_metric", "global", "none"}:
+        raise ValueError(
+            "`norm` must be one of {'per_metric','global','none'}."
+        )
 
-            # # If the metric is an error (lower is better), invert the scale
-            # if "neg" in metric or "error" in metric:
-            #     normalized = 1 - (values - min_val) / (max_val - min_val)
-            # else: # Higher is better
-            normalized = (values - min_val) / (max_val - min_val)
-        else:  # All values are the same
-            normalized = np.ones_like(values)
-        normalized_scores[metric] = normalized
+    normalized: dict[str, np.ndarray] = {}
 
-    # --- Plotting Setup ---
+    if norm == "per_metric":
+        # Scale each metric independently to the range [0, 1].
+        # 'Best' is 1, 'Worst' is 0 for that specific metric.
+        for m, values in scores.items():
+            v = np.asarray(values, dtype=float)
+            vmin, vmax = float(v.min()), float(v.max())
+            if (vmax - vmin) > 1e-12:
+                r = (v - vmin) / (vmax - vmin)
+                # Ensure even the worst bar is slightly visible
+                r = np.maximum(r, min_radius)
+            else:
+                r = np.ones_like(v)  # All scores are equal
+            normalized[m] = r
+
+        radial_min, radial_max = 0.0, 1.0
+        tick_vals = [0, 0.25, 0.5, 0.75, 1.0]
+        tick_lbls = ["Worst", "0.25", "0.5", "0.75", "Best"]
+
+    elif norm == "global":
+        # Scale each metric to [0, 1] based on fixed,
+        # user-provided global bounds.
+        gb = global_bounds or {}
+        for m, values in scores.items():
+            v = np.asarray(values, dtype=float)
+            if m in gb:
+                gmin, gmax = map(float, gb[m])
+            else:
+                # Fallback to per-metric bounds if not provided
+                gmin, gmax = float(v.min()), float(v.max())
+                warnings.warn(
+                    f"`global_bounds` missing for metric '{m}'. "
+                    "Using current data bounds instead.",
+                    stacklevel=2,
+                )
+
+            if gmax <= gmin:
+                r = np.ones_like(v)
+            else:
+                if clip_to_bounds:
+                    v = np.clip(v, gmin, gmax)
+                r = (v - gmin) / (gmax - gmin)
+                r = np.maximum(r, min_radius)
+            normalized[m] = r
+
+        radial_min, radial_max = 0.0, 1.0
+        tick_vals = [0, 0.25, 0.5, 0.75, 1.0]
+        tick_lbls = ["Worst", "0.25", "0.5", "0.75", "Best"]
+
+    else:  # norm == "none"
+        # Plot the raw score values directly without scaling.
+        for m, values in scores.items():
+            normalized[m] = np.asarray(values, dtype=float)
+
+        # Determine axis limits from all raw values
+        all_vals = np.concatenate([normalized[m] for m in metric_names])
+        radial_min = float(all_vals.min())
+        radial_max = float(all_vals.max())
+        if np.isclose(radial_max, radial_min):
+            radial_min -= 0.5
+            radial_max += 0.5
+
+        tick_vals = np.linspace(radial_min, radial_max, 5).tolist()
+        tick_lbls = [f"{t:.2g}" for t in tick_vals]
+
+    # --- 3. Create the Polar Plot ---
     fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+        figsize=figsize,
+        subplot_kw={"projection": "polar"},
     )
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, n_models))
 
+    # Prepare angles and widths for the grouped bars
     n_metrics = len(metric_names)
     group_angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False)
-    bar_width = (2 * np.pi / n_metrics) / (n_models + 1)
+    bar_width = (2 * np.pi / n_metrics) / (len(names) + 1)
 
-    # --- Plot Bars ---
+    # Get a color for each model
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, len(names)))
+
+    # Draw the bars for each model
     for i, name in enumerate(names):
-        radii = [normalized_scores[metric][i] for metric in metric_names]
-        offsets = group_angles + (i - n_models / 2 + 0.5) * bar_width
+        radii = [normalized[m][i] for m in metric_names]
+        # Calculate the angular offset for each bar in the group
+        offsets = group_angles + ((i - len(names) / 2 + 0.5) * bar_width)
         ax.bar(
             offsets,
             radii,
@@ -1374,57 +1451,71 @@ def plot_regression_performance(
             label=name,
         )
 
-    # --- Plot Performance Rings ---
+    # --- 4. Add Formatting and Rings ---
+    # Draw the 'Best' and 'Worst' performance rings for reference
+    theta = np.linspace(0, 2 * np.pi, 200)
     ax.plot(
-        np.linspace(0, 2 * np.pi, 100),
-        [1.0] * 100,
+        theta,
+        np.full_like(theta, radial_max),
         color="green",
         linestyle="-",
         lw=1.5,
         label="Best Performance",
     )
     ax.plot(
-        np.linspace(0, 2 * np.pi, 100),
-        [0.0] * 100,
+        theta,
+        np.full_like(theta, radial_min),
         color="red",
         linestyle="--",
         lw=1.5,
         label="Worst Performance",
     )
 
-    # --- Formatting ---
+    # Set titles, ticks, and labels
     ax.set_title(title, fontsize=16, y=1.1)
     ax.set_xticks(group_angles)
 
-    # --- NEW: Smart Label Handling ---
+    # Handle custom metric labels
     if metric_labels is False or (
         isinstance(metric_labels, list) and not metric_labels
     ):
-        # Mute labels if False or an empty list is provided
         ax.set_xticklabels([])
     elif isinstance(metric_labels, dict):
-        # Rename labels using the provided dictionary
-        display_names = [
-            metric_labels.get(name, name) for name in metric_names
-        ]
-        ax.set_xticklabels(display_names, fontsize=10)
+        ax.set_xticklabels(
+            [metric_labels.get(m, m) for m in metric_names],
+            fontsize=10,
+        )
     else:
-        # Default behavior: show the original metric names
         ax.set_xticklabels(metric_names, fontsize=10)
 
-    # ax.set_xticklabels(metric_names, fontsize=10)
-    ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
-    ax.set_yticklabels(["Worst", "0.25", "0.5", "0.75", "Best"])
-    ax.set_ylim(0, 1.05)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
-    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    # Set radial ticks and limits
+    ax.set_yticks(tick_vals)
+    ax.set_yticklabels(tick_lbls)
+    ax.set_ylim(radial_min, radial_max)
 
+    # Place legend outside the plot area for clarity
+    ax.legend(
+        loc="upper right",
+        bbox_to_anchor=(1.35, 1.1),
+    )
+
+    # Apply grid styling and optional masking
+    set_axis_grid(
+        ax,
+        show_grid=show_grid,
+        grid_props=grid_props,
+    )
     if mask_radius:
         ax.set_yticklabels([])
 
+    # --- 5. Finalize and Show/Save ---
     plt.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.savefig(
+            savefig,
+            dpi=dpi,
+            bbox_inches="tight",
+        )
         plt.close(fig)
     else:
         plt.show()
@@ -1477,6 +1568,37 @@ higher_is_better : dict of {str: bool}, optional
     values should be ``True`` (higher is better) or ``False``
     (lower is better). This overrides the default behavior for
     both string and callable metrics.    
+norm : {'per_metric', 'global', 'none'}, default='per_metric'
+    The strategy for normalizing raw metric scores into bar radii.
+
+    - ``'per_metric'``: (Default) Normalizes scores for each
+      metric independently to the range [0, 1]. The best-
+      performing model on a given metric gets a radius of 1,
+      and the worst gets 0. This is best for comparing the
+      *relative* performance of models.
+    - ``'global'``: Normalizes scores using fixed, absolute
+      bounds defined in the ``global_bounds`` parameter. This is
+      useful for comparing models against a consistent,
+      predefined scale.
+    - ``'none'``: Plots the raw, un-normalized metric scores
+      directly. Use with caution, as metrics with different
+      scales can make the plot difficult to interpret.
+
+global_bounds : dict of {str: (float, float)}, optional
+    A dictionary providing fixed `(min, max)` bounds for each
+    metric when using ``norm='global'``. The dictionary keys
+    should be the metric names (e.g., 'r2') and the values
+    should be a tuple of the worst and best possible scores.
+    For example, ``{'r2': (0.0, 1.0)}``.
+min_radius : float, default=0.02
+    A small minimum radius to ensure that even the worst-
+    performing bars (with a normalized score of 0) remain
+    slightly visible on the plot.
+clip_to_bounds : bool, default=True
+    If ``True`` and ``norm='global'``, any score that falls
+    outside the range specified in ``global_bounds`` will be
+    clipped to that range before normalization. If ``False``,
+    scores can result in radii less than 0 or greater than 1.
 title : str, default="Regression Model Performance"
     The title for the plot.
 figsize : tuple of (float, float), default=(8, 8)

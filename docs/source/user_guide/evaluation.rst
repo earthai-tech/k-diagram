@@ -300,26 +300,25 @@ The plot makes it easy to identify a model's strengths and
 weaknesses on a per-class basis.
 
 * **Angle**: Each major angular sector represents a **True
-    Class** (e.g., "True Class A").
+  Class** (e.g., "True Class A").
 * **Bars**: Within each sector, the different colored bars show
-    how the samples from that true class were **predicted**. The
-    legend indicates which color corresponds to which predicted
-    class.
+  how the samples from that true class were **predicted**. The
+  legend indicates which color corresponds to which predicted
+  class.
 * **Radius**: The length of each bar represents the **proportion**
-    (if normalized) or **count** of samples.
+  (if normalized) or **count** of samples.
 * **Ideal Performance**: A good model will have tall bars that
-    match the sector's true class (e.g., the "Predicted Class A"
-    bar is tallest in the "True Class A" sector) and very short
-    bars for all other predicted classes.
+  match the sector's true class (e.g., the "Predicted Class A"
+  bar is tallest in the "True Class A" sector) and very short
+  bars for all other predicted classes.
 
 **Use Cases:**
 
 * To get a detailed, visual summary of a multiclass
-    classifier's performance.
-* To quickly identify which classes a model struggles with the
-    most.
+  classifier's performance.
+* To quickly identify which classes a model struggles with the most.
 * To understand the specific patterns of confusion between
-    classes (e.g., "Is Class A more often confused with B or C?").
+  classes (e.g., "Is Class A more often confused with B or C?").
 
 
 **Example**
@@ -381,21 +380,21 @@ classifier's performance, making it easy to spot imbalances and
 trade-offs.
 
 * **Angle**: Each major angular sector represents a **True
-    Class** (e.g., "Class Alpha").
+  Class** (e.g., "Class Alpha").
 * **Bars**: Within each sector, the three colored bars represent
-    the key metrics: **Precision**, **Recall**, and **F1-Score**.
+  the key metrics: **Precision**, **Recall**, and **F1-Score**.
 * **Radius**: The length of each bar represents the score for
-    that metric, from 0 at the center to 1 at the edge. A good
-    model will have consistently tall bars across all metrics and
-    classes.
+  that metric, from 0 at the center to 1 at the edge. A good
+  model will have consistently tall bars across all metrics and
+  classes.
 
 **Use Cases:**
 
 * To get a detailed, per-class summary of a multiclass
-    classifier's performance beyond a single accuracy score.
+  classifier's performance beyond a single accuracy score.
 * To diagnose the Precision vs. Recall trade-off for each class.
 * To identify which specific classes a model is struggling to
-    predict correctly, especially in imbalanced datasets.
+  predict correctly, especially in imbalanced datasets.
 
 
 **Example**
@@ -440,26 +439,26 @@ The plot provides a detailed breakdown of a probabilistic
 forecast's performance across its entire distribution.
 
 * **Angle**: Represents the **Quantile Level**, sweeping from 0
-    to 1 around the circle.
+  to 1 around the circle.
 * **Radius**: The radial distance from the center represents the
-    **Average Pinball Loss** for that quantile. A **smaller radius
-    is better**, indicating a more accurate forecast for that
-    specific quantile.
+  **Average Pinball Loss** for that quantile. A **smaller radius
+  is better**, indicating a more accurate forecast for that
+  specific quantile.
 * **Shape**: A good forecast will have a small and relatively
-    symmetrical shape close to the center. An asymmetrical shape
-    can reveal if the model is better at predicting the lower
-    tail of the distribution than the upper tail, or vice-versa.
+  symmetrical shape close to the center. An asymmetrical shape
+  can reveal if the model is better at predicting the lower
+  tail of the distribution than the upper tail, or vice-versa.
 
 
 **Use Cases:**
 
 * To get a granular, per-quantile view of a model's performance,
-    which is more detailed than an overall score like the CRPS.
+  which is more detailed than an overall score like the CRPS.
 * To diagnose if a model is better at predicting the center of a
-    distribution (e.g., the median, q=0.5) versus its tails
-    (e.g., q=0.1 or q=0.9).
+  distribution (e.g., the median, q=0.5) versus its tails
+  (e.g., q=0.1 or q=0.9).
 * To compare the per-quantile performance of multiple models by
-    overlaying their plots.
+  overlaying their plots.
 
 
 **Example**

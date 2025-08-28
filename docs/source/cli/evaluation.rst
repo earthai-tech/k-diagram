@@ -9,10 +9,27 @@ evaluation plots. These tools help you move beyond simple error scores
 and visualize the performance of classifiers and regressors, often
 using polar coordinates to make multi-model comparisons intuitive.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: Available Commands
+   :widths: 30 70
+   :header-rows: 1
 
+   * - Command
+     - Description
+   * - :ref:`plot-polar-roc <cli_plot_polar_roc>`
+     - Draws a Polar Receiver Operating Characteristic (ROC) curve.
+   * - :ref:`plot-polar-pr-curve <cli_plot_polar_pr_curve>`
+     - Draws a Polar Precision-Recall (PR) curve for imbalanced data.
+   * - :ref:`plot-polar-cm <cli_plot_polar_confusion_matrix>`
+     - Visualizes a binary confusion matrix on a polar plot.
+   * - :ref:`plot-polar-cm-in <cli_plot_polar_confusion_matrix_in>`
+     - Visualizes a multiclass confusion matrix.
+   * - :ref:`plot-polar-cr <cli_plot_polar_classification_report>`
+     - Displays a per-class report of Precision, Recall, and F1-Score.
+   * - :ref:`plot-pinball-loss <cli_plot_pinball_loss>`
+     - Visualizes the Pinball Loss for each quantile of a forecast.
+   * - :ref:`plot-regression-performance <cli_plot_regression_performance>`
+     - Visualizes multiple regression models across several metrics at once.
+     
 ----------------------
 Common CLI Conventions
 ----------------------
@@ -24,15 +41,16 @@ data and customizing the output.
   ``data.csv``) and will save the resulting plot if you provide the
   ``--savefig`` flag.
 - **Column Selection**:
+
   - ``--y-true``: **(Required)** The column containing the true,
     observed values.
   - ``--y-pred`` or ``--model NAME:COL``: Use one of these patterns to
     specify the prediction columns you want to evaluate.
   - ``--names``: Provide clean, readable names for the legend.
+  
 - **Styling**: Flags like ``--title``, ``--figsize``, and ``--cmap``
   give you control over the plot's final appearance.
 
----
 
 .. _cli_plot_polar_roc:
 
@@ -72,7 +90,6 @@ ground truth in column ``y``:
    This plot is a polar version of the output from
    :func:`sklearn.metrics.roc_curve`.
 
----
 
 .. _cli_plot_polar_pr_curve:
 
@@ -106,7 +123,6 @@ Here is a practical example:
      --title "Precision-Recall Comparison (polar)" \
      --savefig polar_pr.png
 
----
 
 .. _cli_plot_polar_confusion_matrix:
 
@@ -144,7 +160,6 @@ normalized results:
 Transitioning from binary to multiclass problems, the next command
 offers a more detailed view.
 
----
 
 .. _cli_plot_polar_confusion_matrix_in:
 
@@ -180,7 +195,6 @@ Let's visualize the performance on a 4-class problem:
 
 An alias for this command is ``plot-polar-cm-multiclass``.
 
----
 
 .. _cli_plot_polar_classification_report:
 
@@ -215,7 +229,6 @@ Here's how you'd use it for a 3-class model:
 
 Now, let's shift from classification to quantile regression.
 
----
 
 .. _cli_plot_pinball_loss:
 
@@ -250,7 +263,6 @@ Here is a typical example:
      --title "Pinball Loss by Quantile" \
      --savefig pinball_loss.png
 
----
 
 .. _cli_plot_regression_performance:
 
@@ -258,7 +270,7 @@ Here is a typical example:
 plot-regression-performance
 -------------------------------
 
-This is a powerful "radar chart" for comparing multiple regression
+This is a "radar chart" for comparing multiple regression
 models across several metrics at once. It's an ideal tool for getting
 a holistic view of model trade-offs :footcite:p:`kouadiob2025`.
 
@@ -295,7 +307,6 @@ Here, we plot scores that were calculated elsewhere:
    negated (e.g., ``neg_mean_absolute_error``) so that higher is
    always better.
 
----
 
 -------------------------
 Troubleshooting & Tips
@@ -307,8 +318,8 @@ Troubleshooting & Tips
   flag to see its full list of options.
 - **See Also**: The commands on this page are often used together.
   For example, after finding a good model with
-  :ref:`plot-regression-performance`, you might use the plots from
-  the :doc:`context` page to inspect its errors more closely.
+  :ref:`cli_plot_regression_performance`, you might use the plots from
+  the :doc:`context/` page to inspect its errors more closely.
   
   
 .. raw:: html

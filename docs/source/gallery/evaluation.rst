@@ -58,11 +58,11 @@ misleading.
        y_pred_bad,
        names=["Good Model", "Weak Model"],
        title="Polar Precision-Recall Curve Comparison",
-       savefig="gallery/images/gallery_polar_pr_curve.png"
+       savefig="gallery/images/gallery_evaluation_plot_polar_pr_curve.png"
    )
    plt.close()
 
-.. image:: ../images/gallery_polar_pr_curve.png
+.. image:: ../images/gallery_evaluation_plot_polar_pr_curve.png
    :alt: Example of a Polar Precision-Recall Curve
    :align: center
    :width: 75%
@@ -471,7 +471,7 @@ This provides a more detailed summary than a confusion matrix alone.
 
    <hr>
 
-. _gallery_plot_pinball_loss:
+.. _gallery_plot_pinball_loss:
 
 -----------------------------
 Polar Pinball Loss

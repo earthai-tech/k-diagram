@@ -10,9 +10,22 @@ on this page are designed to diagnose the quality of these forecasts,
 helping you assess their calibration (reliability) and sharpness
 (precision) using specialized polar plots.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: Available Commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-pit-histogram <cli_plot_pit_histogram>`
+     - Assesses forecast calibration using a Polar PIT Histogram.
+   * - :ref:`plot-polar-sharpness <cli_plot_polar_sharpness>`
+     - Compares the sharpness (precision) of multiple models.
+   * - :ref:`plot-crps-comparison <cli_plot_crps_comparison>`
+     - Provides an overall performance score using the CRPS.
+   * - :ref:`plot-credibility-bands <cli_plot_credibility_bands>`
+     - Visualizes how forecast uncertainty changes with a feature.
+   * - :ref:`plot-calibration-sharpness <cli_plot_calibration_sharpness>`
+     - Shows the trade-off between calibration and sharpness.
 
 -------------------
 Common Conventions
@@ -33,7 +46,8 @@ for each model. These commands use a flexible system to handle this.
   - ``--pred-cols q10,q50,q90`` (repeatable for multiple models)
 - **Saving**: To save a plot, add the ``--savefig out.png`` flag.
 
----
+
+.. _cli_plot_pit_histogram:
 
 --------------------
 plot-pit-histogram
@@ -69,7 +83,40 @@ Here is an example using space-separated prediction columns:
      --title "PIT Calibration Histogram" \
      --savefig pit.png
 
----
+.. _cli_plot_polar_sharpness:
+
+----------------------
+plot-polar-sharpness
+----------------------
+
+A sharp forecast is a confident one, meaning its prediction intervals
+are narrow. While sharpness is desirable, it must be balanced with
+calibration. This command isolates the sharpness component by plotting
+the average interval width for each model as a point in polar space.
+The radius corresponds to the width, so models closer to the center
+are sharper (more precise) :footcite:p:`Gneiting2007b`.
+
+The usage is very similar to the CRPS comparison:
+
+.. code-block:: bash
+
+   k-diagram plot-polar-sharpness INPUT
+     --q-levels 0.1,0.5,0.9
+     --model M1:q10a,q50a,q90a
+     --model M2:q10b,q50b,q90b
+
+This example compares the sharpness of two models, A and B:
+
+.. code-block:: bash
+
+   k-diagram plot-polar-sharpness demo.csv \
+     --model A:q10_a,q50_a,q90_a \
+     --model B:q10_b,q50_b,q90_b \
+     --q-levels 0.1,0.5,0.9 \
+     --savefig sharpness_comparison.png
+
+
+.. _cli_plot_crps_comparison:
 
 ----------------------
 plot-crps-comparison
@@ -105,73 +152,7 @@ Here's a practical example comparing two models, "M1" and "M2":
      --q-levels 0.1,0.5,0.9 \
      --savefig crps_comparison.png
 
----
-
-----------------------
-plot-polar-sharpness
-----------------------
-
-A sharp forecast is a confident one, meaning its prediction intervals
-are narrow. While sharpness is desirable, it must be balanced with
-calibration. This command isolates the sharpness component by plotting
-the average interval width for each model as a point in polar space.
-The radius corresponds to the width, so models closer to the center
-are sharper (more precise) :footcite:p:`Gneiting2007b`.
-
-The usage is very similar to the CRPS comparison:
-
-.. code-block:: bash
-
-   k-diagram plot-polar-sharpness INPUT
-     --q-levels 0.1,0.5,0.9
-     --model M1:q10a,q50a,q90a
-     --model M2:q10b,q50b,q90b
-
-This example compares the sharpness of two models, A and B:
-
-.. code-block:: bash
-
-   k-diagram plot-polar-sharpness demo.csv \
-     --model A:q10_a,q50_a,q90_a \
-     --model B:q10_b,q50_b,q90_b \
-     --q-levels 0.1,0.5,0.9 \
-     --savefig sharpness_comparison.png
-
----
-
-----------------------------
-plot-calibration-sharpness
-----------------------------
-
-This plot visualizes the fundamental trade-off between calibration and
-sharpness. It places each model on a quarter-circle where the **angle
-(θ)** represents the calibration error (0° is perfect) and the
-**radius (r)** represents the sharpness (lower is sharper). The ideal
-model would be located at the bottom-left corner (low radius, near-zero
-angle).
-
-The command synopsis is as follows:
-
-.. code-block:: bash
-
-   k-diagram plot-calibration-sharpness INPUT
-     --y-true Y_TRUE
-     --q-levels 0.1,0.5,0.9
-     --model M1:q10a,q50a,q90a
-     --model M2:q10b,q50b,q90b
-
-Let's compare a "Good" model with a "Wide" (but possibly well-calibrated) model:
-
-.. code-block:: bash
-
-   k-diagram plot-calibration-sharpness demo.csv \
-     --true-col actual \
-     --model Good:q10_good,q50_good,q90_good \
-     --model Wide:q10_wide,q50_wide,q90_wide \
-     --q-levels 0.1,0.5,0.9 \
-     --savefig calibration_vs_sharpness.png
-
----
+.. _cli_plot_credibility_bands:
 
 ------------------------
 plot-credibility-bands
@@ -207,7 +188,41 @@ Here's an example showing seasonal forecast credibility, binned by month:
      --title "Seasonal Forecast Credibility" \
      --savefig credibility_bands.png
 
----
+
+.. _cli_plot_calibration_sharpness:
+
+----------------------------
+plot-calibration-sharpness
+----------------------------
+
+This plot visualizes the fundamental trade-off between calibration and
+sharpness. It places each model on a quarter-circle where the **angle
+(θ)** represents the calibration error (0° is perfect) and the
+**radius (r)** represents the sharpness (lower is sharper). The ideal
+model would be located at the bottom-left corner (low radius, near-zero
+angle).
+
+The command synopsis is as follows:
+
+.. code-block:: bash
+
+   k-diagram plot-calibration-sharpness INPUT
+     --y-true Y_TRUE
+     --q-levels 0.1,0.5,0.9
+     --model M1:q10a,q50a,q90a
+     --model M2:q10b,q50b,q90b
+
+Let's compare a "Good" model with a "Wide" (but possibly well-calibrated) model:
+
+.. code-block:: bash
+
+   k-diagram plot-calibration-sharpness demo.csv \
+     --true-col actual \
+     --model Good:q10_good,q50_good,q90_good \
+     --model Wide:q10_wide,q50_wide,q90_wide \
+     --q-levels 0.1,0.5,0.9 \
+     --savefig calibration_vs_sharpness.png
+
 
 -------------------------
 Troubleshooting & Tips

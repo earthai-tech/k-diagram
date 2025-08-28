@@ -1,11 +1,11 @@
 .. _cli_introduction:
 
-====================================
-Welcome to the kdiagram CLI
-====================================
+====================
+Introduction - CLI
+====================
 
 Ever feel like your standard charts are missing the full story?
-Welcome to ``kdiagram``—a powerful suite of command-line tools
+Welcome to ``k-diagram``—a powerful suite of command-line tools
 designed to give you a fresh, insightful perspective on your models
 and data. We leverage the power of **polar coordinates** to turn
 complex diagnostics into beautiful, intuitive visualizations. Think of
@@ -16,8 +16,10 @@ This page is your starting point. We'll cover the core concepts that
 apply to all commands and then give you a guided tour to help you find
 the perfect plot for your task.
 
-.. tip:: A Note on Command Naming
-
+.. tip::
+   
+   **A Note on Command Naming**
+   
    Throughout this documentation, you will see the main command written
    as ``k-diagram`` (with a hyphen). However, a convenient alias
    ``kdiagram`` (without a hyphen) is also configured.
@@ -37,7 +39,7 @@ the perfect plot for your task.
 The Core Philosophy: A Shared Grammar
 ------------------------------------------
 
-The best part of the ``kdiagram`` CLI is that once you learn a few
+The best part of the ``k-diagram`` CLI is that once you learn a few
 simple patterns, you've learned the whole suite. Most commands share a
 common "grammar" for handling data, selecting columns, and styling plots.
 
@@ -114,7 +116,7 @@ The commands are organized into thematic groups based on the questions
 they help you answer. Many of these visualizations are rooted in
 specific statistical concepts like forecast verification, calibration,
 and error analysis. For a deeper dive into the theory behind the
-plots, please refer to our detailed :doc:`user_guide/mathematical_concepts`.
+plots, please refer to our detailed :doc:`../user_guide/index`.
 
 Where would you like to begin?
 
@@ -125,9 +127,9 @@ visualizing raw time series, checking correlations, and getting a
 baseline understanding of your model's errors. Effective visualization
 is the cornerstone of data analysis :footcite:p:`Hunter:2007`.
 
-- **CLI Reference**: :doc:`cli/context`
-- **User Guide**: :doc:`user_guide/context`
-- **Examples Gallery**: :doc:`gallery/context`
+- **CLI Reference**: :doc:`context/`
+- **User Guide**: :doc:`../user_guide/context`
+- **Examples Gallery**: :doc:`../gallery/context`
 
 **Model Evaluation**
 ^^^^^^^^^^^^^^^^^^^^
@@ -136,9 +138,9 @@ score, offering classic evaluation metrics like ROC/PR curves
 :footcite:p:`Powers2011`, confusion matrices, and the famous Taylor
 diagram :footcite:p:`Taylor2001` for a holistic performance summary.
 
-- **CLI Reference**: :doc:`cli/evaluation` and :doc:`cli/taylor`
-- **User Guide**: :doc:`user_guide/evaluation` and :doc:`user_guide/taylor_diagram`
-- **Examples Gallery**: :doc:`gallery/evaluation` and :doc:`gallery/taylor_diagram`
+- **CLI Reference**: :doc:`evaluation/` and :doc:`taylor_diagram/`
+- **User Guide**: :doc:`../user_guide/evaluation` and :doc:`../user_guide/taylor_diagram`
+- **Examples Gallery**: :doc:`../gallery/evaluation` and :doc:`../gallery/taylor_diagram`
 
 **Comparison & Calibration**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -147,9 +149,9 @@ tools like reliability diagrams to check if your forecast probabilities
 are well-calibrated, alongside radar charts for direct,
 multi-metric model comparisons.
 
-- **CLI Reference**: :doc:`cli/comparison`
-- **User Guide**: :doc:`user_guide/comparison`
-- **Examples Gallery**: :doc:`gallery/comparison`
+- **CLI Reference**: :doc:`comparison/`
+- **User Guide**: :doc:`../user_guide/comparison`
+- **Examples Gallery**: :doc:`../gallery/comparison`
 
 **Probabilistic Forecast Diagnostics**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -159,9 +161,9 @@ is both reliable (calibrated) and precise (sharp)
 model's uncertainty estimates are actually trustworthy using methods
 like PIT histograms and CRPS comparisons :footcite:p:`Jolliffe2012`.
 
-- **CLI Reference**: :doc:`cli/probabilistic`
-- **User Guide**: :doc:`user_guide/probabilistic`
-- **Examples Gallery**: :doc:`gallery/probabilistic`
+- **CLI Reference**: :doc:`probabilistic/`
+- **User Guide**: :doc:`../user_guide/probabilistic`
+- **Examples Gallery**: :doc:`../gallery/probabilistic`
 
 **Uncertainty Analysis**
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -171,9 +173,9 @@ to diagnosing the quality and characteristics of your prediction
 intervals, a key feature of modern forecasting systems
 :footcite:p:`Lim2021, kouadiob2025`.
 
-- **CLI Reference**: :doc:`cli/uncertainty`
-- **User Guide**: :doc:`user_guide/uncertainty`
-- **Examples Gallery**: :doc:`gallery/uncertainty`
+- **CLI Reference**: :doc:`uncertainty`
+- **User Guide**: :doc:`../user_guide/uncertainty`
+- **Examples Gallery**: :doc:`../gallery/uncertainty`
 
 **Relationship & Error Analysis**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -183,9 +185,9 @@ These plots help you uncover hidden biases and systematic patterns by
 exploring the relationships between your model's errors, its
 predictions, and the true values.
 
-- **CLI Reference**: :doc:`cli/relationship` and :doc:`cli/errors`
-- **User Guide**: :doc:`user_guide/relationship_and_errors`
-- **Examples Gallery**: :doc:`gallery/relationship_and_errors`
+- **CLI Reference**: :doc:`relationship/` and :doc:`errors/`
+- **User Guide**: :doc:`../user_guide/relationship` and :doc:`../user_guide/errors`
+- **Examples Gallery**: :doc:`../gallery/relationship` and :doc:`../gallery/errors`
 
 **Feature-Based Visualization**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -195,15 +197,15 @@ leverage that structure to help you understand which features are most
 important with "fingerprint" charts and how different features
 interact to influence the outcome.
 
-- **CLI Reference**: :doc:`cli/feature_based`
-- **User Guide**: :doc:`user_guide/feature_based`
-- **Examples Gallery**: :doc:`gallery/feature_based`
+- **CLI Reference**: :doc:`feature_based/`
+- **User Guide**: :doc:`../user_guide/feature_based`
+- **Examples Gallery**: :doc:`../gallery/feature_based`
 
 -------------------
 Ready to Dive In?
 -------------------
 
-You now have a map of the entire ``kdiagram`` CLI. The best way to
+You now have a map of the entire ``k-diagram`` CLI. The best way to
 learn is to try one out! Pick a section that matches your current task
 and explore the commands within.
 
@@ -217,8 +219,8 @@ and explore the commands within.
       
 .. raw:: html
 
-   <hr>
+    <hr>
+    
+.. rubric:: References
 
-References
-----------
 .. footbibliography::

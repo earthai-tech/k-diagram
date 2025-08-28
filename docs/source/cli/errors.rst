@@ -11,9 +11,18 @@ They help you compare the full error distributions of multiple models,
 see how errors vary with cyclical drivers like seasonality, and even
 visualize 2-D uncertainty.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: List of Available Commands 
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-error-bands <cli_plot_error_bands>`
+     - Visualizes systemic bias vs. random error.
+   * - :ref:`plot-error-violins <cli_plot_error_violins>`
+     - Compares the full error distributions of multiple models.
+   * - :ref:`plot-polar-error-ellipses <cli_plot_polar_error_ellipses>`
+     - Displays two-dimensional positional uncertainty.
 
 -------------------
 Common Conventions
@@ -24,7 +33,47 @@ specified as a positional argument or via ``-i/--input``. The file
 format is auto-detected, but you can override it with ``--format``. To
 save a plot, simply add the ``--savefig out.png`` flag.
 
----
+.. _cli_plot_error_bands:
+
+------------------
+plot-error-bands
+------------------
+
+Often, a model's errors aren't uniform; they might be larger during
+certain months or times of day. This command helps you visualize such
+patterns by plotting the mean error ± some multiple of the standard
+deviation against a cyclical feature (like the month of the year).
+The result is a shaded band in polar space that reveals conditional
+biases or variance.
+
+You can generate the plot with this structure:
+
+.. code-block:: bash
+
+   k-diagram plot-error-bands INPUT
+     --error-col ERR
+     --theta-col CYCLIC_FEATURE
+     [--theta-period P]
+     [--theta-bins K]
+     [--n-std S]
+
+Here's an example that shows the mean error ± 1.5 standard deviations
+for each month of the year:
+
+.. code-block:: bash
+
+   k-diagram plot-error-bands errors.csv \
+     --error-col err \
+     --theta-col month \
+     --theta-period 12 \
+     --theta-bins 12 \
+     --n-std 1.5 \
+     --color "#2980B9" \
+     --alpha 0.35 \
+     --savefig error_bands.png
+
+
+.. _cli_plot_error_violins:
 
 --------------------
 plot-error-violins
@@ -65,46 +114,8 @@ For example, to compare the error distributions from three models,
    providing a comma-separated list. Use ``--names`` to give them
    readable labels for the plot legend.
 
----
 
-------------------
-plot-error-bands
-------------------
-
-Often, a model's errors aren't uniform; they might be larger during
-certain months or times of day. This command helps you visualize such
-patterns by plotting the mean error ± some multiple of the standard
-deviation against a cyclical feature (like the month of the year).
-The result is a shaded band in polar space that reveals conditional
-biases or variance.
-
-You can generate the plot with this structure:
-
-.. code-block:: bash
-
-   k-diagram plot-error-bands INPUT
-     --error-col ERR
-     --theta-col CYCLIC_FEATURE
-     [--theta-period P]
-     [--theta-bins K]
-     [--n-std S]
-
-Here's an example that shows the mean error ± 1.5 standard deviations
-for each month of the year:
-
-.. code-block:: bash
-
-   k-diagram plot-error-bands errors.csv \
-     --error-col err \
-     --theta-col month \
-     --theta-period 12 \
-     --theta-bins 12 \
-     --n-std 1.5 \
-     --color "#2980B9" \
-     --alpha 0.35 \
-     --savefig error_bands.png
-
----
+.. _cli_plot_polar_error_ellipses:
 
 ---------------------
 plot-error-ellipses
@@ -146,8 +157,7 @@ coloring them by a "priority" column:
      --linewidth 0.5 \
      --savefig ellipses.png
 
----
-   
+
 -------------------------
 Troubleshooting & Tips
 -------------------------

@@ -16,14 +16,14 @@ Start with the :doc:`introduction` for an overview of the core concepts
 and common conventions shared across all commands.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: CLI Reference
 
    introduction
    context
    evaluation
    comparison
-   taylor
+   taylor_diagram
    probabilistic
    uncertainty
    relationship

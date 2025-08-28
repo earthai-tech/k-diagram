@@ -33,6 +33,7 @@ forecasting models and data.
    comparison
    relationship
    feature_based
+   evaluation
    taylor_diagram
    context
    hist

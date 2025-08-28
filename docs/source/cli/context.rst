@@ -10,9 +10,24 @@ data by visualizing time series, checking correlations, and inspecting
 the fundamental properties of forecast errors. Every command reads a
 standard tabular file (like a CSV or Parquet) and produces a plot.
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
+.. list-table:: Available Commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - :ref:`plot-time-series <cli_plot_time_series>`
+     - Plots actual and predicted values over time.
+   * - :ref:`plot-scatter-corr <cli_plot_scatter_correlation>`
+     - Creates a scatter plot of true vs. predicted values.
+   * - :ref:`plot-error-autocorr <cli_plot_error_autocorrelation>`
+     - Creates an ACF plot to check for temporal patterns in errors.
+   * - :ref:`plot-qq <cli_plot_qq>`
+     - Generates a Q-Q plot to check if errors are normally distributed.
+   * - :ref:`plot-error-pacf <cli_plot_error_pacf>`
+     - Creates a PACF plot to identify specific error structures.
+   * - :ref:`plot-error-distr <cli_plot_error_distribution>`
+     - Visualizes the distribution of forecast errors.
 
 ---------------
 Common Patterns
@@ -30,7 +45,8 @@ data and saving your work.
 - **Saving**: By default, plots are shown in a window. To save a plot
   to a file, just add the ``--savefig out.png`` flag.
 
----
+
+.. _cli_plot_time_series:
 
 ------------------
 plot-time-series
@@ -72,7 +88,8 @@ For instance, to plot two models ("Model-1", "Model-2") along with an
    an uncertainty band, both ``--q-lower-col`` and ``--q-upper-col``
    must be provided.
 
----
+
+.. _cli_plot_scatter_correlation: 
 
 --------------------------
 plot-scatter-corr
@@ -107,7 +124,8 @@ Here's an example comparing two models, A and B:
 After checking the direct correlation, it's often useful to analyze
 the errors themselves, which the following plots help with.
 
----
+
+.. _cli_plot_error_autocorrelation:
 
 ----------------------------
 plot-error-autocorr
@@ -137,7 +155,8 @@ Here is a basic example:
      --title "ACF of Model Errors" \
      --savefig acf.png
 
----
+
+.. _cli_plot_qq: 
 
 ---------
 plot-qq
@@ -166,7 +185,8 @@ Here is an example:
      --title "Q-Q Plot of Model Errors" \
      --savefig qq.png
 
----
+
+.. _cli_plot_error_pacf:
 
 -----------------
 plot-error-pacf
@@ -200,7 +220,8 @@ Here's a simple use case:
    This command requires the ``statsmodels`` library to be installed.
    You'll get a helpful error message if it's missing.
 
----
+
+.. _cli_plot_error_distribution: 
 
 -------------------
 plot-error-dist
@@ -247,7 +268,7 @@ customizing the number of bins and the title:
    making it comparable to the KDE curve. If you'd rather see the raw
    counts in each bin, use the ``--no-density`` flag.
    
----
+
 
 -------------------------
 Troubleshooting & Tips
