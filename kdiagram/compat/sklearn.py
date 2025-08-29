@@ -949,49 +949,90 @@ def get_pipeline_feature_names(pipeline, input_features=None):
     feature_names = list(map(str, current_features))
     return feature_names
 
+def mean_squared_error(
+    y_true,
+    y_pred,
+    squared=True,
+    **kwargs,
+):
+    """
+    Drop-in MSE/RMSE shim across scikit-learn versions.
 
-def mean_squared_error(y_true, y_pred, squared=True, **kwargs):
-    r"""
-    Compatibility wrapper for sklearn.metrics.mean_squared_error.
+    For scikit-learn >= 1.4, the "squared" kwarg was removed
+    from sklearn.metrics.mean_squared_error. This wrapper
+    preserves the old API and behavior.
 
-    This function behaves like the older version of the function, accepting
-    a 'squared' argument to toggle between MSE and RMSE.
+    Parameters
+    ----------
+    y_true, y_pred : array-like
+        Ground truth and predictions.
+    squared : bool, default True
+        If False, return RMSE; else return MSE.
+    **kwargs : dict
+        Passed through (e.g., sample_weight, multioutput).
 
-    Args:
-        y_true: Ground truth (correct) target values.
-        y_pred: Estimated target values.
-        squared (bool): If True, returns MSE. If False, returns RMSE.
-        **kwargs: Other arguments passed to the underlying function.
-
-    Returns:
-        float: The calculated metric score.
+    Returns
+    -------
+    float
+        MSE if squared, else RMSE.
     """
     if sklearn_mse is None:
-        raise ImportError("scikit-learn is required for metric utilities.")
+        raise ImportError(
+            "scikit-learn is required for metric utilities."
+        )
 
     if SKLEARN_VERSION >= _SQUARED_ARG_REMOVED_VERSION:
-        # For new versions (>=1.4), 'squared' is gone. We replicate its behavior.
+        # >= 1.4: no "squared" kw. Compute MSE, sqrt if needed.
         mse = sklearn_mse(y_true, y_pred, **kwargs)
         if squared:
-            return mse  # Return Mean Squared Error
-        else:
-            return np.sqrt(mse)  # Return Root Mean Squared Error
-    else:
-        # For old versions (<1.4), the 'squared' argument exists.
-        # We can pass it through directly.
-        return sklearn_mse(y_true, y_pred, squared=squared, **kwargs)
+            return mse
+        return np.sqrt(mse)
+
+    # < 1.4: pass "squared" through to sklearn.
+    return sklearn_mse(
+        y_true,
+        y_pred,
+        squared=squared,
+        **kwargs,
+    )
 
 
-def root_mean_squared_error(y_true, y_pred, **kwargs):
+def root_mean_squared_error(
+    y_true,
+    y_pred,
+    **kwargs,
+):
     """
-    A stable helper function that always calculates RMSE.
+    Version-stable RMSE.
+
+    Uses sklearn.metrics.root_mean_squared_error when
+    available (>= 1.4). Falls back to sqrt(MSE) otherwise.
     """
     if SKLEARN_VERSION >= _SQUARED_ARG_REMOVED_VERSION:
-        from sklearn.metrics import root_mean_squared_error
+        try:
+            from sklearn.metrics import (
+                root_mean_squared_error as _sk_rmse,
+            )
+        except ImportError:
+            return mean_squared_error(
+                y_true,
+                y_pred,
+                False,
+                **kwargs,
+            )
+        return _sk_rmse(
+            y_true,
+            y_pred,
+            **kwargs,
+        )
 
-        return root_mean_squared_error(y_true, y_pred, **kwargs)
+    return mean_squared_error(
+        y_true,
+        y_pred,
+        False,
+        **kwargs,
+    )
 
-    return mean_squared_error(y_true, y_pred, squared=False, **kwargs)
 
 
 __all__.extend(
