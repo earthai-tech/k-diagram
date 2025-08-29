@@ -2212,7 +2212,7 @@ def make_classification_data(
     model_names: list[str] | None = None,
     true_col: str = "y",
     prefix_label: str = "pred_",
-    prefix_proba: str = "proba",
+    prefix_proba: str = "proba_",
     add_compat_cols: bool = False,
     include_binary_pred_cols: bool = False,
     as_frame: bool = False,
@@ -2343,8 +2343,8 @@ def make_classification_data(
 
             if include_binary_pred_cols:
                 lbl = (p1 > 0.5).astype(int)
-                df[f"{prefix_label}_{name}"] = lbl
-                pred_label_cols.append(f"{prefix_label}_{name}")
+                df[f"{prefix_label}{name}"] = lbl
+                pred_label_cols.append(f"{prefix_label}{name}")
         else:
             # logits per class
             B = (
@@ -2357,12 +2357,12 @@ def make_classification_data(
             probs = _softmax(logits / temp)
             # per-class probs
             for k in range(n_classes):
-                col = f"{prefix_proba}_{name}_{k}"
+                col = f"{prefix_proba}{name}_{k}"
                 df[col] = probs[:, k]
                 proba_cols.append(col)
             # predicted labels
             lbl = probs.argmax(axis=1).astype(int)
-            col_lbl = f"{prefix_label}_{name}"
+            col_lbl = f"{prefix_label}{name}"
             df[col_lbl] = lbl
             pred_label_cols.append(col_lbl)
 
@@ -2370,7 +2370,7 @@ def make_classification_data(
     if add_compat_cols and n_classes > 2:
         if true_col != "yt":
             df["yt"] = df[true_col]
-        first_pred = f"{prefix_label}_{model_names[0]}"
+        first_pred = f"{prefix_label}{model_names[0]}"
         if first_pred in df.columns and "yp" not in df.columns:
             df["yp"] = df[first_pred]
 
@@ -2510,7 +2510,7 @@ prefix_label : str, default="pred\_"
     when a user name is not supplied or when multiclass
     compat columns are requested).
 
-prefix_proba : str, default="proba"
+prefix_proba : str, default="proba\_"
     Prefix for auto-named probability columns (only used
     when a user name is not supplied).
 

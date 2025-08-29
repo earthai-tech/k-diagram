@@ -986,6 +986,11 @@ def root_mean_squared_error(y_true, y_pred, **kwargs):
     """
     A stable helper function that always calculates RMSE.
     """
+    if SKLEARN_VERSION >= _SQUARED_ARG_REMOVED_VERSION:
+        from sklearn.metrics import root_mean_squared_error
+
+        return root_mean_squared_error(y_true, y_pred, **kwargs)
+
     return mean_squared_error(y_true, y_pred, squared=False, **kwargs)
 
 

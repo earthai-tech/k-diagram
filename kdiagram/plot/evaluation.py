@@ -12,14 +12,13 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     mean_absolute_error,
-    mean_squared_error,
     precision_recall_curve,
     r2_score,
     roc_curve,
 )
 
 from ..compat.matplotlib import get_cmap
-from ..compat.sklearn import type_of_target
+from ..compat.sklearn import root_mean_squared_error, type_of_target
 from ..decorators import check_non_emptiness
 from ..utils.handlers import columns_manager
 from ..utils.mathext import compute_pinball_loss
@@ -1213,7 +1212,8 @@ def _get_scores(
         "r2": (r2_score, True),
         "neg_mean_absolute_error": (mean_absolute_error, False),
         "neg_root_mean_squared_error": (
-            lambda yt, yp: mean_squared_error(yt, yp, squared=False),
+            root_mean_squared_error,
+            # lambda yt, yp: mean_squared_error(yt, yp, squared=False),
             False,
         ),
     }

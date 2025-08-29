@@ -106,6 +106,7 @@ omit = [
     "kdiagram/cli/_utils.py ",          # Tested via integration, not unit coverage
     "kdiagram/core/_io_utils.py ",
     "kdiagram/core/io.py ",
+    "kdiagram/utils/plot.py",           # Skip plot helpers
     "kdiagram/compat/*",                # Handles external library version differences
     "kdiagram/utils/deps.py",           # Handles optional dependencies
     "kdiagram/utils/_deps.py",          # Handles optional dependencies
