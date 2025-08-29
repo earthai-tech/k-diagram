@@ -61,11 +61,6 @@ else:
         modules=[r"^(numpy|matplotlib|pandas)\."],
     )
 
-# -- Ensure versioning is always set correctly --------------------------------
-if release == "0+unknown":
-    # If version is "0+unknown", explicitly warn it's an unknown or dev version
-    warnings.warn(f"Using fallback version: {release}", stacklevel=2)
-
 # -- Project information -----------------------------------------------------
 
 project = "k-diagram"
@@ -209,16 +204,7 @@ html_theme_options = {
             "class": "",
         },
     ],
-    # Example options:
-    "light_css_variables": {
-        "color_brand_primary": "#007ACC",  # Example blue
-        "color_brand_content": "#005FAB",
-    },
-    "dark_css_variables": {
-        "color_brand_primary": "#52C0FF",  # Example light blue for dark mode
-        "color_brand_content": "#7BCBFF",
-    },
-    # Add Furo specific options here, e.g., for sidebar, fonts, etc.
+    # Furo specific options here, e.g., for sidebar, fonts, etc.
     "sidebar_hide_name": False,  # Show project name in sidebar
     "navigation_with_keys": True,
 }
@@ -244,6 +230,7 @@ rst_epilog = """
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+html_js_files = ["custom.js"]
 # Optional: Add custom CSS files (relative to html_static_path)
 html_css_files = [
     "css/custom.css",

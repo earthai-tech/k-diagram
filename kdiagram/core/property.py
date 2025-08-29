@@ -1,110 +1,94 @@
 # Author: LKouadio <etanoyau@gmail.com>
-# License: Apache License 2.0 (see LICENSE file)
-
-# -------------------------------------------------------------------
-# Defines core properties, constants, and default settings for k-diagram.
-# Parts may be adapted or inspired by code originally found in the
-# 'gofast' package: https://github.com/earthai-tech/gofast
-# Original 'gofast' code licensed under BSD-3-Clause.
+# License: Apache License 2.0
+#
+# ------------------------------------------------------------------
+# Core properties, constants, and defaults for k-diagram.
+# Parts may be adapted or inspired by code in the 'gofast'
+# package:
+# https://github.com/earthai-tech/gofast
+# Original 'gofast' code is licensed under BSD-3-Clause.
 # Modifications and 'k-diagram' are under Apache License 2.0.
-# -------------------------------------------------------------------
-"""
-Core Properties and Constants (:mod:`kdiagram.core.property`)
-===============================================================
+# ------------------------------------------------------------------
 
-This module defines shared constants, default parameter values, string
-enumerations (like accepted options for plot arguments), configuration
-settings, or other core properties used internally throughout the
-`k-diagram` package to ensure consistency.
-"""
+from __future__ import annotations
+
+from typing import Any, Callable
 
 import pandas as pd
+
+__all__ = ["PandasDataHandlers"]
+
+r"""
+Core properties for :mod:`kdiagram.core.property`.
+
+This module exposes small, shared utilities used across
+``kdiagram``.  Currently it provides a lightweight mapping
+between common file extensions and pandas IO functions for
+reading and writing tabular data.
+
+Notes
+-----
+The mappings are intentionally conservative.  They cover
+popular formats shipped with pandas.  If your build of
+pandas lacks a given reader or writer, importing or using
+that entry may raise at runtime.
+
+Examples
+--------
+Get a parser and read a CSV file::
+
+    >>> from kdiagram.core.property import PandasDataHandlers
+    >>> h = PandasDataHandlers()
+    >>> df = h.parsers[".csv"]("data.csv")
+
+Get a writer and export to JSON::
+
+    >>> w = h.writers(df)[".json"]
+    >>> w("out.json")
+
+See Also
+--------
+pandas.read_* : Family of read functions.
+pandas.DataFrame.to_* : Family of write methods.
+
+References
+----------
+.. [1] McKinney, W.  *Data Structures for Statistical
+       Computing in Python*.  Proc. SciPy 2010.
+"""
 
 
 class PandasDataHandlers:
     r"""
-    A container for data parsers and writers based on Pandas, supporting a
-    wide range of formats for both reading and writing DataFrames. This class
-    simplifies data I/O by mapping file extensions to Pandas functions, making
-    it easier to manage diverse file formats in the Gofast package.
+    Small container that surfaces pandas IO helpers.
+
+    The goal is to centralize a consistent set of readers
+    (``parsers``) and writers (``writers``) keyed by file
+    extension.  This keeps IO routing simple and uniform
+    in higher level APIs.
 
     Attributes
     ----------
     parsers : dict
-        A dictionary mapping common file extensions to Pandas functions for
-        reading files into DataFrames. Each entry links a file extension to
-        a specific Pandas reader function, allowing for standardized and
-        convenient data import.
-
-    Methods
-    -------
-    writers(obj)
-        Returns a dictionary mapping file extensions to Pandas functions for
-        writing a DataFrame to various formats. Enables easy exporting of data
-        in multiple file formats, ensuring flexibility in data storage.
+        Maps extension to a pandas reader callable.
 
     Notes
     -----
-    The `PandasDataHandlers` class centralizes data handling functions,
-    allowing for a unified interface to access multiple data formats, which
-    simplifies data parsing and file writing in the Gofast package.
-
-    This class does not take any parameters on initialization and is used
-    to manage I/O options for DataFrames exclusively.
-
-    Examples
-    --------
-    >>> from kdiagram.core.property import PandasDataHandlers
-    >>> data_handler = PandasDataHandlers()
-
-    # Reading a CSV file
-    >>> parser_func = data_handler.parsers[".csv"]
-    >>> df = parser_func("data.csv")
-
-    # Writing to JSON
-    >>> writer_func = data_handler.writers(df)[".json"]
-    >>> writer_func("output.json")
-
-    The above example illustrates how to access reader and writer functions
-    for specified file extensions, allowing for simplified data import and
-    export with Pandas.
-
-    See Also
-    --------
-    pandas.DataFrame : Provides comprehensive data structures and methods for
-                       managing tabular data.
-
-    References
-    ----------
-    .. [1] McKinney, W. (2010). "Data Structures for Statistical Computing
-           in Python." In *Proceedings of the 9th Python in Science Conference*,
-           51-56.
+    The mappings return the raw pandas callables.  You may
+    pass any pandas-specific keyword arguments to them.  For
+    remote filesystems, many readers accept ``storage_options``.
     """
 
     @property
-    def parsers(self):
-        """
-        A dictionary mapping file extensions to Pandas functions for reading
-        data files. Each extension is associated with a Pandas function
-        capable of parsing the respective format and returning a DataFrame.
+    def parsers(self) -> dict[str, Callable[..., pd.DataFrame]]:
+        r"""
+        Return a mapping of extension to pandas readers.
 
         Returns
         -------
         dict
-            A dictionary of file extensions as keys, and their respective
-            Pandas parsing functions as values.
-
-        Examples
-        --------
-        >>> data_handler = PandasDataHandlers()
-        >>> csv_parser = data_handler.parsers[".csv"]
-        >>> df = csv_parser("data.csv")
-
-        Notes
-        -----
-        The `parsers` attribute simplifies data import across diverse formats
-        supported by Pandas. As new formats are integrated into Pandas, this
-        dictionary can be expanded to include additional file types.
+            Keys are extensions (dot-prefixed).  Values are
+            pandas read callables.
         """
         return {
             ".csv": pd.read_csv,
@@ -121,36 +105,23 @@ class PandasDataHandlers:
         }
 
     @staticmethod
-    def writers(obj):
-        """
-        A dictionary mapping file extensions to Pandas functions for writing
-        DataFrames. The `writers` method generates file-specific writing
-        functions to enable export of DataFrames in various formats.
+    def writers(
+        obj: pd.DataFrame,
+    ) -> dict[str, Callable[..., Any]]:
+        r"""
+        Return a mapping of extension to pandas writers.
 
         Parameters
         ----------
         obj : pandas.DataFrame
-            The DataFrame to be written to a specified format.
+            The frame for which writers will be bound.
 
         Returns
         -------
         dict
-            A dictionary of file extensions as keys, mapped to the DataFrame
-            writer functions in Pandas that allow exporting to that format.
-
-        Examples
-        --------
-        >>> data_handler = PandasDataHandlers()
-        >>> df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-        >>> json_writer = data_handler.writers(df)[".json"]
-        >>> json_writer("output.json")
-
-        Notes
-        -----
-        The `writers` method provides a flexible solution for exporting data
-        to multiple file formats. This method centralizes data export
-        functionality by associating file extensions with Pandas writer
-        methods, making it straightforward to save data in different formats.
+            Keys are extensions (dot-prefixed).  Values are
+            bound methods that write ``obj`` to the target
+            format.
         """
         return {
             ".csv": obj.to_csv,

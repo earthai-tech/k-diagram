@@ -357,7 +357,9 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
 
 
 def get_valid_kwargs(
-    callable_obj: Any, kwargs: dict[str, Any]
+    callable_obj: Any,
+    kwargs: dict[str, Any],
+    error="ignore",
 ) -> dict[str, Any]:
     r"""
     Filter and return only the valid keyword arguments for a given
@@ -385,13 +387,19 @@ def get_valid_kwargs(
     try:
         # Retrieve the signature of the callable object
         signature = inspect.signature(callable_obj)
-    except ValueError:
+    except ValueError as verr:
         # If signature cannot be obtained, return empty kwargs and warn
-        warnings.warn(
+        msg = (
             "Unable to retrieve signature of the callable object. "
-            "No keyword arguments will be passed.",
-            stacklevel=2,
+            "No keyword arguments will be passed."
         )
+        if error == "warn":
+            warnings.warn(
+                msg,
+                stacklevel=2,
+            )
+        elif error == "raise":
+            raise ValueError(msg) from verr
         return {}
 
     # Extract parameter names from the function signature
@@ -407,7 +415,7 @@ def get_valid_kwargs(
             invalid_kwargs[k] = v
 
     # Warn the user about invalid kwargs
-    if invalid_kwargs:
+    if invalid_kwargs and error == "warn":
         invalid_keys = ", ".join(invalid_kwargs.keys())
         warnings.warn(
             f"The following keyword arguments are invalid"

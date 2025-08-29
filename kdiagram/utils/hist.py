@@ -35,6 +35,7 @@ def plot_hist_kde(
     normalize_kde: bool = False,
     show_grid: bool = True,
     grid_props: Optional[dict] = None,
+    return_ax: bool = False,
     **hist_kws,  # Pass extra keywords to the histogram
 ) -> tuple[np.ndarray, np.ndarray]:
     # Ensure the data is a valid type and convert it to np.ndarray
@@ -108,6 +109,10 @@ def plot_hist_kde(
         plt.close()
     else:
         plt.show()
+
+    if return_ax:
+
+        return ax
 
     return grid, pdf
 

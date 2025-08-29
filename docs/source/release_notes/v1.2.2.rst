@@ -1,0 +1,134 @@
+.. _release_v1_3_0:
+
+----------------
+Version 1.2.2
+----------------
+
+*(Released: 2025-08-25)*
+
+This is a major feature release that introduces a new ``context``
+module for standard Cartesian diagnostic plots and adds a 
+suite of utilities for data preparation and mathematical scoring.
+This release enhances the package's capabilities as a
+complete forecast evaluation toolkit.
+
+New Features
+~~~~~~~~~~~~~
+
+* |Feature| **New Classification Evaluation Module** (``kdiagram.plot.evaluation``):
+  A suite of polar plots for in-depth classification model
+  diagnostics.
+
+  - :func:`~kdiagram.plot.evaluation.plot_polar_roc` and
+    :func:`~kdiagram.plot.evaluation.plot_polar_pr_curve` for novel
+    visualizations of classifier performance.
+  - :func:`~kdiagram.plot.evaluation.plot_polar_confusion_matrix` and
+    :func:`~kdiagram.plot.evaluation.plot_polar_confusion_multiclass`
+    for intuitive binary and multiclass confusion matrices.
+  - :func:`~kdiagram.plot.evaluation.plot_polar_classification_report`
+    for a detailed, per-class breakdown of Precision, Recall, and
+    F1-Score.
+  - :func:`~kdiagram.plot.evaluation.plot_pinball_loss` for granular,
+    per-quantile performance analysis.
+
+* |Feature| **New Advanced Relationship Plots** (``kdiagram.plot.relationship``):
+
+  - :func:`~kdiagram.plot.relationship.plot_conditional_quantiles` to
+    visualize how uncertainty bands change with the true value.
+  - :func:`~kdiagram.plot.relationship.plot_error_relationship` to
+    diagnose error patterns against true values.
+  - :func:`~kdiagram.plot.relationship.plot_residual_relationship` to
+    diagnose error patterns against predicted values.
+
+* |Feature| **New Feature Interaction Plot** (``kdiagram.plot.feature_based``):
+
+  - :func:`~kdiagram.plot.feature_based.plot_feature_interaction` to
+    create a polar heatmap that reveals how two features jointly
+    influence a target.
+    
+* |Feature| **New Contextual Plots Module** (``kdiagram.plot.context``):
+  A dedicated suite of standard diagnostic plots to provide essential
+  context for your main analysis. This includes functions to:
+
+  - Visually inspect forecasts against actuals with
+    :func:`~kdiagram.plot.context.plot_time_series` and check for
+    systematic bias with
+    :func:`~kdiagram.plot.context.plot_scatter_correlation`.
+  - Understand the shape and normality of forecast errors using
+    :func:`~kdiagram.plot.context.plot_error_distribution` and
+    :func:`~kdiagram.plot.context.plot_qq`.
+  - Diagnose residual temporal patterns in errors with
+    :func:`~kdiagram.plot.context.plot_error_autocorrelation` (ACF)
+    and :func:`~kdiagram.plot.context.plot_error_pacf` (PACF).
+
+* |Feature| **New Data & Math Utilities**:
+  Core backend functions have been organized into new, dedicated
+  modules for easier use and extension.
+
+  - The new ``kdiagram.utils.forecast_utils`` module provides helpers
+    for common data wrangling tasks, such as calculating residuals
+    with :func:`~kdiagram.utils.compute_forecast_errors`, measuring
+    uncertainty with :func:`~kdiagram.utils.compute_interval_width`,
+    and reshaping data for analysis with
+    :func:`~kdiagram.utils.pivot_forecasts_long`.
+  - The new ``kdiagram.utils.mathext`` module is the home for core
+    mathematical and probabilistic scoring functions, including key
+    metrics like :func:`~kdiagram.utils.compute_crps` (for overall
+    skill), :func:`~kdiagram.utils.compute_pit` (for calibration),
+    and :func:`~kdiagram.utils.compute_winkler_score` (for interval
+    accuracy).
+
+Enhancements
+~~~~~~~~~~~~~~
+
+* |Enhancement| The API for several plotting functions (e.g.,
+  ``plot_time_series``) has been made flexible and explicit by
+  replacing variadic arguments (``*args``) with clear keyword
+  arguments (e.g., ``pred_cols: list``).
+* |Enhancement| The module structure has been clarified by renaming the old
+  ``evaluation.py`` to ``taylor_diagram.py`` and creating a new
+  ``evaluation.py`` for classification metrics.
+* |Enhancement| Added ``metric_labels`` and ``higher_is_better`` parameters to
+  ``plot_regression_performance`` for more flexible and intuitive
+  visualization of custom metrics.
+  
+Documentation
+~~~~~~~~~~~~~~~
+* |Docs| **New User Guides**: 
+
+  - Added a comprehensive ``evaluation.rst`` user guide
+    with detailed explanations and mathematical formulations for all new
+    classification plots.
+  - Added a comprehensive ``context.rst`` user guide with detailed
+    explanations and examples for all new contextual plots.
+  - Added new ``forecast_utils.rst`` and ``math_utils.rst`` user
+    guides for all new utility functions.
+    
+* |Docs| **New Gallery Page**: 
+
+  - Created a new ``evaluation.rst`` gallery page
+    with runnable examples and interpretation guides for all new
+    evaluation plots.
+  - Created a new ``context.rst`` gallery 
+    page with runnable examples and interpretation guides for all 
+    new contextual plots.
+    
+* |Docs| **API Reference Updated**: The API reference has been updated to
+  include the new ``evaluation`` and ``taylor_diagram`` modules and all
+  new functions.
+
+Testing & QA
+~~~~~~~~~~~~~~
+
+* |Tests| **Test Suite Completed**: Added comprehensive test suites
+  for the new ``context``, ``forecast_utils``, and ``mathext``
+  modules, ensuring high code coverage.
+* |Tests| **All Warnings Resolved**: The entire test suite now
+  passes cleanly with **zero warnings** across all supported Python
+  versions (3.9 to 3.13). All previously skipped tests have been
+  fixed and enabled, and all global warning filters in
+  ``pyproject.toml`` have been removed in favor of explicit,
+  local handling within the tests.
+* |Tests| **Test Suite Expanded**: Added comprehensive test suites for all new
+  functions in the ``evaluation``, ``relationship``, and
+  ``feature_based`` modules, ensuring high code coverage

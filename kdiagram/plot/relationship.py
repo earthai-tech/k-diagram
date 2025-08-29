@@ -1,7 +1,9 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
+from __future__ import annotations
 
 import warnings
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +14,674 @@ from ..utils.generic_utils import drop_nan_in
 from ..utils.plot import set_axis_grid
 from ..utils.validator import validate_yy
 
-__all__ = ["plot_relationship"]
+__all__ = [
+    "plot_relationship",
+    "plot_conditional_quantiles",
+    "plot_residual_relationship",
+    "plot_error_relationship",
+]
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+    }
+)
+def plot_residual_relationship(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: list[str] | None = None,
+    title: str = "Residual vs. Predicted Relationship",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    s: int = 50,
+    alpha: float = 0.7,
+    show_zero_line: bool = True,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
+    dpi: int = 300,
+):
+
+    # --- Input Validation and Preparation ---
+    if not y_preds:
+        raise ValueError("At least one prediction array must be provided.")
+
+    y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
+    y_true_val, _ = validate_yy(y_true, y_preds[0])
+
+    if not names:
+        names = [f"Model {i+1}" for i in range(len(y_preds))]
+
+    # --- Error and Coordinate Calculation ---
+    errors_list = [y_true_val - np.asarray(yp) for yp in y_preds]
+    all_errors = np.concatenate(errors_list)
+
+    # Shift the origin to handle negative error values on the radial axis
+    r_offset = np.abs(np.min(all_errors)) if np.min(all_errors) < 0 else 0
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+
+    # --- Plot Zero-Error Line ---
+    if show_zero_line:
+        ax.plot(
+            np.linspace(0, 2 * np.pi, 100),
+            [r_offset] * 100,
+            color="black",
+            linestyle="--",
+            lw=1.5,
+            label="Zero Error",
+        )
+
+    # --- Plot Error Points for Each Model ---
+    for i, (yp, errors) in enumerate(zip(y_preds, errors_list)):
+        y_pred_val = np.asarray(yp)
+
+        # Sort by the predicted value for a smooth spiral
+        sort_idx = np.argsort(y_pred_val)
+        y_pred_sorted = y_pred_val[sort_idx]
+        errors_sorted = errors[sort_idx]
+
+        # Map sorted predicted value to angle
+        theta = (
+            (y_pred_sorted - y_pred_sorted.min())
+            / (y_pred_sorted.max() - y_pred_sorted.min())
+            * 2
+            * np.pi
+        )
+
+        radii = errors_sorted + r_offset
+
+        ax.scatter(
+            theta, radii, color=colors[i], s=s, alpha=alpha, label=names[i]
+        )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xlabel("Based on Predicted Value")
+    ax.set_ylabel("Forecast Error (Actual - Predicted)", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_residual_relationship.__doc__ = r"""
+Plots the relationship between forecast error and predicted value.
+
+This function creates a polar scatter plot, a polar version of a
+classic residual plot, to diagnose model performance. The angle is
+proportional to the **predicted value**, and the radius represents
+the **forecast error**. It is a powerful tool for identifying
+conditional biases and heteroscedasticity related to the model's
+own output magnitude.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true observed values.
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted values from different
+    models.
+names : list of str, optional
+    Display names for each of the models. If not provided,
+    generic names like ``'Model 1'`` will be generated.
+title : str, default="Residual vs. Predicted Relationship"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each model's
+    markers.
+s : int, default=50
+    The size of the scatter plot markers.
+alpha : float, default=0.7
+    The transparency of the markers.
+show_zero_line : bool, default=True
+    If ``True``, draws a reference circle representing zero error.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_error_relationship : Plot error vs. the true value.
+plot_conditional_quantiles : Visualize full conditional quantile bands.
+
+Notes
+-----
+This plot is a novel visualization developed as part of the
+analytics framework in :footcite:p:`kouadiob2025`. It helps
+diagnose if the model's error is correlated with its own
+predictions.
+
+1.  **Error (Residual) Calculation**: For each observation
+    :math:`i`, the error is the difference between the true and
+    predicted value.
+
+    .. math::
+       :label: eq:error_calc
+
+       e_i = y_{true,i} - y_{pred,i}
+
+2.  **Angular Mapping**: The angle :math:`\theta_i` is made
+    proportional to the predicted value :math:`y_{pred,i}`,
+    after sorting, to create a continuous spiral.
+
+    .. math::
+
+       \theta_i \propto y_{pred,i}
+
+3.  **Radial Mapping**: The radius :math:`r_i` represents the
+    error :math:`e_i`. To handle negative error values on a
+    polar plot, an offset is added to all radii so that the
+    zero-error line becomes a reference circle.
+
+Examples
+--------
+>>> import numpy as np
+>>> from kdiagram.plot.relationship import plot_residual_relationship
+>>>
+>>> # Generate synthetic data with known flaws
+>>> np.random.seed(0)
+>>> n_samples = 200
+>>> y_true = np.linspace(0, 20, n_samples)**1.5
+>>> # Model has errors that increase with the prediction magnitude
+>>> noise = np.random.normal(0, 1, n_samples) * (y_true / 20)
+>>> y_pred = y_true + noise
+>>>
+>>> # Generate the plot
+>>> ax = plot_residual_relationship(
+...     y_true,
+...     y_pred,
+...     names=["My Model"],
+...     title="Residual vs. Predicted Value (Heteroscedasticity)"
+... )
+
+References
+----------
+.. footbibliography::
+"""
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+    }
+)
+def plot_error_relationship(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: list[str] | None = None,
+    title: str = "Error vs. True Value Relationship",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    s: int = 50,
+    alpha: float = 0.7,
+    show_zero_line: bool = True,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
+    dpi: int = 300,
+):
+
+    # --- Input Validation and Preparation ---
+    if not y_preds:
+        raise ValueError("At least one prediction array must be provided.")
+
+    y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
+    y_true, _ = validate_yy(
+        y_true, y_preds[0]
+    )  # Validate first pred against true
+
+    if not names:
+        names = [f"Model {i+1}" for i in range(len(y_preds))]
+
+    # --- Error and Coordinate Calculation ---
+    errors_list = [y_true - np.asarray(yp) for yp in y_preds]
+    all_errors = np.concatenate(errors_list)
+
+    # To handle negative errors on a polar plot, we shift the origin.
+    # The zero-error line will be a circle.
+    r_offset = np.abs(np.min(all_errors)) if np.min(all_errors) < 0 else 0
+
+    # Sort by true value to create a smooth spiral effect
+    sort_idx = np.argsort(y_true)
+    y_true_sorted = y_true[sort_idx]
+
+    # Map sorted true value to angle
+    theta = (
+        (y_true_sorted - y_true_sorted.min())
+        / (y_true_sorted.max() - y_true_sorted.min())
+        * 2
+        * np.pi
+    )
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+
+    # --- Plot Zero-Error Line ---
+    if show_zero_line:
+        ax.plot(
+            np.linspace(0, 2 * np.pi, 100),
+            [r_offset] * 100,
+            color="black",
+            linestyle="--",
+            lw=1.5,
+            label="Zero Error",
+        )
+
+    # --- Plot Error Points for Each Model ---
+    for i, errors in enumerate(errors_list):
+        errors_sorted = errors[sort_idx]
+        radii = errors_sorted + r_offset
+
+        ax.scatter(
+            theta, radii, color=colors[i], s=s, alpha=alpha, label=names[i]
+        )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xlabel(f"Based on {getattr(y_true, 'name', 'True Value')}")
+    ax.set_ylabel("Forecast Error", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_error_relationship.__doc__ = r"""
+Plots the relationship between forecast error and the true value.
+
+This function creates a polar scatter plot to diagnose model
+performance by visualizing the structure of its errors. The
+angle is proportional to the **true value**, and the radius
+represents the **forecast error**. It is a powerful tool for
+identifying conditional biases and heteroscedasticity.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true observed values.
+*y_preds : np.ndarray
+    One or more 1D arrays of predicted values from different
+    models.
+names : list of str, optional
+    Display names for each of the models. If not provided,
+    generic names like ``'Model 1'`` will be generated.
+title : str, default="Error vs. True Value Relationship"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap used to assign a unique color to each model's
+    markers.
+s : int, default=50
+    The size of the scatter plot markers.
+alpha : float, default=0.7
+    The transparency of the markers.
+show_zero_line : bool, default=True
+    If ``True``, draws a reference circle representing zero error.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+See Also
+--------
+plot_residual_relationship : Plot error vs. the predicted value.
+plot_conditional_quantiles : Visualize full conditional quantile bands.
+
+Notes
+-----
+This plot is a novel visualization developed as part of the
+analytics framework in :footcite:p:`kouadiob2025`. It helps
+diagnose if the model's error is correlated with the true
+value, a key assumption in many statistical models.
+
+1.  **Error (Residual) Calculation**: For each observation
+    :math:`i`, the error is the difference between the true and
+    predicted value.
+
+    .. math::
+
+       e_i = y_{true,i} - y_{pred,i}
+
+2.  **Angular Mapping**: The angle :math:`\theta_i` is made
+    proportional to the true value :math:`y_{true,i}`,
+    after sorting, to create a continuous spiral.
+
+    .. math::
+
+       \theta_i \propto y_{true,i}
+
+3.  **Radial Mapping**: The radius :math:`r_i` represents the
+    error :math:`e_i`. To handle negative error values on a
+    polar plot, an offset is added to all radii so that the
+    zero-error line becomes a reference circle.
+
+Examples
+--------
+>>> import numpy as np
+>>> from kdiagram.plot.relationship import plot_error_relationship
+>>>
+>>> # Generate synthetic data with known flaws
+>>> np.random.seed(0)
+>>> n_samples = 200
+>>> y_true = np.linspace(0, 20, n_samples)**1.5
+>>> # Model has a bias that depends on the true value
+>>> bias = -0.1 * y_true
+>>> y_pred = y_true + bias + np.random.normal(0, 2, n_samples)
+>>>
+>>> # Generate the plot
+>>> ax = plot_error_relationship(
+...     y_true,
+...     y_pred,
+...     names=["My Model"],
+...     title="Error vs. True Value (Conditional Bias)"
+... )
+
+References
+----------
+.. footbibliography::
+    
+"""
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_preds_quantiles": ["array-like"],
+        "quantiles": ["array-like"],
+    }
+)
+def plot_conditional_quantiles(
+    y_true: np.ndarray,
+    y_preds_quantiles: np.ndarray,
+    quantiles: np.ndarray,
+    *,
+    bands: list[int] | None = None,
+    title: str = "Conditional Quantile Plot",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    alpha_min: float = 0.2,
+    alpha_max: float = 0.5,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
+    dpi: int = 300,
+):
+
+    # --- Input Validation ---
+    y_true, y_preds_quantiles = validate_yy(
+        y_true, y_preds_quantiles, allow_2d_pred=True
+    )
+    quantiles = np.asarray(quantiles)
+    if y_preds_quantiles.shape[1] != len(quantiles):
+        raise ValueError("Shape mismatch between predictions and quantiles.")
+
+    # Sort data by y_true to ensure a smooth spiral plot
+    sort_idx = np.argsort(y_true)
+    y_true_sorted = y_true[sort_idx]
+    y_preds_sorted = y_preds_quantiles[sort_idx, :]
+
+    # --- Plotting Setup ---
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw={"projection": "polar"}
+    )
+
+    # Map y_true to the angular coordinate
+    theta = (
+        (y_true_sorted - y_true_sorted.min())
+        / (y_true_sorted.max() - y_true_sorted.min())
+        * 2
+        * np.pi
+    )
+
+    # --- Identify Median and Bands ---
+    median_q = 0.5
+    if median_q not in quantiles:
+        warnings.warn(
+            "Median (0.5) not found in quantiles."
+            " No central line will be plotted.",
+            stacklevel=2,
+        )
+        median_idx = -1
+    else:
+        median_idx = np.where(np.isclose(quantiles, median_q))[0][0]
+
+    if bands is None:
+        # Default to the widest possible interval
+        min_q, max_q = np.min(quantiles), np.max(quantiles)
+        bands = [int((max_q - min_q) * 100)]
+
+    bands = sorted(bands, reverse=True)  # Plot widest band first
+
+    cmap_obj = get_cmap(cmap, default="viridis")
+    alphas = np.linspace(alpha_min, alpha_max, len(bands))
+    colors = cmap_obj(np.linspace(0.3, 0.9, len(bands)))
+
+    # --- Plot Bands ---
+    for i, band_pct in enumerate(bands):
+        lower_q = (100 - band_pct) / 200.0
+        upper_q = 1 - lower_q
+
+        try:
+            lower_idx = np.where(np.isclose(quantiles, lower_q))[0][0]
+            upper_idx = np.where(np.isclose(quantiles, upper_q))[0][0]
+        except IndexError:
+            warnings.warn(
+                f"Quantiles for {band_pct}% interval not found. Skipping.",
+                stacklevel=2,
+            )
+            continue
+
+        ax.fill_between(
+            theta,
+            y_preds_sorted[:, lower_idx],
+            y_preds_sorted[:, upper_idx],
+            color=colors[i],
+            alpha=alphas[i],
+            label=f"{band_pct}% Interval",
+        )
+
+    # --- Plot Median Line ---
+    if median_idx != -1:
+        ax.plot(
+            theta,
+            y_preds_sorted[:, median_idx],
+            color="black",
+            lw=1.5,
+            label="Median (Q50)",
+        )
+
+    # --- Formatting ---
+    ax.set_title(title, fontsize=16, y=1.1)
+    ax.set_xlabel(
+        f"Based on {y_true.name if hasattr(y_true, 'name') else 'True Value'}"
+    )
+    ax.set_ylabel("Predicted Value", labelpad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+
+    return ax
+
+
+plot_conditional_quantiles.__doc__ = r"""
+Plots polar conditional quantile bands.
+
+This function visualizes how the predicted conditional
+distribution (represented by quantiles) changes as a function
+of the true observed value. It is a powerful tool for
+diagnosing heteroscedasticity, i.e., whether the forecast
+uncertainty is constant or changes with the magnitude of the
+target variable.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of true observed values, which will be mapped
+    to the angular coordinate.
+y_preds_quantiles : np.ndarray
+    2D array of quantile forecasts, with shape
+    ``(n_samples, n_quantiles)``.
+quantiles : np.ndarray
+    1D array of the quantile levels corresponding to the columns
+    of ``y_preds_quantiles``.
+bands : list of int, optional
+    A list of the desired interval percentages to plot as
+    shaded bands (e.g., ``[90, 50]`` for the 90% and 50%
+    prediction intervals). Defaults to the widest interval
+    available from the provided quantiles.
+title : str, default="Conditional Quantile Plot"
+    The title for the plot.
+figsize : tuple of (float, float), default=(8, 8)
+    The figure size in inches.
+cmap : str, default='viridis'
+    The colormap for the shaded uncertainty bands.
+alpha_min : float, default=0.2
+    The minimum alpha (transparency) for the outermost band.
+alpha_max : float, default=0.5
+    The maximum alpha for the innermost band.
+show_grid : bool, default=True
+    Toggle the visibility of the polar grid lines.
+grid_props : dict, optional
+    Custom keyword arguments passed to the grid for styling.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+savefig : str, optional
+    The file path to save the plot. If ``None``, the plot is
+    displayed interactively.
+dpi : int, default=300
+    The resolution (dots per inch) for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the plot.
+
+Notes
+-----
+This plot is a novel visualization developed as part of the
+analytics framework in :footcite:p:`kouadiob2025`. It provides
+an intuitive view of the conditional predictive distribution.
+
+1.  **Coordinate Mapping**: The plot first sorts the data based
+    on the true values :math:`y_{true}` to ensure a continuous
+    spiral. The sorted true values are then mapped to the
+    angular coordinate :math:`\theta` in the range :math:`[0, 2\pi]`.
+
+    .. math::
+
+       \theta_i \propto y_{true,i}^{\text{(sorted)}}
+
+    The predicted quantiles :math:`q_{i, \tau}` for each
+    observation :math:`i` and quantile level :math:`\tau` are
+    mapped directly to the radial coordinate :math:`r`.
+
+2.  **Band Construction**: For a given prediction interval, for
+    example 80%, the corresponding lower (:math:`\tau=0.1`) and
+    upper (:math:`\tau=0.9`) quantile forecasts are used to
+    define the boundaries of a shaded band. The function can
+    plot multiple, nested bands (e.g., 80% and 50%) to give a
+    more complete picture of the distribution's shape. The
+    median forecast (:math:`\tau=0.5`) is drawn as a solid
+    central line.
+
+Examples
+--------
+>>> import numpy as np
+>>> from kdiagram.plot.relationship import plot_conditional_quantiles
+>>>
+>>> # Generate synthetic data with heteroscedasticity
+>>> np.random.seed(0)
+>>> n_samples = 200
+>>> y_true = np.linspace(0, 20, n_samples)**1.5
+>>> quantiles = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
+>>>
+>>> # Uncertainty (interval width) increases with the true value
+>>> interval_width = 5 + (y_true / y_true.max()) * 15
+>>> y_preds = np.zeros((n_samples, len(quantiles)))
+>>> y_preds[:, 2] = y_true # Median
+>>> y_preds[:, 1] = y_true - interval_width * 0.25 # Q25
+>>> y_preds[:, 3] = y_true + interval_width * 0.25 # Q75
+>>> y_preds[:, 0] = y_true - interval_width * 0.5  # Q10
+>>> y_preds[:, 4] = y_true + interval_width * 0.5  # Q90
+>>>
+>>> # Generate the plot
+>>> ax = plot_conditional_quantiles(
+...     y_true,
+...     y_preds,
+...     quantiles,
+...     bands=[80, 50], # Show 80% and 50% intervals
+...     title="Conditional Uncertainty (Heteroscedasticity)"
+... )
+
+References
+----------
+.. footbibliography::
+"""
 
 
 @validate_params(
@@ -96,7 +765,7 @@ def plot_relationship(
             ):
                 # Use colors directly from discrete map if enough
                 color_palette = cmap_obj.colors[:num_preds]
-            else:  # Sample from continuous map or discrete map with fewer colors
+            else:
                 color_palette = [
                     (
                         cmap_obj(i / max(1, num_preds - 1))
@@ -126,7 +795,8 @@ def plot_relationship(
     elif acov == "eighth_circle":
         angular_range = np.pi / 4
     else:
-        # This case should be caught by @validate_params, but keep as safeguard
+        # This case should be caught by @validate_params,
+        # but keep as safeguard
         raise ValueError(
             "Invalid value for `acov`. Choose from 'default',"
             " 'half_circle', 'quarter_circle', or 'eighth_circle'."
@@ -221,7 +891,7 @@ def plot_relationship(
 
         ax.set_xticks(theta_ticks)
         ax.set_xticklabels(z_tick_labels)
-        # Optional: Set label for z-axis if z_label is provided
+        # Set label for z-axis if z_label is provided
         if z_label:
             ax.text(
                 1.1,
@@ -231,22 +901,17 @@ def plot_relationship(
                 rotation=90,
                 va="center",
                 ha="left",
-            )  # Adjust position as needed
+            )
 
     # Add labels for radial and angular axes (only if z_values are not used for angles)
     if z_values is None:
-        ax.set_ylabel(
-            ylabel or "Angular Mapping (θ)", labelpad=15
-        )  # Use labelpad
+        ax.set_ylabel(ylabel or "Angular Mapping (θ)", labelpad=15)
     # Radial label
     ax.set_xlabel(xlabel or "Normalized Predictions (r)", labelpad=15)
     # Position radial labels better
     ax.set_rlabel_position(22.5)  # Adjust angle for radial labels
 
-    # Add title
-    ax.set_title(
-        title or "Relationship Visualization", va="bottom", pad=20
-    )  # Add padding
+    ax.set_title(title or "Relationship Visualization", va="bottom", pad=20)
 
     # Add grid using helper or directly
     set_axis_grid(ax, show_grid, grid_props=grid_props)

@@ -27,12 +27,15 @@ Summary of Comparison Functions
      - Generates a radar chart comparing multiple models across
        various performance metrics (e.g., R2, MAE, Accuracy).
    * - :func:`~kdiagram.plot.comparison.plot_reliability_diagram`
-     - Draws a reliability (calibration) diagram to assess how
-       well predicted probabilities match observed frequencies.
+     - Draws a standard reliability (calibration) diagram to assess
+       how well predicted probabilities match observed frequencies.
+   * - :func:`~kdiagram.plot.comparison.plot_polar_reliability`
+     - Draws a novel polar reliability spiral with diagnostic
+       coloring to visualize model calibration.
    * - :func:`~kdiagram.plot.comparison.plot_horizon_metrics`
-     - Draw a polar bar chart to visually compare key metrics across
-       a set of distinct categories.
-
+     - Draws a polar bar chart to visually compare key metrics across
+       a set of distinct categories, such as forecast horizons.
+       
 Detailed Explanations
 ---------------------
 
@@ -131,7 +134,6 @@ in the Gallery)
 .. raw:: html
 
    <hr>
-
 
 .. _ug_plot_reliability:
 
@@ -262,11 +264,99 @@ Lower ECE/MCE/Brier indicate better calibration (and accuracy for Brier).
 runnable snippet that saves an image and returns per-bin statistics.)
 
 
-
 .. raw:: html
 
    <hr>
 
+.. _ug_plot_polar_reliability:
+
+Polar Reliability Diagram (:func:`~kdiagram.plot.comparison.plot_polar_reliability`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose**
+This function creates a **Polar Reliability Diagram**, a novel
+visualization that transforms the standard calibration plot into an
+intuitive spiral :footcite:p:`kouadiob2025`. It is designed to
+diagnose model calibration by comparing **predicted probabilities**
+(mapped to the angle) to **observed frequencies** (mapped to the
+radius), with diagnostic coloring to reveal the nature of any
+miscalibration.
+
+**Mathematical Concept:**
+This plot is a polar adaptation of the standard reliability diagram,
+a key tool in forecast verification :footcite:p:`Jolliffe2012`.
+
+1.  **Binning**: First, the predicted probabilities :math:`p_i` are
+    partitioned into :math:`K` bins. For each bin :math:`k`, the
+    mean predicted probability (:math:`\bar{p}_k`) and the mean
+    observed frequency (:math:`\bar{y}_k`) are calculated.
+
+2.  **Polar Mapping**: These binned statistics are then mapped to
+    polar coordinates:
+
+    .. math::
+       :label: eq:polar_reliability_mapping
+
+       \theta_k &= \bar{p}_k \cdot \frac{\pi}{2} \\
+       r_k &= \bar{y}_k
+
+    The plot is constrained to a 90-degree quadrant, where the
+    angle :math:`\theta` represents the predicted probability from
+    0 to 1, and the radius :math:`r` represents the observed
+    frequency from 0 to 1.
+
+3.  **Perfect Calibration**: A perfectly calibrated model, where
+    :math:`\bar{p}_k = \bar{y}_k` for all bins, will form a perfect
+    Archimedean spiral defined by :math:`r = \frac{2\theta}{\pi}`.
+    This is drawn as a dashed black reference line.
+
+4.  **Diagnostic Coloring**: The calibration error for each bin is
+    calculated as :math:`e_k = \bar{y}_k - \bar{p}_k`. The line
+    segments of the model's spiral are colored based on this error:
+    
+    - :math:`e_k < 0`: The model is **over-confident** (observed
+      frequency is lower than predicted probability).
+    - :math:`e_k > 0`: The model is **under-confident** (observed
+      frequency is higher than predicted probability).
+
+
+**Interpretation:**
+The plot provides an intuitive visual assessment of model
+calibration by comparing the model's spiral to the perfect
+calibration reference.
+
+* **Alignment**: A well-calibrated model will have a spiral that
+  lies directly on top of the dashed black reference spiral.
+* **Deviation**:
+
+  - If the model's spiral is **inside** the reference, it indicates
+    **over-confidence** (the model predicts higher probabilities
+    than are observed).
+  - If the model's spiral is **outside** the reference, it indicates
+    **under-confidence**.
+* **Color**: The color of the line provides a direct diagnostic.
+  Using a diverging colormap like 'coolwarm', red areas might show
+  over-confidence while blue areas show under-confidence.
+
+
+**Use Cases:**
+
+* To get a more intuitive and visually engaging assessment of
+  model calibration compared to a traditional Cartesian plot.
+* To quickly identify in which probability ranges a model is
+  over- or under-confident.
+* To effectively communicate the calibration performance of one or
+  more models in a single, diagnostic-rich figure.
+
+
+**Example:**
+See the gallery example and code:
+:ref:`gallery_plot_polar_reliability`.
+
+.. raw:: html
+
+   <hr>
+   
 .. _ug_plot_horizon_metrics:
 
 Comparing Metrics Across Horizons (:func:`~kdiagram.plot.comparison.plot_horizon_metrics`)
@@ -365,6 +455,7 @@ in the Gallery)
 .. raw:: html
 
    <hr>
+
 
 .. rubric:: References
 

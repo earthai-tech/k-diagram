@@ -4,7 +4,11 @@ from __future__ import annotations
 import os
 import warnings
 
+import numpy as np
+import pandas as pd
 import pytest
+
+import kdiagram.utils._deps as deps
 
 # Force a non-GUI backend before importing pyplot
 os.environ.setdefault("MPLBACKEND", "Agg")
@@ -15,6 +19,13 @@ try:
     import matplotlib.pyplot as plt
 except Exception:  # Matplotlib might be optional in some envs
     plt = None  # type: ignore[assignment]
+
+
+@pytest.fixture(autouse=True)
+def clear_requirements_cache():
+    deps._REQUIREMENT_CACHE.clear()
+    yield
+    deps._REQUIREMENT_CACHE.clear()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -97,3 +108,17 @@ def pytest_configure(config: pytest.Config) -> None:
     #     category=UserWarning,
     #     module=r"^matplotlib\.",
     # )
+
+
+@pytest.fixture
+def demo_csv_context(tmp_path):
+    n = 200
+    rng = np.random.default_rng(0)
+    time = pd.date_range("2024-01-01", periods=n, freq="D")
+    y = 50 + np.linspace(0, 10, n) + rng.normal(0, 2, n)
+    m1 = y + rng.normal(0, 2.5, n)
+    m2 = y - 3 + rng.normal(0, 3.0, n)
+    df = pd.DataFrame({"time": time, "actual": y, "m1": m1, "m2": m2})
+    p = tmp_path / "context.csv"
+    df.to_csv(p, index=False)
+    return p

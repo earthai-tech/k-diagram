@@ -8,11 +8,13 @@ K-Diagram: Polar Diagnostics for Forecast Uncertainty
 specialized diagnostic polar plots, called "k-diagrams,
 for comprehensive model evaluation and forecast analysis.
 """
+
 import importlib
 import logging
 import warnings
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 
-# Configure basic logging and suppress certain third-party library warnings
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger("matplotlib.font_manager").disabled = True
 
@@ -31,12 +33,11 @@ def _lazy_import(module_name, alias=None):
 
 
 try:
-    from ._scm_version import version as __version__
-except Exception:
-    # Fallback version 
-    __version__ = "1.2.0"
+    __version__ = _pkg_version("k-diagram")
+except PackageNotFoundError:
+    # fallback when running from source without install
+    __version__ = "1.2.2.dev0"
 
-# Dependency check
 _required_dependencies = [
     ("numpy", None),
     ("pandas", None),
@@ -69,22 +70,40 @@ from .config import configure_warnings, warnings_config  # noqa: F401, E402
 from .plot import (  # noqa: E402
     plot_actual_vs_predicted,
     plot_anomaly_magnitude,
+    plot_calibration_sharpness,
+    plot_conditional_quantiles,
     plot_coverage,
     plot_coverage_diagnostic,
+    plot_credibility_bands,
+    plot_crps_comparison,
     plot_error_bands,
     plot_error_ellipses,
+    plot_error_relationship,
     plot_error_violins,
     plot_feature_fingerprint,
+    plot_feature_interaction,
     plot_horizon_metrics,
     plot_interval_consistency,
     plot_interval_width,
     plot_model_comparison,
     plot_model_drift,
+    plot_pinball_loss,
+    plot_pit_histogram,
+    plot_polar_classification_report,
+    plot_polar_confusion_matrix,
+    plot_polar_confusion_matrix_in,
+    plot_polar_confusion_multiclass,
     plot_polar_heatmap,
+    plot_polar_pr_curve,
     plot_polar_quiver,
+    plot_polar_reliability,
+    plot_polar_roc,
+    plot_polar_sharpness,
     plot_radial_density_ring,
+    plot_regression_performance,
     plot_relationship,
     plot_reliability_diagram,
+    plot_residual_relationship,
     plot_taylor_diagram,
     plot_taylor_diagram_in,
     plot_temporal_uncertainty,
@@ -111,10 +130,12 @@ __all__ = [
     "plot_taylor_diagram_in",
     "taylor_diagram",
     "plot_feature_fingerprint",
+    "plot_feature_interaction",
     "plot_relationship",
     "plot_model_comparison",
     "plot_radial_density_ring",
     "plot_reliability_diagram",
+    "plot_polar_reliability",
     "plot_horizon_metrics",
     "plot_horizon_metrics",
     "plot_polar_heatmap",
@@ -122,4 +143,20 @@ __all__ = [
     "plot_error_bands",
     "plot_error_ellipses",
     "plot_error_violins",
+    "plot_crps_comparison",
+    "plot_pit_histogram",
+    "plot_polar_sharpness",
+    "plot_credibility_bands",
+    "plot_calibration_sharpness",
+    "plot_error_relationship",
+    "plot_residual_relationship",
+    "plot_conditional_quantiles",
+    "plot_pinball_loss",
+    "plot_polar_classification_report",
+    "plot_polar_confusion_matrix",
+    "plot_polar_confusion_matrix_in",
+    "plot_polar_confusion_multiclass",
+    "plot_polar_pr_curve",
+    "plot_polar_roc",
+    "plot_regression_performance",
 ]

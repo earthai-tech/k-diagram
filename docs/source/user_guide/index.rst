@@ -7,7 +7,7 @@ User Guide
 Welcome to the `k-diagram` User Guide!
 
 While the :doc:`../quickstart` provides a fast runnable example and the
-:doc:`../gallery/index` showcases the various plots and utilities, this
+:doc:`../gallery/index` showcases the various plots, this
 guide aims to provide a deeper understanding of the concepts behind the
 different visualizations and helper functions offered by `k-diagram`.
 
@@ -27,16 +27,21 @@ forecasting models and data.
    :maxdepth: 1
    :caption: Guide Topics:
 
-   uncertainty         
-   evaluation  
-   comparison               
-   feature_based       
-   relationship 
+   uncertainty
    errors
-   hist  
-   datasets                 
-   utils
-   case_history              
+   probabilistic
+   comparison
+   relationship
+   feature_based
+   evaluation
+   taylor_diagram
+   context
+   hist
+   forecast_utils
+   quantile_utils
+   math_utils
+   datasets
+   case_history
 
 We hope this guide enhances your ability to leverage `k-diagram` for
 comprehensive forecast analysis. For detailed function parameters, please

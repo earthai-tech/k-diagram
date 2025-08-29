@@ -115,3 +115,104 @@ values comparing feature influence across three years.
      over time, as shown in this yearly example.
    * **Model Interpretation:** Understand and communicate the key
      drivers behind model predictions for different scenarios.
+  
+
+.. raw:: html
+
+   <hr>
+      
+.. _gallery_plot_feature_interaction:
+
+---------------------------
+Polar Feature Interaction
+---------------------------
+
+Visualizes the interaction between two features by plotting a target
+variable's aggregated value on a polar heatmap. This plot is designed to
+reveal complex, non-linear relationships that are not apparent from 1D
+feature-importance plots.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import pandas as pd
+   import numpy as np
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation ---
+
+   np.random.seed(0)
+   n_points = 5000
+
+   # Feature 1 (Angle): Hour of day
+   hour_of_day = np.random.uniform(0, 24, n_points)
+
+   # Feature 2 (Radius): Cloud cover
+   cloud_cover = np.random.rand(n_points)
+
+   # Target (Color): Solar panel output, which depends on the
+   # interaction between daylight and cloud cover.
+   daylight_factor = np.sin(hour_of_day * np.pi / 24) ** 2
+   cloud_factor = (1 - cloud_cover ** 0.5)
+   panel_output = 100 * daylight_factor * cloud_factor + np.random.rand(n_points) * 5
+   panel_output[(hour_of_day < 6) | (hour_of_day > 18)] = 0
+
+   df_solar = pd.DataFrame({
+       'hour': hour_of_day,
+       'cloud_cover': cloud_cover,
+       'panel_output': panel_output,
+   })
+
+   # --- Plotting ---
+
+   kd.plot_feature_interaction(
+       df=df_solar,
+       theta_col='hour',
+       r_col='cloud_cover',
+       color_col='panel_output',
+       theta_period=24,
+       theta_bins=24,  # One bin per hour
+       r_bins=8,
+       cmap='inferno',
+       title='Solar Panel Output by Hour and Cloud Cover',
+       savefig='gallery/images/plot_feature_based_interaction.png',
+   )
+   plt.close()
+
+.. image:: ../images/plot_feature_based_interaction.png
+   :alt: Example of a Polar Feature Interaction Plot
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar Feature Interaction** plot provides a powerful diagnostic
+   for understanding how two features jointly influence a target variable.
+
+   **Key Features:**
+   
+   * **Angle (θ):** First feature, often cyclical (here, hour of day).
+   * **Radius (r):** Second feature (here, cloud cover, with 0 at the center).
+   * **Color:** Mean value of the target for points within each angle–radius bin.
+
+   **🔍 In this Example:**
+   
+   * **Interaction “Hot Spot”:** Bright region at low radius (low cloud
+     cover) and angle ~90° (midday) shows output is high **only when it is
+     noon AND cloud cover is low**.
+   * **No-Interaction Zones:** Night hours are dark (zero output) regardless
+     of cloud cover; outer rings (high cloud cover) remain dark even during
+     the day.
+
+   **💡 When to Use:**
+   
+   * Move beyond simple feature importance to diagnose **pairwise feature
+     interactions** affecting predictions or errors.
+   * Identify non-linear relationships and conditional patterns.
+   * Visually confirm expected interaction effects learned by a model.
+
+.. raw:: html
+
+   <hr>

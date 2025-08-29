@@ -217,6 +217,106 @@ probability bins. A perfectly calibrated model lies on the
 
     <hr>
 
+.. _gallery_plot_polar_reliability:
+
+--------------------------------------------------
+Polar Reliability Diagram (Calibration Spiral)
+--------------------------------------------------
+
+Provides a novel and intuitive visualization of model calibration by
+mapping the traditional reliability diagram onto a polar coordinate
+system. Perfect calibration is represented by a spiral, and the
+model's performance is shown as a colored line that should follow
+this spiral.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import numpy as np
+   from scipy.stats import norm
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation ---
+   np.random.seed(0)
+   n_samples = 2000
+   # True probability of an event is 0.4
+   y_true = (np.random.rand(n_samples) < 0.4).astype(int)
+
+   # Model 1: Well-calibrated
+   calibrated_preds = np.clip(0.4 + np.random.normal(
+       0, 0.15, n_samples), 0, 1)
+
+   # Model 2: Over-confident (pushes probabilities to extremes)
+   overconfident_preds = np.clip(0.4 + np.random.normal(
+       0, 0.3, n_samples), 0, 1)
+
+   model_names = ["Well-Calibrated", "Over-Confident"]
+
+   # --- Plotting ---
+   kd.plot_polar_reliability(
+       y_true,
+       calibrated_preds,
+       overconfident_preds,
+       names=model_names,
+       n_bins=15,
+       cmap='plasma',
+       savefig="gallery/images/gallery_polar_reliability_diagram.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_polar_reliability_diagram.png
+   :alt: Example of a Polar Reliability Diagram
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   The **Polar Reliability Diagram** transforms the standard
+   calibration plot into an intuitive spiral, making it easier to
+   diagnose the nature and location of miscalibrations.
+
+   **Key Features:**
+
+   * **Angle (θ):** Represents the **predicted probability**,
+     sweeping from 0.0 at 0° to 1.0 at 90°.
+   * **Radius (r):** Represents the **observed frequency** of the
+     event in each probability bin.
+   * **Perfect Calibration (Dashed Spiral):** This is the ideal
+     line where predicted probability equals observed frequency.
+   * **Diagnostic Coloring:** The model's line is colored based on
+     the calibration error. In this example (using the 'plasma'
+     colormap), yellow/orange indicates **over-confidence** (observed
+     frequency < predicted probability), while purple/blue
+     indicates **under-confidence**.
+
+   **🔍 In this Example:**
+
+   * **Well-Calibrated Model (Purple Spiral):** This model's line
+     closely follows the dashed "Perfect Calibration" spiral. The
+     dark purple color indicates that the calibration error is very
+     close to zero across all probability bins.
+   * **Over-Confident Model (Multi-colored Spiral):** This model's
+     line deviates significantly. For low predicted probabilities
+     (small angles), it is outside the reference spiral (under-confident,
+     purple). For higher predicted probabilities (larger angles), it
+     moves inside the reference spiral, and the color shifts to
+     yellow/orange, clearly indicating **over-confidence**.
+
+   **💡 When to Use:**
+
+   * To get a more intuitive and visually engaging assessment of
+     model calibration compared to a traditional Cartesian plot.
+   * To quickly identify where a model is over- or under-confident
+     across its range of predicted probabilities.
+   * To effectively communicate the calibration performance of one or
+     more models in a single, diagnostic-rich figure.
+
+.. raw:: html
+
+   <hr>
+   
 .. _gallery_plot_horizon_metrics:
 
 -------------------------------------
@@ -230,50 +330,50 @@ as color) across multiple distinct categories, such as forecast
 horizons.
 
 .. code-block:: python
-    :linenos:
+   :linenos:
 
-    import kdiagram.plot.comparison as kdc
-    import pandas as pd
-    import numpy as np
-    import matplotlib.pyplot as plt
+   import kdiagram.plot.comparison as kdc
+   import pandas as pd
+   import numpy as np
+   import matplotlib.pyplot as plt
 
-    # --- Data Generation ---
+   # --- Data Generation ---
 
-    # Create synthetic data where each row represents a forecast horizon.
+   # Create synthetic data where each row represents a forecast horizon.
 
-    # The columns represent different samples (e.g., from different locations).
+   # The columns represent different samples (e.g., from different locations).
 
-    horizons = ["H1", "H2", "H3", "H4", "H5", "H6"]
-    df_horizons = pd.DataFrame({
+   horizons = ["H1", "H2", "H3", "H4", "H5", "H6"]
+   df_horizons = pd.DataFrame({
     'q10_s1': [1, 2, 3, 4, 5, 6],
     'q10_s2': [1.2, 2.3, 3.4, 4.5, 5.6, 6.7],
     'q90_s1': [3, 4, 5.5, 7, 8, 9.5],
     'q90_s2': [3.1, 4.2, 5.7, 7.3, 8.4, 9.9],
     'q50_s1': [2, 3, 4.2, 5.7, 6.5, 8.2],
     'q50_s2': [2.1, 3.2, 4.4, 5.9, 6.9, 8.8],
-    })
+   })
 
-    q10_cols = ['q10_s1', 'q10_s2']
-    q90_cols = ['q90_s1', 'q90_s2']
-    q50_cols = ['q50_s1', 'q50_s2']
+   q10_cols = ['q10_s1', 'q10_s2']
+   q90_cols = ['q90_s1', 'q90_s2']
+   q50_cols = ['q50_s1', 'q50_s2']
 
-    # --- Plotting ---
+   # --- Plotting ---
 
-    ax = kdc.plot_horizon_metrics(
-    df=df_horizons,
-    qlow_cols=q10_cols,
-    qup_cols=q90_cols,
-    q50_cols=q50_cols,
-    title="Mean Interval Width Across Horizons",
-    xtick_labels=horizons,
-    show_value_labels=False,  # Hiding for a cleaner look
-    r_label="Mean Interval Width",
-    cbar_label="Mean Q50 Value",
-    acov="half_circle",  # Use a 180-degree view
-    # Save the plot (adjust path relative to this file)
-    savefig="images/gallery_horizon_metrics.png"
-    )
-    plt.close()
+   ax = kdc.plot_horizon_metrics(
+   df=df_horizons,
+   qlow_cols=q10_cols,
+   qup_cols=q90_cols,
+   q50_cols=q50_cols,
+   title="Mean Interval Width Across Horizons",
+   xtick_labels=horizons,
+   show_value_labels=False,  # Hiding for a cleaner look
+   r_label="Mean Interval Width",
+   cbar_label="Mean Q50 Value",
+   acov="half_circle",  # Use a 180-degree view
+   # Save the plot (adjust path relative to this file)
+   savefig="images/gallery_horizon_metrics.png"
+   )
+   plt.close()
 
 .. image:: ../images/gallery_horizon_metrics.png
     :alt: Example Plot of Metrics Across Horizons

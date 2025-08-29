@@ -1,122 +1,169 @@
 .. _lab_quickstart:
 
-==================
-Quick Start Guide
-==================
+=============
+Quick Start
+=============
 
-This guide provides a minimal, runnable example to get you started
-with `k-diagram`. We'll generate some sample data and create our
-first diagnostic polar plot: the **Anomaly Magnitude** plot.
+.. topic:: Our Goal: Comparing Two Models with a Radar Chart
+   :class: hint
 
-This plot helps identify where actual values fall outside predicted
-uncertainty intervals and visualizes the magnitude of those errors.
+   Imagine you've developed a new "Upgraded" model and you need to
+   prove it's better than the old "Baseline". A single accuracy score
+   might not tell the whole story. How can you show the trade-offs
+   across multiple performance metrics quickly and visually?
 
-Setup and Example
------------------
+   This guide provides a fast, hands-on example to do just that using
+   ``k-diagram``'s polar radar chart.
 
-1.  **Import Libraries:**
-    We need `kdiagram`, `pandas` for data handling, and `numpy` for
-    data generation.
+Welcome! This is a complete, copy-pasteable example to
+take you from synthetic data generation to a final, publication-quality
+plot in just a few minutes. We'll show you how to do it with both the
+**Python API** and the **Command-Line Interface (CLI)**.
 
-2.  **Generate Sample Data:**
-    We create a simple DataFrame with actual values and corresponding
-    prediction interval bounds (e.g., 10th and 90th percentiles).
-    Crucially, we'll ensure some 'actual' values fall outside these
-    bounds to simulate prediction anomalies.
+---------------------------
+Part 1: The Python API
+---------------------------
 
-3.  **Create the Plot:**
-    Call `kd.plot_anomaly_magnitude`, specifying the columns for
-    actual values and the interval bounds.
+The most flexible way to use ``k-diagram`` is within a Python script
+or notebook. The code below will generate a complete, illustrative
+example.
 
-Copy and run the following Python code:
-
+**Code**
+^^^^^^^^
 .. code-block:: python
    :linenos:
 
    import kdiagram as kd
-   import pandas as pd
-   import numpy as np
-   import matplotlib.pyplot as plt # Often needed alongside plotting libs
+   import matplotlib.pyplot as plt
 
-   # 1. Generate Sample Data
-   np.random.seed(42) # for reproducible results
-   n_points = 180
-   data = pd.DataFrame({'sample_id': range(n_points)})
+   # 1. Define distinct profiles for the models we want to compare.
+   # This ensures they have different performance characteristics, which
+   # will make our comparison plot much more interesting.
+   model_profiles = {
+       "Baseline": {"bias": -8.0, "noise_std": 3.0},
+       "Upgraded": {"bias": 0.5, "noise_std": 4.0},
+   }
 
-   # Create base actual values and interval bounds
-   data['actual'] = np.random.normal(loc=20, scale=5, size=n_points)
-   data['q10'] = data['actual'] - np.random.uniform(2, 6, size=n_points)
-   data['q90'] = data['actual'] + np.random.uniform(2, 6, size=n_points)
-
-   # Introduce some anomalies (points outside the interval)
-   # Make ~10% under-predictions
-   under_indices = np.random.choice(n_points, size=n_points // 10, replace=False)
-   data.loc[under_indices, 'actual'] = data.loc[under_indices, 'q10'] - \
-                                       np.random.uniform(1, 5, size=len(under_indices))
-
-   # Make ~10% over-predictions (avoiding indices already used)
-   available_indices = list(set(range(n_points)) - set(under_indices))
-   over_indices = np.random.choice(available_indices, size=n_points // 10, replace=False)
-   data.loc[over_indices, 'actual'] = data.loc[over_indices, 'q90'] + \
-                                      np.random.uniform(1, 5, size=len(over_indices))
-
-   print("Sample Data Head:")
-   print(data.head())
-   print(f"\nTotal points: {len(data)}")
-
-   # 2. Create the Anomaly Magnitude Plot
-   print("\nGenerating Anomaly Magnitude plot...")
-   ax = kd.plot_anomaly_magnitude(
-       df=data,
-       actual_col='actual',
-       q_cols=['q10', 'q90'], # Provide lower and upper bounds as a list
-       title="Quick Start: Anomaly Magnitude Example",
-       cbar=True,            # Show color bar indicating magnitude
-       verbose=1             # Print summary of anomalies found
+   # 2. Generate the dataset using these specific profiles.
+   print("Generating synthetic data for two models...")
+   data = kd.datasets.make_regression_data(
+       model_profiles=model_profiles,
+       seed=42,
+       as_frame=True  # We ask for a pandas DataFrame as output
    )
 
-   # The plot is displayed automatically by default
-   # Alternatively, save it using savefig:
-   # kd.plot_anomaly_magnitude(..., savefig="quickstart_anomaly.png")
+   # 3. Save the data so we can use it with the CLI in Part 2
+   data.to_csv("quickstart_data.csv", index=False)
+   print("Sample data created and saved to quickstart_data.csv")
 
-   # Optional: Explicitly show plot if needed in some environments
-   # plt.show()
+   # 4. Create the comparison plot and display it.
+   print("\nGenerating comparison plot from Python API...")
+   ax = kd.plot_regression_performance(
+       # Pass the true values and each prediction series as NumPy arrays
+       data['y_true'].values,
+       data['pred_Baseline'].values,
+       data['pred_Upgraded'].values,
+       
+       names=["Baseline", "Upgraded"],
+       title="Model Comparison: Baseline vs. Upgraded",
+       # Use metric_labels for a cleaner plot
+       metric_labels={
+           'r2': 'R²',
+           'neg_mean_absolute_error': 'MAE',
+           'neg_root_mean_squared_error': 'RMSE',
+       }
+   )
+   
+   plt.show()
 
-Expected Output
----------------
+**Expected Output**
+^^^^^^^^^^^^^^^^^^^
+Running this script will print a confirmation message and then display
+a polar radar chart similar to this one, clearly showing the
+performance difference between the two models.
 
-Running the code above will first print the head of the generated
-DataFrame and a summary of detected anomalies. It will then display
-a polar plot similar to this:
-
-.. image:: /images/quickstart_anomaly_magnitude.png
-   :alt: Example Anomaly Magnitude Plot
+.. image:: /images/quickstart_radar_chart.png
+   :alt: Example Regression Performance Radar Chart
    :align: center
    :width: 80%
 
+------------------------------------------
+Part 2: The Command-Line (CLI) Alternative
+------------------------------------------
 
-**Interpreting the Plot:**
+Prefer the command line for quick tasks? You can create the exact same
+plot without writing any Python. Since we already saved our data to
+``quickstart_data.csv``, just run this command in your terminal:
 
-* **Angles:** Each point around the circle represents a sample from
-  the DataFrame (ordered by index in this case).
-* **Radius:** The distance from the center indicates the magnitude of
-  the anomaly (how far the actual value was from the interval bound).
-  Points perfectly within the interval are not shown.
-* **Color:** Points are colored based on the type of anomaly:
+.. code-block:: bash
 
-  * Blue tones (default) indicate **under-predictions** (actual < q10).
-  * Red tones (default) indicate **over-predictions** (actual > q90).
-  * The color intensity corresponds to the anomaly magnitude shown
-    on the color bar.
+   k-diagram plot-regression-performance quickstart_data.csv \
+     --y-true y_true \
+     --pred pred_Baseline pred_Upgraded \
+     --names "Baseline" "Upgraded" \
+     --title "Model Comparison (from CLI)" \
+     --metric-label "r2:R²" "neg_mean_absolute_error:MAE" \
+       "neg_root_mean_squared_error:RMSE" \
+     --savefig quickstart_cli_plot.png
 
+This will save the plot directly to a file named
+``quickstart_cli_plot.png``.
+
+-------------------------
+Interpreting the Plot
+-------------------------
+
+This radar chart provides a rich, holistic view of model performance.
+Here’s how to read it.
+
+.. topic:: How to Read the Chart
+
+   * **Axes**: Each axis represents a different performance metric (like
+     R², MAE, RMSE). To make all metrics comparable, scores are always
+     normalized so that **outward is always better**.
+   * **Radius**: The length of a bar shows the model's normalized score
+     on that metric. A bar reaching the outer green circle represents
+     the best possible performance among the models being compared.
+   * **Shape**: Each colored shape represents a model. A model with a
+     **larger overall area** is a better all-around performer.
+
+**Putting It All Together: Our Analysis**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The plot tells a very clear story: the **"Upgraded" model is a significant 
+improvement** over the "Baseline".
+
+* The **Upgraded model** (yellow) has long bars on all three axes, forming 
+  a large, balanced shape. This indicates it is a strong all-around performer 
+  with a high R² (good fit) and low MAE and RMSE (low errors).
+
+* The **Baseline model** (purple) reveals a critical flaw. While its MAE bar 
+  is not zero, its bars for **R² and RMSE are extremely short**. This is a 
+  classic sign of a model with a **severe, systematic bias**. The large, 
+  consistent errors are heavily penalized by the R² and RMSE metrics, 
+  indicating the model has poor predictive power despite its seemingly 
+  acceptable average error.
+
+In conclusion, the chart instantly shows us that the "Upgraded" model 
+successfully fixed the critical bias issue present in the "Baseline", 
+making it the clear winner.
+
+This is just one example of what this chart can reveal. To see more
+advanced use cases, including how to add custom metrics or control the
+normalization, check out the detailed examples in our gallery.
+
+*See more examples in :ref:`gallery_plot_regression_performance`*
+
+-------------
 Next Steps
-----------
+-------------
 
-Congratulations! You've created your first k-diagram plot.
+Congratulations! You've created your first k-diagram plot and seen
+how easy it is to compare models.
 
 * Explore more plot types and their capabilities in the
-  :doc:`Plot Gallery <gallery/index>`
+  :doc:`Plot Gallery <gallery/index>`.
 * Learn about the concepts behind the visualizations in the
-  :doc:`User Guide <user_guide/index>`
-* Refer to the :doc:`API Reference <api>` documentation for detailed function
+  :doc:`User Guide <user_guide/index>`.
+* Refer to the :doc:`API Reference <api>` for detailed function
   signatures and parameters.

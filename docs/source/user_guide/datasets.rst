@@ -42,6 +42,12 @@ Function Summary
    * - :func:`~kdiagram.datasets.make_multi_model_quantile_data`
      - Generates quantile predictions from multiple simulated models
        for a single time period. Useful for model comparison plots.
+   * - :func:`~kdiagram.datasets.make_regression_data`
+     - Generates a rich synthetic dataset for comparing regression
+       models with configurable error profiles.
+   * - :func:`~kdiagram.datasets.make_classification_data`
+     - Generates a synthetic dataset for classification tasks,
+       including predicted labels and probabilities.
    * - :func:`~kdiagram.datasets.make_cyclical_data`
      - Generates data with true and predicted series exhibiting
        cyclical/seasonal patterns.
@@ -316,6 +322,83 @@ comparisons across models :footcite:p:`Gneiting2007b, Jolliffe2012`.
    4  53.938741   0.776598   5.808982          43.275494          53.397751          61.104506          39.947971          52.309521          63.340564
 
 
+Generating Regression Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:func:`~kdiagram.datasets.make_regression_data` is a powerful and
+flexible generator for creating datasets to test regression model
+evaluation plots. You can control the ground truth signal, the number
+of features, and define detailed error profiles for each simulated model.
+
+.. code-block:: python
+   :linenos:
+
+   from kdiagram.datasets import make_regression_data
+
+   # Define profiles for two models with different error characteristics
+   model_profiles = {
+       "Good Model": {"bias": 0.5, "noise_std": 4.0},
+       "Biased Model": {"bias": -10.0, "noise_std": 2.0},
+   }
+   
+   # Generate the data as a DataFrame
+   df_regression = make_regression_data(
+       model_profiles=model_profiles,
+       seed=42,
+       as_frame=True
+   )
+
+   print("--- Regression Data Frame ---")
+   print(df_regression.head())
+   
+.. code-block:: text
+   :caption: Example Output
+
+   --- Regression Data Frame ---
+         y_true  feature_1  pred_Good_Model  pred_Biased_Model
+   0  19.917686   6.302826        22.233548           5.414131
+   1  10.819543   2.272387        14.317278           1.712187
+   2  24.806819   7.447622        19.778093          12.725647
+   3  25.401583   7.269946        22.887473          13.559882
+   4   6.296408   1.034030        12.616590          -3.138418
+
+Generating Classification Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:func:`~kdiagram.datasets.make_classification_data` creates datasets
+for binary or multiclass classification problems. It generates features,
+true class labels, and for each simulated model, both predicted class
+labels and predicted probabilities. This makes it ideal for testing
+plots like ROC/PR curves and confusion matrices.
+
+.. code-block:: python
+   :linenos:
+
+   from kdiagram.datasets import make_classification_data
+   
+   # Generate data for a 2-class problem with 2 models
+   df_classification = make_classification_data(
+       n_samples=5,
+       n_features=2,
+       n_classes=2,
+       n_models=2,
+       seed=42,
+       as_frame=True
+   )
+
+   print("--- Classification Data Frame ---")
+   print(df_classification)
+
+.. code-block:: text
+   :caption: Example Output
+   
+   --- Classification Data Frame ---
+            x1        x2  y        m1        m2
+   0  1.777792 -0.680930  1  0.659534  0.816292
+   1 -0.933969  1.222541  0  0.780446  0.705698
+   2  2.127241 -0.154529  1  0.659211  0.928274
+   3  1.467509 -0.428328  1  0.544542  0.749182
+   4  0.140708 -0.352134  1  0.372744  0.366596
+   
+   
 Generating Cyclical Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 :func:`~kdiagram.datasets.make_cyclical_data` produces a “true” sinusoid plus
@@ -682,7 +765,7 @@ and the normalized predictions (mapped to radius) using
 .. code-block:: python
    :linenos:
 
-   import kdiagram as kd # Assuming top-level access or specific imports
+   import kdiagram as kd 
    import matplotlib.pyplot as plt
    import numpy as np 
 
