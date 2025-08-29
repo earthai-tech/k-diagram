@@ -821,11 +821,11 @@ html[data-theme="dark"] .see-also-tiles .see-also-accent{
 
 /* Per-card preview images
    (custom.css is at /_static/css/, previews at /_static/previews/) */
-.see-also-tiles .card--uncertainty { --card-preview: url("../previews/uncertainty.png"); }
-.see-also-tiles .card--errors      { --card-preview: url("../previews/errors.png"); }
-.see-also-tiles .card--evaluation  { --card-preview: url("../previews/evaluation.png"); }
-.see-also-tiles .card--importance  { --card-preview: url("../previews/importance.png"); }
-.see-also-tiles .card--relationship{ --card-preview: url("../previews/relationship.png"); }
+.see-also-tiles .card--uncertainty { --card-preview: url("_static/previews/uncertainty.png"); }
+.see-also-tiles .card--errors      { --card-preview: url("_static/previews/errors.png"); }
+.see-also-tiles .card--evaluation  { --card-preview: url("_static/previews/evaluation.png"); }
+.see-also-tiles .card--importance  { --card-preview: url("_static/previews/importance.png"); }
+.see-also-tiles .card--relationship{ --card-preview: url("_static/previews/relationship.png"); }
 
 /* Dark mode: stronger shadow only */
 html[data-theme="dark"] .see-also-tiles .sd-card:hover{
@@ -859,7 +859,6 @@ html[data-theme="dark"] .see-also-tiles .sd-card:hover{
   background: linear-gradient(135deg, rgba(33,102,243,.10), rgba(33,102,243,0) 60%);
   opacity: 1; /* set to 0 and add :hover {opacity:1} if you want it only on hover */
 }
-
 
 hr.hr-spacer{
   margin: 1.5em 0 2em !important;
