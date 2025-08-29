@@ -949,6 +949,7 @@ def get_pipeline_feature_names(pipeline, input_features=None):
     feature_names = list(map(str, current_features))
     return feature_names
 
+
 def mean_squared_error(
     y_true,
     y_pred,
@@ -977,9 +978,7 @@ def mean_squared_error(
         MSE if squared, else RMSE.
     """
     if sklearn_mse is None:
-        raise ImportError(
-            "scikit-learn is required for metric utilities."
-        )
+        raise ImportError("scikit-learn is required for metric utilities.")
 
     if SKLEARN_VERSION >= _SQUARED_ARG_REMOVED_VERSION:
         # >= 1.4: no "squared" kw. Compute MSE, sqrt if needed.
@@ -1032,7 +1031,6 @@ def root_mean_squared_error(
         False,
         **kwargs,
     )
-
 
 
 __all__.extend(
