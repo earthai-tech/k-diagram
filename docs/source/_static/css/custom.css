@@ -8,11 +8,11 @@
 html[data-theme="light"] {
     /* --- Brand Colors --- */
     /* Primary: Dark Red based on image_357b7c.png */
-    --color-brand-primary: ##00796B; /* DarkRed */
+    --color-brand-primary: #00796B; /* DarkCyan shade  */
     /* Content color for static links, H2 */
-    --color-brand-content: #A93226; /* Slightly Lighter DarkRed */
+    --color-brand-content: #A93226; /* Dark red or brown */
     /* Secondary: Slate Blue from logo_k_diagram.png */
-    --color-brand-secondary: #36456e; /* SlateBlue */
+    --color-brand-secondary: #36456e; /* Dark shape Blue */
     /* Tertiary: Sea Green from logo_k_diagram.png */
     --color-brand-tertiary: #2E8B57; /* SeaGreen */
     
@@ -123,7 +123,6 @@ h1, .heading-title {
     font-weight: 700;
     letter-spacing: -0.5px;
 }
-}
 
 h2 {
     font-size: 2.0rem;
@@ -154,39 +153,26 @@ h4 {
     margin-top: 2rem;
 }
 
-/* Links */
-a,
-a:visited {
-    /* Use Content Red for static links */
-    color: var(--color-brand-content);
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    position: relative;
-    transition: color 0.2s ease-out;
+/* Page title */
+.content h1, article h1 {
+  color: var(--color-brand-primary) !important;  /* your teal */
+  font-weight: 700;
 }
-a::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 1px;
-    display: block;
-    margin-top: 2px;
-    right: 0;
-    /* Underline uses Primary Red */
-    background: var(--color-brand-primary);
-    transition: width 0.3s ease;
-    -webkit-transition: width 0.3s ease;
+
+/* Section titles */
+.content h2, article h2,
+.content h2 a, article h2 a {                    /* catch the linked (kdiagram.plot) part */
+  color: var(--color-foreground-primary) !important;  /* black */
+  font-weight: 700 !important;
 }
-a:hover {
-    /* Use Primary Red on hover */
-    color: var(--color-brand-primary);
-    border-bottom-color: transparent;
+
+/* H3: keep default look */
+.content h3, article h3,
+.content h3 a, article h3 a {
+  color: var(--color-foreground-primary);
+  font-weight: 600;
 }
-a:hover::after {
-    width: 100%;
-    left: 0;
-    background-color: var(--color-brand-primary);
-}
+
 
 /*--------------------------------------------------------------------------
  * Code Blocks & Inline Code
@@ -391,7 +377,7 @@ table.docutils tbody tr:hover {
 
 
 /*--------------------------------------------------------------------------
- * Sphinx Design Components (Refined)
+ * Sphinx Design Components 
  *--------------------------------------------------------------------------*/
 .sd-button-link {
     border-radius: 6px;
@@ -440,10 +426,10 @@ table.docutils tbody tr:hover {
     font-weight: 600;
     padding: 0.8em 1.2em;
 }
+
 .sd-card .sd-card-body {
     padding: 1.2em;
 }
-
 
 
 /* ------------------------------
@@ -540,11 +526,344 @@ a[role="doc-backlink"]::before {
   margin-right: .25em;
 }
 
-/* Print: remove hover lift/shadow */
-@media print {
-  .footnote,
-  dl.footnote {
-    box-shadow: none !important;
-    transform: none !important;
+/*--------------------------------------------------------------------------
+ * Hero Image Enhancement
+ *--------------------------------------------------------------------------*/
+
+/* Define the animation */
+@keyframes fadeIn-floatUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply the animation to the hero image card */
+.hero-image-card {
+  animation: fadeIn-floatUp 0.8s ease-out forwards;
+}
+
+
+/* Make the card a positioning container for the badge */
+.sd-card {
+  position: relative;
+}
+
+/* Base style for the badge */
+.new-badge-card {
+  display: none; /* Hidden by default, JS will show it */
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 7px;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: white;
+  background-color: var(--color-brand-primary); /* Your theme's primary red */
+  border-radius: 6px;
+  z-index: 2;
+  /* Apply the sparkle animation */
+  animation: sparkle 1.5s infinite ease-in-out;
+}
+
+/* Keyframe animation for the sparkle/pulse effect */
+@keyframes sparkle {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 121, 107, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 121, 107, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 121, 107, 0);
+  }
+}
+
+/*--------------------------------------------------------------------------
+ *  Restore clickable cards and position badges
+ *--------------------------------------------------------------------------*/
+/* text links only (not cards / header anchors) */
+.content a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink),
+article a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink) {
+  color: var(--color-brand-content);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  position: relative;
+  transition: color .2s ease-out;
+}
+.content a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink)::after,
+article a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 1px;
+  bottom: -2px; /*margin-top: 2px*/;
+  background: var(--color-brand-content); /*var(--color-brand-primary) #A93226*/;
+  transition: width .3s ease;
+}
+.content a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink):hover,
+article  a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink):hover {
+  color: var(--color-brand-primary);
+}
+.content a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink):hover::after,
+article  a:not(.sd-stretched-link):not(.sd-card-link):not(.headerlink):hover::after {
+  width: 100%;
+  left: 0;
+}
+
+
+/* critical: the stretched-link anchor itself must NOT be positioned */
+a.sd-stretched-link { position: static !important; }
+
+/* full-card, transparent clickable layer generated by the anchor */
+a.sd-stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent !important;
+}
+
+
+/* Topic as a soft card */
+.topic {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: var(--color-background-secondary);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.topic p.topic-title {
+  font-weight: 700;
+  margin-bottom: .5rem;
+  color: var(--color-foreground-primary);
+}
+
+
+/* === CTA tiles (home grid) === */
+.cta-tiles .sd-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background-primary);
+  transition: transform .15s ease, box-shadow .15s ease,
+              background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.cta-tiles .sd-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.10);
+  background-color: var(--color-brand-primary) !important;  /* #00796B in light mode */
+  border-color: var(--color-brand-primary) !important;
+}
+
+/* Make text readable on brand background */
+.cta-tiles .sd-card:hover,
+.cta-tiles .sd-card:hover .sd-card-header,
+.cta-tiles .sd-card:hover .sd-card-body,
+.cta-tiles .sd-card:hover p,
+.cta-tiles .sd-card:hover a {
+  color: #fff !important;
+}
+
+/* Header polish */
+.cta-tiles .sd-card .sd-card-header {
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: .75rem 1rem;
+}
+.cta-tiles .sd-card:hover .sd-card-header {
+  border-bottom-color: rgba(255,255,255,.35);
+}
+
+/* Body spacing */
+.cta-tiles .sd-card .sd-card-body {
+  padding: .9rem 1rem 1rem;
+  color: var(--color-foreground-secondary);
+}
+
+/* Keep the stretched-link overlay working over the card */
+.cta-tiles .sd-card { position: relative; }
+.cta-tiles a.sd-stretched-link { position: static !important; }
+.cta-tiles a.sd-stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: transparent !important;
+}
+
+/* Optional: subtle emoji lift on hover */
+.cta-tiles .sd-card:hover .sd-card-header::before {
+  transform: translateY(-1px);
+}
+
+/* NEW badge you already use */
+.new-badge-card {
+  display: inline-block;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 7px;
+  font-size: 0.70rem;
+  font-weight: 800;
+  color: #fff !important;
+  background-color: #ef4444;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  z-index: 3;
+}
+
+/* Dark mode: keep hover strong and readable */
+html[data-theme="dark"] .cta-tiles .sd-card:hover {
+  /* uses var(--color-brand-primary) from your dark palette */
+  box-shadow: 0 8px 22px rgba(0,0,0,.35);
+}
+
+:root { --tile-hover-bg: #2166F3; }
+html[data-theme="dark"] { --tile-hover-bg: #2166F3; } /* same in dark */
+.cta-tiles .sd-card:hover {
+ background-color: var(--tile-hover-bg) !important; 
+ border-color: var(--tile-hover-bg) !important; 
+}
+
+/* ================================
+   SEE ALSO (image previews on hover)
+   ================================ */
+
+/* Base card in the See-Also grid */
+.see-also-tiles .sd-card{
+  position: relative;                     /* for ::before/::after */
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: transparent !important;     /* let preview show through */
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+/* Header/body must be transparent so the image is visible */
+.see-also-tiles .sd-card .sd-card-header,
+.see-also-tiles .sd-card .sd-card-body{
+  background: transparent !important;
+  position: relative;
+  z-index: 2;                              /* above ::before/::after */
+}
+
+/* Subtle lift on hover */
+.see-also-tiles .sd-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+  border-color: var(--color-brand-secondary);
+}
+
+/* ---- preview layers ---- */
+
+/* image layer (set per card with --card-preview below) */
+.see-also-tiles .sd-card::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image: var(--card-preview);
+  background-position:center; background-size:cover; background-repeat:no-repeat;
+  opacity:0; transform:scale(1.04);
+  transition: opacity .25s ease, transform .25s ease;
+  z-index:0;
+}
+
+/* blue tint for readability (Furo title/link blue #2166F3) */
+.see-also-tiles .sd-card::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(to bottom,
+              rgba(33,102,243,.18), rgba(33,102,243,.52));
+  opacity:0; transition:opacity .25s ease;
+  z-index:1;
+}
+
+/* reveal image + tint */
+.see-also-tiles .sd-card:hover::before{ opacity:1; transform:scale(1); }
+.see-also-tiles .sd-card:hover::after { opacity:1; }
+
+/* Text color on hover = your dark red */
+.see-also-tiles .sd-card:hover,
+.see-also-tiles .sd-card:hover .sd-card-header,
+.see-also-tiles .sd-card:hover .sd-card-body,
+.see-also-tiles .sd-card:hover p,
+.see-also-tiles .sd-card:hover a{
+  color: #A93226 !important;              /* your “brand-content” red */
+}
+
+/* Keep stretched-link working */
+.see-also-tiles .sd-card a.sd-stretched-link{ position: static !important; }
+.see-also-tiles .sd-card a.sd-stretched-link::after{
+  content:""; position:absolute; inset:0; z-index:3; background:transparent !important;
+}
+
+/* Soft accent ONLY for the “Full API” tile (no preview, no tint) */
+.see-also-tiles .see-also-accent{
+  background: color-mix(in srgb, var(--color-brand-primary) 8%, var(--color-background-secondary));
+}
+html[data-theme="dark"] .see-also-tiles .see-also-accent{
+  background: color-mix(in srgb, var(--color-brand-primary) 14%, var(--color-background-secondary));
+}
+/* prevent image/tint on the accent tile */
+/*.see-also-tiles .see-also-accent::before,
+.see-also-tiles .see-also-accent::after{ display:none !important; }
+/* keep default text color on the accent tile */
+.see-also-tiles .see-also-accent:hover,
+.see-also-tiles .see-also-accent:hover *{
+  color: var(--color-foreground-primary) !important;
+}
+
+/* Per-card preview images
+   (custom.css is at /_static/css/, previews at /_static/previews/) */
+.see-also-tiles .card--uncertainty { --card-preview: url("../previews/uncertainty.png"); }
+.see-also-tiles .card--errors      { --card-preview: url("../previews/errors.png"); }
+.see-also-tiles .card--evaluation  { --card-preview: url("../previews/evaluation.png"); }
+.see-also-tiles .card--importance  { --card-preview: url("../previews/importance.png"); }
+.see-also-tiles .card--relationship{ --card-preview: url("../previews/relationship.png"); }
+
+/* Dark mode: stronger shadow only */
+html[data-theme="dark"] .see-also-tiles .sd-card:hover{
+  box-shadow: 0 10px 22px rgba(0,0,0,.35);
+}
+
+/* Full API — base soft tint */
+.see-also-tiles .see-also-accent{
+  /* Adjust these two numbers to taste */
+  --api-tint-rest: 10%;
+  --api-tint-border: 25%;
+  background: color-mix(in srgb, #2166F3 var(--api-tint-rest), var(--color-background-secondary));
+  border-color: color-mix(in srgb, #2166F3 var(--api-tint-border), var(--color-border));
+}
+
+/* Stronger tint on hover (still no image) */
+.see-also-tiles .sd-card.see-also-accent:hover{
+  --api-tint-hover: 22%;
+  background: color-mix(in srgb, #2166F3 var(--api-tint-hover), var(--color-background-secondary));
+  border-color: #2166F3;
+  color: var(--color-foreground-primary) !important; /* keep text readable */
+}
+
+/* No preview image for this tile */
+.see-also-tiles .sd-card.see-also-accent::before{ display:none !important; }
+
+/* OPTIONAL: add a subtle blue overlay tint (comment out if not wanted) */
+.see-also-tiles .sd-card.see-also-accent::after{
+  content:"";
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background: linear-gradient(135deg, rgba(33,102,243,.10), rgba(33,102,243,0) 60%);
+  opacity: 1; /* set to 0 and add :hover {opacity:1} if you want it only on hover */
+}
+
+
+hr.hr-spacer{
+  margin: 1.5em 0 2em !important;
+  border: 0 !important;           /* remove the stroke */
+  height: 0 !important;           /* neutralize UA defaults */
+  background: transparent !important;
 }

@@ -270,15 +270,47 @@ Here is a typical example:
 plot-regression-performance
 -------------------------------
 
-This is a "radar chart" for comparing multiple regression
-models across several metrics at once. It's an ideal tool for getting
-a holistic view of model trade-offs :footcite:p:`kouadiob2025`.
+This command creates a  "radar chart" for comparing multiple
+regression models across several metrics at once. It's the an ideal
+tool for moving beyond a single score and getting a holistic, visual
+understanding of your models' trade-offs :footcite:p:`kouadiob2025`.
 
-It supports two modes: **Data-mode**, where it calculates metrics from
-your data, and **Values-mode**, where you provide pre-computed scores.
+The command is flexible, but don't let that intimidate you! It's
+built around two simple modes for providing your data and offers
+several powerful strategies for viewing the results.
 
-**Data-mode Example**
-Here, we compute metrics from prediction columns ``m1`` and ``m2``:
+The command's general structure showcases its dual-mode capability
+and new normalization controls:
+
+.. code-block:: text
+
+   k-diagram plot-regression-performance [INPUT]
+
+     # --- Data Mode (provide one of these) ---
+     --y-true TRUE_COL --pred PRED_1 PRED_2 ...
+     --y-true TRUE_COL --model "M1:p1" --model "M2:p2" ...
+
+     # --- OR Values Mode ---
+     --metric-values "r2:0.8,0.7" "mae:2.1,2.5" ...
+     
+     # --- Normalization Control ---
+     --norm [per_metric|global|none]
+     [--global-bounds "metric:min,max" ...]
+
+     # --- Labels & Styling ---
+     [--names "Model 1" "Model 2" ...]
+     [--metric-label "neg_mean_absolute_error:MAE"]
+     [--title "My Plot Title"]
+     [--savefig my_plot.png]
+
+**Putting It Into Practice: Two Common Scenarios**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**1. The Standard Workflow (Data-mode)**
+The most common way to use this command is by pointing it at your data
+and letting it do the hard work of calculating the metrics for you.
+Let's say you want to compare a Linear Regression model against a
+Gradient Boosting model:
 
 .. code-block:: bash
 
@@ -287,27 +319,69 @@ Here, we compute metrics from prediction columns ``m1`` and ``m2``:
      --pred m1 m2 \
      --names "Linear Regression" "Gradient Boosting" \
      --metrics r2 neg_mean_absolute_error \
+     --metric-label "neg_mean_absolute_error:MAE" \
      --title "Overall Model Performance" \
      --savefig reg_perf_data.png
 
-**Values-mode Example**
-Here, we plot scores that were calculated elsewhere:
+**2. Using Pre-Computed Scores (Values-mode)**
+What if you already have your performance scores, maybe from a report
+or a different experiment? No problem. You can feed the scores
+directly to the command without needing the original dataset.
+
+Here's how you'd plot the same kind of chart using pre-computed values:
 
 .. code-block:: bash
 
    k-diagram plot-regression-performance \
-     --metric-values r2:0.82,0.74 \
-     --metric-values neg_mean_absolute_error:-3.2,-3.6 \
+     --metric-values "r2:0.82,0.74" "mae:-3.2,-3.6" \
      --names "Model A" "Model B" \
+     --metric-label "mae:MAE" \
+     --title "Performance from Pre-computed Scores" \
      --savefig reg_perf_values.png
 
-.. note::
-   Scores are min-max normalized per metric so that 0 is the worst
-   performance and 1 is the best. Error-based metrics should be
-   negated (e.g., ``neg_mean_absolute_error``) so that higher is
-   always better.
+As you can see, getting a plot is easy. But to truly unlock its power,
+it helps to understand how the data is scaled.
 
+**Choosing Your Perspective: Normalization Strategies**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+To make different metrics (like R², which is near 1, and RMSE, which
+can be large) comparable on the same plot, their scores are normalized
+to determine the length of the bars. The ``--norm`` flag gives you
+precise control over this process.
+
+* **``--norm per_metric`` (Default): The Relative Comparison**
+  **Use this when you want to know:** *"Which of my models is
+  relatively better or worse on each metric?"*
+  This strategy scales each metric independently. The best model for
+  a given metric gets a bar of length 1, and the worst gets a bar of
+  length 0. It's perfect for quickly spotting the relative strengths
+  of each model.
+
+* **``--norm global``: The Absolute Benchmark**
+  **Use this when you want to know:** *"Do my models meet a
+  predefined standard of 'good'?"*
+  This strategy scales each metric against fixed, absolute bounds
+  that you provide. It's ideal for comparing models against a
+  consistent benchmark. For example, let's judge R² on a fixed scale
+  of 0 to 1, and MAE on a scale of -10 (bad) to 0 (perfect).
+
+  .. code-block:: bash
+
+     k-diagram plot-regression-performance data.csv \
+       --y-true y --pred m1 m2 --names M1 M2 \
+       --norm global \
+       --global-bounds "r2:0,1" "neg_mean_absolute_error:-10,0" \
+       --savefig reg_perf_global.png
+
+* **``--norm none``: The Expert's View**
+  **Use this when you need to know:** *"What are the exact, raw score
+  values?"*
+  This plots the raw metric scores directly. Be careful with this
+  option, as metrics with very different scales can make the plot
+  difficult to interpret visually, but it's useful for seeing the
+  un-scaled numbers.
+  
 -------------------------
 Troubleshooting & Tips
 -------------------------

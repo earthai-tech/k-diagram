@@ -328,7 +328,7 @@ df : pd.DataFrame
 quantile_pairs : list of (str or float)
     One or more lists or tuples, each containing two elements in
     the order: ``[lower_quantile_col, upper_quantile_col]``.
-prefix : str, default='width{_}'
+prefix : str, default='width\_'
     The prefix for the new interval width column names. The new
     name will be f"{prefix}{upper_col_name}".
 inplace : bool, default=False
@@ -557,7 +557,7 @@ error_type : {'raw', 'absolute', 'squared', 'percentage'}, default='raw'
     - 'squared': :math:`(y_{true} - y_{pred})^2`
     - 'percentage': :math:`100 \cdot (y_{true} - y_{pred}) / y_{true}`
     
-prefix : str, default='error{_}'
+prefix : str, default='error\_'
     The prefix to add to the new error column names. For example,
     a prediction column 'Model_A' will become 'error_Model_A'.
 inplace : bool, default=False

@@ -10,6 +10,7 @@ from ._utils import (
     ColumnsListAction,
     _collect_point_preds,
     _flatten_cols,
+    _parse_global_bounds,
     _parse_metric_values,
     _parse_name_bool_map,
     _resolve_metric_labels,
@@ -20,9 +21,7 @@ from ._utils import (
     parse_figsize,
 )
 
-__all__ = [
-    "add_plot_regression_performance",
-]
+__all__ = ["add_plot_regression_performance"]
 
 
 def _cmd_plot_regression_performance(
@@ -34,7 +33,6 @@ def _cmd_plot_regression_performance(
       (A) values-mode via --metric-values
       (B) data-mode via --y-true + preds
     """
-
     # values-mode
     mv = _parse_metric_values(ns.metric_values)
     if mv:
@@ -54,6 +52,10 @@ def _cmd_plot_regression_performance(
             add_to_defaults=False,
             metric_labels=_resolve_metric_labels(ns),
             higher_is_better=_parse_name_bool_map(ns.higher_is_better),
+            norm=ns.norm,
+            global_bounds=_parse_global_bounds(ns.global_bounds),
+            min_radius=ns.min_radius,
+            clip_to_bounds=ns.clip_to_bounds,
             title=ns.title,
             figsize=ns.figsize,
             cmap=ns.cmap,
@@ -100,6 +102,10 @@ def _cmd_plot_regression_performance(
         add_to_defaults=ns.add_to_defaults,
         metric_labels=_resolve_metric_labels(ns),
         higher_is_better=_parse_name_bool_map(ns.higher_is_better),
+        norm=ns.norm,
+        global_bounds=_parse_global_bounds(ns.global_bounds),
+        min_radius=ns.min_radius,
+        clip_to_bounds=ns.clip_to_bounds,
         title=ns.title,
         figsize=ns.figsize,
         cmap=ns.cmap,
@@ -240,6 +246,37 @@ def add_plot_regression_performance(
             "Repeated pairs 'name:v1,v2,...' for values-mode "
             "(e.g. r2:0.8,0.7 rmse:5.2,6.0)."
         ),
+    )
+
+    # normalization & scaling
+    p.add_argument(
+        "--norm",
+        choices=["per_metric", "global", "none"],
+        default="per_metric",
+        help="Normalization strategy for bar radii.",
+    )
+    p.add_argument(
+        "--global-bounds",
+        action="append",
+        default=None,
+        dest="global_bounds",
+        help=(
+            "Pairs 'metric:min,max' (repeat). "
+            "Example: --global-bounds r2:0,1 --global-bounds neg_mean_absolute_error:-5,0"
+        ),
+    )
+    p.add_argument(
+        "--min-radius",
+        type=float,
+        default=0.02,
+        help="Minimum bar radius after normalization.",
+    )
+    add_bool_flag(
+        p,
+        "clip-to-bounds",
+        True,
+        "Clip scores to bounds in norm=global.",
+        "Do not clip to bounds.",
     )
 
     # figure

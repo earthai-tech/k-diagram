@@ -895,3 +895,200 @@ the function would automatically recognize as an error.
    * When you want to ensure that your plot's normalization is
      unambiguous and correctly reflects the desired interpretation
      of each metric.
+     
+Controlling Normalization Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``norm`` parameter is a powerful feature that changes the
+"perspective" of the plot. It controls how raw metric scores are
+scaled to the radial axis, allowing you to switch between relative
+comparisons and absolute benchmarks.
+
+The following examples all use the same underlying data, generated once
+to create two models with different error profiles.
+
+**Data Generation**
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import matplotlib.pyplot as plt
+
+   # Define distinct profiles for a good model and a biased model
+   model_profiles = {
+       "Good Model": {"bias": 0.5, "noise_std": 4.0},
+       "Biased Model": {"bias": -10.0, "noise_std": 2.0},
+   }
+
+   # Generate the dataset
+   data = kd.datasets.make_regression_data(
+       model_profiles=model_profiles,
+       seed=42,
+       as_frame=True
+   )
+   
+   # Prepare data and labels for plotting
+   y_true = data['y_true'].values
+   y_pred_good = data['pred_Good_Model'].values
+   y_pred_biased = data['pred_Biased_Model'].values
+   model_names = ["Good", "Biased"]
+   
+   metric_labels = {
+       'r2': 'R²',
+       'neg_mean_absolute_error': 'MAE',
+       'neg_root_mean_squared_error': 'RMSE',
+   }
+
+**1. Relative Comparison (`norm="per_metric"`)**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is the default behavior. It scales each metric independently to
+the range [0, 1]. This perspective is best for answering the question:
+*"Which of my models is relatively better or worse on each metric?"*
+
+.. code-block:: python
+   :linenos:
+
+   kd.plot_regression_performance(
+       y_true, y_pred_good, y_pred_biased,
+       names=model_names,
+       metric_labels=metric_labels,
+       norm="per_metric",
+       title="Regression Model Performance (Per-Metric Norm)",
+       savefig="gallery/images/gallery_plot_regression_performance_per_metric.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_plot_regression_performance_per_metric.png
+   :alt: Polar Performance Chart with Per-Metric Normalization
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   * **Interpretation:** The plot shows a stark contrast. On R² and
+     RMSE, the "Good" model is the best, so its bars reach the outer
+     "Best Performance" ring (normalized score of 1.0). The "Biased"
+     model is the worst, so its bars are at the inner "Worst
+     Performance" ring (score of 0). The situation is reversed for
+     MAE, where the low-variance "Biased" model is relatively better.
+   * **When to Use:** This is the best general-purpose view for
+     quickly identifying the relative strengths and weaknesses of each
+     model.
+
+**2. Absolute Benchmark (`norm="global"`)**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This mode compares models against a fixed, meaningful scale that you
+define with ``global_bounds``. It's best for answering: *"Do my
+models meet a predefined standard of 'good'?"*
+
+.. code-block:: python
+   :linenos:
+   
+   # Define a benchmark for what "good" and "bad" means for each metric
+   global_bounds = {
+       "r2": (0.0, 1.0),
+       "neg_mean_absolute_error": (-15.0, 0.0),
+       "neg_root_mean_squared_error": (-20.0, 0.0),
+   }
+
+   kd.plot_regression_performance(
+       y_true, y_pred_good, y_pred_biased,
+       names=model_names,
+       metric_labels=metric_labels,
+       norm="global",
+       global_bounds=global_bounds,
+       title="Regression Model Performance (Global Norm)",
+       savefig="gallery/images/gallery_plot_regression_performance_global.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_plot_regression_performance_global.png
+   :alt: Polar Performance Chart with Global Normalization
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   * **Interpretation:** The bars no longer necessarily touch the
+     edges. The "Good" model has a high R², so its bar is long on the
+     absolute 0-1 scale. However, its MAE and RMSE are not perfect,
+     so their bars do not reach the outer ring. The "Biased" model's
+     R² is very poor, resulting in a very short bar, accurately
+     showing its poor performance against the absolute benchmark.
+   * **When to Use:** When you have a specific performance target and
+     want to see how close your models are to achieving it.
+
+**3. Raw Scores (`norm="none"`)**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This mode is for experts who want to see the un-scaled metric values
+directly. The radial axis is relabeled to show the raw scores.
+
+.. code-block:: python
+   :linenos:
+
+   kd.plot_regression_performance(
+       y_true, y_pred_good, y_pred_biased,
+       names=model_names,
+       metric_labels=metric_labels,
+       norm="none",
+       title="Regression Model Performance (No Norm)",
+       savefig="gallery/images/gallery_plot_regression_performance_none.png"
+   )
+   plt.close()
+
+.. image:: ../images/gallery_plot_regression_performance_none.png
+   :alt: Polar Performance Chart with No Normalization
+   :align: center
+   :width: 75%
+
+.. topic:: 🧠 Analysis and Interpretation (Expert Mode)
+   :class: hint
+
+   This mode provides the most direct, unfiltered view of the raw
+   performance scores. However, it's also the most complex to
+   interpret because each metric exists on its own unique scale. The
+   key is to **read each metric axis independently**, like separate
+   bar charts radiating from the center.
+
+   **How to Read This Plot:**
+
+   1.  **Isolate a Single Metric:** Pick one metric to analyze, for
+       example, **MAE**. Ignore the other axes for a moment.
+   2.  **Read the Radial Axis for That Metric:** Look at the numbers
+       on the grid lines. For MAE and RMSE, these are negative values,
+       where scores closer to 0 are better. For R², the values are
+       positive, where scores closer to 1 are better.
+   3.  **Compare Models *Within* That Metric Only:**
+   
+       - For **MAE**, the "Good" model's bar (purple) reaches about
+         **-4.8**. The "Biased" model's bar (yellow) only reaches about
+         **-10**. Since -4.8 is a better (higher) score than -10, the
+         "Good" model is the clear winner on this metric.
+       - For **R²**, the "Good" model's bar reaches about **0.73**,
+         while the "Biased" model's bar is extremely short, showing a
+         very poor raw R² score.
+         
+   4.  **Repeat for Each Metric.**
+
+   **⚠️ Critical Warning:**
+
+   **Do not** visually compare the length of a bar for one metric to
+   the length of a bar for another. For example, comparing the length
+   of the **R²** bar to the **RMSE** bar is meaningless, as they
+   represent completely different units and scales.
+
+   **💡 When to Use:**
+
+   * When you need to see the **exact numerical scores** on the plot
+     itself without needing to consult a separate table.
+   * To assess the **absolute magnitude** of your model's errors, not
+     just its relative ranking compared to other models.
+   * For technical reports aimed at audiences who understand that the
+     axes have different units and can interpret multi-scale plots.

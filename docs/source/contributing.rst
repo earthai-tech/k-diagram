@@ -13,14 +13,14 @@ Getting Started
 ---------------
 
 * **Issues Tracker:** The best place to start is the
-    `GitHub Issues page <https://github.com/earthai-tech/k-diagram/issues>`_.
-    Look for existing issues labeled `bug`, `enhancement`,
-    `documentation`, or `good first issue`.
+  `GitHub Issues page <https://github.com/earthai-tech/k-diagram/issues>`_.
+  Look for existing issues labeled `bug`, `enhancement`,
+  `documentation`, or `good first issue`.
 * **Ideas:** If you have an idea for a new feature or improvement,
-    feel free to open a new issue to discuss it first.
+  feel free to open a new issue to discuss it first.
 * **Questions:** If you have questions about usage or contribution,
-    you can also use the `GitHub Issues <https://github.com/earthai-tech/k-diagram/issues>`_
-    page.
+  you can also use the `GitHub Issues <https://github.com/earthai-tech/k-diagram/issues>`_
+  page.
 
 Setting up for Development
 -----------------------------

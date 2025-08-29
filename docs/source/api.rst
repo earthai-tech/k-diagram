@@ -237,6 +237,8 @@ for examples and testing.
    ~kdiagram.datasets.make_cyclical_data
    ~kdiagram.datasets.make_fingerprint_data
    ~kdiagram.datasets.make_multi_model_quantile_data
+   ~kdiagram.datasets.make_regression_data
+   ~kdiagram.datasets.make_classification_data 
    ~kdiagram.datasets.make_taylor_data
    ~kdiagram.datasets.make_uncertainty_data
    

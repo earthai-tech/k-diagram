@@ -997,6 +997,45 @@ def _resolve_metric_labels(ns: argparse.Namespace) -> Any:
     return out if out else None
 
 
+def _parse_global_bounds(
+    items: list[str] | None,
+) -> dict[str, tuple[float, float]]:
+    """
+    Parse --global-bounds entries of the form:
+      METRIC:min,max  (e.g., "r2:0,1" "rmse:0,10")
+    Returns {metric: (min, max)} and validates ordering.
+    """
+    if not items:
+        return {}
+
+    # --- flatten in case we got [['r2:0,1'], ['rmse:0,10']] ---
+    flat: list[str] = []
+    for it in items:
+        if isinstance(it, (list, tuple)):
+            flat.extend(it)
+        else:
+            flat.append(it)
+    items = flat
+
+    out: dict[str, tuple[float, float]] = {}
+    for it in items:
+        if ":" not in it:
+            raise SystemExit(
+                f"invalid --global-bounds item '{it}'; "
+                "expected 'name:min,max'"
+            )
+        name, rhs = it.split(":", 1)
+        vals = [float(x) for x in split_csv(rhs)]
+        if len(vals) != 2:
+            raise SystemExit(f"invalid bounds in '{it}'; expected two floats")
+        lo, hi = vals
+        if hi < lo:
+            raise SystemExit(f"min must be <= max in '{it}' (got {lo}..{hi})")
+        out[name] = (lo, hi)
+
+    return out
+
+
 # ------------------------ test helpers  --------------------------------
 
 

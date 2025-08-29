@@ -2051,7 +2051,7 @@ hetero_strength : float, default=0.5
     ground-truth noise when ``heteroskedastic=True`` and for
     ``error_type="hetero"`` in model profiles).
 
-prefix : str, default="pred_"
+prefix : str, default="pred\_"
     Prefix used for auto-named prediction columns when a
     user name is not supplied for a model.
 
@@ -2211,7 +2211,7 @@ def make_classification_data(
     model_profiles: dict[str, dict[str, Any]] | None = None,
     model_names: list[str] | None = None,
     true_col: str = "y",
-    prefix_label: str = "pred",
+    prefix_label: str = "pred_",
     prefix_proba: str = "proba",
     add_compat_cols: bool = False,
     include_binary_pred_cols: bool = False,
@@ -2505,7 +2505,7 @@ model_names : list of str or None, default=None
 true_col : str, default="y"
     Column name for the ground-truth labels.
 
-prefix_label : str, default="pred"
+prefix_label : str, default="pred\_"
     Prefix for auto-named discrete label columns (only used
     when a user name is not supplied or when multiclass
     compat columns are requested).

@@ -63,7 +63,7 @@ Summary of Probabilistic Diagnostic Functions
 .. _ug_plot_pit_histogram:
 
 PIT Histogram (:func:`~kdiagram.plot.probabilistic.plot_pit_histogram`)
------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 Creates a **Polar Probability Integral Transform (PIT) histogram**, a
