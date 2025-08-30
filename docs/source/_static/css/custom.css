@@ -1,99 +1,130 @@
 /* custom.css for k-diagram documentation with Furo theme */
 
 /*--------------------------------------------------------------------------
- * Variables and Color Palette (k-diagram Theme v2)
+ * Variables and Color Palette (k-diagram Theme v3 - Blue & Brown)
  *--------------------------------------------------------------------------*/
 
 :root,
 html[data-theme="light"] {
     /* --- Brand Colors --- */
-    /* Primary: Dark Red based on image_357b7c.png */
-    --color-brand-primary: #00796B; /* DarkCyan shade  */
-    /* Content color for static links, H2 */
-    --color-brand-content: #A93226; /* Dark red or brown */
-    /* Secondary: Slate Blue from logo_k_diagram.png */
-    --color-brand-secondary: #36456e; /* Dark shape Blue */
-    /* Tertiary: Sea Green from logo_k_diagram.png */
-    --color-brand-tertiary: #2E8B57; /* SeaGreen */
-    
+    /* Primary: A vibrant, modern blue for key elements. */
+    --color-brand-primary: #2166F3;
+    /* Secondary: A deep, professional brown for subheadings and content. */
+    --color-brand-secondary: #332421; /* # #5D4037 Dark Brown */
+    /* Tertiary: Slate blue for accents and secondary information. */
+    --color-brand-tertiary: #36456e;
+    /* Quaternary: A complementary sea green for tips and success states. */
+    --color-brand-quaternary: #2E8B57;
+
+    /* --- Intermediate & Accent Colors --- */
+    /* A lighter tint of the primary blue for hover effects and backgrounds. */
+    --color-brand-primary-tint: #E3F2FD;
+    /* A muted version of the secondary brown for borders and subtle text. */
+    --color-brand-secondary-muted: #8D6E63;
+
+
     /* --- Sidebar Overrides (Light Mode) --- */
-    --color-sidebar-background:       var(--color-background-secondary);
-    --color-sidebar-background-hover: var(--color-table-hover-bg-tint);  /* or whatever tint you like */
-    --color-sidebar-link-text:        var(--color-foreground-secondary);
+    --color-sidebar-background: var(--color-background-secondary);
+    /* Use a tint of the new primary blue for sidebar hover. */
+    --color-sidebar-background-hover: color-mix(in srgb, var(--color-brand-primary) 8%, transparent);
+    --color-sidebar-link-text: var(--color-foreground-secondary);
     --color-sidebar-link-text--top-level: var(--color-foreground-primary);
 
 
-    /* --- Status Colors --- */
-    --color-warning-border: #f57c00;  /* Amber */
+    /* --- Status Colors (Admonitions) --- */
+    /* Amber for warnings. */
+    --color-warning-border: #f57c00;
     --color-warning-bg-tint: 15%;
-    --color-error-border: var(--color-brand-primary); /* Use Primary Red */
-    --color-error-bg-tint: 15%;
-    --color-info-border: var(--color-brand-secondary);/* Use Secondary Blue */
+    /* A distinct red for errors/danger. */
+    --color-error-border: #D32F2F;
+    --color-error-bg-tint: 10%;
+    /* Tertiary slate blue for info/notes. */
+    --color-info-border: var(--color-brand-tertiary);
     --color-info-bg-tint: 10%;
-    --color-tip-border: var(--color-brand-tertiary);  /* Use Tertiary Green */
+    /* Quaternary sea green for tips/hints. */
+    --color-tip-border: var(--color-brand-quaternary);
     --color-tip-bg-tint: 10%;
+
 
     /* --- Base Colors --- */
     --color-foreground-primary: #212529; /* Near Black */
     --color-foreground-secondary: #495057; /* Dark Grey */
     --color-foreground-muted: #6c757d;   /* Medium Grey */
     --color-background-primary: #ffffff;
-    --color-background-secondary: #f8f9fa;
+    --color-background-secondary: #f8f9fa; /* Off-white */
     --color-background-hover: #e9ecef;
     --color-border: #dee2e6;
 
+
     /* --- Code Blocks --- */
+    /* Using the tertiary slate blue for code block borders for a themed feel. */
     --color-code-background: #f8f9fa;
-    --color-code-border: #dee2e6; /* Match base border */
+    --color-code-border: color-mix(in srgb, var(--color-brand-tertiary) 20%, transparent);
+
 
     /* --- Tables --- */
     --color-table-border: #dee2e6;
     --color-table-header-bg: #f1f3f5;
-    --color-table-stripe-bg: #f8f9fa; /* Subtle stripe */
-    --color-table-hover-bg-tint: 8%; /* Primary Red tint % */
+    --color-table-stripe-bg: #f8f9fa;
+    /* Use a tint of the primary blue for table row hover. */
+    --color-table-hover-bg-tint: 12%;
 }
 
 html[data-theme="dark"] {
     /* --- Brand Colors (Dark Mode) --- */
-    --color-brand-primary: #E57373; /* Light Red */
-    --color-brand-content: #F08080; /* Light Coral */
-    --color-brand-secondary: #8a9bcd; /* Light Slate Blue */
-    --color-brand-tertiary: #66bbab; /* Light Sea Green */
-    
+    /* A lighter, more vibrant blue for dark backgrounds. */
+    --color-brand-primary: #64B5F6;
+    /* A lighter brown that's clear and readable. */
+    --color-brand-secondary: #A1887F;
+    /* A brighter slate blue. */
+    --color-brand-tertiary: #8a9bcd;
+    /* A brighter sea green. */
+    --color-brand-quaternary: #66bbab;
+
+    /* --- Intermediate & Accent Colors (Dark Mode) --- */
+    --color-brand-primary-tint: #1E293B; /* A very dark blue */
+    --color-brand-secondary-muted: #BCAAA4;
+
+
     /* --- Sidebar Overrides (Dark Mode) --- */
-    --color-sidebar-background:       var(--color-background-secondary);
-    --color-sidebar-background-hover: var(--color-table-hover-bg-tint);
-    --color-sidebar-link-text:        var(--color-foreground-muted);
+    --color-sidebar-background: var(--color-background-secondary);
+    --color-sidebar-background-hover: color-mix(in srgb, var(--color-brand-primary) 15%, transparent);
+    --color-sidebar-link-text: var(--color-foreground-muted);
     --color-sidebar-link-text--top-level: var(--color-foreground-primary);
-    
+
+
     /* --- Status Colors (Dark Mode) --- */
     --color-warning-border: #ffa726; /* Lighter Amber */
     --color-warning-bg-tint: 20%;
-    --color-error-border: var(--color-brand-primary); /* Use Primary Light Red */
+    --color-error-border: #EF5350; /* Lighter Red */
     --color-error-bg-tint: 20%;
-    --color-info-border: var(--color-brand-secondary); /* Use Secondary Light Blue */
+    --color-info-border: var(--color-brand-tertiary);
     --color-info-bg-tint: 15%;
-    --color-tip-border: var(--color-brand-tertiary);  /* Use Tertiary Light Green */
+    --color-tip-border: var(--color-brand-quaternary);
     --color-tip-bg-tint: 15%;
+
 
     /* --- Base Colors (Dark Mode) --- */
     --color-foreground-primary: #e9ecef; /* Light Grey */
     --color-foreground-secondary: #ced4da;
     --color-foreground-muted: #adb5bd;
-    --color-background-primary: #212529; /* Dark Grey */
-    --color-background-secondary: #2c3034;
-    --color-background-hover: #343a40;
+    --color-background-primary: #111827; /* Near Black */
+    --color-background-secondary: #1F2937; /* Dark Grey */
+    --color-background-hover: #374151;
     --color-border: #495057;
 
+
     /* --- Code Blocks (Dark Mode) --- */
-    --color-code-background: #2c3034;
-    --color-code-border: #495057;
+    --color-code-background: #1F2937;
+    --color-code-border: color-mix(in srgb, var(--color-brand-tertiary) 30%, transparent);
+
 
     /* --- Tables (Dark Mode) --- */
     --color-table-border: #495057;
-    --color-table-header-bg: #343a40;
-    --color-table-stripe-bg: #2c3034; /* Subtle stripe */
-    --color-table-hover-bg-tint: 12%; /* Primary Red tint % */
+    --color-table-header-bg: #374151;
+    --color-table-stripe-bg: #1F2937;
+    /* Use a tint of the primary blue for table row hover. */
+    --color-table-hover-bg-tint: 15%;
 }
 
 /*--------------------------------------------------------------------------
@@ -117,7 +148,7 @@ h1, .heading-title {
     font-size: 2.7rem;
     margin-bottom: 1.5rem;
     padding-bottom: 0.7rem;
-    /* Use Primary Red for H1 */
+    /* Use Primary Blue for H1 */
     border-bottom: 3px solid var(--color-brand-primary);
     color: var(--color-brand-primary);
     font-weight: 700;
@@ -129,16 +160,18 @@ h2 {
     margin-top: 3.5rem;
     margin-bottom: 1.4rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--color-border);
-    /* Use Content Red for H2 */
-    color: var(--color-brand-content);
-    font-weight: 600;
+    /* Use a muted brown for the border to complement the text */
+    border-bottom: 1px solid var(--color-brand-secondary-muted);
+    /* Use Secondary Dark Brown for H2 */
+    color: var(--color-brand-secondary);
+    font-weight: 700; /* Bolder as requested */
 }
 
 h3 {
     font-size: 1.6rem;
     margin-top: 3rem;
     margin-bottom: 1.2rem;
+    /* Use the standard dark text color for H3 */
     color: var(--color-foreground-primary);
     font-weight: 600;
 }
@@ -146,193 +179,430 @@ h3 {
 h4 {
     font-size: 1.25rem;
     font-weight: 600;
-    /* Use Secondary Blue for H4 */
-    color: var(--color-brand-secondary);
+    /* Use Tertiary Slate Blue for H4 for visual variety */
+    color: var(--color-brand-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-top: 2rem;
 }
 
-/* Page title */
+/* Page title (reinforces H1 style) */
 .content h1, article h1 {
-  color: var(--color-brand-primary) !important;  /* your teal */
+  color: var(--color-brand-primary) !important;
   font-weight: 700;
 }
 
-/* Section titles */
+/* Section titles (applies H2 style to linked titles) */
 .content h2, article h2,
-.content h2 a, article h2 a {                    /* catch the linked (kdiagram.plot) part */
-  color: var(--color-foreground-primary) !important;  /* black */
+.content h2 a, article h2 a {
+  color: var(--color-brand-secondary) !important;
   font-weight: 700 !important;
 }
 
-/* H3: keep default look */
-.content h3, article h3,
-.content h3 a, article h3 a {
-  color: var(--color-foreground-primary);
+/*--------------------------------------------------------------------------
+ * Code Blocks & Inline Code — semantic emphasis for py objects
+ *--------------------------------------------------------------------------*/
+
+/* Accent color used on hover */
+:root { --color-code-accent: #8B0B6F; } /* dark magenta */
+
+/* Base containers */
+pre, :not(pre) > code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono",
+               Menlo, Courier, monospace;
+  border-radius: 6px;
+  border: 1px solid var(--color-code-border);
+  background-color: var(--color-code-background);
+}
+
+/* Code block wrapper + content */
+.highlight {               /* outer wrapper Sphinx/Furo uses */
+  margin: 1.7em 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,.04);
+  border-radius: 6px;
+}
+.highlight pre {
+  padding: 1em 1.2em;
+  background: transparent;
+  border: none;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Inline code (generic) — keep neutral */
+:not(pre) > code {
+  padding: 0.2em 0.45em;
+  font-size: 0.9em;
+  white-space: nowrap;
+  color: inherit;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+
+/* ---------------- Token emphasis inside blocks ----------------
+ * Pygments classes:
+ *  .nf = Name.Function    .nc = Name.Class
+ *  .nn = Name.Namespace   .ne = Name.Exception
+ *  .nd = Name.Decorator   .nx is for method  
+ * -------------------------------------------------------------*/
+
+/* Default: thin primary-blue underline, slightly larger size */
+.highlight .nf,          /* Function */
+.highlight .nc,          /* Class */
+.highlight .nn,          /* Namespace */
+.highlight .ne,          /* Exception */
+.highlight .nd,          /* Decorator */
+.highlight .nx {         /* Method (functions in modules) */
+  font-size: 1.04em;                     /* subtle size bump */
+  font-weight: 400;                      /* NO bold by default */
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-brand-primary);
+  text-decoration-thickness: 1px;        /* thin by default */
+  text-underline-offset: 2px;
+  transition: color .15s ease,
+              text-decoration-color .15s ease,
+              text-decoration-thickness .15s ease,
+              font-weight .15s ease;
+}
+
+/* Hover: thicker underline + magenta + semi-bold */
+.highlight .nf:hover,
+.highlight .nc:hover,
+.highlight .nn:hover,
+.highlight .ne:hover,
+.highlight .nd:hover,
+.highlight .nx:hover {    /* Added .nx for method hover */
+  color: var(--color-code-accent) !important;
+  text-decoration-color: var(--color-code-accent);
+  text-decoration-thickness: 2.5px;
   font-weight: 600;
 }
 
+/* Keyboard accessibility */
+.highlight .nf:focus,
+.highlight .nc:focus,
+.highlight .nn:focus,
+.highlight .ne:focus,
+.highlight .nd:focus {
+  outline: none;
+  color: var(--color-code-accent) !important;
+  text-decoration-color: var(--color-code-accent);
+  text-decoration-thickness: 2.5px;
+  font-weight: 600;
+}
 
-/*--------------------------------------------------------------------------
- * Code Blocks & Inline Code
- *--------------------------------------------------------------------------*/
-pre, :not(pre) > code {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono",
-                 Menlo, Courier, monospace;
-    border-radius: 5px;
-    border: 1px solid var(--color-code-border);
-    background-color: var(--color-code-background);
+/* ---------------- Inline Python xrefs (roles) ----------------
+ * Sphinx renders :py:func:, :py:class:, :py:mod: as code.xref.py...
+ * Give them the same baseline + hover behavior.
+ * -------------------------------------------------------------*/
+a.reference code.xref.py,
+code.xref.py.py-func,
+code.xref.py.py-class,
+code.xref.py.py-mod {
+  font-size: 1.02em;
+  font-weight: 400; /* not bold by default */
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-brand-primary);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color .15s ease, text-decoration-color .15s ease,
+              text-decoration-thickness .15s ease, font-weight .15s ease;
 }
-pre {
-    padding: 1em 1.2em;
-    margin: 1.7em 0;
-    font-size: 0.92em;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    line-height: 1.6;
+
+/* Hover state for inline Python references */
+a.reference:hover code.xref.py,
+code.xref.py.py-func:hover,
+code.xref.py.py-class:hover,
+code.xref.py.py-mod:hover {
+  color: var(--color-code-accent);
+  text-decoration-color: var(--color-code-accent);
+  text-decoration-thickness: 2.5px;
+  font-weight: 600;
 }
-:not(pre) > code {
-    padding: 0.2em 0.45em;
-    font-size: 0.9em;
-    white-space: nowrap;
+
+/* Additional rules for highlighting method calls like kdf.plot_feature_fingerprint */
+code.xref.py.py-func {
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-brand-primary);
+  text-decoration-thickness: 1px;
+  transition: color .15s ease, text-decoration-color .15s ease, text-decoration-thickness .15s ease;
 }
+
+/* Hover state for method calls */
+code.xref.py.py-func:hover {
+  color: var(--color-code-accent);
+  text-decoration-color: var(--color-code-accent);
+  text-decoration-thickness: 2.5px;
+  font-weight: 600;
+}
+
+/* Links that appear inside highlighted code (keep tidy) */
+.highlight a {
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-brand-primary);
+  color: inherit;
+  transition: color .2s ease, border-color .2s ease, background-color .2s ease;
+}
+.highlight a:hover {
+  color: var(--color-code-accent) !important;
+  border-bottom: 2px solid var(--color-code-accent);
+  background-color: var(--color-background-hover);
+  border-radius: 3px;
+  padding: 1px 2px;
+  margin: -1px -2px;
+}
+
+/* Copy button */
 button.copybtn {
-    background-color: transparent !important;
-    border: 1px solid var(--color-code-border) !important;
-    color: var(--color-foreground-muted) !important;
-    opacity: 0.5 !important;
-    transition: all 0.2s ease-in-out;
+  background-color: transparent !important;
+  border: 1px solid var(--color-code-border) !important;
+  color: var(--color-foreground-muted) !important;
+  opacity: .55 !important;
+  transition: opacity .2s ease, background-color .2s ease, color .2s ease;
 }
 button.copybtn:hover {
-    opacity: 1 !important;
-    background-color: var(--color-code-border) !important;
-    color: var(--color-foreground-primary) !important;
+  opacity: 1 !important;
+  background-color: var(--color-code-border) !important;
+  color: var(--color-foreground-primary) !important;
 }
 
+
+
 /*--------------------------------------------------------------------------
- * Tables
+ * Tables — Enhanced v3 (row hover ring, no cell/column hover)
  *--------------------------------------------------------------------------*/
 table.docutils {
-    width: 100%;
-    margin: 2em 0;
-    border-collapse: separate;
-    border-spacing: 0;
-    border: 1px solid var(--color-table-border);
-    border-radius: 6px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    overflow: hidden;
+  /* local tokens */
+  --table-radius: 10px;
+  --table-shadow: 0 1.5px 4px rgba(0,0,0,.06);
+  --row-hover-bg: color-mix(in srgb,
+                      var(--color-brand-tertiary) var(--color-table-hover-bg-tint),
+                      var(--color-background-primary));
+  --row-ring: var(--color-brand-tertiary); /* slate blue edge on hover */
+
+  width: 100%;
+  margin: 1.75em 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--color-table-border);
+  border-radius: var(--table-radius);
+  box-shadow: var(--table-shadow);
+  overflow: hidden; /* needed for rounded corners */
 }
 
-table.docutils th {
-    background-color: var(--color-table-header-bg);
-    border-bottom: 1px solid var(--color-table-border);
-    padding: 0.9em 1em;
-    font-weight: 600;
-    text-align: left;
-    color: var(--color-foreground-primary);
+/* Responsive scroll for small screens */
+@media (max-width: 860px) {
+  table.docutils {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
-table.docutils thead tr:first-child th {
-    border-top: none;
+
+/* Sticky header with subtle tint */
+table.docutils thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--color-brand-tertiary) 7%, transparent),
+      transparent 70%),
+    var(--color-table-header-bg);
+  color: var(--color-foreground-primary);
+  border-bottom: 1px solid var(--color-table-border);
+  padding: 0.85em 1em;
+  font-weight: 700;
+  text-align: left;
 }
+
+/* Cells */
+table.docutils th,
 table.docutils td {
-    border-top: 1px solid var(--color-table-border);
-    padding: 0.9em 1em;
-    vertical-align: top;
-    font-size: 0.95em;
+  border-top: 1px solid var(--color-table-border);
+  padding: 0.85em 1em;
+  vertical-align: top;
+  font-size: .95em;
+  transition: background-color .15s ease, box-shadow .15s ease;
 }
+
+/* Zebra striping */
 table.docutils tbody tr:nth-child(even) {
-    background-color: var(--color-table-stripe-bg);
+  background-color: var(--color-table-stripe-bg);
 }
-table.docutils tbody tr:hover {
-    /* Hover uses tint of Primary Red */
-    background-color: color-mix(
-        in srgb,
-        var(--color-brand-primary) var(--color-table-hover-bg-tint),
-        transparent
-    );
-    transition: background-color 0.15s ease-in-out;
+
+/* ===== Row hover only ===== */
+table.docutils tbody tr:hover > th,
+table.docutils tbody tr:hover > td {
+  background-color: var(--row-hover-bg);
+  /* top + bottom slate-blue edges drawn inside the cells */
+  box-shadow:
+    inset 0 2px 0 0 var(--row-ring),
+    inset 0 -2px 0 0 var(--row-ring);
 }
+
+/* add left edge only on the first cell */
+table.docutils tbody tr:hover > th:first-child,
+table.docutils tbody tr:hover > td:first-child {
+  box-shadow:
+    inset 0 2px 0 0 var(--row-ring),
+    inset 0 -2px 0 0 var(--row-ring),
+    inset 2px 0 0 0 var(--row-ring);
+}
+
+/* add right edge only on the last cell */
+table.docutils tbody tr:hover > th:last-child,
+table.docutils tbody tr:hover > td:last-child {
+  box-shadow:
+    inset 0 2px 0 0 var(--row-ring),
+    inset 0 -2px 0 0 var(--row-ring),
+    inset -2px 0 0 0 var(--row-ring);
+}
+
+/* Keyboard accessibility: give the same treatment when row contains focus */
+table.docutils tbody tr:focus-within > th,
+table.docutils tbody tr:focus-within > td {
+  background-color: var(--row-hover-bg);
+  box-shadow:
+    inset 0 2px 0 0 var(--row-ring),
+    inset 0 -2px 0 0 var(--row-ring);
+}
+table.docutils tbody tr:focus-within > th:first-child,
+table.docutils tbody tr:focus-within > td:first-child {
+  box-shadow:
+    inset 0 2px 0 0 var(--row-ring),
+    inset 0 -2px 0 0 var(--row-ring),
+    inset 2px 0 0 0 var(--row-ring);
+}
+table.docutils tbody tr:focus-within > th:last-child,
+table.docutils tbody tr:focus-within > td:last-child {
+  box-shadow:
+    inset 0 2px 0 0 var(--row-ring),
+    inset 0 -2px 0 0 var(--row-ring),
+    inset -2px 0 0 0 var(--row-ring);
+}
+
+/* Optional caption style */
+table.docutils caption {
+  caption-side: top;
+  padding: .6rem 0 .3rem;
+  font-weight: 700;
+  color: var(--color-foreground-secondary);
+}
+
 
 /*--------------------------------------------------------------------------
- * Admonitions - Colored by Type
+ * Admonitions - Modern Icon-Based Design
  *--------------------------------------------------------------------------*/
 .admonition {
-    border-radius: 6px;
-    padding: 1.2em 1.5em;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
     margin: 2em 0;
-    border-left-width: 6px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    background-color: var(--color-background-secondary);
+    background-color: var(--color-background-primary);
+    overflow: hidden; /* To contain the styled title bar */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.admonition p:last-child {
+
+.admonition:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.admonition .admonition-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    font-weight: 700;
+    padding: 0.8em 1.2em;
+    color: white; /* Text color is white for all title bars */
+}
+
+/* Icon styling using a mask for easy coloring */
+.admonition .admonition-title::before {
+    content: '';
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    flex-shrink: 0;
+    background-color: currentColor; /* The icon color will match the title text color */
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.admonition p:last-of-type {
     margin-bottom: 0;
 }
-.admonition .admonition-title {
-    font-weight: 700;
-    margin-bottom: 0.6em;
-    display: block;
+
+.admonition > *:not(.admonition-title) {
+    padding: 0 1.2em 1.2em;
 }
 
-/* Note / Info / See Also (Secondary Blue) */
-.admonition.note, .admonition.seealso {
-    border-left-color: var(--color-brand-secondary);
-    background-color: color-mix(
-        in srgb,
-        var(--color-brand-secondary) var(--color-info-bg-tint),
-        var(--color-background-secondary)
-    );
+/* Note / Info / See Also (Tertiary Slate Blue) */
+.admonition.note, .admonition.seealso, .admonition.info {
+    border-top: 4px solid var(--color-brand-tertiary);
 }
 .admonition.note .admonition-title,
-.admonition.seealso .admonition-title {
-    color: var(--color-brand-secondary);
+.admonition.seealso .admonition-title,
+.admonition.info .admonition-title {
+    background-color: var(--color-brand-tertiary);
+}
+.admonition.note .admonition-title::before,
+.admonition.seealso .admonition-title::before,
+.admonition.info .admonition-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='16' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'%3E%3C/line%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='16' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'%3E%3C/line%3E%3C/svg%3E");
 }
 
-/* Tip / Hint (Tertiary Green) */
+/* Tip / Hint (Quaternary Sea Green) */
 .admonition.tip, .admonition.hint {
-    border-left-color: var(--color-brand-tertiary);
-    background-color: color-mix(
-        in srgb,
-        var(--color-brand-tertiary) var(--color-tip-bg-tint),
-        var(--color-background-secondary)
-    );
+    border-top: 4px solid var(--color-brand-quaternary);
 }
 .admonition.tip .admonition-title,
 .admonition.hint .admonition-title {
-    color: var(--color-brand-tertiary);
+    background-color: var(--color-brand-quaternary);
+}
+.admonition.tip .admonition-title::before,
+.admonition.hint .admonition-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'%3E%3C/path%3E%3Cpolyline points='15 3 21 9 11 19 5 19 5 13 15 3'%3E%3C/polyline%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'%3E%3C/path%3E%3Cpolyline points='15 3 21 9 11 19 5 19 5 13 15 3'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-/* Warning / Caution (Orange) */
+/* Warning / Caution (Amber) */
 .admonition.warning, .admonition.caution {
-    border-left-color: var(--color-warning-border);
-    background-color: color-mix(
-        in srgb,
-        var(--color-warning-border) var(--color-warning-bg-tint),
-        var(--color-background-secondary)
-    );
+    border-top: 4px solid var(--color-warning-border);
 }
 .admonition.warning .admonition-title,
 .admonition.caution .admonition-title {
-    color: var(--color-warning-border);
+    background-color: var(--color-warning-border);
+}
+.admonition.warning .admonition-title::before,
+.admonition.caution .admonition-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'%3E%3C/path%3E%3Cline x1='12' y1='9' x2='12' y2='13'%3E%3C/line%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'%3E%3C/path%3E%3Cline x1='12' y1='9' x2='12' y2='13'%3E%3C/line%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
 }
 
-/* Error / Danger / Important (Primary Red) */
+/* Error / Danger / Important (Red) */
 .admonition.error, .admonition.danger, .admonition.important {
-     border-left-color: var(--color-error-border);
-     background-color: color-mix(
-        in srgb,
-        var(--color-error-border) var(--color-error-bg-tint),
-        var(--color-background-secondary)
-     );
+    border-top: 4px solid var(--color-error-border);
 }
 .admonition.error .admonition-title,
 .admonition.danger .admonition-title,
 .admonition.important .admonition-title {
-     color: var(--color-error-border);
+    background-color: var(--color-error-border);
+}
+.admonition.error .admonition-title::before,
+.admonition.danger .admonition-title::before,
+.admonition.important .admonition-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='15' y1='9' x2='9' y2='15'%3E%3C/line%3E%3Cline x1='9' y1='9' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='15' y1='9' x2='9' y2='15'%3E%3C/line%3E%3Cline x1='9' y1='9' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
 }
 
 
 /*--------------------------------------------------------------------------
- * Sidebar Customization (Furo) - Updated Hover
+ * Sidebar Customization (Furo) 
  *--------------------------------------------------------------------------*/
 
 .toc-drawer > .toc-tree {
@@ -430,7 +700,6 @@ table.docutils tbody tr:hover {
 .sd-card .sd-card-body {
     padding: 1.2em;
 }
-
 
 /* ------------------------------
    Footnote-style citations (footcite)
@@ -629,23 +898,125 @@ a.sd-stretched-link::after {
   background: transparent !important;
 }
 
+/* ------------------------------------------------------------------------
+ * Topic (Sphinx .. topic::) — Soft Card v2
+ * - Uses brand tertiary (#36456e in light, #8a9bcd in dark) for identity
+ * - Title becomes a rounded "chip"
+ * - Left accent bar + gentle background tint
+ * ---------------------------------------------------------------------- */
 
-/* Topic as a soft card */
+/* Base card */
 .topic {
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  position: relative; /* for decorative layers */
   padding: 1rem 1.25rem;
-  background: var(--color-background-secondary);
-  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-brand-tertiary) 18%, var(--color-border));
+  background:
+    /* faint diagonal glaze */
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--color-brand-tertiary) 6%, transparent) 0%,
+      transparent 60%)
+    ,
+    /* base off-white / dark panel */
+    var(--color-background-secondary);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  overflow: hidden;
 }
+
+/* Subtle left accent bar */
+.topic::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;   /* top 0, right auto, bottom 0, left 0 */
+  width: 6px;
+  background: var(--color-brand-tertiary);
+  opacity: .95;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Gentle corner bloom for depth */
+.topic::after {
+  content: "";
+  position: absolute;
+  inset: -30% -20% auto auto; /* top-right glow */
+  width: 220px;
+  height: 220px;
+  pointer-events: none;
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--color-brand-tertiary) 16%, transparent),
+    transparent 70%);
+  opacity: .35;
+}
+
+/* Hover polish */
+.topic:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  border-color: color-mix(in srgb, var(--color-brand-tertiary) 28%, var(--color-border));
+}
+
+/* Title chip (Sphinx renders <p class="topic-title">) */
 .topic p.topic-title {
-  font-weight: 700;
-  margin-bottom: .5rem;
-  color: var(--color-foreground-primary);
+  display: inline-block;
+  margin: 0 0 .6rem 0;
+  padding: .35rem .7rem;
+  border-radius: 999px;                     /* pill shape */
+  background: var(--color-brand-tertiary);  /* slate blue chip */
+  color: #fff;                              /* readable on dark slate */
+  font-weight: 800;
+  letter-spacing: .2px;
+  line-height: 1.1;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
+/* Body text inside topic */
+.topic > :not(.topic-title) {
+  color: var(--color-foreground-secondary);
+}
+
+/* Links inside topic: keep on-brand and accessible */
+.topic a {
+  color: color-mix(in srgb, var(--color-brand-primary) 75%, var(--color-foreground-primary));
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color .15s ease, border-color .15s ease;
+}
+.topic a:hover {
+  color: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+}
+
+/* ------- Dark mode refinements ------- */
+html[data-theme="dark"] .topic {
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--color-brand-tertiary) 10%, transparent) 0%,
+      transparent 60%),
+    var(--color-background-secondary);
+}
+html[data-theme="dark"] .topic p.topic-title {
+  /* tertiary is lighter in dark mode; use dark text for contrast */
+  color: var(--color-background-primary); /* near-black */
+  box-shadow: 0 1px 3px rgba(0,0,0,.45);
+}
+html[data-theme="dark"] .topic:hover {
+  box-shadow: 0 10px 24px rgba(0,0,0,.5);
+}
+
+/* Hide ONLY the permalink icon inside .. topic:: titles */
+.topic p.topic-title .headerlink,
+.topic p.topic-title .headerlink::before,
+.topic p.topic-title .headerlink::after {
+  display: none !important;
+  content: none !important; /* belt-and-suspenders for themes that use ::before */
 }
 
 
-/* === CTA tiles (home grid) === */
+/*--------------------------------------------------------------------------
+ * CTA tiles (home grid)
+ *--------------------------------------------------------------------------*/
 .cta-tiles .sd-card {
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -764,15 +1135,34 @@ html[data-theme="dark"] { --tile-hover-bg: #2166F3; } /* same in dark */
 /* ---- preview layers ---- */
 
 /* image layer (set per card with --card-preview below) */
-.see-also-tiles .sd-card::before{
-  content:"";
-  position:absolute; inset:0;
-  background-image: var(--card-preview);
-  background-position:center; background-size:cover; background-repeat:no-repeat;
-  opacity:0; transform:scale(1.04);
-  transition: opacity .25s ease, transform .25s ease;
-  z-index:0;
+.see-also-tiles .sd-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: transparent;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
+
+.see-also-tiles .sd-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--card-preview);  /* Using the dynamically set variable */
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 0; /* Sit under the card content */
+}
+
+.see-also-tiles .sd-card:hover::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
 
 /* blue tint for readability (Furo title/link blue #2166F3) */
 .see-also-tiles .sd-card::after{
@@ -785,10 +1175,11 @@ html[data-theme="dark"] { --tile-hover-bg: #2166F3; } /* same in dark */
 }
 
 /* reveal image + tint */
-.see-also-tiles .sd-card:hover::before{ opacity:1; transform:scale(1); }
+/*.see-also-tiles .sd-card:hover::before{ opacity:1; transform:scale(1); }*/
 .see-also-tiles .sd-card:hover::after { opacity:1; }
 
 /* Text color on hover = your dark red */
+
 .see-also-tiles .sd-card:hover,
 .see-also-tiles .sd-card:hover .sd-card-header,
 .see-also-tiles .sd-card:hover .sd-card-body,
@@ -821,11 +1212,11 @@ html[data-theme="dark"] .see-also-tiles .see-also-accent{
 
 /* Per-card preview images
    (custom.css is at /_static/css/, previews at /_static/previews/) */
-.see-also-tiles .card--uncertainty { --card-preview: url("_static/previews/uncertainty.png"); }
-.see-also-tiles .card--errors      { --card-preview: url("_static/previews/errors.png"); }
-.see-also-tiles .card--evaluation  { --card-preview: url("_static/previews/evaluation.png"); }
-.see-also-tiles .card--importance  { --card-preview: url("_static/previews/importance.png"); }
-.see-also-tiles .card--relationship{ --card-preview: url("_static/previews/relationship.png"); }
+.see-also-tiles .card--uncertainty { --card-preview: url('../previews/uncertainty.png');}
+.see-also-tiles .card--errors { --card-preview: url('../previews/errors.png'); }
+.see-also-tiles .card--evaluation { --card-preview: url('../previews/evaluation.png'); }
+.see-also-tiles .card--importance { --card-preview: url('../previews/importance.png');}
+.see-also-tiles .card--relationship { --card-preview: url('../previews/relationship.png');}
 
 /* Dark mode: stronger shadow only */
 html[data-theme="dark"] .see-also-tiles .sd-card:hover{
@@ -866,3 +1257,4 @@ hr.hr-spacer{
   height: 0 !important;           /* neutralize UA defaults */
   background: transparent !important;
 }
+
