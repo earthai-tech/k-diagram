@@ -367,7 +367,7 @@ def plot_error_bands(
 
 
 plot_error_bands.__doc__ = r"""
-Plot polar error bands to visualize systemic vs. random error.
+Plot polar error bands to visualize systemic vs random error.
 
 This function aggregates forecast errors across bins of a cyclical
 or ordered feature (like month or hour) and plots the mean error

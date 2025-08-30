@@ -107,9 +107,6 @@ error variance (consistency).
     * To identify periods or conditions where a model's performance is
       less consistent (i.e., has higher error variance).
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_error_violins:
 
@@ -188,9 +185,6 @@ polar plot, revealing differences in bias, variance, and shape.
     * To select a model based on the most desirable error profile (e.g.,
       low bias and low variance).
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_polar_error_ellipses:
 

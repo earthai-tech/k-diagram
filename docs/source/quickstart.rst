@@ -152,7 +152,7 @@ This is just one example of what this chart can reveal. To see more
 advanced use cases, including how to add custom metrics or control the
 normalization, check out the detailed examples in our gallery.
 
-*See more examples in :ref:`gallery_plot_regression_performance`*
+*See more examples in* :ref:`gallery_plot_regression_performance`
 
 -------------
 Next Steps

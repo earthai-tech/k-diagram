@@ -230,7 +230,7 @@ rst_epilog = """
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_js_files = ["custom.js"]
+html_js_files = ["js/custom.js"]
 # Optional: Add custom CSS files (relative to html_static_path)
 html_css_files = [
     "css/custom.css",

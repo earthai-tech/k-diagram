@@ -120,9 +120,6 @@ anomalies in the data.
    * To check if the prediction intervals are wide enough to contain the
      actual values.
 
-.. raw:: html
-
-   <hr>
    
 .. _gallery_plot_scatter_correlation:
 
@@ -211,9 +208,6 @@ systemic bias, and spotting outliers.
    * To identify individual outliers that are far from the main
      cluster of points.
 
-.. raw:: html
-
-   <hr>
 
 
 .. _gallery_plot_error_distribution:
@@ -298,9 +292,6 @@ statistical methods.
      which might indicate that the model struggles with certain types
      of predictions.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_qq:
 
@@ -385,9 +376,7 @@ normally distributed.
    * As a companion to the `plot_error_distribution` to get a more
      rigorous check of the distribution's shape.
 
-.. raw:: html
 
-   <hr>
    
 .. _gallery_plot_error_autocorrelation:
 
@@ -475,9 +464,6 @@ patterns) in the residuals.
      the model could be improved by adding more lags or other time-based
      features.
 
-.. raw:: html
-
-   <hr>
    
 .. _gallery_plot_error_pacf:
 

@@ -3004,7 +3004,7 @@ def plot_actual_vs_predicted(
     mask_angle: bool = False,
     savefig: str | None = None,
 ):
-    r"""Polar plot comparing actual observed vs. predicted values.
+    r"""Polar plot comparing actual observed vs predicted values.
 
     This function generates a polar plot to visually compare actual
     ground truth values against model predictions (typically a central

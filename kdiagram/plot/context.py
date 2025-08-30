@@ -194,7 +194,6 @@ See Also
 --------
 plot_scatter_correlation : A Cartesian plot for correlation.
 plot_actual_vs_predicted : A polar plot for comparing true vs. predicted.
-:ref:`userguide_context` : The user guide for contextual plots.
 
 Notes
 -----
@@ -335,7 +334,7 @@ def plot_scatter_correlation(
 
 
 plot_scatter_correlation.__doc__ = r"""
-Plots a scatter plot of true vs. predicted values.
+Plots a scatter plot of true vs predicted values.
 
 This function creates a classic Cartesian scatter plot to
 visualize the relationship between true observed values and model

@@ -166,7 +166,6 @@ k-diagram: Polar Insights for Forecasting
          :link: api_uncertainty
          :class-card: sd-rounded-lg sd-shadow-sm seealso-card card--uncertainty
 
-         
          Analyze prediction intervals, coverage, anomalies, and drift.
 
       .. grid-item-card:: 📉 Error Visualization
@@ -174,8 +173,7 @@ k-diagram: Polar Insights for Forecasting
          :link: api_errors
          :class-card: sd-rounded-lg sd-shadow-sm seealso-card card--errors
 
-         
-         Diagnose bias vs. variance, compare error distributions, 
+         Diagnose bias vs. variance, compare error distributions,
          visualize 2D uncertainty.
 
       .. grid-item-card:: 📊 Model Evaluation
@@ -183,7 +181,6 @@ k-diagram: Polar Insights for Forecasting
          :link: api_evaluation
          :class-card: sd-rounded-lg sd-shadow-sm seealso-card card--evaluation
 
-         
          Generate Taylor diagrams and other evaluation views.
 
       .. grid-item-card:: 🧠 Feature Interaction
@@ -191,7 +188,6 @@ k-diagram: Polar Insights for Forecasting
          :link: api_feature_based
          :class-card: sd-rounded-lg sd-shadow-sm seealso-card card--importance
 
-         
          Visualize feature influence patterns (fingerprints).
 
       .. grid-item-card:: 🔗 Relationship Visualization
@@ -199,7 +195,6 @@ k-diagram: Polar Insights for Forecasting
          :link: api_relationship
          :class-card: sd-rounded-lg sd-shadow-sm seealso-card card--relationship
 
-         
          Plot true vs. predicted values in polar coordinates.
 
 
@@ -209,4 +204,3 @@ k-diagram: Polar Insights for Forecasting
          :class-card: sd-shadow-sm see-also-card see-also-accent
 
          Browse every function, class, and parameter.
-

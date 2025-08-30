@@ -104,9 +104,6 @@ misleading.
    * To compare models based on their Average Precision (AP) score,
      which is summarized by the area under the PR curve.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_polar_roc:
 
@@ -193,9 +190,6 @@ False Positive Rate to assess a model's discriminative ability.
      desired balance between the True Positive Rate and False
      Positive Rate.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_polar_confusion_matrix:
 
@@ -280,10 +274,7 @@ multiple models.
    * To create a more visually engaging and intuitive representation
      of a confusion matrix for reports and presentations.
 
-.. raw:: html
 
-   <hr>
-   
 .. _gallery_plot_polar_confusion_matrix_in:
 
 -----------------------------------
@@ -375,9 +366,7 @@ predictions for that class.
    * To understand the specific patterns of confusion between classes
      (e.g., "Is Class A more often confused with B or C?").
 
-.. raw:: html
 
-   <hr>
    
 .. _gallery_plot_polar_classification_report:
 
@@ -467,9 +456,6 @@ This provides a more detailed summary than a confusion matrix alone.
    * To identify which specific classes a model is struggling to
      predict correctly.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_pinball_loss:
 
@@ -650,9 +636,7 @@ clean labels for the plot axes.
    * For model selection when you need to balance trade-offs between
      different performance criteria.
 
-.. raw:: html
 
-   <hr>
 
 Custom and Added Metrics Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -735,9 +719,6 @@ Absolute Error) to the default set of metrics using the
    * To create a comprehensive performance profile that includes both
      standard and domain-specific evaluation criteria.
 
-.. raw:: html
-
-   <hr>
 
 Pre-calculated Metrics Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
