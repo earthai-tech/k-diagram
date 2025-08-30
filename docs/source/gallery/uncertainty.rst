@@ -106,9 +106,6 @@ bias.
    * Complement numerical scores (MAE, RMSE) with an intuitive
      overview of model fit, especially for cyclical or ordered data.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_anomaly_magnitude:
 
@@ -214,9 +211,6 @@ prediction interval [Qlow, Qup]. Shows the location (angle), type
    where and how prediction *intervals* fail, complementing plots
    that assess point forecast accuracy.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_overall_coverage:
 
@@ -311,9 +305,7 @@ for two simulated models.
     * **Summarizing Reliability:** Provides a concise summary of the
       average reliability of prediction intervals.
 
-.. raw:: html
 
-    <hr>
 
 .. _gallery_plot_coverage_diagnostic: 
 
@@ -406,10 +398,6 @@ using bars.
       by-point, complementing the overall average line.
     * **Guiding Model Improvement:** Pinpoint problematic samples
       or regimes where uncertainty quantification needs refinement.
-
-.. raw:: html
-
-    <hr>
 
 
 .. _gallery_plot_interval_consistency: 
@@ -519,9 +507,6 @@ radius means inconsistent width.
      treat predictions with high variability (high radius) with more
      caution.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_interval_width: 
 
@@ -615,10 +600,6 @@ the width. Color can represent width or an optional third variable
    * **Assess Spatial Patterns:** If the angle represented spatial
      location, this plot could reveal geographical areas of high/low
      predicted uncertainty.
-
-.. raw:: html
-
-    <hr>
 
 
 .. _gallery_plot_model_drift: 
@@ -719,9 +700,6 @@ diagnose model degradation over lead time.
    * **Communicate Forecast Reliability:** Show stakeholders how
      confidence in forecasts typically decreases for longer lead times.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_temporal_uncertainty: 
 
@@ -820,10 +798,6 @@ samples.
      (angle) or with the magnitude of the prediction (radius/color).
    * **Check Quantile Ordering:** Visually verify that Q10 <= Q50 <= Q90
      holds for most samples.
-
-.. raw:: html
-
-    <hr>
 
 
 .. _gallery_plot_uncertainty_drift:
@@ -930,9 +904,6 @@ showing the relative uncertainty width at each angle (location).
      uncertainty estimates remain stable or degrade significantly as
      forecasts extend further out.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_prediction_velocity: 
 
@@ -1040,9 +1011,6 @@ Q50.
    * **Analyze Temporal Trends Spatially:** Understand the spatial
      distribution of the rate of change across different locations.
 
-.. raw:: html
-
-    <hr>
 
 
 .. _gallery_plot_radial_density_ring:
@@ -1273,9 +1241,6 @@ of any pre-calculated, single-column metric.
     * To present the distribution of any summary statistic in a
       visually engaging format.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_polar_heatmap:
 
@@ -1365,9 +1330,6 @@ angular variable.
     * To identify "hot spots" in your data where specific conditions
       (e.g., time of day and error size) frequently co-occur.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_polar_quiver:
 

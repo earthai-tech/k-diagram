@@ -117,9 +117,6 @@ values comparing feature influence across three years.
      drivers behind model predictions for different scenarios.
   
 
-.. raw:: html
-
-   <hr>
       
 .. _gallery_plot_feature_interaction:
 

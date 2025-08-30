@@ -111,9 +111,6 @@ standard deviation.
    * Ideal for comparing multiple models against observations in
      fields like climate science or hydrology.
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_taylor_diagram_background_shading_focus: 
 
@@ -202,9 +199,6 @@ orientation (Corr=1 at North, angles increase counter-clockwise).
    * Use the orientation options (`zero_location`, `direction`) to
      match specific conventions or visual preferences.
 
-.. raw:: html
-
-    <hr>
 
 
 .. _gallery_plot_taylor_diagram_basic: 
@@ -294,9 +288,6 @@ orientation for Corr=1.
      Taylor Diagram representation.
     
 
-.. raw:: html
-
-    <hr> 
 
 .. _gallery_plot_taylor_diagram_in_variant1: 
 
@@ -360,9 +351,6 @@ value, and includes a colorbar.
     directly reflects the correlation value based on the 'Purples' map.
 
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_taylor_diagram_in_variant2: 
 

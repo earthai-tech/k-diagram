@@ -121,9 +121,6 @@ plot where the bars form a perfect circle.
    * To compare the calibration of different models before looking at
      other metrics like sharpness.
 
-.. raw:: html
-
-   <hr>
    
 .. _gallery_plot_polar_sharpness:
 
@@ -216,9 +213,6 @@ represented by a point closer to the center of the plot.
    * To select a model that provides the best balance of sharpness and
      calibration for a specific application.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_crps_comparison:
 
@@ -312,9 +306,6 @@ simultaneously.
    * For model selection when a single, proper scoring rule is the
      primary decision criterion.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_credibility_bands:
 
@@ -409,9 +400,6 @@ predictions and its uncertainty.
    * To communicate how the forecast distribution is expected to behave under
      different conditions.
 
-.. raw:: html
-
-   <hr>
 
 .. _gallery_plot_calibration_sharpness:
 

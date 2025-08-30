@@ -113,10 +113,6 @@ range of true values.
    * To identify non-linear biases, where a model might perform well for
      low values but poorly for high values (or vice versa).
 
-
-.. raw:: html
-
-   <hr>
    
 .. _gallery_plot_conditional_quantiles:
 
@@ -207,9 +203,6 @@ value. It is a powerful tool for diagnosing heteroscedasticity.
    * To identify if a model is consistently over- or under-confident
      for specific ranges of the true value.
 
-.. raw:: html
-
-   <hr>
    
 .. _gallery_plot_error_relationship:
 
@@ -293,9 +286,6 @@ designed to diagnose conditional biases and heteroscedasticity.
    * To visually inspect for heteroscedasticity, where the variance
      of the error changes across the range of true values.
 
-.. raw:: html
-
-   <hr>
    
 .. _gallery_plot_residual_relationship:
 

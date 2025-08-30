@@ -213,9 +213,6 @@ probability bins. A perfectly calibrated model lies on the
    * **Communicating** both calibration quality (curve vs. diagonal) and
      **data support** (counts per bin).
 
-.. raw:: html
-
-    <hr>
 
 .. _gallery_plot_polar_reliability:
 
@@ -313,9 +310,7 @@ this spiral.
    * To effectively communicate the calibration performance of one or
      more models in a single, diagnostic-rich figure.
 
-.. raw:: html
 
-   <hr>
    
 .. _gallery_plot_horizon_metrics:
 
