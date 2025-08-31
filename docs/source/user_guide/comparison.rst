@@ -127,9 +127,79 @@ performance profile.
   in others?
 * Facilitates the identification of trade-offs between different metrics.
 
+Now that you understand the concepts behind the radar chart, let's
+apply it to a common scenario: choosing the best model to predict
+house prices.
+
+.. admonition:: Practical Example
+
+   Imagine you've trained two different regression models: a simple
+   ``Linear Regression`` model and a more complex ``Gradient Boosting``
+   model. You want to compare them not just on one metric, but on a
+   balance of accuracy (``r2``), error (``mae``), and training speed.
+
+   Here’s how you could generate a comparison plot:
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Define your data ---
+      >>> # True house prices (in $1000s)
+      >>> y_true = np.array([250, 300, 450, 500, 720])
+      >>> # Predictions from Model 1 (Linear Regression)
+      >>> y_pred_lr = np.array([265, 310, 430, 515, 700])
+      >>> # Predictions from Model 2 (Gradient Boosting)
+      >>> y_pred_gb = np.array([255, 305, 445, 505, 715])
+      >>> # Training times in seconds
+      >>> train_times = [0.05, 1.2] # Linear Regression is much faster
+      >>> model_names = ['Linear Regression', 'Gradient Boosting']
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_model_comparison(
+      ...     y_true,
+      ...     y_pred_lr,
+      ...     y_pred_gb,
+      ...     train_times=train_times,
+      ...     names=model_names,
+      ...     metrics=['r2', 'mae', 'rmse'],
+      ...     title="House Price Model Comparison",
+      ...     scale='norm'
+      ... )
+
+   .. figure:: ../images/userguide_plot_model_comparison.png
+      :align: center
+      :width: 80%
+      :alt: Radar chart comparing two models for house price prediction.
+
+      A radar chart comparing a Linear Regression and a Gradient
+      Boosting model across performance metrics and training time.
+
+   This chart provides an immediate, holistic comparison of the two
+   models. Let's break down what the shapes tell us about their
+   respective strengths and weaknesses.
+
+   **Quick Interpretation:**
+    The plot starkly illustrates a classic performance trade-off. The
+    ``Gradient Boosting`` model (orange triangle) forms a large
+    polygon that fully extends to the outer edge on all three
+    predictive metrics (``r2``, ``mae``, and ``rmse``), indicating its
+    superior accuracy. In complete contrast, the ``Linear Regression``
+    model (blue line) scores perfectly on the ``Train Time (s)``
+    axis, highlighting its significant speed advantage, but shows
+    minimal performance on the accuracy axes. This visualization
+    instantly clarifies the choice: select Gradient Boosting for
+    maximum accuracy, or Linear Regression for maximum speed.
+
+This summary provides the key takeaways from the plot. For a complete,
+runnable example and a more detailed analysis, explore the full
+example in our gallery.
+
 **Example:**
 (See the :ref:`Model Comparison Example <gallery_plot_model_comparison>`
-in the Gallery)
+in the Gallery).
+
 
 .. raw:: html
 
@@ -259,6 +329,72 @@ Lower ECE/MCE/Brier indicate better calibration (and accuracy for Brier).
 * **Distribution-aware** with the counts panel, showing score sharpness
   and data coverage.
 
+Understanding the theory of calibration is crucial. Now, let's ground
+it in a practical use case where reliable probabilities are not just a
+technicality, but a business necessity: predicting loan defaults.
+
+.. admonition:: Practical Example
+
+   You've learned the theory, so let's consider a practical use case:
+   a bank needs to predict the probability that a loan applicant will
+   default. It's not enough for the model to be accurate; the predicted
+   probabilities must be *reliable*.
+
+   Let's compare a model's raw, uncalibrated probabilities with
+   probabilities that have been improved using a calibration technique.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Define your data ---
+      >>> # True outcomes (1 = default, 0 = no default)
+      >>> np.random.seed(0)
+      >>> y_true = (np.random.rand(500) < 0.3).astype(int)
+      >>> # Model 1: An over-confident, uncalibrated model
+      >>> uncalibrated_probs = np.clip(y_true * 0.5 + 0.25 + np.random.randn(500) * 0.2, 0.01, 0.99)
+      >>> # Model 2: A better-calibrated model
+      >>> calibrated_probs = np.clip(y_true * 0.4 + 0.3 + np.random.randn(500) * 0.1, 0.01, 0.99)
+      >>> model_names = ['Uncalibrated Model', 'Calibrated Model']
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_reliability_diagram(
+      ...     y_true,
+      ...     uncalibrated_probs,
+      ...     calibrated_probs,
+      ...     names=model_names,
+      ...     n_bins=10,
+      ...     title="Loan Default Model Calibration"
+      ... )
+
+   .. figure:: ../images/userguide_plot_reliability_diagram.png
+      :align: center
+      :width: 80%
+      :alt: Reliability diagram comparing calibrated and uncalibrated models.
+
+      A reliability diagram showing an uncalibrated model's curve
+      deviating from the ideal diagonal, while a calibrated model's
+      curve follows it closely.
+
+   The resulting plot directly compares the reliability of the two
+   approaches. Let's analyze the curves to see the impact of
+   calibration.
+
+   **Quick Interpretation:**
+    The plot clearly shows the effect of calibration. The blue line
+    (``Uncalibrated Model``) deviates from the dashed diagonal,
+    especially for predicted probabilities between 0.4 and 0.8, where
+    it falls below the line. This indicates the model is
+    **over-confident**. In contrast, the orange line
+    (``Calibrated Model``) follows the diagonal much more closely,
+    demonstrating that its predicted probabilities are far more
+    reliable and trustworthy.
+
+This analysis provides the main visual takeaways. To generate this
+plot yourself and see how to retrieve the underlying per-bin
+statistics, dive into the detailed gallery example.
+
 **Example:**
 (See the :ref:`Gallery example <gallery_plot_reliability>` for a complete,
 runnable snippet that saves an image and returns per-bin statistics.)
@@ -348,6 +484,73 @@ calibration reference.
 * To effectively communicate the calibration performance of one or
   more models in a single, diagnostic-rich figure.
 
+While the standard reliability diagram is effective, sometimes a
+different perspective can make model behavior even more intuitive.
+Let's revisit the loan default scenario using the novel polar
+reliability plot to see how it visualizes over- and under-confidence.
+
+.. admonition:: Practical Example
+
+   Let's use the novel polar diagram to get a more intuitive feel for
+   model calibration. We'll stick with the loan default prediction
+   scenario but visualize the model's performance in a different way.
+   This format can be very effective for quickly diagnosing where a
+   model's probabilities are misleading.
+
+   Let's compare an over-confident model with an under-confident one.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Define your data ---
+      >>> np.random.seed(42)
+      >>> y_true = (np.random.rand(1000) < 0.4).astype(int)
+      >>> # Model 1: Over-confident (predicts probabilities that are too extreme)
+      >>> overconfident_preds = np.clip(0.4 + np.random.normal(0, 0.3, 1000), 0.01, 0.99)
+      >>> # Model 2: Under-confident (cautious probabilities)
+      >>> underconfident_preds = 0.5 - np.abs(np.clip(
+      ...     0.4 + np.random.normal(0, 0.1, 1000), 0, 1) - 0.5)
+      >>> model_names = ['Over-Confident', 'Under-Confident']
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_polar_reliability(
+      ...     y_true,
+      ...     overconfident_preds,
+      ...     underconfident_preds,
+      ...     names=model_names,
+      ...     n_bins=15,
+      ...     title="Calibration Spiral for Loan Default Models"
+      ... )
+
+   .. figure:: ../images/userguide_plot_polar_reliability.png
+      :align: center
+      :width: 80%
+      :alt: Polar reliability spiral for loan default models.
+
+      A polar reliability spiral where an over-confident model's
+      curve falls inside the perfect calibration line and an
+      under-confident model's curve falls outside.
+
+   This spiral visualization offers a unique diagnostic view. By
+   comparing the model's spiral to the perfect calibration reference,
+   we can instantly spot issues.
+
+   **Quick Interpretation:**
+    This spiral plot makes miscalibration intuitive to see. The
+    segments of the spiral colored red, corresponding to the
+    "Over-Confident" model's predictions, fall significantly
+    **inside** the dashed black reference line. This visually shows
+    that the model's predicted probabilities are higher than the
+    actual observed outcomes. Conversely, the blue segments,
+    representing the "Under-Confident" model, lie **outside** the
+    reference line, indicating the model consistently underestimates
+    the true event frequency.
+
+This summary covers the key insights from the plot. For a complete,
+step-by-step code example and a more detailed breakdown of the
+analysis, please explore the full example in the gallery.
 
 **Example:**
 See the gallery example and code:
@@ -447,6 +650,79 @@ median quantiles: :math:`\mathbf{L}`, :math:`\mathbf{U}`, and
   compact plot.
 * **Highlights Trends:** Trends across horizons, such as consistently
   increasing uncertainty, are immediately apparent.
+  
+Beyond single predictions, a common challenge is understanding how a
+model's performance evolves over a forecast horizon. This example
+tackles that problem by visualizing how both the uncertainty and the
+central tendency of a forecast change over time.
+
+.. admonition:: Practical Example
+
+   Let's apply this unique plot to a common time-series forecasting
+   problem: predicting electricity demand for the next 12 hours. A key
+   challenge is that uncertainty typically increases for forecasts
+   further in the future. We want to visualize two things at once: (1) How 
+   does the model's uncertainty (prediction interval width) change? (2) How 
+   does the central forecast (the median) change?
+
+   .. code-block:: pycon
+
+      >>> import pandas as pd
+      >>> import numpy as np
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Create synthetic forecast data ---
+      >>> horizons = [f"H+{i+1}" for i in range(12)]
+      >>> # Create increasing uncertainty and a rising/falling demand pattern
+      >>> base_q50 = 100 + 20 * np.sin(np.linspace(0, np.pi, 12))
+      >>> base_width = np.linspace(5, 25, 12) # Uncertainty grows
+      >>> df_flat = pd.DataFrame(index=horizons)
+      >>> df_flat['q10_s1'] = base_q50 - base_width/2 + np.random.randn(12)
+      >>> df_flat['q10_s2'] = base_q50 - base_width/2 + np.random.randn(12)
+      >>> df_flat['q90_s1'] = base_q50 + base_width/2 + np.random.randn(12)
+      >>> df_flat['q90_s2'] = base_q50 + base_width/2 + np.random.randn(12)
+      >>> df_flat['q50_s1'] = base_q50 + np.random.randn(12)
+      >>> df_flat['q50_s2'] = base_q50 + np.random.randn(12)
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_horizon_metrics(
+      ...     df=df_flat,
+      ...     qlow_cols=['q10_s1', 'q10_s2'],
+      ...     qup_cols=['q90_s1', 'q90_s2'],
+      ...     q50_cols=['q50_s1', 'q50_s2'],
+      ...     xtick_labels=horizons,
+      ...     title="Electricity Demand Forecast: Uncertainty & Median",
+      ...     r_label="Mean Prediction Interval Width",
+      ...     cbar_label="Mean Median Demand (kW)"
+      ... )
+
+   .. figure:: ../images/userguide_plot_horizon_metrics.png
+      :align: center
+      :width: 80%
+      :alt: Polar bar chart showing forecast metrics across horizons.
+
+      A polar bar chart where bar height represents forecast
+      uncertainty and color represents the median predicted value
+      across 12 forecast horizons.
+
+   The polar bar chart summarizes the entire 12-hour forecast in a
+   single snapshot. Let's examine the bars' height and color to
+   understand the evolving forecast.
+
+   **Quick Interpretation:**
+    This plot provides a rich, two-dimensional summary of the
+    forecast. As you move clockwise from "H+1" to "H+12", the
+    **bar heights** (radius) get progressively longer. This is a
+    clear visual confirmation that the model's uncertainty grows as it
+    forecasts further into the future. Simultaneously, the **bar
+    colors** show the trend in the median prediction, shifting from
+    blue (lower demand) to red (higher demand) around the "H+5" to
+    "H+9" horizons, indicating a peak in predicted electricity
+    demand.
+
+This summary covers the key insights from the plot. For a complete,
+step-by-step code example and a more detailed breakdown of the
+analysis, please explore the full example in the gallery.
 
 **Example:**
 (See the :ref:`Horizon Metrics Example <gallery_plot_horizon_metrics>`

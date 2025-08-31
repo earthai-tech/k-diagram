@@ -194,7 +194,91 @@ shaded uncertainty band for the "good" model.
        q_upper_col='q90',
        title="Time Series Forecast Comparison"
    )
-   
+  
+Before diving into complex error metrics, the most fundamental step in
+any forecast evaluation is to simply look at the results. A time series
+plot provides that crucial first look, allowing for an immediate visual
+assessment of a model's performance against the ground truth.
+
+.. admonition:: Practical Example
+
+   Imagine you're managing an e-commerce website and need to forecast
+   the number of daily users to prepare server resources. You have two
+   forecasting models in competition: "Model A" and "Model B". The most
+   fundamental way to compare them is to simply plot their forecasts
+   directly against the actual user traffic over a period of time.
+
+   Let's also visualize the uncertainty for Model A, which provides us
+   with a prediction interval.
+
+   .. code-block:: pycon
+
+      >>> import kdiagram as kd
+      >>> import pandas as pd
+      >>> import numpy as np
+      >>>
+      >>> # --- 1. Generate synthetic website traffic data ---
+      >>> np.random.seed(0)
+      >>> time_idx = pd.date_range("2025-01-01", periods=180, freq='D')
+      >>> y_true = (
+      ...     500 + np.linspace(0, 200, 180)  # Trend: growing user base
+      ...     + 150 * np.sin(np.arange(180) * 2 * np.pi / 30)  # Monthly seasonality
+      ...     + np.random.normal(0, 40, 180)  # Daily noise
+      ... )
+      >>>
+      >>> # Model A: Tracks well but has uncertainty
+      >>> model_a_preds = y_true + np.random.normal(0, 30, 180)
+      >>> # Model B: Consistently underestimates traffic
+      >>> model_b_preds = y_true * 0.85 + 50
+      >>>
+      >>> df = pd.DataFrame({
+      ...     'Actual Users': y_true,
+      ...     'Model A': model_a_preds,
+      ...     'Model B': model_b_preds,
+      ...     'Model A Lower Bound': model_a_preds - 80,
+      ...     'Model A Upper Bound': model_a_preds + 80,
+      ... }, index=time_idx)
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_time_series(
+      ...     df,
+      ...     actual_col='Actual Users',
+      ...     pred_cols=['Model A', 'Model B'],
+      ...     q_lower_col='Model A Lower Bound',
+      ...     q_upper_col='Model A Upper Bound',
+      ...     title="Daily Website User Forecast Comparison"
+      ... )
+
+   .. figure:: ../images/userguide_context_plot_time_series.png
+      :align: center
+      :width: 80%
+      :alt: Time series plot comparing two forecast models against actual data.
+
+      Comparison of two forecast models (Model A and Model B) against
+      the actual daily website traffic, including an uncertainty
+      interval for Model A.
+
+   This plot lays out the raw performance of our two forecast models
+   against the ground truth. By examining how the lines track each other
+   and interact with the shaded uncertainty band, we can get our first
+   crucial insights into which model is more reliable.
+
+   **Quick Interpretation:**
+    The plot clearly shows that ``Model A`` (red dashed line) is a
+    strong performer. It closely tracks the ``Actual`` traffic (black
+    solid line), successfully capturing the seasonal peaks and the
+    overall trend. Furthermore, the ``Actual`` line remains almost
+    entirely within the gray ``Uncertainty Interval``, suggesting the
+    model's uncertainty estimates are well-calibrated. In stark
+    contrast, ``Model B`` (blue dashed line) is visibly and
+    consistently below the ``Actual`` line, revealing a clear
+    systemic bias to **under-predict** website traffic.
+
+This high-level visual check is invaluable. For a closer look at the
+code and parameters used to generate this comparison, please refer to
+the gallery.
+
+**Example:**
 See the gallery :ref:`gallery_plot_time_series` for more examples.
 
 .. raw:: html
@@ -268,9 +352,82 @@ performance.
 * To identify individual outliers that are far from the main
   cluster of points.
 
+While a time series plot is ideal for sequential data, the classic
+scatter plot is the go-to tool for regression problems to assess the
+direct relationship between predictions and actuals. This example shows
+how to use it to diagnose a model's correlation and bias.
 
-**Example**
+.. admonition:: Practical Example
+
+   Let's say you work for an automotive company and have developed a
+   machine learning model to predict a car's fuel efficiency (in Miles
+   Per Gallon, or MPG) based on its specifications like engine size and
+   weight. To validate this model, you need to see how well its
+   predictions correlate with the actual, lab-tested MPG values.
+
+   A scatter correlation plot is the industry standard for this task. It
+   plots the true value against the predicted value. For a perfect model,
+   every single point would fall exactly on the 45-degree identity line.
+
+   .. code-block:: pycon
+
+      >>> import kdiagram as kd
+      >>> import pandas as pd
+      >>> import numpy as np
+      >>>
+      >>> # --- 1. Define your data ---
+      >>> np.random.seed(42)
+      >>> # Actual lab-tested MPG for 150 cars
+      >>> y_true_mpg = np.random.uniform(15, 50, 150)
+      >>> # Predictions from our model (with some realistic error)
+      >>> y_pred_mpg = y_true_mpg + np.random.normal(loc=0, scale=3, size=150)
+      >>> # Let's add a subtle bias: the model overestimates for high-MPG cars
+      >>> y_pred_mpg[y_true_mpg > 40] += 5
+      >>>
+      >>> df = pd.DataFrame({
+      ...     'Actual_MPG': y_true_mpg,
+      ...     'Predicted_MPG': y_pred_mpg
+      ... })
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_scatter_correlation(
+      ...     df,
+      ...     actual_col='Actual_MPG',
+      ...     pred_cols=['Predicted_MPG'],
+      ...     title="Correlation of Predicted vs. Actual Car MPG"
+      ... )
+
+   .. figure:: ../images/userguide_context_plot_scatter_correlation.png
+      :align: center
+      :width: 80%
+      :alt: Scatter plot of predicted vs. actual car MPG.
+
+      Correlation between a model's predicted fuel efficiency and the
+      actual lab-tested MPG values. The dashed line represents a
+      perfect one-to-one correlation.
+
+   The scatter plot gives us a classic head-to-head comparison between
+   our model's predictions and reality. Now, let's dive into the details
+   of this point cloud to assess the model's accuracy, bias, and any
+   unusual errors.
+
+   **Quick Interpretation:**
+    The plot reveals two key insights. First, the points form a tight,
+    linear cloud around the dashed ``Identity Line``, indicating a
+    **strong positive correlation**. This means the model is generally
+    very effective at predicting MPG. However, for true values above
+    40 MPG, the points are systematically **above** the identity line.
+    This shows a specific bias: the model consistently
+    **over-predicts** the fuel efficiency for the most economical cars,
+    an important finding for model refinement.
+
+This visual diagnosis is powerful. To explore the full code and see
+how this plot can be customized, check out the complete example in the
+gallery.
+
+**Example:**
 See the gallery example and code: :ref:`gallery_plot_scatter_correlation`.
+
 
 .. raw:: html
 
@@ -337,6 +494,72 @@ distribution's key characteristics.
 * To identify skewness or heavy tails in the error distribution,
   which might indicate that the model has systematic failings.
 
+After visualizing the predictions themselves, the next step is to
+analyze the errors. A model's quality is defined by its errors, and
+the most basic diagnostic is to examine their distribution. A good
+model should produce errors that are random, centered around zero,
+and normally distributed.
+
+.. admonition:: Practical Example
+
+   Let's imagine you are a data scientist for a retail chain, and you've
+   just built a model to forecast daily sales. Before deploying it, you
+   need to check its performance. A fundamental first step is to analyze
+   the prediction errors. Are they centered around zero? Are they skewed?
+   An error distribution plot gives you a powerful first glance.
+
+   A model that is unbiased should have errors that are normally
+   distributed around a mean of zero. Let's see how our sales model did.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Define your data ---
+      >>> np.random.seed(0)
+      >>> # True daily sales for 365 days
+      >>> y_true = np.random.poisson(lam=150, size=365)
+      >>> # Predictions from our model (let's introduce a slight bias)
+      >>> y_pred = y_true + np.random.normal(loc=5, scale=10, size=365)
+      >>> # Create a DataFrame
+      >>> df = pd.DataFrame({'Actual_Sales': y_true, 'Predicted_Sales': y_pred})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_error_distribution(
+      ...     df,
+      ...     actual_col='Actual_Sales',
+      ...     pred_col='Predicted_Sales',
+      ...     title="Distribution of Daily Sales Forecast Errors",
+      ...     bins=30
+      ... )
+
+   .. figure:: ../images/userguide_context_plot_error_distribution.png
+      :align: center
+      :width: 80%
+      :alt: Distribution of daily sales forecast errors.
+
+      Histogram and Kernel Density Estimate (KDE) of the errors from a
+      daily sales forecasting model.
+
+   The plot above shows a histogram of our forecast errors. Now, let's
+   move on to interpreting what this shape tells us about our model's
+   tendency to over or under-predict sales.
+
+   **Quick Interpretation:**
+    The plot shows that the errors approximate a bell shape, which is a
+    good sign, suggesting they are somewhat normally distributed.
+    However, the distribution is **not centered at zero**. The peak of
+    the histogram and the KDE curve is clearly shifted to the left,
+    centered around an error value of approximately -5. Since the error
+    is calculated as `Actual - Predicted`, this reveals a systematic
+    **negative bias**: the model consistently **over-predicts** sales
+    by about 5 units.
+
+This kind of bias is a critical finding. To see how this plot is
+generated and how you can apply it to your own models, take a look at
+the gallery example.
 
 **Example**
 See the gallery example and code:
@@ -408,6 +631,69 @@ normality assumption of a model's errors.
 * As a companion to the :func:`~kdiagram.plot.context.plot_error_distribution`
   to get a more rigorous check of the distribution's shape.
 
+A histogram gives a general sense of the error distribution, but a
+Q-Q plot provides a more rigorous and detailed check for normality.
+This is a critical step for validating the assumptions behind many
+statistical models.
+
+.. admonition:: Practical Example
+
+   Continuing with our sales forecast scenario, a histogram gave us a
+   good general idea of the error distribution. However, to more
+   rigorously check if the errors follow a normal distribution—a key
+   assumption for many statistical methods—we can use a Q-Q (Quantile-Quantile)
+   plot.
+
+   This plot compares the quantiles of our model's errors against the
+   quantiles of a perfect theoretical normal distribution. If the errors
+   are truly normal, the points on the plot will lie perfectly along the
+   diagonal line.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Use the same sales data in a DataFrame ---
+      >>> np.random.seed(0)
+      >>> y_true = np.random.poisson(lam=150, size=365)
+      >>> y_pred = y_true + np.random.normal(loc=5, scale=10, size=365)
+      >>> df = pd.DataFrame({'Actual_Sales': y_true, 'Predicted_Sales': y_pred})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_qq(
+      ...     df,
+      ...     actual_col='Actual_Sales',
+      ...     pred_col='Predicted_Sales',
+      ...     title="Q-Q Plot of Sales Forecast Errors"
+      ... )
+
+   .. figure:: ../images/userguide_context_plot_qq.png
+      :align: center
+      :width: 80%
+      :alt: Q-Q plot of sales forecast errors against a normal distribution.
+
+      A Quantile-Quantile (Q-Q) plot comparing the distribution of model
+      errors against a theoretical normal distribution.
+
+   This Q-Q plot provides a more forensic look at our error distribution.
+   By observing how the red dots align with the ideal diagonal line, we can
+   diagnose exactly how our model's errors differ from a normal
+   distribution. Let's take a closer look.
+
+   **Quick Interpretation:**
+    The plot provides strong evidence that the forecast errors are, for
+    the most part, **normally distributed**. The red dots, which
+    represent the error quantiles, align very closely with the solid
+    diagonal line representing a theoretical normal distribution. While
+    there are minor deviations at the extreme tails, the overall fit is
+    excellent, suggesting that assumptions of normality for this
+    model's errors are valid.
+
+Confirming the error distribution is a key step in model validation.
+To learn more about the implementation, please see the full example in
+the gallery.
 
 **Example:**
 See the gallery example and code: :ref:`gallery_plot_qq`.
@@ -485,10 +771,76 @@ model's errors.
   that the model could be improved by adding more lags or other
   time-based features.
 
+For time-series data, checking for random errors is not enough; we
+must also ensure the errors are not correlated with each other over
+time. Lingering patterns in the errors suggest the model can be
+improved. The Autocorrelation Function (ACF) plot is the primary tool
+for this investigation.
 
-**Example**
-See the gallery example and code:
-:ref:`gallery_plot_error_autocorrelation`.
+.. admonition:: Practical Example
+
+   Now, let's switch to a new challenge: forecasting hourly traffic to a
+   website. For time-series forecasts like this, it's crucial that the
+   model's errors are independent of each other. If the error from one
+   hour helps predict the error for the next hour, it means there is a
+   pattern in the residuals that our model has failed to capture.
+
+   The Autocorrelation Function (ACF) plot is the perfect diagnostic
+   tool for this, showing the correlation of the error series with itself
+   at different time lags.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Define time-series data in a DataFrame ---
+      >>> np.random.seed(42)
+      >>> time = np.arange(200)
+      >>> # True hourly website traffic
+      >>> y_true = 50 * np.sin(time * 0.2) + np.random.randn(200) * 5
+      >>> # Predictions from a model that slightly lags reality
+      >>> y_pred = 50 * np.sin((time - 2) * 0.2)
+      >>> df = pd.DataFrame({'Actual_Traffic': y_true, 'Predicted_Traffic': y_pred})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_error_autocorrelation(
+      ...     df,
+      ...     actual_col='Actual_Traffic',
+      ...     pred_col='Predicted_Traffic',
+      ...     title="Autocorrelation of Website Traffic Errors",
+      ...     n_lags=30
+      ... )
+
+   .. figure:: ../images/userguide_context_plot_errorautocorrelation.png
+      :align: center
+      :width: 80%
+      :alt: Autocorrelation function plot of forecast errors.
+
+      The Autocorrelation Function (ACF) of the errors from a website
+      traffic forecast, showing correlation across different time lags.
+
+   Building the forecast was the first half of the job. This ACF plot
+   helps us investigate the quality of its predictions by hunting for
+   hidden, time-dependent patterns in the model's mistakes.
+
+   **Quick Interpretation:**
+    This plot reveals a significant issue with the forecast model. The
+    correlation values exhibit a strong, slowly decaying **sine wave
+    pattern**, with many lags extending far beyond the significance
+    bands. This indicates that the errors are **not random** and
+    contain a strong cyclical or seasonal pattern. The model has
+    failed to capture the underlying seasonality of the data, and this
+    repeating pattern is left over in the errors.
+
+Identifying autocorrelation is the first step to fixing it. To see
+the full code for this diagnostic check, explore the example in the
+gallery.
+
+**Example:**
+See the gallery example and code: :ref:`gallery_plot_error_autocorrelation`.
+
 
 .. raw:: html
 
@@ -554,10 +906,75 @@ the specific structure of any remaining patterns in the residuals.
 * As a complementary tool to the ACF plot for a more complete
   diagnosis of time series residuals.
 
+The ACF plot tells us *if* the errors are correlated, while its
+companion, the Partial Autocorrelation Function (PACF) plot, helps us
+understand *why*. It isolates the direct relationship between errors,
+providing specific clues on how to improve time-series models like
+Autoregressive Integrated Moving Average (ARIMA).
 
-**Example**
-See the gallery example and code:
-:ref:`gallery_plot_error_pacf`.
+.. admonition:: Practical Example
+
+   In our website traffic analysis, the ACF plot showed us *that* the
+   errors are correlated over time. Now, we need to understand the nature
+   of that correlation better. The Partial Autocorrelation Function (PACF)
+   plot is the ideal companion tool.
+
+   While ACF shows the total correlation between an error and its past
+   values (including indirect effects), PACF shows the *direct*
+   correlation at a specific lag after removing the influence of shorter
+   lags. This is extremely useful for identifying the precise order of
+   autoregressive (AR) models.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Use the same website traffic data in a DataFrame ---
+      >>> np.random.seed(42)
+      >>> time = np.arange(200)
+      >>> y_true = 50 * np.sin(time * 0.2) + np.random.randn(200) * 5
+      >>> y_pred = 50 * np.sin((time - 2) * 0.2)
+      >>> df = pd.DataFrame({'Actual_Traffic': y_true, 'Predicted_Traffic': y_pred})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_error_pacf(
+      ...     df,
+      ...     actual_col='Actual_Traffic',
+      ...     pred_col='Predicted_Traffic',
+      ...     title="Partial Autocorrelation of Forecast Errors",
+      ...     n_lags=30
+      ... )
+
+   .. figure:: ../images/userguide_context_plot_error_pacf.png
+      :align: center
+      :width: 80%
+      :alt: Partial autocorrelation plot of forecast errors.
+
+      The Partial Autocorrelation Function (PACF) of forecast errors,
+      showing the direct correlation at each lag.
+
+   This PACF plot isolates the direct relationships between errors across
+   time. Let's analyze the significant spikes to understand the specific
+   lag structure our forecasting model is currently missing.
+
+   **Quick Interpretation:**
+    While the ACF plot showed a complex wave, the PACF plot gives a
+    much clearer, actionable insight. There are **significant spikes
+    at lags 1 and 2**, after which the correlations abruptly drop
+    within the significance bounds. This is the classic signature of an
+    **Autoregressive (AR) process of order 2**. It tells us that an
+    error is directly predicted by the errors from the two previous
+    time steps. This suggests the forecast model could be improved by
+    adding AR(2) terms.
+
+This kind of specific diagnostic is crucial for refining time-series
+models. To see the full implementation, please refer to the gallery
+example.
+
+**Example:**
+See the gallery example and code: :ref:`gallery_plot_error_pacf`.
 
 .. raw:: html
 

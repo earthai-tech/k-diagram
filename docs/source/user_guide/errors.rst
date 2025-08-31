@@ -102,8 +102,84 @@ The function first partitions the dataset into :math:`K` bins,
 * Separating reducible systemic errors (bias) from irreducible random
   errors (variance) to guide model improvement efforts.
 
+You've just seen the theory behind decomposing errors into bias and
+variance. Now, let's put this powerful diagnostic tool to work. The
+following example simulates a common forecasting challenge where a
+model's performance is not constant, illustrating where this plot
+truly shines.
+
+.. admonition:: Practical Example
+
+   An energy company uses a model to forecast electricity demand for the
+   next day. They suspect the model's accuracy changes depending on the
+   time of day—performing well overnight but struggling during the peak
+   demand hours of the late afternoon.
+
+   An error band plot is the perfect diagnostic tool for this. It can
+   show the mean error (bias) and error variance (consistency) for each
+   hour, wrapped around a 24-hour circle, to instantly reveal
+   time-dependent patterns in the model's performance.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate errors with a time-of-day pattern ---
+      >>> np.random.seed(42)
+      >>> n_points = 5000
+      >>> hour_of_day = np.random.randint(0, 24, n_points)
+      >>> # Create a bias (under-prediction) and more noise during peak hours (4-7 PM)
+      >>> peak_hours = (hour_of_day >= 16) & (hour_of_day <= 19)
+      >>> bias = np.where(peak_hours, -15, 2) # Negative error = under-prediction
+      >>> noise = np.where(peak_hours, 25, 10)
+      >>> errors = bias + np.random.normal(0, noise, n_points)
+      >>>
+      >>> df_hourly = pd.DataFrame({'hour': hour_of_day, 'demand_error': errors})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_error_bands(
+      ...     df=df_hourly,
+      ...     error_col='demand_error',
+      ...     theta_col='hour',
+      ...     theta_period=24,
+      ...     theta_bins=24,
+      ...     n_std=1.5,
+      ...     title='Forecast Error Analysis by Hour of Day'
+      ... )
+
+   .. figure:: ../images/userguide_plot_error_bands.png
+      :align: center
+      :width: 80%
+      :alt: Polar error bands showing error bias and variance by hour.
+
+      Polar error bands revealing how a forecast's mean error (bias)
+      and variance change depending on the hour of the day.
+
+   This visualization wraps the entire 24-hour error cycle into a single
+   view. By examining the central line's distance from the "Zero Error"
+   circle and the width of the shaded band, we can pinpoint exactly when
+   our forecast is least reliable.
+
+   **Quick Interpretation:**
+    The plot immediately reveals that the model's performance is not
+    constant, but rather exhibits a strong time-dependent pattern. An
+    analysis of the mean error (the black line) shows a systemic bias
+    that shifts throughout the day; for instance, the model tends to
+    under-predict in the early morning hours, while it consistently
+    over-predicts in the afternoon. In addition to this changing bias,
+    the model's consistency also varies significantly. The width of the
+    shaded variance band is much larger during the evening and night,
+    indicating that the model's predictions are highly inconsistent
+    and unreliable during these periods.
+
+This plot effectively diagnoses that the model has a time-dependent
+bias and is far less consistent at certain times of the day. To
+reproduce this diagnostic plot, explore the full example in the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_error_bands>` for code and plot examples)
+See the gallery :ref:`gallery_plot_error_bands` for code and plot examples.
 
 .. raw:: html
 
@@ -157,8 +233,78 @@ Each model is assigned its own angular sector on the polar plot.
   unbiased but inconsistent one).
 * Presenting a summary of comparative model performance to stakeholders.
 
+Now that you understand the mathematical concept behind polar violins,
+let's see them in action. This practical example will show you how to
+turn abstract error data from competing models into a clear,
+comparative visualization, making model selection much more intuitive.
+
+.. admonition:: Practical Example
+
+   Imagine a financial firm has built three different models (A, B, and C)
+   to predict a client's credit score. To choose the best one, they need
+   to compare the entire *distribution* of prediction errors. A model
+   that is unbiased on average but makes occasional huge errors could be
+   very risky.
+
+   A polar violin plot allows for a direct, side-by-side comparison of
+   the shape, bias, and variance of each model's errors on a single,
+   intuitive chart.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate errors from three different models ---
+      >>> np.random.seed(0)
+      >>> n_points = 1000
+      >>> df_errors = pd.DataFrame({
+      ...     'Model A (Good)': np.random.normal(loc=0.5, scale=1.5, size=n_points),
+      ...     'Model B (Biased)': np.random.normal(loc=-4.0, scale=1.5, size=n_points),
+      ...     'Model C (Inconsistent)': np.random.normal(loc=0, scale=4.0, size=n_points),
+      ... })
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_error_violins(
+      ...     df_errors,
+      ...     'Model A (Good)',
+      ...     'Model B (Biased)',
+      ...     'Model C (Inconsistent)',
+      ...     title='Comparison of Credit Score Model Errors'
+      ... )
+
+   .. figure:: ../images/userguide_plot_error_violins.png
+      :align: center
+      :width: 80%
+      :alt: Polar violin plots comparing three model error distributions.
+
+      A polar violin plot comparing the error distributions of three
+      competing models, revealing differences in their bias and variance.
+
+   The resulting plot arranges the error profile of each model into a
+   clear, comparative layout. Let's dissect these violin shapes to see
+   which model is truly the most reliable.
+
+   **Quick Interpretation:**
+    This plot provides a rich, comparative view of the three distinct
+    error profiles. Model 2 (Green) clearly emerges as the best
+    performer, as its violin is both tall, narrow, and centered on the
+    "Zero Error" line, indicating an ideal combination of low bias and
+    low variance. In contrast, Model 1 (Purple) presents a trade-off;
+    while its narrow shape demonstrates high consistency (low
+    variance), its outward shift reveals a systemic positive bias.
+    Model 3 (Red) showcases the opposite problem. Although it appears
+    unbiased on average with its center near zero, its extremely wide
+    shape and long tail signify dangerously high variance, making it
+    unreliable and prone to large, unpredictable errors.
+
+This direct visual comparison makes model selection much clearer than
+relying on single-score metrics. To see the full implementation,
+please refer to the gallery example.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_error_violins>` for code and plot examples)
+See the gallery :ref:`gallery_plot_error_violins` for code and plot examples.
 
 .. raw:: html
 
@@ -213,8 +359,88 @@ approximates a 95% confidence region).
 * Understanding the directionality of spatial forecast errors.
 * Assessing the positional accuracy of simulation models.
 
+The concept of two-dimensional positional uncertainty can seem
+abstract. Let's ground it in a tangible, high-stakes application.
+This example will demonstrate how to use error ellipses to visualize
+the uncertainty in hurricane track forecasting, making complex data
+much more intuitive.
+
+.. admonition:: Practical Example
+
+   A meteorological agency tracks hurricanes. Their models predict a
+   storm's future position in terms of distance and direction from a
+   reference point, along with the uncertainty (standard deviation) for
+   both of these measurements. Visualizing this two-dimensional
+   uncertainty is critical for issuing effective public warnings.
+
+   A polar error ellipse plot is the ideal way to visualize this 2D
+   positional uncertainty. Each ellipse can represent the confidence
+   region for a tracked storm's predicted location, with its color
+   indicating the storm's intensity.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate tracking data for multiple hurricanes ---
+      >>> np.random.seed(1)
+      >>> n_points = 15
+      >>> df_tracking = pd.DataFrame({
+      ...     'direction_deg': np.linspace(0, 330, n_points),
+      ...     'distance_km': np.random.uniform(200, 800, n_points),
+      ...     'distance_std': np.random.uniform(20, 70, n_points),
+      ...     'direction_std_deg': np.random.uniform(5, 15, n_points),
+      ...     'storm_category': np.random.randint(1, 6, n_points)
+      ... })
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_error_ellipses(
+      ...     df=df_tracking,
+      ...     r_col='distance_km',
+      ...     theta_col='direction_deg',
+      ...     r_std_col='distance_std',
+      ...     theta_std_col='direction_std_deg',
+      ...     color_col='storm_category',
+      ...     n_std=2.0, # for a 95% confidence ellipse
+      ...     title='95% Confidence Ellipses for Hurricane Track Forecasts'
+      ... )
+
+   .. figure:: ../images/userguide_plot_error_ellipses.png
+      :align: center
+      :width: 80%
+      :alt: Polar error ellipses for hurricane positional uncertainty.
+
+      95% confidence ellipses visualizing the two-dimensional
+      positional uncertainty for multiple hurricane track forecasts,
+      colored by storm intensity.
+
+   Each ellipse on this plot represents a 95% confidence region for a
+   hurricane's predicted position. The size, shape, and color of these
+   ellipses tell a rich story about the forecast's reliability. Let's
+   analyze them in detail.
+
+   **Quick Interpretation:**
+    This plot offers a multi-faceted view of the two-dimensional
+    positional uncertainty in the forecasts. The magnitude of this
+    uncertainty is directly conveyed by the **size** of the ellipses,
+    which vary dramatically from small, confident predictions (purple)
+    to large regions of uncertainty (yellow). Moreover, the **shape**
+    of the ellipses reveals the nature of the error; nearly circular
+    ellipses indicate uniform uncertainty, whereas elongated ones show
+    that the error is much greater in one direction (e.g., distance)
+    than the other (e.g., direction). Finally, the **color** provides a
+    key physical insight, showing a clear correlation between storm
+    intensity and forecast uncertainty, as the higher-category storms
+    (yellow) correspond to the largest ellipses.
+
+This visualization communicates complex, two-dimensional
+error data. For a complete, step-by-step example, please see the
+full implementation in the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_polar_error_ellipses>` for code and plot examples)
+See the gallery :ref:`gallery_plot_polar_error_ellipses` for code and plot examples.
 
 
 .. raw:: html

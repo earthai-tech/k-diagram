@@ -136,9 +136,85 @@ is the number of features.
 * Normalization allows comparing relative patterns effectively, even if
   absolute importance scales differ significantly between layers.
 
-**Example:**
-(See the :ref:`Gallery <gallery_feature_based>` section for a runnable code example and plot)
 
+Understanding which features a model relies on is a cornerstone of
+interpretation and trust. While a simple bar chart can show feature
+importance for a single model, the real insights often come from
+comparing these patterns across different models or contexts. This
+"Feature Fingerprint" plot is designed for exactly that kind of
+comparative analysis.
+
+.. admonition:: Practical Example
+
+   A telecommunications company has two models competing to predict
+   customer churn: a classic ``Logistic Regression`` model and a more
+   complex ``Gradient Boosting`` model. To trust and deploy one of
+   them, the company needs to understand their decision-making
+   processes. Which features does each model consider most important?
+   Do they rely on the same information, or do they have fundamentally
+   different "views" of the problem?
+
+   This plot will create a unique "fingerprint" for each model,
+   visualizing their feature importance profiles on the same set of
+   axes for a direct comparison.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Define feature names and model importance scores ---
+      >>> features = [
+      ...     'tenure', 'monthly_charges', 'total_charges',
+      ...     'data_usage', 'support_calls', 'contract_type'
+      ... ]
+      >>> labels = ['Logistic Regression', 'Gradient Boosting']
+      >>>
+      >>> # Logistic Regression relies heavily on a few key features
+      >>> logreg_importances = [0.8, 0.9, 0.7, 0.1, 0.2, 0.6]
+      >>> # Gradient Boosting uses a wider range of features
+      >>> boosting_importances = [0.5, 0.6, 0.6, 0.8, 0.7, 0.4]
+      >>>
+      >>> importances = np.array([logreg_importances, boosting_importances])
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_feature_fingerprint(
+      ...     importances,
+      ...     features=features,
+      ...     labels=labels,
+      ...     title='Churn Model Feature Importance Fingerprints'
+      ... )
+
+   .. figure:: ../images/userguide_plot_feature_fingerprint.png
+      :align: center
+      :width: 80%
+      :alt: A feature fingerprint radar chart comparing two models.
+
+      A polar radar chart comparing the feature importance profiles
+      ("fingerprints") of a Logistic Regression and a Gradient
+      Boosting model for customer churn prediction.
+
+   This plot allows for an immediate visual comparison of the models'
+   internal logic. By comparing the shapes of the colored polygons, we
+   can see which features dominate each model's decision-making.
+
+   **Quick Interpretation:**
+    The plot reveals the distinctly different "fingerprints" of the two
+    models. The ``Logistic Regression`` model (blue) has a spiky
+    profile, indicating it relies heavily on a few core features like
+    ``tenure``, ``monthly_charges``, and ``total_charges``, while paying
+    little attention to others. In contrast, the ``Gradient Boosting``
+    model (brown) displays a more well-rounded fingerprint, showing
+    that it has learned to incorporate a wider array of information,
+    assigning significant importance to features like ``data_usage`` and
+    ``support_calls`` as well.
+
+This ability to compare feature importance profiles is crucial for
+model selection, debugging, and ensuring alignment with domain
+knowledge. To see the full implementation, please explore the gallery.
+
+**Example:**
+See the gallery example and code: :ref:`gallery_plot_feature_fingerprint`.
 
 .. raw:: html
 
@@ -210,6 +286,82 @@ The plot reveals how the two features jointly influence the target.
   physical or logical interaction (e.g., high solar output
   only occurs at midday with low cloud cover).
 
+While individual feature importances are revealing, they do not tell
+the whole story. In many complex systems, the most powerful predictive
+signals come from the **interaction** between two or more features.
+This polar heatmap is designed to move beyond one-dimensional analysis
+and uncover these crucial two-way feature interactions.
+
+.. admonition:: Practical Example
+
+   An energy analyst is modeling the power output of a solar farm.
+   They know that the output depends on both the **time of day** and
+   the **cloud cover**. However, the effect is not simply additive;
+   these two features interact strongly. High energy output is only
+   possible when it is both midday AND cloud cover is low. At night,
+   the level of cloud cover is completely irrelevant.
+
+   This plot will visualize this interaction by mapping the time of
+   day to the angle, cloud cover to the radius, and the resulting
+   energy output to the color, revealing the "hot spot" of peak
+   performance.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate solar farm output data ---
+      >>> np.random.seed(42)
+      >>> n_points = 5000
+      >>> df = pd.DataFrame({
+      ...     'hour_of_day': np.random.uniform(0, 24, n_points),
+      ...     'cloud_cover_pct': np.random.uniform(0, 100, n_points)
+      ... })
+      >>> # Output depends on time (peaks at noon) AND low cloud cover
+      >>> time_effect = np.sin(df['hour_of_day'] * np.pi / 24)**2
+      >>> cloud_effect = (100 - df['cloud_cover_pct']) / 100
+      >>> df['energy_output_kw'] = 150 * time_effect * cloud_effect + np.random.randn(n_points) * 5
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_feature_interaction(
+      ...     df,
+      ...     theta_col='hour_of_day',
+      ...     r_col='cloud_cover_pct',
+      ...     color_col='energy_output_kw',
+      ...     theta_period=24,
+      ...     title='Solar Energy Output (kW) vs. Time and Cloud Cover'
+      ... )
+
+   .. figure:: ../images/userguide_plot_feature_interaction.png
+      :align: center
+      :width: 80%
+      :alt: A polar heatmap showing a two-way feature interaction.
+
+      A polar heatmap visualizing the interaction between the hour of
+      the day (angle) and cloud cover (radius) on solar energy
+      output (color).
+
+   This plot translates a complex, three-dimensional relationship into
+   an intuitive 2D visualization. The location of the most intense
+   colors reveals the conditions that lead to the strongest outcomes.
+
+   **Quick Interpretation:**
+    This polar heatmap clearly visualizes the strong interaction between
+    the time of day (angle) and cloud cover (radius) on energy output
+    (color). The most intense energy generation, shown by the bright
+    yellow "hot spot," occurs only under a specific combination of
+    conditions: near midday (top of the plot) **and** with very low
+    cloud cover (close to the center). The plot also confirms that
+    during the night (bottom of the plot), energy output is near zero
+    regardless of cloud cover, effectively demonstrating that the two
+    features are not merely additive but have a powerful interactive
+    effect.
+
+Understanding feature interactions is key to unlocking deeper insights
+from your data and models. To see the full code for this example,
+please visit the gallery.
 
 **Example**
 See the gallery example and code:

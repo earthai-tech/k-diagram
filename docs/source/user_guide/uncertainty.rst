@@ -61,10 +61,10 @@ uncertainty and related diagnostics:
      - Calculates and plots overall interval coverage scores.
    * - :func:`~kdiagram.plot.uncertainty.plot_coverage_diagnostic`
      - Diagnoses interval coverage point-by-point on a polar plot.
-   * - :func:`~kdiagram.plot.uncertainty.plot_interval_consistency`
-     - Shows consistency/variability of interval widths over time.
    * - :func:`~kdiagram.plot.uncertainty.plot_interval_width`
      - Visualizes the width of prediction intervals across samples.
+   * - :func:`~kdiagram.plot.uncertainty.plot_interval_consistency`
+     - Shows consistency/variability of interval widths over time.
    * - :func:`~kdiagram.plot.uncertainty.plot_model_drift`
      - Tracks how average uncertainty width changes over horizons.
    * - :func:`~kdiagram.plot.uncertainty.plot_temporal_uncertainty`
@@ -75,6 +75,11 @@ uncertainty and related diagnostics:
      - Shows the rate of change (velocity) of median predictions.
    * - :func:`~kdiagram.plot.uncertainty.plot_radial_density_ring`
      - Shows a unique visualization of the probability distribution.
+   * - :func:`~kdiagram.plot.uncertainty.plot_polar_quiver`
+     - Draws arrows (vectors) on a polar grid.
+   * - :func:`~kdiagram.plot.uncertainty.plot_polar_heatmap`
+     - Visualizes a 2D density distribution distribution.
+     
 
 Detailed Explanations
 ---------------------
@@ -136,8 +141,85 @@ emphasize the error magnitude and direction.
 * Can make cyclical patterns (if angle relates to time, like month or
   hour) more apparent than a standard time series plot.
 
+At the heart of any forecast evaluation lies a simple, fundamental
+question: "How close are the predictions to reality?" Before we dissect
+the complexities of uncertainty, we must first master the basics. This
+plot provides that essential, point-by-point comparison, visualizing
+the direct relationship between the ground truth and the model's central
+forecast in an intuitive polar layout.
+
+.. admonition:: Practical Example
+
+   Imagine you are an environmental scientist monitoring the water
+   level of a critical reservoir. You have a hydrological model that
+   provides daily predictions for the upcoming year. A key task is to
+   quickly assess if the model is systematically biased—does it
+   consistently predict water levels that are too high or too low,
+   especially during crucial dry or wet seasons?
+
+   This polar plot will wrap the entire year's worth of data into a
+   single view, with the angle representing the day of the year. It
+   will simultaneously display the actual observed water levels and
+   the model's predictions, with the gap between them instantly
+   revealing the model's error for any given day.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate daily reservoir level data for a full year ---
+      >>> np.random.seed(42)
+      >>> n_days = 365
+      >>> time_index = pd.date_range("2024-01-01", periods=n_days, freq='D')
+      >>> # Actual level shows seasonal variation (high in spring, low in autumn)
+      >>> seasonal_cycle = 20 * np.sin((np.arange(n_days) - 80) * 2 * np.pi / 365)
+      >>> y_true = 75 + seasonal_cycle + np.random.normal(0, 2, n_days)
+      >>> # Simulate a model that has a slight delay and over-predicts in summer
+      >>> y_pred = 75 + 18 * np.sin((np.arange(n_days) - 90) * 2 * np.pi / 365) + 3
+      >>>
+      >>> df = pd.DataFrame({'observed_level': y_true, 'predicted_level': y_pred}, index=time_index)
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_actual_vs_predicted(
+      ...     df,
+      ...     actual_col='observed_level',
+      ...     pred_col='predicted_level',
+      ...     title='Reservoir Water Level: Actual vs. Predicted',
+      ...     r_label='Water Level (meters)'
+      ... )
+
+   .. figure:: ../images/userguide_plot_actual_vs_predicted.png
+      :align: center
+      :width: 80%
+      :alt: A polar plot comparing actual and predicted reservoir levels over a year.
+
+      A polar plot where the angle represents the day of the year,
+      showing the direct comparison between observed (black line) and
+      predicted (red line) water levels.
+
+   This plot provides a foundational, high-level check of model
+   performance. The degree of overlap between the two spirals reveals
+   the model's accuracy, while any consistent separation highlights
+   systemic biases.
+
+   **Quick Interpretation:**
+    The plot reveals that the model has successfully captured the main
+    seasonal cycle of the reservoir level, as the predicted (red) and
+    actual (black) lines follow the same general pattern. However, it
+    also exposes a systematic, seasonal bias. The model tends to
+    **over-predict** during the low-water season (bottom of the circle)
+    and **under-predict** during the high-water season (top of the
+    circle). Furthermore, the predicted line is much smoother, indicating
+    the model does not capture the day-to-day noise present in the
+    actual observations.
+
+This initial check is indispensable. To see the full implementation and
+learn how to customize the plot's appearance, please visit the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_actual_vs_predicted>` for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_actual_vs_predicted`.
 
 .. raw:: html
 
@@ -220,8 +302,89 @@ a plotted point is :math:`r_i`.
 * Circular layout helps identify patterns or concentrations of anomalies
   across the angular dimension.
 
+A good probabilistic forecast should provide an uncertainty interval
+that reliably contains the true outcome. But what happens when it
+fails? It's not enough to know *that* it failed; we need to know
+**how badly** it failed. This specialized diagnostic plot focuses
+exclusively on these failures, or "anomalies," to visualize their
+location, type, and, most importantly, their severity.
+
+.. admonition:: Practical Example
+
+   A logistics company uses a probabilistic model to forecast delivery
+   times, providing customers with an estimated arrival window (e.g.,
+   "between 2 and 4 days"). An "anomaly" occurs when a package
+   arrives outside this window. For the business, it is critical to
+   understand these failures: (1) Are late arrivals (over-predictions) more 
+   common than early ones? (2) When a delivery is late, is it late by a 
+   few hours or by several days?
+
+   The anomaly magnitude plot will ignore all successful deliveries and
+   create a focused visualization of only the failures, with the
+   radial distance showing exactly how severe each miss was.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate delivery time forecast data ---
+      >>> np.random.seed(0)
+      >>> n_deliveries = 500
+      >>> # Actual delivery time in days
+      >>> y_true = np.random.lognormal(mean=1, sigma=0.5, size=n_deliveries) * 2
+      >>> # Predicted 80% interval [Q10, Q90]
+      >>> y_pred_q10 = y_true * 0.8 - np.random.uniform(0.5, 1, n_deliveries)
+      >>> y_pred_q90 = y_true * 1.2 + np.random.uniform(0.5, 1, n_deliveries)
+      >>>
+      >>> df = pd.DataFrame({
+      ...     'actual_days': y_true, 'predicted_q10': y_pred_q10, 'predicted_q90': y_pred_q90
+      ... })
+      >>> # --- 2. Manually introduce some severe anomalies ---
+      >>> late_indices = np.random.choice(n_deliveries, 30, replace=False)
+      >>> df.loc[late_indices, 'actual_days'] += np.random.uniform(2, 5, 30)
+      >>>
+      >>> # --- 3. Generate the plot ---
+      >>> ax = kd.plot_anomaly_magnitude(
+      ...     df,
+      ...     actual_col='actual_days',
+      ...     q_cols=['predicted_q10', 'predicted_q90'],
+      ...     title='Analysis of Delivery Time Anomalies',
+      ...     cbar=True
+      ... )
+
+   .. figure:: ../images/userguide_plot_anomaly_magnitude.png
+      :align: center
+      :width: 80%
+      :alt: A polar plot visualizing the magnitude and type of forecast anomalies.
+
+      A polar scatter plot showing only the forecast failures, where
+      the radius represents the severity of the miss and the color
+      indicates the type (over- or under-prediction).
+
+   This plot acts as a magnifying glass for your model's most
+   significant errors. A sparse plot with points close to the center
+   is ideal, while points far from the center demand immediate
+   investigation.
+
+   **Quick Interpretation:**
+    This plot, which focuses exclusively on forecast failures, provides
+    a critical insight into the model's reliability. The most striking
+    feature is that **all anomalies are of one type**: over-predictions.
+    This means that every time the delivery was outside its predicted
+    window, it was because it arrived later than the latest estimated
+    time. This reveals a systematic bias where the model is too
+    optimistic. The plot also shows the severity of these failures, with
+    most being 1-2 days late, but some severe anomalies are more than
+    3.5 days late, representing a significant service failure.
+
+Focusing on the magnitude of failures is essential for risk assessment
+and building robust models. To learn more about this diagnostic, please
+explore the full example in the gallery.
+
 **Example:**
-(Refer to :ref:`Gallery <gallery_plot_anomaly_magnitude>` and runnable code examples)
+See the gallery example and code: :ref:`gallery_plot_anomaly_magnitude`.
 
 
 .. raw:: html
@@ -304,8 +467,88 @@ discrete): :math:`\text{Coverage} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{1}\{y_i =
 * Offers multiple visualization options (`kind` parameter) for flexible
   comparison.
 
+Beyond looking at individual errors, a vital check for any
+probabilistic forecast is its **overall coverage**. This is a simple,
+powerful summary metric that answers the question: "If I create an
+80% prediction interval, does the true value actually fall inside it
+80% of the time?" This plot provides that  summary, making
+it the perfect first step for comparing the aggregate reliability of
+different models.
+
+.. admonition:: Practical Example
+
+   A national weather service uses two competing numerical models,
+   "Met-A" and "Met-B," to generate an 80% confidence interval for the
+   next day's high temperature. Before issuing these forecasts to the
+   public, they need to perform a quick check: over the past year,
+   which model has been more reliable?
+
+   This plot will calculate the overall coverage score for each model—the
+   fraction of days the actual high temperature fell within the
+   predicted range—and display them on a comparative radar chart for
+   an instant verdict.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate a year of temperature forecasts ---
+      >>> np.random.seed(0)
+      >>> n_days = 365
+      >>> y_true = 15 + 10 * np.sin(np.arange(
+      ...  n_days) * 2 * np.pi / 365) + np.random.normal(0, 3, n_days)
+      >>>
+      >>> # Met-A: An under-confident model (intervals too wide -> high coverage)
+      >>> interval_A = 10
+      >>> y_pred_A = np.array([y_true - interval_A/2, y_true, y_true + interval_A/2]
+      ...    ).T + np.random.normal(0,1,(n_days,3))
+      >>> # Met-B: An over-confident model (intervals too narrow -> low coverage)
+      >>> interval_B = 5
+      >>> y_pred_B = np.array([y_true - interval_B/2,
+      ... y_true, y_true + interval_B/2]).T + np.random.normal(0,1,(n_days,3))
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_coverage(
+      ...     y_true,
+      ...     y_pred_A,
+      ...     y_pred_B,
+      ...     q=[0.1, 0.5, 0.9],
+      ...     names=['Met-A (Under-Confident)', 'Met-B (Over-Confident)'],
+      ...     kind='radar',
+      ...     cov_fill=True,
+      ...     title='Overall Coverage for Temperature Forecasts (80% Interval)'
+      ... )
+
+   .. figure:: ../images/userguide_plot_coverage.png
+      :align: center
+      :width: 80%
+      :alt: A radar chart comparing the overall coverage scores of two models.
+
+      A radar chart providing a high-level comparison of the empirical
+      coverage rates for two competing weather models against the
+      nominal 80% target.
+
+   This plot provides a simple, aggregate score that is invaluable for
+   a first-pass model comparison. Let's see what the results tell us
+   about each model's average reliability.
+
+   **Quick Interpretation:**
+    The plot provides a stark comparison of the two models' reliability
+    against the nominal target of an 80% interval. "Met-A" achieves a
+    coverage score of 100%, which is far too high. This indicates the
+    model is **under-confident**; its prediction intervals are excessively
+    wide, capturing the true temperature every time but offering very
+    little precision. In complete contrast, "Met-B" has a coverage of 0%,
+    meaning it is extremely **over-confident**. Its prediction intervals
+    are so narrow that they fail to capture the true temperature every
+    single time. Neither model is well-calibrated.
+
+This overall score is a great starting point. To see the full code and
+explore other chart types for this function, please visit the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_overall_coverage>` for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_overall_coverage`.
 
 .. raw:: html
 
@@ -388,13 +631,247 @@ The plot also typically shows the overall coverage rate
 * The average coverage line acts as an immediate visual benchmark against
   the plot boundaries (0 and 1) and reference grid lines.
 
+While an overall coverage score tells us *if* a model is reliable on
+average, it doesn't tell us *when* or *why* it might be failing. A
+model could achieve 80% overall coverage by being perfect in the winter
+but completely unreliable during summer heatwaves. This point-by-point
+diagnostic plot is designed to uncover these critical, conditional
+failures.
+
+.. admonition:: Practical Example
+
+   Continuing our weather forecast scenario, we want to perform a
+   deeper dive on one of our models. Even if its overall coverage is
+   close to the nominal 80%, we need to be sure it is reliable
+   throughout the entire year. Is the model's uncertainty estimation
+   robust, or does it fail during specific seasons?
+
+   This diagnostic plot will visualize the coverage success (1) or
+   failure (0) for every single day of the year, arranged on a circle.
+   This will immediately reveal any seasonal clustering of failures,
+   which would be invisible in an aggregate score.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate a forecast with seasonal miscalibration ---
+      >>> np.random.seed(42)
+      >>> n_days = 365
+      >>> days_of_year = np.arange(n_days)
+      >>> y_true = 15 + 10 * np.sin(days_of_year * 2 * np.pi / 365
+      ...  ) + np.random.normal(0, 2, n_days)
+      >>>
+      >>> # Model produces intervals that are too narrow during summer (days 150-240)
+      >>> interval_width = np.ones(n_days) * 8
+      >>> interval_width[(days_of_year > 150) & (days_of_year < 240)] = 3 # Too narrow
+      >>>
+      >>> y_pred_q10 = y_true - interval_width / 2
+      >>> y_pred_q90 = y_true + interval_width / 2
+      >>>
+      >>> df = pd.DataFrame({
+      ...     'temp_actual': y_true, 'temp_q10': y_pred_q10, 'temp_q90': y_pred_q90
+      ... })
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_coverage_diagnostic(
+      ...     df,
+      ...     actual_col='temp_actual',
+      ...     q_cols=['temp_q10', 'temp_q90'],
+      ...     title='Point-wise Coverage Diagnostic for Temperature Forecast'
+      ... )
+
+   .. figure:: ../images/userguide_plot_coverage_diagnostic.png
+      :align: center
+      :width: 80%
+      :alt: A polar diagnostic plot showing point-wise coverage success and failure.
+
+      A polar plot where each point on the circle is a day of the
+      year. Points at radius 1 are successful coverages; points at
+      radius 0 are failures.
+
+   This plot provides a granular, case-by-case report card for the
+   model's prediction intervals. A uniform scattering of failures is
+   expected, but any clustering demands further investigation.
+
+   **Quick Interpretation:**
+    This diagnostic provides a granular, day-by-day report card of the
+    model's interval performance. The key finding is that every single
+    point is located at a **radius of 1.0**, and the average coverage
+    line is also at 1.0. This indicates that the model's prediction
+    interval **never failed**; it successfully captured the true temperature
+    every day of the year. While seemingly perfect, this is a strong
+    indicator that the model is **under-confident**, producing prediction
+    intervals that are likely too wide to be practically useful.
+
+This kind of detailed diagnostic is essential for building models that
+are not just accurate on average, but truly robust. To learn more,
+explore the full example in the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_coverage_diagnostic>` or function docstring for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_coverage_diagnostic`.
 
 .. raw:: html
 
    <hr>
    
+.. _ug_interval_width:
+
+Prediction Interval Width Visualization (:func:`~kdiagram.plot.uncertainty.plot_interval_width`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Purpose:**
+This function creates a polar scatter focused on the **magnitude of
+predicted uncertainty**, visualizing the **width** (:math:`Q_{up}-Q_{low}`)
+for each point at a given snapshot or horizon. Width is a proxy for
+**sharpness**—useful only when paired with good calibration
+:footcite:p:`Gneiting2007b`. As a complementary display to time-series
+fan charts :footcite:p:`Sokol2025`, our polar view highlights spatial/
+cross-sectional structure in uncertainty :footcite:p:`kouadiob2025`.
+It answers: "How wide is the predicted uncertainty range for  
+each point in my dataset?"
+
+**Mathematical Concept:**
+For each data point :math:`i`, the interval width is calculated:
+
+.. math::
+
+   w_i = Q_{up,i} - Q_{low,i}
+
+The point is plotted at an angle :math:`\theta_i` (based on index) and a
+**radius** :math:`r_i = w_i`. Optionally, a third variable :math:`z_i`
+from a specified ``z_col`` can determine the color of the point; otherwise,
+the color typically represents the width :math:`w_i` itself.
+
+**Interpretation:**
+
+* **Radius:** The radial distance directly corresponds to the width of
+  the prediction interval. Points far from the center represent samples
+  with high predicted uncertainty (wide intervals). Points near the
+  center have low predicted uncertainty (narrow intervals).
+* **Color (with `z_col`):** If a ``z_col`` (e.g., the median prediction
+  Q50, or the actual value) is provided, the color allows you to see how
+  interval width relates to that variable. For example, are wider
+  intervals (larger radius) associated with higher or lower median
+  predictions (color)?
+* **Color (without `z_col`):** If no ``z_col`` is given, color usually
+  maps to the width itself, reinforcing the radial information.
+* **Angular Patterns:** Look for regions around the circle (representing
+  subsets of data based on index order or a future `theta_col`
+  implementation) that exhibit consistently high or low interval widths.
+
+**Use Cases:**
+
+* Identifying samples or locations with the largest/smallest predicted
+  uncertainty ranges at a specific time/horizon.
+* Visualizing the overall distribution of uncertainty magnitudes across
+  the dataset.
+* Exploring potential relationships between uncertainty width and other
+  factors (e.g., input features, predicted value magnitude) by using
+  the ``z_col`` option.
+* Assessing if uncertainty is relatively uniform or highly variable
+  across samples.
+
+**Advantages (Polar Context):**
+
+* Provides a compact overview of uncertainty magnitude for many points.
+* The radial distance offers a direct, intuitive mapping for interval
+  width.
+* Facilitates the visual identification of angular patterns or clusters
+  related to uncertainty levels.
+* Allows simultaneous visualization of location (angle), uncertainty
+  width (radius), and a third variable (color via ``z_col``).
+
+A key quality of a useful probabilistic forecast is **sharpness**—the
+ability to produce prediction intervals that are as narrow as possible
+while still being reliable. A wide, uncertain forecast has less value
+for decision-making than a sharp, precise one. This plot is the
+primary tool for visualizing the magnitude of this predicted
+uncertainty, or the "width" of the forecast, for every point in a
+dataset.
+
+.. admonition:: Practical Example
+
+   A water management authority has a probabilistic forecast for the
+   daily river flow for the entire upcoming year. To plan for water
+   allocation and flood mitigation, they need to understand the
+   predicted uncertainty at a glance. Are the forecast intervals wider
+   during the spring snowmelt season when flows are high and volatile?
+   Are they narrow and confident during the dry summer months?
+
+   This plot will map each day of the year to an angle on a circle.
+   The radius will represent the width of the prediction interval on
+   that day, and the color will show the median predicted flow,
+   instantly revealing any seasonal patterns in the model's uncertainty.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate a year of daily river flow forecasts ---
+      >>> np.random.seed(1)
+      >>> n_days = 365
+      >>> day_of_year = np.arange(n_days)
+      >>> # Simulate seasonal flow (peaks in spring, day ~120) and uncertainty
+      >>> median_flow = 50 + 150 * np.exp(-((day_of_year - 120)**2) / (2 * 40**2))
+      >>> interval_width = 10 + 40 * np.exp(-((day_of_year - 120)**2) / (2 * 40**2))
+      >>>
+      >>> df = pd.DataFrame({
+      ...     'day': day_of_year,
+      ...     'q10_flow': median_flow - interval_width / 2 + np.random.randn(n_days) * 2,
+      ...     'q50_flow': median_flow + np.random.randn(n_days) * 2,
+      ...     'q90_flow': median_flow + interval_width / 2 + np.random.randn(n_days) * 2
+      ... })
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_interval_width(
+      ...     df,
+      ...     q_cols=['q10_flow', 'q90_flow'],
+      ...     z_col='q50_flow',
+      ...     title='Annual Forecast Uncertainty for River Flow',
+      ...     cmap='plasma'
+      ... )
+
+   .. figure:: ../images/userguide_plot_interval_width.png
+      :align: center
+      :width: 80%
+      :alt: A polar scatter plot showing the width of prediction intervals.
+
+      A polar scatter plot where the angle represents the day of the
+      year, the radius is the prediction interval width, and the color
+      is the median predicted river flow.
+
+   This visualization provides a complete map of the forecast's
+   sharpness over the entire year. By looking at the radius and color,
+   we can diagnose how the model's uncertainty relates to its central
+   prediction.
+
+   **Quick Interpretation:**
+    This plot reveals a strong and desirable seasonal pattern in the
+    model's predicted uncertainty. The interval width (radius) is small
+    during the low-flow season, represented by the purple points
+    clustered near the center. As the median predicted flow (color)
+    increases towards its peak, the interval width also grows
+    significantly, shown by the yellow points spiraling outwards. This
+    clearly demonstrates that the model has learned a crucial and
+    realistic relationship: the forecast uncertainty is correctly predicted
+    to be much higher during periods of high river flow.
+
+Understanding the magnitude and patterns of uncertainty is a critical
+step in trusting and acting upon a forecast. To see the full
+implementation, please explore the gallery example.
+
+**Example:**
+See the gallery example and code: :ref:`gallery_plot_interval_width`.
+
+.. raw:: html
+
+   <hr>
+
 .. _ug_interval_consistency:
 
 Interval Width Consistency (:func:`~kdiagram.plot.uncertainty.plot_interval_consistency`)
@@ -480,87 +957,96 @@ steps, providing context.
 * Color adds valuable context about the average prediction level associated
   with different consistency levels.
 
+While the previous plot shows a snapshot of uncertainty for a single
+forecast period, this visualization tackles a different, crucial
+question: is the model's assessment of its own uncertainty **stable over
+time**? A reliable model should produce uncertainty estimates that are
+consistent from one forecast cycle to the next. This plot is designed
+to diagnose this temporal consistency.
+
+.. admonition:: Practical Example
+
+   Let's continue with our river flow scenario. We are now evaluating a
+   model's performance over five consecutive years, looking at multiple
+   monitoring stations along the river. For each station, we have a
+   forecast interval for each of the five years.
+
+   We need to identify stations where the model's uncertainty
+   predictions are stable and trustworthy, versus stations where the
+   uncertainty fluctuates wildly from year to year. A model that is
+   confident one year and highly uncertain the next for the same
+   location may not be reliable for long-term planning.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate multi-year forecasts for multiple stations ---
+      >>> np.random.seed(42)
+      >>> n_stations = 150
+      >>> years = [2021, 2022, 2023, 2024, 2025]
+      >>> df = pd.DataFrame({'station_id': range(n_stations)})
+      >>>
+      >>> # Create stable and unstable stations
+      >>> stable_mask = np.arange(n_stations) < 75
+      >>> for year in years:
+      ...     base_width = np.where(stable_mask, 10, 10 + np.random.uniform(-8, 8, n_stations))
+      ...     median = np.where(stable_mask, 50, 80) + np.random.randn(n_stations)*5
+      ...     df[f'q10_y{year}'] = median - base_width / 2
+      ...     df[f'q90_y{year}'] = median + base_width / 2
+      ...     df[f'q50_y{year}'] = median
+      >>>
+      >>> qlow_cols = [f'q10_y{y}' for y in years]
+      >>> qup_cols = [f'q90_y{y}' for y in years]
+      >>> q50_cols = [f'q50_y{y}' for y in years]
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_interval_consistency(
+      ...     df,
+      ...     qlow_cols=qlow_cols,
+      ...     qup_cols=qup_cols,
+      ...     q50_cols=q50_cols,
+      ...     title='Consistency of River Flow Uncertainty (2021-2025)',
+      ...     use_cv=True # Use Coefficient of Variation for relative stability
+      ... )
+
+   .. figure:: ../images/userguide_plot_interval_consistency.png
+      :align: center
+      :width: 80%
+      :alt: A polar plot showing the consistency of prediction intervals.
+
+      A polar scatter plot where each point is a monitoring station,
+      the radius is the variability of its forecast uncertainty over
+      five years, and the color is its average predicted flow.
+
+   This plot diagnoses the stability of the model's confidence. Points
+   far from the center represent stations where the model's uncertainty
+   estimates are volatile and less trustworthy over time.
+
+   **Quick Interpretation:**
+    This plot assesses the year-to-year stability of the model's
+    uncertainty estimates, where a smaller radius (lower CV) is better.
+    For the majority of monitoring stations, the model demonstrates
+    **good consistency**, with points tightly clustered close to the center,
+    indicating its uncertainty predictions are stable over time. However,
+    the plot also highlights a few outlier stations with a much larger
+    radius. These outliers represent locations where the model's
+    uncertainty forecasts are **unstable and fluctuate significantly**
+    from year to year, warranting further investigation.
+
+Assessing the long-term stability of a model's uncertainty is key to
+building trust in its forecasts. To explore this example in more
+detail, please visit the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_interval_consistency>` or function docstring for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_interval_consistency`.
 
 .. raw:: html
 
    <hr>
-
-.. _ug_interval_width:
-
-Prediction Interval Width Visualization (:func:`~kdiagram.plot.uncertainty.plot_interval_width`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Purpose:**
-This function creates a polar scatter focused on the **magnitude of
-predicted uncertainty**, visualizing the **width** (:math:`Q_{up}-Q_{low}`)
-for each point at a given snapshot or horizon. Width is a proxy for
-**sharpness**—useful only when paired with good calibration
-:footcite:p:`Gneiting2007b`. As a complementary display to time-series
-fan charts :footcite:p:`Sokol2025`, our polar view highlights spatial/
-cross-sectional structure in uncertainty :footcite:p:`kouadiob2025`.
-It answers: "How wide is the predicted uncertainty range for  
-each point in my dataset?"
-
-**Mathematical Concept:**
-For each data point :math:`i`, the interval width is calculated:
-
-.. math::
-
-   w_i = Q_{up,i} - Q_{low,i}
-
-The point is plotted at an angle :math:`\theta_i` (based on index) and a
-**radius** :math:`r_i = w_i`. Optionally, a third variable :math:`z_i`
-from a specified ``z_col`` can determine the color of the point; otherwise,
-the color typically represents the width :math:`w_i` itself.
-
-**Interpretation:**
-
-* **Radius:** The radial distance directly corresponds to the width of
-  the prediction interval. Points far from the center represent samples
-  with high predicted uncertainty (wide intervals). Points near the
-  center have low predicted uncertainty (narrow intervals).
-* **Color (with `z_col`):** If a ``z_col`` (e.g., the median prediction
-  Q50, or the actual value) is provided, the color allows you to see how
-  interval width relates to that variable. For example, are wider
-  intervals (larger radius) associated with higher or lower median
-  predictions (color)?
-* **Color (without `z_col`):** If no ``z_col`` is given, color usually
-  maps to the width itself, reinforcing the radial information.
-* **Angular Patterns:** Look for regions around the circle (representing
-  subsets of data based on index order or a future `theta_col`
-  implementation) that exhibit consistently high or low interval widths.
-
-**Use Cases:**
-
-* Identifying samples or locations with the largest/smallest predicted
-  uncertainty ranges at a specific time/horizon.
-* Visualizing the overall distribution of uncertainty magnitudes across
-  the dataset.
-* Exploring potential relationships between uncertainty width and other
-  factors (e.g., input features, predicted value magnitude) by using
-  the ``z_col`` option.
-* Assessing if uncertainty is relatively uniform or highly variable
-  across samples.
-
-**Advantages (Polar Context):**
-
-* Provides a compact overview of uncertainty magnitude for many points.
-* The radial distance offers a direct, intuitive mapping for interval
-  width.
-* Facilitates the visual identification of angular patterns or clusters
-  related to uncertainty levels.
-* Allows simultaneous visualization of location (angle), uncertainty
-  width (radius), and a third variable (color via ``z_col``).
-
-**Example:**
-(See :ref:`Gallery <gallery_plot_interval_width>` or function docstring for code and plot examples)
-
-.. raw:: html
-
-   <hr>
-   
+    
 .. _ug_model_drift:
 
 Model Forecast Drift (:func:`~kdiagram.plot.uncertainty.plot_model_drift`)
@@ -627,8 +1113,92 @@ aggregated metric for that horizon if ``color_metric_cols`` is used.
 * Provides a concise summary comparing average uncertainty levels across
   multiple forecast lead times.
 
+A critical aspect of evaluating any forecasting model is understanding
+how its performance degrades over longer prediction horizons. A model
+that is sharp and accurate for a one-day-ahead forecast may become
+unacceptably uncertain when predicting seven days ahead. This
+phenomenon is often called **model drift**, and this specialized polar
+bar chart is designed to diagnose it by visualizing how average
+uncertainty changes across different forecast lead times.
+
+.. admonition:: Practical Example
+
+   A supply chain manager for a large retail company needs to forecast
+   the demand for a key product for one, two, three, and four weeks
+   ahead to optimize inventory. It is expected that the forecast will
+   become less certain for longer lead times, but the manager needs to
+   quantify this degradation. How rapidly does the uncertainty grow?
+
+   This plot will show the average prediction interval width for each
+   of the four forecast horizons. Each horizon is a bar on the polar
+   chart, with its height (radius) representing the average
+   uncertainty, providing an instant visual summary of the model's
+   drift.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate demand forecasts for multiple horizons ---
+      >>> np.random.seed(0)
+      >>> n_samples = 100
+      >>> horizons = ['1 Week', '2 Weeks', '3 Weeks', '4 Weeks']
+      >>> df = pd.DataFrame()
+      >>> q10_cols, q90_cols = [], []
+      >>>
+      >>> for i, horizon in enumerate(horizons):
+      ...     # Uncertainty increases with each horizon
+      ...     base_demand = 1000 + 50 * i
+      ...     interval_width = 100 + 50 * i
+      ...     q10 = base_demand - interval_width / 2 + np.random.randn(n_samples) * 20
+      ...     q90 = base_demand + interval_width / 2 + np.random.randn(n_samples) * 20
+      ...     df[f'q10_h{i+1}'] = q10
+      ...     df[f'q90_h{i+1}'] = q90
+      ...     q10_cols.append(f'q10_h{i+1}')
+      ...     q90_cols.append(f'q90_h{i+1}')
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_model_drift(
+      ...     df,
+      ...     q10_cols=q10_cols,
+      ...     q90_cols=q90_cols,
+      ...     horizons=horizons,
+      ...     title='Demand Forecast Uncertainty Drift by Horizon'
+      ... )
+
+   .. figure:: ../images/userguide_plot_model_drift.png
+      :align: center
+      :width: 80%
+      :alt: A polar bar chart showing increasing uncertainty over four horizons.
+
+      A polar bar chart where each bar represents a forecast horizon.
+      The increasing height of the bars shows that the average
+      prediction uncertainty grows as the forecast lead time increases.
+
+   This plot provides a concise summary of how forecast quality changes
+   over time. The outward progression of the bars gives an intuitive
+   sense of the model's performance degradation.
+
+   **Quick Interpretation:**
+    This plot visualizes how the model's average forecast uncertainty
+    changes as it predicts further into the future. The result is a clear
+    and unambiguous pattern of **model drift**: the height of the bars
+    systematically increases from the "1 Week" horizon to the "4 Weeks"
+    horizon. The annotations quantify this, showing the average
+    uncertainty width growing from approximately 100 to over 250. This
+    demonstrates that the forecast becomes progressively less certain and
+    less precise at longer lead times, a critical finding for
+    understanding the reliable range of the model.
+
+Understanding model drift is key to defining a forecast's reliable
+range and planning for model retraining. To see the full
+implementation, please explore the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_model_drift>` or function docstring for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_model_drift`.
+
 
 .. raw:: html
 
@@ -704,8 +1274,83 @@ Each series :math:`k` is assigned a distinct color.
   different scales.
 * Can reveal shared cyclical patterns among the plotted series.
 
+While many plots in this package have a highly specific diagnostic
+purpose, it is often useful to have a general-purpose tool for simply
+visualizing and comparing multiple data series in a polar context.
+This function serves as that flexible utility. One of its primary use
+cases is to display the full spread of a probabilistic forecast by
+plotting several of its predicted quantiles simultaneously for a single
+time period.
+
+.. admonition:: Practical Example
+
+   A financial analyst is using a probabilistic model to forecast the
+   next day's price for a volatile stock. To understand the full range
+   of predicted outcomes and assess risk, they need to visualize not
+   just a single prediction interval, but the entire predicted
+   distribution, represented by multiple quantiles (e.g., 10th, 25th,
+   50th, 75th, and 90th percentiles).
+
+   This plot will display all five quantile forecasts on the same polar
+   axes. The radial distance between the different quantile series will
+   vividly illustrate the shape and spread of the predicted
+   uncertainty for each trading day.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate a multi-quantile stock price forecast ---
+      >>> np.random.seed(42)
+      >>> n_days = 100
+      >>> base_price = 150 + np.cumsum(np.random.randn(n_days) * 2)
+      >>> df = pd.DataFrame()
+      >>> quantiles = {'q10': -1.28, 'q25': -0.67, 'q50': 0, 'q75': 0.67, 'q90': 1.28}
+      >>>
+      >>> for name, z_score in quantiles.items():
+      ...     df[name] = base_price + z_score * 5 + np.random.randn(n_days)
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_temporal_uncertainty(
+      ...     df,
+      ...     q_cols=['q10', 'q25', 'q50', 'q75', 'q90'],
+      ...     normalize=False, # Plot actual price values
+      ...     title='Daily Stock Price Forecast Distribution'
+      ... )
+
+   .. figure:: ../images/userguide_plot_temporal_uncertainty.png
+      :align: center
+      :width: 80%
+      :alt: A polar scatter plot showing multiple quantile series for a forecast.
+
+      A polar scatter plot where each color represents a different
+      predicted quantile (10th, 25th, 50th, 75th, 90th), visualizing
+      the full spread of forecast uncertainty.
+
+   This plot allows us to see the entire predicted distribution at a
+   glance. The radial distance between the outer and inner series
+   shows the width of the uncertainty, while the spacing of the
+   intermediate series reveals the shape of the distribution.
+
+   **Quick Interpretation:**
+    This plot visualizes the full predicted stock price distribution for
+    each day, with each colored series representing a different quantile
+    forecast. The key insight is that the radial distance between the
+    different quantile series—representing the spread of the
+    uncertainty—appears **relatively constant** as you move around the
+    circle. This suggests the model predicts a similar level of price
+    volatility for each day in the forecast period, a characteristic
+    known as homoscedastic uncertainty.
+
+This flexible visualization is a powerful tool for exploring any set of
+related time series or distributions. To learn more, please see the
+full example in the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_temporal_uncertainty>` or function docstring for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_temporal_uncertainty`.
+
 
 .. raw:: html
 
@@ -794,8 +1439,93 @@ Each ring :math:`t` receives a distinct color from the specified
   in relative uncertainty at that time.
 * Color coding aids in distinguishing and tracking specific time steps.
 
+While some plots show how average uncertainty drifts over time, this
+visualization provides a much deeper insight: it shows how the entire
+**spatial pattern** of uncertainty evolves across multiple forecast
+periods. Each time step is drawn as a distinct concentric ring,
+allowing you to see a complete "map" of uncertainty and how that map
+changes from one period to the next.
+
+.. admonition:: Practical Example
+
+   An environmental agency is using a deep learning model to forecast
+   land subsidence (the sinking of land) for hundreds of locations in a
+   vulnerable coastal region over the next four years. They need to
+   understand not just if the uncertainty is growing on average, but
+   if specific areas are becoming dangerously unpredictable over time.
+
+   This plot will render the uncertainty forecast for each year as a
+   separate ring. The "bumpiness" of each ring shows the spatial
+   variability of uncertainty in that year, and comparing the rings
+   reveals how this pattern drifts over the full forecast horizon.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate multi-year subsidence forecasts ---
+      >>> np.random.seed(1)
+      >>> n_locations = 200
+      >>> locations_angle = np.linspace(0, 360, n_locations)
+      >>> df = pd.DataFrame({'location_id': range(n_locations)})
+      >>> years = [2024, 2025, 2026, 2027]
+      >>> qlow_cols, qup_cols = [], []
+      >>>
+      >>> for i, year in enumerate(years):
+      ...     # Uncertainty grows over time, especially in a specific region (90-180 deg)
+      ...     regional_effect = (locations_angle > 90) & (locations_angle < 180)
+      ...     base_width = 5 + 2 * i
+      ...     width = base_width + np.where(regional_effect, 5 * i, 0)
+      ...     median = 10 + np.random.uniform(0, 5, n_locations)
+      ...     df[f'q10_{year}'] = median - width / 2
+      ...     df[f'q90_{year}'] = median + width / 2
+      ...     qlow_cols.append(f'q10_{year}')
+      ...     qup_cols.append(f'q90_{year}')
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_uncertainty_drift(
+      ...     df,
+      ...     qlow_cols=qlow_cols,
+      ...     qup_cols=qup_cols,
+      ...     dt_labels=[str(y) for y in years],
+      ...     title='Spatiotemporal Drift of Subsidence Uncertainty'
+      ... )
+
+   .. figure:: ../images/userguide_plot_uncertainty_drift.png
+      :align: center
+      :width: 80%
+      :alt: A polar plot with concentric rings showing uncertainty drift over time.
+
+      Concentric rings representing four consecutive years, where the
+      shape of each ring visualizes the spatial pattern of forecast
+      uncertainty for that year.
+
+   This plot provides a powerful comparison of uncertainty "maps"
+   across time. By tracing a single angle (a single location) from the
+   inner rings to the outer rings, we can track how the uncertainty for
+   that specific location is predicted to evolve.
+
+   **Quick Interpretation:**
+    Each colored ring on this plot represents the spatial pattern of
+    forecast uncertainty for a given year. The visualization reveals two
+    key trends. First, the **overall radius of the rings increases** from
+    the inner ring (2024) to the outer ring (2027), indicating that the
+    average forecast uncertainty grows over the four-year horizon.
+    Second, the **shape of the rings** shows that the uncertainty is not
+    uniform, with "bumps" or outward bulges appearing in the same angular
+    locations each year. These bumps become more pronounced over time,
+    demonstrating a clear **spatiotemporal drift** where uncertainty is
+    growing fastest in specific, identifiable regions.
+
+This ability to visualize the evolution of an entire uncertainty field
+is crucial for complex spatiotemporal forecasting. To explore this
+example in more detail, please visit the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_uncertainty_drift>` or function docstring for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_uncertainty_drift`.
+
 
 .. raw:: html
 
@@ -882,8 +1612,89 @@ absolute magnitude of the Q50 predictions
 * Facilitates spotting spatial patterns or clusters related to the dynamics
   of the prediction.
 
+While the previous plot shows how forecast *uncertainty* evolves, this
+visualization focuses on the central prediction itself. It is designed
+to reveal the **rate of change**, or "velocity," of the phenomenon being
+forecasted. This is essential for moving beyond static predictions to
+understand the underlying dynamics of the system.
+
+.. admonition:: Practical Example
+
+   Continuing with our land subsidence scenario, the environmental
+   agency now needs to identify which locations are predicted to sink
+   the fastest over the next few years. This information is critical
+   for prioritizing infrastructure monitoring and deploying mitigation
+   measures. A location that is already heavily subsided but stable is
+   a different kind of problem than a location that is currently stable
+   but predicted to start sinking rapidly.
+
+   This plot will calculate the average rate of change (velocity) of the
+   median subsidence forecast for each location. The radius will show
+   how fast each location is sinking, and the color will provide
+   context by showing the average total subsidence.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate multi-year median subsidence forecasts ---
+      >>> np.random.seed(42)
+      >>> n_locations = 200
+      >>> df = pd.DataFrame({'location_id': range(n_locations)})
+      >>> years = [2024, 2025, 2026, 2027]
+      >>> q50_cols = []
+      >>> # Create a base subsidence level
+      >>> base_subsidence = np.random.uniform(5, 20, n_locations)
+      >>> # Create a velocity that varies by location
+      >>> velocity = np.linspace(0.5, 5, n_locations)
+      >>>
+      >>> for i, year in enumerate(years):
+      ...     df[f'q50_{year}'] = base_subsidence + velocity * i
+      ...     q50_cols.append(f'q50_{year}')
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_velocity(
+      ...     df,
+      ...     q50_cols=q50_cols,
+      ...     title='Predicted Velocity of Land Subsidence (2024-2027)',
+      ...     use_abs_color=True, # Color by total subsidence
+      ...     cmap='plasma'
+      ... )
+
+   .. figure:: ../images/userguide_plot_velocity.png
+      :align: center
+      :width: 80%
+      :alt: A polar scatter plot visualizing the velocity of land subsidence.
+
+      A polar scatter plot where each point is a location. The radius
+      shows the predicted rate of sinking (velocity), and the color
+      shows the average total subsidence magnitude.
+
+   This plot provides a rich, two-dimensional summary of the predicted
+   dynamics. The radius immediately identifies the hotspots of rapid
+   change, while the color provides crucial context about the absolute
+   state of those locations.
+
+   **Quick Interpretation:**
+    This plot reveals a powerful correlation between the rate of change
+    and the total magnitude of the forecast. The smooth increase in
+    **radius** from the center outwards shows that the locations are
+    ordered by their predicted subsidence velocity, from most stable to
+    fastest sinking. The **color**, which represents the average total
+    subsidence, transitions along this same path from purple (low
+    magnitude) to yellow (high magnitude). The key insight is that the
+    locations with the highest rate of change are also the locations
+    with the highest overall subsidence, indicating that the most
+    problematic areas are also deteriorating the fastest.
+
+Identifying the velocity of change is key to proactive decision-making.
+To see the full implementation of this dynamic analysis, please explore
+the gallery example.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_prediction_velocity>` or function docstring for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_prediction_velocity`.
 
 .. raw:: html
 
@@ -962,8 +1773,80 @@ value :math:`x`, and the color at that radius is determined by
 * The "ring" metaphor can be an intuitive way to view the entirety of a
   distribution's shape at once.
 
+While many plots show us data point-by-point, sometimes what we
+really need is a high-level, bird's-eye view of a variable's entire
+distribution. Is it symmetric and well-behaved, or skewed and
+unpredictable? The radial density ring transforms the familiar histogram
+into a smooth, continuous visualization, offering a unique and powerful
+way to understand the fundamental shape of your data.
+
+.. admonition:: Practical Example
+
+   An airline's operations team relies on a model to predict flight
+   times. To manage fuel reserves and crew schedules effectively, they
+   need to understand the nature of the forecast errors. Are the errors
+   normally distributed around zero, meaning small over- and
+   under-predictions are equally common? Or is the distribution skewed,
+   indicating a tendency for flights to be, for instance, much later
+   than predicted but rarely much earlier?
+
+   This plot will visualize the entire probability distribution of the
+   forecast errors. The location of the most intense color on the ring
+   will reveal the most common error, while the shape will expose any
+   dangerous asymmetries.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate flight time forecast errors ---
+      >>> np.random.seed(0)
+      >>> n_flights = 1000
+      >>> # Errors are mostly small, but with a "long tail" of significant delays
+      >>> errors_minutes = np.random.lognormal(mean=1.5, sigma=0.8, size=n_flights) - 5
+      >>>
+      >>> df = pd.DataFrame({'forecast_error': errors_minutes})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_radial_density_ring(
+      ...     df,
+      ...     kind='direct',
+      ...     target_cols='forecast_error',
+      ...     title='Distribution of Flight Time Forecast Errors',
+      ...     r_label='Error (Minutes)'
+      ... )
+
+   .. figure:: ../images/userguide_plot_radial_density_ring.png
+      :align: center
+      :width: 80%
+      :alt: A radial density ring showing the distribution of forecast errors.
+
+      A polar density plot where the radius represents the forecast
+      error in minutes and the color intensity shows the probability
+      density, revealing the shape of the error distribution.
+
+   This plot provides a complete picture of the error distribution's
+   character. By examining the shape and peaks of the colored ring, we
+   can diagnose the typical behavior of our model's mistakes.
+
+   **Quick Interpretation:**
+    This plot visualizes the probability distribution of the flight time
+    forecast errors, where the radius is the error in minutes and bright
+    colors indicate the most common outcomes. The most prominent feature
+    is the **single, bright ring located very near the center**, which
+    indicates that the vast majority of forecast errors are concentrated
+    in a narrow band around zero. This is the signature of a high-quality
+    forecast model that is both **unbiased** (centered on zero) and
+    **precise** (the distribution is sharp and not wide).
+
+Understanding the true shape of a distribution is key to robust
+decision-making. To explore this unique visualization further, please
+visit the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_radial_density_ring>` for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_radial_density_ring`.
 
 .. raw:: html
 
@@ -1028,8 +1911,81 @@ The plot is a 2D histogram in polar coordinates.
   spot in a standard Cartesian heatmap.
 * Provides a compact and intuitive overview of a 2D distribution.
 
+The most powerful insights often lie at the intersection of two
+variables. This polar heatmap is a specialized tool for exploring these
+two-dimensional relationships, designed to uncover "hot spots" or areas
+of high concentration in your data. It is particularly effective when
+one of the variables is cyclical, such as the hour of the day or the
+month of the year.
+
+.. admonition:: Practical Example
+
+   A city's public safety department wants to optimize police patrol
+   schedules. They hypothesize that the number of incidents is not
+   uniform throughout the day but instead peaks at certain times and
+   locations. To confirm this, they need to visualize the density of
+   incidents based on both the **hour of the day** and the **distance
+   from the city center**.
+
+   This polar heatmap is the perfect tool for this analysis. The angle
+   will represent the hour of the day, the radius will be the distance
+   from the city center, and the color will show the concentration of
+   incidents, instantly revealing the times and locations of peak activity.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate public safety incident data ---
+      >>> np.random.seed(42)
+      >>> n_incidents = 5000
+      >>> # Incidents are concentrated during evening hours (e.g., 18:00 - 23:00)
+      >>> hour = np.random.normal(20, 2, n_incidents) % 24
+      >>> # Incidents are more common 2-5 km from the city center
+      >>> distance_km = np.random.gamma(shape=4, scale=1, size=n_incidents)
+      >>>
+      >>> df = pd.DataFrame({'hour_of_day': hour, 'distance_from_center_km': distance_km})
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_polar_heatmap(
+      ...     df,
+      ...     r_col='distance_from_center_km',
+      ...     theta_col='hour_of_day',
+      ...     theta_period=24,
+      ...     title='Density of Incidents by Time and Location'
+      ... )
+
+   .. figure:: ../images/userguide_plot_polar_heatmap.png
+      :align: center
+      :width: 80%
+      :alt: A polar heatmap showing the density of incidents.
+
+      A polar heatmap where the angle is the hour of the day, the
+      radius is the distance from the city center, and the color
+      shows the count of incidents.
+
+   This plot turns a complex dataset into an intuitive map of activity.
+   The bright "hot spots" on the map are a direct guide for resource
+   allocation, showing exactly where and when patrols are needed most.
+
+   **Quick Interpretation:**
+    This polar heatmap effectively visualizes the concentration of
+    incidents based on the time of day (angle) and distance from the city
+    center (radius). The key finding is the distinct **"hot spot"** of high
+    activity, represented by the bright blue and white colors. This hot
+    spot is clearly concentrated in the **late evening hours** (bottom-left
+    quadrant of the plot) and occurs not in the immediate city center,
+    but at a **short distance of approximately 2-6 km away**. This provides a
+    clear, actionable insight for allocating public safety resources.
+
+This ability to visualize 2D density is invaluable for discovering
+hidden patterns in spatiotemporal data. To learn more, please see the
+full example in the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_polar_heatmap>` for code and plot examples)
+See :ref:`Gallery <gallery_plot_polar_heatmap>` for code and plot examples.
 
 .. raw:: html
 
@@ -1100,8 +2056,91 @@ Each arrow is a vector defined at an origin point in polar coordinates.
 * Can reveal large-scale rotational or radial patterns in the vector
   data.
 
+Some phenomena are not just about static values, but about **change**,
+**flow**, or **revision**. These are vector quantities, possessing both
+magnitude and direction. The polar quiver plot is a specialized
+visualization designed to bring these dynamic processes to life,
+representing each data point not as a dot, but as an arrow showing its
+movement or change.
+
+.. admonition:: Practical Example
+
+   Oceanographers are studying ocean currents using data from a series
+   of buoys. Each buoy reports its position (angle and distance from a
+   central point) and the velocity of the current at its location. The
+   velocity is a vector, with a component flowing radially (towards or
+   away from the center) and a component flowing tangentially (rotating
+   around the center).
+
+   To understand the overall ocean circulation pattern, they need to
+   visualize this entire vector field. The polar quiver plot is the
+   ideal tool, drawing an arrow at each buoy's location that points in
+   the direction of the current and whose size and color represent its
+   speed.
+
+   .. code-block:: pycon
+
+      >>> import numpy as np
+      >>> import pandas as pd
+      >>> import kdiagram as kd
+      >>>
+      >>> # --- 1. Simulate ocean current data from buoys ---
+      >>> np.random.seed(1)
+      >>> n_buoys = 75
+      >>> # Buoy positions
+      >>> r_pos = np.random.uniform(10, 50, n_buoys)
+      >>> theta_pos_deg = np.linspace(0, 330, n_buoys)
+      >>>
+      >>> # Simulate a large-scale rotational current (a gyre)
+      >>> u_radial = np.random.normal(0, 0.1, n_buoys) # Small radial flow
+      >>> v_tangential = 1.5 + np.sin(np.deg2rad(theta_pos_deg)) # Strong tangential flow
+      >>>
+      >>> df = pd.DataFrame({
+      ...     'buoy_dist_km': r_pos, 'buoy_angle_deg': theta_pos_deg,
+      ...     'radial_current_kmh': u_radial, 'tangential_current_kmh': v_tangential
+      ... })
+      >>>
+      >>> # --- 2. Generate the plot ---
+      >>> ax = kd.plot_polar_quiver(
+      ...     df,
+      ...     r_col='buoy_dist_km',
+      ...     theta_col='buoy_angle_deg',
+      ...     u_col='radial_current_kmh',
+      ...     v_col='tangential_current_kmh',
+      ...     theta_period=360,
+      ...     title='Ocean Current Velocity Field',
+      ...     scale=40 # Adjust arrow size for visibility
+      ... )
+
+   .. figure:: ../images/userguide_plot_polar_quiver.png
+      :align: center
+      :width: 80%
+      :alt: A polar quiver plot visualizing an ocean current field.
+
+      A polar quiver plot where arrows at each buoy location show the
+      direction and magnitude of the ocean current.
+
+   This plot transforms raw numbers into an intuitive picture of a
+   dynamic system. A single glance reveals the large-scale patterns of
+   flow that would be impossible to see in a table of data.
+
+   **Quick Interpretation:**
+    This quiver plot transforms the raw vector data into an intuitive map
+    of the ocean current field. The **direction** of the arrows clearly
+    reveals a large-scale, counter-clockwise **rotational pattern** across
+    the entire area, which is characteristic of an ocean gyre.
+    Furthermore, the **color and size** of the arrows, representing the
+    current's speed, show that the flow is not uniform; it is
+    significantly **stronger** (bright yellow arrows) in the upper half
+    of the plot and weaker (dark purple arrows) in the lower half.
+
+Visualizing vector fields is essential in many scientific and
+engineering domains. To see the full implementation of this 
+technique, please explore the gallery.
+
 **Example:**
-(See :ref:`Gallery <gallery_plot_polar_quiver>` for code and plot examples)
+See the gallery example and code: :ref:`gallery_plot_polar_quiver`.
+
 
 .. raw:: html
 
