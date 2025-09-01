@@ -18,10 +18,12 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
 from matplotlib.colors import Normalize
 from scipy.stats import gaussian_kde
 
 from ..api.summary import ResultSummary
+from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import validate_params
 from ..decorators import check_non_emptiness, isdf
@@ -31,7 +33,12 @@ from ..utils.diagnose_q import (
     validate_qcols,
 )
 from ..utils.handlers import columns_manager
-from ..utils.plot import _sample_colors, set_axis_grid
+from ..utils.plot import (
+    _sample_colors,
+    map_theta_to_span,
+    set_axis_grid,
+    setup_polar_axes,
+)
 from ..utils.validator import (
     _assert_all_types,
     exist_features,
@@ -72,7 +79,14 @@ def plot_coverage(
     title: str | None = None,
     savefig: str | None = None,
     verbose: int = 1,
+    ax: Axes | None = None,
 ):
+    if ax is not None:
+        warnings.warn(
+            "`plot_coverage` currently does not suppport ax params."
+            "Setting  'ax' does nothing; present for API consistency.",
+            stacklevel=2,
+        )
     # Convert the true values to a numpy array for consistency
     y_true = np.array(y_true)
 
@@ -548,6 +562,7 @@ def plot_model_drift(
     annotate: bool = True,
     grid_props: dict | None = None,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     r"""Visualize forecast drift across prediction horizons.
 
@@ -767,10 +782,11 @@ def plot_model_drift(
 
     #
     # 4. Figure setup
-    fig, ax = plt.subplots(
-        figsize=figsize,
-        subplot_kw={"projection": "polar"},
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize,
+            subplot_kw={"projection": "polar"},
+        )
 
     # Orient polar chart: 0° at the top, clockwise direction
     ax.set_theta_offset(np.pi / 2)
@@ -845,6 +861,7 @@ def plot_velocity(
     savefig: str | None = None,
     cbar: bool = True,
     mask_angle: bool = False,
+    ax: Axes | None = None,
 ):
     # --- Input Validation ---
     # Check if required q50_cols exist in the DataFrame
@@ -963,9 +980,10 @@ def plot_velocity(
     colors = cmap_used(color_norm(color_vals))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
 
     # Set the angular limits based on angular coverage
     ax.set_thetamin(0)
@@ -1348,6 +1366,7 @@ def plot_interval_consistency(
     show_grid: bool = True,
     mask_angle: bool = False,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     # --- Input Validation ---
     # Basic DataFrame checks handled by decorators @isdf @check_non_emptiness
@@ -1493,9 +1512,10 @@ def plot_interval_consistency(
     plot_colors = cmap_used(color_norm(color_vals_source))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
 
     # Set angular limits
     ax.set_thetamin(0)
@@ -1863,6 +1883,7 @@ def plot_anomaly_magnitude(
     cbar: bool = False,
     savefig: str | None = None,
     mask_angle: bool = False,
+    ax: Axes | None = None,
 ):
     try:
         qlow_col, qup_col = validate_qcols(
@@ -2005,9 +2026,10 @@ def plot_anomaly_magnitude(
     over_mask_ordered = over_mask_filtered[ordered_idx]
 
     # --- Plotting ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(coverage))  # Expects degrees
     ax.set_title(title, fontsize=14, y=1.08)  # Adjust position
@@ -2476,6 +2498,7 @@ def plot_uncertainty_drift(
     show_legend: bool = True,
     mask_angle: bool = True,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     # --- Input Validation ---
     if len(qlow_cols) != len(qup_cols):
@@ -2604,9 +2627,10 @@ def plot_uncertainty_drift(
     )
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
     ax.set_thetamin(np.degrees(theta_min_rad))  # Expects degrees
     ax.set_thetamax(np.degrees(theta_max_rad))  # Expects degrees
 
@@ -3003,6 +3027,7 @@ def plot_actual_vs_predicted(
     show_legend: bool = True,
     mask_angle: bool = False,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     r"""Polar plot comparing actual observed vs predicted values.
 
@@ -3346,9 +3371,10 @@ def plot_actual_vs_predicted(
         ) from e
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
 
@@ -3498,6 +3524,7 @@ def plot_interval_width(
     cbar: bool = True,
     mask_angle: bool = True,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     # --- Input Validation ---
     # Basic df checks handled by decorators
@@ -3645,9 +3672,10 @@ def plot_interval_width(
         colors = cmap_ref(norm(z))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
 
@@ -3984,6 +4012,7 @@ def plot_coverage_diagnostic(
     mask_angle: bool = True,
     savefig: str | None = None,
     verbose: int = 0,
+    ax: Axes | None = None,
 ):
     q_cols_processed = columns_manager(q_cols, empty_as_none=False)
     if len(q_cols_processed) != 2:
@@ -4078,9 +4107,10 @@ def plot_coverage_diagnostic(
     )
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
     ax.set_thetamin(np.degrees(theta_min_rad))
     ax.set_thetamax(np.degrees(theta_max_rad))
     # Set radial limits strictly to [0, 1] for coverage plot
@@ -4554,6 +4584,7 @@ def plot_temporal_uncertainty(
     mask_label: bool = False,
     mask_angle: bool = True,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     r"""Visualize multiple data series using polar scatter plots.
 
@@ -4979,9 +5010,10 @@ def plot_temporal_uncertainty(
         color_palette = cmap_obj(np.linspace(0, 1, num_series))
 
     # --- Plotting ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
 
     # Set angular limits
     ax.set_thetamin(np.degrees(theta_min_rad))
@@ -5059,94 +5091,110 @@ def plot_radial_density_ring(
     target_cols: str | list[str],
     title: str | None = None,
     r_label: str | None = None,
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     cmap: str = "viridis",
     alpha: float = 0.8,
     cbar: bool = True,
+    acov: Acov = "default",
     show_grid: bool = True,
-    grid_props: dict[str, any] | None = None,
+    grid_props: dict[str, Any] | None = None,
     mask_angle: bool = True,
     bandwidth: float | None = None,
     savefig: str | None = None,
     dpi: int = 300,
     show_yticklabels: bool = False,
-):
+    ax: Axes | None = None,
+) -> Axes | None:
+    # warn if non-default sector (ring is conventionally 360°)
+    if acov != "default":
+        warnings.warn(
+            "Non-default 'acov' for ring. Convention prefers "
+            "full 360°, proceeding as requested.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    # deprecation shim for legacy param
     if show_yticklabels:
         warnings.warn(
-            'Parameter "show_yticklabels" is deprecated as of v1.2.0'
-            " and will be removed in a future release. "
-            'Use "mask_angle" instead '
-            "(set mask_angle=False to show angular labels, "
-            "mask_angle=True to hide).",
+            'Param "show_yticklabels" is deprecated. Use '
+            '"mask_angle" (False to show angular labels).',
             DeprecationWarning,
             stacklevel=2,
         )
-        # delegate to mask angle
         mask_angle = False
 
+    # columns and existence checks
     cols = columns_manager(target_cols)
     exist_features(df, features=cols)
 
+    # select 1D target depending on kind
     if kind == "direct":
         if len(cols) != 1:
             raise ValueError(
-                "`kind='direct'` requires one column in "
-                f"`target_cols`, but got {len(cols)}."
+                "`kind='direct'` needs one column in " "`target_cols`."
             )
         data_1d = df[cols[0]]
         r_label = r_label or cols[0]
         title = title or f"Distribution of {cols[0]}"
-
     elif kind in ("width", "velocity"):
         if len(cols) != 2:
             raise ValueError(
-                f"`kind='{kind}'` requires two columns in "
-                f"`target_cols`, but got {len(cols)}."
+                f"`kind='{kind}'` needs two columns in " "`target_cols`."
             )
         data_1d = df[cols[1]] - df[cols[0]]
-        r_label = r_label or f"{cols[1]} $-$ {cols[0]}"
+        r_label = r_label or f"{cols[1]} - {cols[0]}"
         title = title or f"Distribution of {kind.title()}"
     else:
         raise ValueError(
-            f"Invalid `kind`: '{kind}'. Use 'width', "
-            "'velocity', or 'direct'."
+            f"Invalid kind={kind!r}. Use 'width', " "'velocity', or 'direct'."
         )
 
+    # drop NaNs and bail if empty
     data_1d = data_1d.dropna()
     if data_1d.empty:
         warnings.warn(
-            "Derived data is empty after dropping NaNs. "
-            "Cannot generate plot.",
+            "Derived data empty after NaN drop. Cannot plot.",
             UserWarning,
             stacklevel=2,
         )
         return None
 
+    # KDE along radius
     grid, pdf = _calculate_kde_for_ring(
-        data_1d.to_numpy(), bandwidth=bandwidth
+        data_1d.to_numpy(),
+        bandwidth=bandwidth,
     )
     if grid.size == 0:
         warnings.warn(
-            "Could not compute KDE. Cannot generate plot.",
+            "KDE failed. Cannot plot ring.",
             UserWarning,
             stacklevel=2,
         )
         return None
 
+    # normalize density to [0,1]
     pdf_norm = pdf.copy()
-    pdf_max = np.max(pdf_norm)
-    if pdf_max > 0:
-        pdf_norm /= pdf_max
+    vmax = float(np.max(pdf_norm))
+    if vmax > 0.0:
+        pdf_norm /= vmax
 
-    thetas = np.linspace(0, 2 * np.pi, 128)
+    # axes + polar span
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
+    )
+
+    # theta grid over requested span
+    thetas = np.linspace(0.0, span, 128)
     T, R = np.meshgrid(thetas, grid)
+
+    # tile normalized density over theta
     C = np.tile(pdf_norm, (len(thetas), 1)).T
 
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    # draw pcolormesh ring
     cmap_obj = get_cmap(cmap, default="viridis")
-
     ax.grid(False)
     pcm = ax.pcolormesh(
         T,
@@ -5155,33 +5203,46 @@ def plot_radial_density_ring(
         shading="auto",
         cmap=cmap_obj,
         alpha=alpha,
-        vmin=0,
-        vmax=1,
+        vmin=0.0,
+        vmax=1.0,
     )
 
-    ax.set_title(title, va="bottom", fontsize=14)
-    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
-    ax.set_thetagrids([])
+    # titles, labels, grids
+    ax.set_title(title or "Radial Density Ring", va="bottom")
+    set_axis_grid(
+        ax,
+        show_grid=show_grid,
+        grid_props=grid_props,
+    )
+    ax.set_thetagrids([])  # no angular labels by default
     ax.set_rlabel_position(0)
-
     if r_label:
-        ax.set_ylabel(r_label, fontsize=12, labelpad=20)
-
+        ax.set_ylabel(r_label, labelpad=20)
     if mask_angle:
         ax.set_yticklabels([])
 
+    # colorbar if requested
     if cbar:
-        cbar_obj = plt.colorbar(pcm, ax=ax, pad=0.1, shrink=0.7)
-        cbar_obj.set_label(
+        cb = plt.colorbar(
+            pcm,
+            ax=ax,
+            pad=0.1,
+            shrink=0.7,
+        )
+        cb.set_label(
             "Normalized Density",
             rotation=270,
             labelpad=15,
-            fontsize=10,
         )
 
-    plt.tight_layout()
+    # output handling
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(
+            savefig,
+            dpi=dpi,
+            bbox_inches="tight",
+        )
         plt.close(fig)
     else:
         plt.show()
@@ -5253,6 +5314,19 @@ alpha : float, default=0.8
 cbar : bool, default=True
     If ``True``, display a color bar representing the
     normalized density.
+    
+acov : {'default', 'half_circle', 'quarter_circle',
+    'eighth_circle'}, default='default'
+    Angular coverage of the polar sector.
+
+    - ``'default'``        : full circle, :math:`2\pi` (360°)
+    - ``'half_circle'``    : :math:`\pi` (180°)
+    - ``'quarter_circle'`` : :math:`\pi/2` (90°)
+    - ``'eighth_circle'``  : :math:`\pi/4` (45°)
+
+    By convention, the radial density *ring* uses a full
+    360° sector. If a non-default value is provided, a short
+    warning is issued.
 
 show_grid : bool, default=True
     Toggle gridlines via the package helper ``set_axis_grid``.
@@ -5348,10 +5422,11 @@ def plot_polar_quiver(
     u_col: str,
     v_col: str,
     *,
+    acov: Acov = "default",
     color_col: str | None = None,
     theta_period: float | None = None,
     title: str | None = None,
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     cmap: str = "viridis",
     mask_angle: bool = False,
     mask_radius: bool = False,
@@ -5359,81 +5434,122 @@ def plot_polar_quiver(
     grid_props: dict[str, Any] | None = None,
     savefig: str | None = None,
     dpi: int = 300,
+    ax: Axes | None = None,
     **quiver_kws,
-):
-
-    required_cols = [r_col, theta_col, u_col, v_col]
+) -> Axes | None:
+    # ---- required columns
+    req = [r_col, theta_col, u_col, v_col]
     if color_col:
-        required_cols.append(color_col)
-    exist_features(df, features=required_cols)
+        req.append(color_col)
+    exist_features(df, features=req)
 
-    data = df[required_cols].dropna()
+    # ---- clean data
+    data = df[req].dropna()
     if data.empty:
         warnings.warn(
-            "DataFrame is empty after dropping NaNs in "
-            "required columns. Cannot plot.",
+            "DataFrame empty after NaN drop in required "
+            "columns. Cannot plot.",
             UserWarning,
             stacklevel=2,
         )
         return None
 
+    # ---- extract arrays
     r_data = data[r_col].to_numpy()
-    theta_data = data[theta_col].to_numpy()
-    u_data = data[u_col].to_numpy()  # Radial component
-    v_data = data[v_col].to_numpy()  # Angular component
+    t_raw = data[theta_col].to_numpy()
+    u_data = data[u_col].to_numpy()  # radial change
+    v_data = data[v_col].to_numpy()  # angular change
 
-    if theta_period:
-        theta_rad = (theta_data % theta_period) / theta_period * (2 * np.pi)
-    else:
-        min_theta, max_theta = theta_data.min(), theta_data.max()
-        if (max_theta - min_theta) > 1e-9:
-            theta_rad = (
-                ((theta_data - min_theta) / (max_theta - min_theta))
-                * 2
-                * np.pi
-            )
-        else:
-            theta_rad = np.zeros_like(theta_data)
-
-    if color_col:
-        color_data = data[color_col].to_numpy()
-        cbar_label = color_col
-    else:
-        # Default to coloring by vector magnitude
-        color_data = np.sqrt(u_data**2 + v_data**2)
-        cbar_label = "Vector Magnitude"
-
-    norm = Normalize(vmin=np.min(color_data), vmax=np.max(color_data))
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(norm(color_data))
-
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # ---- axes & span
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
     )
 
-    # Matplotlib's quiver on a polar axis expects:
-    # (theta, r, angular_change, radial_change)
-    ax.quiver(theta_rad, r_data, v_data, u_data, color=colors, **quiver_kws)
+    # ---- map theta to [0, span]
+    if theta_period is not None:
+        t_map = map_theta_to_span(
+            t_raw,
+            span=span,
+            theta_period=theta_period,
+        )
+    else:
+        tmin = float(t_raw.min())
+        tmax = float(t_raw.max())
+        if tmax > tmin + 1e-12:
+            t_map = map_theta_to_span(
+                t_raw,
+                span=span,
+                data_min=tmin,
+                data_max=tmax,
+            )
+        else:
+            t_map = np.zeros_like(t_raw)
 
+    # ---- color values
+    if color_col:
+        c_vals = data[color_col].to_numpy()
+        cbar_label = color_col
+    else:
+        # default color by vector magnitude
+        c_vals = np.sqrt(u_data**2 + v_data**2)
+        cbar_label = "Vector Magnitude"
+
+    # robust normalize
+    cmin = float(np.nanmin(c_vals))
+    cmax = float(np.nanmax(c_vals))
+    if not np.isfinite(cmin) or not np.isfinite(cmax):
+        cmin, cmax = 0.0, 1.0
+    if np.isclose(cmax - cmin, 0.0):
+        cmax = cmin + 1.0
+
+    norm = Normalize(vmin=cmin, vmax=cmax)
+    cmap_obj = get_cmap(cmap, default="viridis")
+    colors = cmap_obj(norm(c_vals))
+
+    # ---- draw quiver
+    # Matplotlib polar quiver expects:
+    # (theta, r, dtheta, dr)
+    ax.quiver(
+        t_map,
+        r_data,
+        v_data,
+        u_data,
+        color=colors,
+        **quiver_kws,
+    )
+
+    # ---- colorbar
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj)
     cbar = plt.colorbar(
-        plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj),
+        sm,
         ax=ax,
         pad=0.1,
         shrink=0.75,
     )
     cbar.set_label(cbar_label, fontsize=10)
 
+    # ---- labels, grid, masks
     ax.set_title(title or f"Quiver Plot of ({u_col}, {v_col})")
-    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    set_axis_grid(
+        ax,
+        show_grid=show_grid,
+        grid_props=grid_props,
+    )
     if mask_angle:
         ax.set_xticklabels([])
-
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    # ---- output
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(
+            savefig,
+            dpi=dpi,
+            bbox_inches="tight",
+        )
         plt.close(fig)
     else:
         plt.show()
@@ -5470,6 +5586,18 @@ v_col : str
     Name of the column for the **tangential component** of the vector
     (the change in angle).
 
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'}, \
+    default='default'
+    Angular **coverage** of the plot:
+        
+    - ``'default'``: full circle, :math:`2\pi`
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\pi/2`
+    - ``'eighth_circle'``: :math:`\pi/4`
+    
+    (Value is case-insensitive; invalid values fall back to full circle
+    with a warning.)
+    
 color_col : str, optional
     Name of a column to use for coloring the arrows. If ``None``,
     arrows are colored by their total vector magnitude.
@@ -5600,6 +5728,7 @@ def plot_polar_heatmap(
     r_col: str,
     theta_col: str,
     *,
+    acov: Acov = "default",
     theta_period: float | None = None,
     r_bins: int = 20,
     theta_bins: int = 36,
@@ -5614,76 +5743,85 @@ def plot_polar_heatmap(
     grid_props: dict[str, Any] | None = None,
     savefig: str | None = None,
     dpi: int = 300,
-):
-    exist_features(df, features=[r_col, theta_col])
+    ax: Axes | None = None,
+) -> Axes | None:
 
+    # ---- Validate required columns & drop NaNs
+    exist_features(df, features=[r_col, theta_col])
     data = df[[r_col, theta_col]].dropna()
     if data.empty:
         warnings.warn(
-            "DataFrame is empty after dropping NaNs in "
-            f"'{r_col}' or '{theta_col}'. Cannot plot.",
+            "DataFrame is empty after dropping NaNs"
+            " in '{r_col}'/'{theta_col}'. Cannot plot.",
             UserWarning,
             stacklevel=2,
         )
         return None
 
+    # ---- Extract arrays
     r_data = data[r_col].to_numpy()
-    theta_data = data[theta_col].to_numpy()
+    theta_raw = data[theta_col].to_numpy()
 
-    if theta_period:
-        # Map to [0, 2*pi] based on a known cycle
-        theta_rad = (theta_data % theta_period) / theta_period * (2 * np.pi)
+    # ---- Axes & angular span (radians)
+    fig, ax, span = setup_polar_axes(ax, acov=acov, figsize=figsize)
+
+    # ---- Map theta values into [0, span]
+    if theta_period is not None:
+        theta_mapped = map_theta_to_span(
+            theta_raw, span=span, theta_period=theta_period
+        )
     else:
-        # Min-max scale to [0, 2*pi]
-        min_theta, max_theta = theta_data.min(), theta_data.max()
-        if (max_theta - min_theta) > 1e-9:
-            theta_rad = (
-                ((theta_data - min_theta) / (max_theta - min_theta))
-                * 2
-                * np.pi
+        tmin, tmax = float(theta_raw.min()), float(theta_raw.max())
+        if tmax > tmin + 1e-12:
+            theta_mapped = map_theta_to_span(
+                theta_raw, span=span, data_min=tmin, data_max=tmax
             )
         else:
-            theta_rad = np.zeros_like(theta_data)
+            theta_mapped = np.zeros_like(theta_raw)
 
-    # Define bins for the 2D histogram
-    r_edges = np.linspace(r_data.min(), r_data.max(), r_bins + 1)
-    theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
+    # ---- Binning
+    if statistic.lower() != "count":
+        warnings.warn(
+            f"statistic='{statistic}' not implemented;"
+            " falling back to 'count'.",
+            UserWarning,
+            stacklevel=2,
+        )
+    r_edges = np.linspace(r_data.min(), r_data.max(), int(r_bins) + 1)
+    theta_edges = np.linspace(0.0, float(span), int(theta_bins) + 1)
 
-    # Use np.histogram2d to get counts in each polar bin
     counts, _, _ = np.histogram2d(
-        x=r_data, y=theta_rad, bins=[r_edges, theta_edges]
+        x=r_data,
+        y=theta_mapped,
+        bins=[r_edges, theta_edges],
     )
+    # Note: np.histogram2d returns shape (len(x_bins)-1, len(y_bins)-1).
+    # Our mesh expects R(len(r_edges)) x T(len(theta_edges)) edges.
 
-    # Transpose counts to match pcolormesh expectations
-    # counts = counts.T
-
-    # Create the polar plot
-
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    # ---- Draw
     cmap_obj = get_cmap(cmap, default="viridis")
-
     ax.grid(False)
-    # Use pcolormesh to draw the heatmap
+
     T, R = np.meshgrid(theta_edges, r_edges)
     pcm = ax.pcolormesh(T, R, counts, cmap=cmap_obj, shading="auto")
 
-    # Add a color bar
+    # ---- Colorbar
     cbar = plt.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
     cbar.set_label(cbar_label or statistic.capitalize(), fontsize=10)
 
+    # ---- Labels, grid, masks
     ax.set_title(title or f"Density of {r_col} vs. {theta_col}")
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
     if mask_angle:
         ax.set_xticklabels([])
-
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    # ---- Output
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -5739,7 +5877,19 @@ r_col : str
 
 theta_col : str
     Name of the column to be used for the angular coordinate.
-
+    
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'}, \
+    default='default'
+    Angular **coverage** of the plot:
+        
+    - ``'default'``: full circle, :math:`2\pi`
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\pi/2`
+    - ``'eighth_circle'``: :math:`\pi/4`
+    
+    (Value is case-insensitive; invalid values fall back to full circle
+    with a warning.)
+    
 theta_period : float, optional
     The period of the cyclical data in ``theta_col``. For example,
     if ``theta_col`` represents the hour of the day, ``theta_period``

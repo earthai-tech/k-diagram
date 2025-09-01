@@ -2,13 +2,15 @@
 #   Author: LKouadio <etanoyau@gmail.com>
 
 import re
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 from scipy.stats import gaussian_kde
 
+from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from .generic_utils import get_valid_kwargs
 
@@ -692,3 +694,157 @@ def _sample_colors(
     else:
         xs = np.linspace(trim, 1.0 - trim, n)
     return [tuple(cmap_obj(float(x))) for x in xs]
+
+
+def _setup_axes_for_reliability(
+    ax: Optional[Axes],
+    counts_panel: str,
+    figsize: Optional[tuple[float, float]],
+) -> tuple:
+    """
+    Return (fig, ax, axb) given an optional `ax` and `counts_panel` setting.
+
+    - If `ax` is None:
+        * counts_panel == "bottom": new Figure + GridSpec (main + bottom)
+        * else:                      new Figure + single Axes
+    - If `ax` is provided:
+        * counts_panel == "bottom": append a bottom axis to the same figure
+                                     (using axes_grid1 divider) that shares x.
+        * else:                      reuse `ax` and no bottom axis.
+    """
+    if ax is None:
+        if counts_panel == "bottom":
+            fig = plt.figure(figsize=figsize)
+            gs = fig.add_gridspec(2, 1, height_ratios=(3.0, 1.0), hspace=0.12)
+            ax = fig.add_subplot(gs[0, 0])
+            axb = fig.add_subplot(gs[1, 0], sharex=ax)
+        else:
+            fig, ax = plt.subplots(figsize=figsize)
+            axb = None
+    else:
+        fig = ax.figure
+        if counts_panel == "bottom":
+            # Append a bottom panel below the provided `ax`
+            try:
+                from mpl_toolkits.axes_grid1 import make_axes_locatable
+            except ModuleNotFoundError as err:
+                raise RuntimeError(
+                    "counts_panel='bottom' with a provided `ax` requires "
+                    "mpl_toolkits.axes_grid1 (install matplotlib's toolkits)."
+                ) from err
+            divider = make_axes_locatable(ax)
+            # ~20% height for counts; tweak pad as you like
+            axb = divider.append_axes(
+                "bottom", size="20%", pad=0.25, sharex=ax
+            )
+        else:
+            axb = None
+    return fig, ax, axb
+
+
+def resolve_polar_span(acov: Acov = "default") -> float:
+    """Return angular span (radians) for the given coverage keyword."""
+    acov = (acov or "default").lower()
+    spans = {
+        "default": 2 * np.pi,  # 360°
+        "half_circle": 1 * np.pi,  # 180°
+        "quarter_circle": 0.5 * np.pi,  # 90°
+        "eighth_circle": 0.25 * np.pi,  # 45°
+    }
+    try:
+        return spans[acov]
+    except KeyError as e:
+        raise ValueError(
+            f"Invalid acov={acov!r}. Use one of "
+            "{'default','half_circle','quarter_circle','eighth_circle'}."
+        ) from e
+
+
+def setup_polar_axes(
+    ax: Optional[Axes],
+    *,
+    acov: Acov = "default",
+    figsize: Optional[tuple[float, float]] = None,
+    zero_at: Literal["N", "E", "S", "W"] = "N",  # where theta=0 points
+    clockwise: bool = True,  # plot direction
+) -> tuple[plt.Figure, Axes, float]:
+    """
+    Ensure we have a polar Axes configured to the requested angular span.
+
+    Returns (fig, ax, span_radians).
+    """
+    span = resolve_polar_span(acov)
+
+    # Create axes if needed
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
+    else:
+        fig = ax.figure
+
+    # Set zero direction
+    offsets = {"E": 0.0, "N": np.pi / 2, "W": np.pi, "S": 3 * np.pi / 2}
+    ax.set_theta_offset(offsets[zero_at])
+
+    # Clockwise or counter-clockwise
+    ax.set_theta_direction(-1 if clockwise else 1)
+
+    # Limit angular range to [0, span]
+    ax.set_thetamin(0.0)
+    ax.set_thetamax(np.degrees(span))
+
+    return fig, ax, span
+
+
+def map_theta_to_span(
+    theta_raw: np.ndarray,
+    *,
+    span: float,
+    theta_period: Optional[float] = None,
+    data_min: Optional[float] = None,
+    data_max: Optional[float] = None,
+) -> np.ndarray:
+    """
+    Map arbitrary theta values to [0, span].
+
+    - If theta_period is given, uses modulo scaling.
+    - Else if data_min/max are given, min-max scale.
+    - Else assumes theta_raw already in [0, 2π] and rescales to [0, span].
+    """
+    theta_raw = np.asarray(theta_raw)
+
+    if theta_period is not None:
+        t = (theta_raw % theta_period) / theta_period  # [0,1]
+        return t * span
+
+    if (
+        (data_min is not None)
+        and (data_max is not None)
+        and (data_max > data_min)
+    ):
+        t = (theta_raw - data_min) / (data_max - data_min)  # [0,1]
+        return t * span
+
+    # Default: assume input is in [0, 2π]
+    return (theta_raw % (2 * np.pi)) / (2 * np.pi) * span
+
+
+def _default_theta_ticks(span: float) -> tuple[np.ndarray, list[str]]:
+    # nice ticks for 360/180/90/45 deg spans
+    deg = np.degrees(span)
+    if np.isclose(deg, 360):
+        vals = np.arange(0, 360, 30)
+    elif np.isclose(deg, 180):
+        vals = np.arange(0, 180 + 1e-9, 15)
+    elif np.isclose(deg, 90):
+        vals = np.arange(0, 90 + 1e-9, 10)
+    else:
+        vals = np.arange(0, 45 + 1e-9, 5)
+
+    return np.radians(vals), [f"{int(v)}°" for v in vals]
+
+
+# Usage
+# ticks, labels = _default_theta_ticks(span)
+# ax.set_thetagrids(np.degrees(ticks), labels)

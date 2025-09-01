@@ -140,18 +140,20 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
   });
-});
-  /* Auto-class Plot Anatomy admonitions */
-  document.querySelectorAll(".admonition > .admonition-title").forEach(t => {
-    const raw = t.textContent.trim();
-    const txt = raw.toLowerCase();
 
-    const norm = txt.replace(/\s+/g, " ");
-    // Match Plot Anatomy (no typo allowance, specific to the case)
-    if (/^plot anatomy$/.test(norm)) {
+  // Auto-class "Plot Anatomy" (allow suffixes like "(Radar Chart)")
+  document.querySelectorAll(".admonition > .admonition-title").forEach(t => {
+    const raw  = (t.textContent || t.innerText || "").trim();
+    const norm = raw.replace(/\s+/g, " ").toLowerCase();
+
+    // starts with "plot anatomy", then end or any non-alphanumeric punctuation/suffix
+    if (/^plot anatomy(?:$|[^a-z0-9_].*)/.test(norm)) {
       const box = t.parentElement;
       box.classList.add("plot-anatomy");
-      box.setAttribute("data-badge", "KEY");  // Set custom ribbon text
+      // if you want a ribbon text
+      if (!box.hasAttribute("data-badge")) box.setAttribute("data-badge", "KEY");
     }
   });
+});
+
 

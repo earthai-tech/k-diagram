@@ -1,6 +1,7 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
 """Model comparison plots."""
+
 from __future__ import annotations
 
 import warnings
@@ -11,16 +12,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import cm
+from matplotlib.axes import Axes
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
 
+from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, type_of_target, validate_params
 from ..decorators import check_non_emptiness, isdf
 from ..utils.generic_utils import drop_nan_in
 from ..utils.handlers import columns_manager
 from ..utils.metric_utils import get_scorer
-from ..utils.plot import set_axis_grid
+from ..utils.plot import (
+    _setup_axes_for_reliability,
+    set_axis_grid,
+    setup_polar_axes,
+)
 from ..utils.validator import _assert_all_types, is_iterable, validate_yy
 
 __all__ = [
@@ -79,7 +86,8 @@ def plot_reliability_diagram(
     ylim: tuple[float, float] = (0.0, 1.0),
     savefig: str | None = None,
     return_data: bool = False,
-    **kw,  # for future extension
+    ax: Axes | None = None,
+    **kw,
 ):
     # -------------- input handling -------------- #
     if len(y_preds) == 0:
@@ -153,14 +161,22 @@ def plot_reliability_diagram(
     # -------------- colors & layout -------------- #
     colors = _colors(cmap, color_palette, len(prob_list))
 
-    if counts_panel == "bottom":
-        fig = plt.figure(figsize=figsize)
-        gs = fig.add_gridspec(2, 1, height_ratios=(3.0, 1.0), hspace=0.12)
-        ax = fig.add_subplot(gs[0, 0])
-        axb = fig.add_subplot(gs[1, 0], sharex=ax)
-    else:
-        fig, ax = plt.subplots(figsize=figsize)
-        axb = None
+    if ax is not None and figsize is not None:
+        warnings.warn(
+            "`figsize` ignored because `ax` was provided.", stacklevel=2
+        )
+    fig, ax, axb = _setup_axes_for_reliability(
+        ax=ax, counts_panel=counts_panel, figsize=figsize
+    )
+
+    # if counts_panel == "bottom":
+    #     fig = plt.figure(figsize=figsize)
+    #     gs = fig.add_gridspec(2, 1, height_ratios=(3.0, 1.0), hspace=0.12)
+    #     ax = fig.add_subplot(gs[0, 0])
+    #     axb = fig.add_subplot(gs[1, 0], sharex=ax)
+    # else:
+    #     fig, ax = plt.subplots(figsize=figsize)
+    #     axb = None
 
     # -------------- compute & plot -------------- #
 
@@ -246,6 +262,8 @@ def plot_reliability_diagram(
                 alpha=counts_alpha,
                 label=name,
             )
+            for lab in ax.get_xticklabels():
+                lab.set_visible(False)
 
     # -------------- format axes -------------- #
     ax.set_xlim(*xlim)
@@ -743,15 +761,17 @@ def plot_polar_reliability(
     n_bins: int = 10,
     strategy: str = "uniform",
     title: str = "Polar Reliability Diagram",
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     cmap: str = "coolwarm",
+    acov: Acov = "half_circle",
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
     show_cbar: bool = True,
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
-):
+    ax: Axes | None = None,
+) -> Axes:
     if not y_preds:
         raise ValueError("At least one prediction array must be provided.")
     if not names:
@@ -762,16 +782,19 @@ def plot_polar_reliability(
     weights = np.ones_like(y_true, dtype=float)
     edges, _ = _build_bins(prob_list, n_bins, strategy, 0.0, 1.0)
 
-    # Use the robust _colors helper for consistency
+    # consistent palette
     colors = _colors(cmap, palette=None, k=len(y_preds))
 
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # axes + angular span in radians
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
     )
 
-    # --- Plot Perfect Calibration Spiral ---
-    perfect_theta = np.linspace(0, np.pi / 2, 100)
-    perfect_radius = np.linspace(0, 1, 100)
+    # perfect calibration spiral over [0, span]
+    perfect_theta = np.linspace(0.0, float(span), 100)
+    perfect_radius = np.linspace(0.0, 1.0, 100)
     ax.plot(
         perfect_theta,
         perfect_radius,
@@ -781,12 +804,11 @@ def plot_polar_reliability(
         label="Perfect Calibration",
     )
 
-    # Use a single LineCollection for the colorbar reference
     line_collection_for_cbar = None
 
-    # --- Plot Model Spirals with Diagnostic Coloring ---
+    # model spirals with diagnostic coloring
     for i, (name, p) in enumerate(zip(names, prob_list)):
-        stats = _bin_stats(p, y_true, weights, edges, "none", 0)
+        stats = _bin_stats(p, y_true, weights, edges, ebars="none", zval=0)
         df = pd.DataFrame(
             {
                 "p_mean": stats["pmean"],
@@ -794,78 +816,91 @@ def plot_polar_reliability(
             }
         ).dropna()
 
-        model_theta = df["p_mean"] * (np.pi / 2)
-        model_radius = df["y_rate"]
+        model_theta = df["p_mean"].to_numpy() * float(span)
+        model_radius = df["y_rate"].to_numpy()
 
-        # Calculate the error (deviation from perfect calibration)
-        calibration_error = model_radius - df["p_mean"]
+        # deviation from perfect calibration
+        calibration_error = model_radius - df["p_mean"].to_numpy()
 
-        # Create line segments for coloring
-        points = np.array([model_theta, model_radius]).T.reshape(-1, 1, 2)
-        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        # build colored segments
+        pts = np.array([model_theta, model_radius]).T
+        pts = pts.reshape(-1, 1, 2)
+        segs = np.concatenate([pts[:-1], pts[1:]], axis=1)
 
-        # Normalize the error for the colormap (- is over-confident, + is under-confident)
         norm = Normalize(vmin=-0.5, vmax=0.5)
-        lc = LineCollection(segments, cmap=cmap, norm=norm)
-        lc.set_array(calibration_error)
-        lc.set_linewidth(3)
+        lc = LineCollection(
+            segs,
+            cmap=get_cmap(cmap),
+            norm=norm,
+        )
+        lc.set_array(calibration_error[:-1])
+        lc.set_linewidth(3.0)
 
         line = ax.add_collection(lc)
-        if i == 0:  # Use the first line for the colorbar
+        if i == 0:
             line_collection_for_cbar = line
 
-        # Add a dummy line for the legend
-        ax.plot([], [], color=get_cmap(cmap)(0.5), lw=3, label=name)
+        # legend handle
+        ax.plot(
+            [],
+            [],
+            color=get_cmap(cmap)(0.5),
+            lw=3.0,
+            label=name,
+        )
 
+        # light fill between model and perfect spiral
+        interp = np.interp(
+            perfect_theta,
+            model_theta,
+            model_radius,
+            left=0.0,
+            right=1.0,
+        )
         ax.fill_between(
             perfect_theta,
-            np.interp(
-                perfect_theta, model_theta, model_radius, left=0, right=1
-            ),
+            interp,
             perfect_radius,
             color=colors[i],
             alpha=0.15,
         )
 
-    # --- Formatting ---
+    # formatting
     ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_thetamin(0)
-    ax.set_thetamax(90)
-    ax.set_ylim(0, 1.05)
-    ax.set_xticks(np.linspace(0, np.pi / 2, 6))
-    ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
+    ax.set_ylim(0.0, 1.05)
 
-    # Add padding to the x-axis label to prevent overlap
+    # ticks: show predicted prob in [0,1] along angle
+    xt = np.linspace(0.0, float(span), 6)
+    xl = [f"{v:.1f}" for v in np.linspace(0.0, 1.0, 6)]
+    ax.set_xticks(xt)
+    ax.set_xticklabels(xl)
+
     ax.set_xlabel("Predicted Probability", labelpad=15)
     ax.set_ylabel("Observed Frequency", labelpad=25)
 
-    # Adjust legend position to avoid overlap
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.15))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    # Add a colorbar to explain the diagnostic colors
-    # Conditionally add colorbar and move it to the bottom
-    if show_cbar and line_collection_for_cbar:
+    # colorbar (horizontal)
+    if show_cbar and line_collection_for_cbar is not None:
         cbar = fig.colorbar(
             line_collection_for_cbar,
             ax=ax,
-            orientation="horizontal",  # Horizontal orientation
+            orientation="horizontal",
             shrink=0.75,
-            pad=0.08,  # Adjust padding
+            pad=0.08,
         )
         cbar.set_label(
-            "Calibration Error (Observed - Predicted)", fontsize=10
+            "Calibration Error (Observed - Predicted)",
+            fontsize=10,
         )
-
-    # cbar = fig.colorbar(line, ax=ax, pad=0.1, shrink=0.75)
-    # cbar.set_label("Calibration Error (Observed - Predicted)", fontsize=10)
 
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -914,6 +949,15 @@ cmap : str, default='coolwarm'
     A diverging colormap used to color the model's spiral. The center
     of the colormap represents perfect calibration, with one color for
     over-confidence and another for under-confidence.
+acov : {'default', 'half_circle', 'quarter_circle',
+    'eighth_circle'}, default='half_circle'
+    Angular coverage of the polar sector.
+
+    - ``'default'``        : full circle, :math:`2\pi` (360°)
+    - ``'half_circle'``    : :math:`\pi` (180°)
+    - ``'quarter_circle'`` : :math:`\pi/2` (90°)
+    - ``'eighth_circle'``  : :math:`\pi/4` (45°)
+    
 show_cbar : bool, default=True
     If ``True``, display a color bar that explains the diagnostic
     coloring of the calibration error.
@@ -1032,363 +1076,136 @@ def plot_model_comparison(
     alpha: float = 0.7,
     legend: bool = True,
     show_grid: bool = True,
-    grid_props: dict = None,
+    grid_props: dict | None = None,
     scale: str | None = "norm",
-    lower_bound: float = 0,
+    lower_bound: float = 0.0,
     savefig: str | None = None,
     loc: str = "upper right",
     verbose: int = 0,
+    acov: Acov = "default",
+    ax: Axes | None = None,
 ):
-    r"""Plot multi-metric model performance comparison on a radar chart.
-
-    Generates a radar chart (spider chart) visualizing multiple
-    performance metrics for one or more models simultaneously. Each
-    axis corresponds to a metric (e.g., R2, MAE, accuracy,
-    precision), and each polygon represents a model, allowing for a
-    holistic comparison of their strengths and weaknesses across
-    different evaluation criteria [1]_.
-
-    This function is highly valuable for model selection, providing a
-    compact overview that goes beyond single-score comparisons. Use
-    it when you need to balance trade-offs between various metrics
-    (like accuracy vs. training time) or understand how different
-    models perform relative to each other across a spectrum of
-    relevant performance indicators. Internally relies on helpers
-    to handle potential NaN values and determine data types [2]_.
-
-    Parameters
-    ----------
-    y_true : array-like of shape (n_samples,)
-        The ground truth (correct) target values.
-
-    *y_preds : array-like of shape (n_samples,)
-        Variable number of prediction arrays, one for each model to
-        be compared. Each array must have the same length as
-        `y_true`.
-
-    train_times : float or list of float, optional
-        Training time in seconds for each model corresponding to
-        `*y_preds`. If provided:
-
-        - A single float assumes the same time for all models.
-        - A list must match the number of models.
-
-        It will be added as an additional axis/metric on the chart.
-        Default is ``None``.
-
-    metrics : str, callable, list of these, optional
-        The performance metrics to calculate and plot. Default is
-        ``None``, which triggers automatic metric selection based on
-        the target type inferred from `y_true`:
-
-        - **Regression:** Defaults to ``["r2", "mae", "mape", "rmse"]``.
-        - **Classification:** Defaults to ``["accuracy", "precision",
-          "recall"]``.
-
-        Can be provided as:
-
-        - A list of strings: Names of metrics known by scikit-learn
-          or gofast's `get_scorer` (e.g., ``['r2', 'rmse']``).
-        - A list of callables: Functions with the signature
-          `metric(y_true, y_pred)`.
-        - A mix of strings and callables.
-
-    names : list of str, optional
-        Names for each model corresponding to `*y_preds`. Used for
-        the legend. If ``None`` or too short, defaults like
-        "Model_1", "Model_2" are generated. Default is ``None``.
-
-    title : str, optional
-        Title displayed above the radar chart. If ``None``, a generic
-        title may be used internally or omitted. Default is ``None``.
-
-    figsize : tuple of (float, float), optional
-        Figure size ``(width, height)`` in inches. If ``None``, uses
-        Matplotlib's default (often similar to ``(8, 8)`` for this
-        type of plot).
-
-    colors : list of str or None, optional
-        List of Matplotlib color specifications for each model's
-        polygon. If ``None``, colors are automatically assigned from
-        the default palette ('tab10'). If provided, the list length
-        should ideally match `n_models`.
-
-    alpha : float, optional
-        Transparency level (between 0 and 1) for the plotted lines
-        and filled areas. Default is ``0.7``. (Note: Fill alpha is
-        often hardcoded lower, e.g., 0.1, in implementation).
-
-    legend : bool, optional
-        If ``True``, display a legend mapping colors/lines to model
-        names. Default is ``True``.
-
-    show_grid : bool, optional
-        If ``True``, display the radial grid lines on the chart.
-        Default is ``True``.
-
-    scale : {'norm', 'min-max', 'std', 'standard'}, optional
-        Method for scaling metric values before plotting. Scaling is
-        applied independently to each metric (axis) across models.
-        Default is ``'norm'``.
-
-        - ``'norm'`` or ``'min-max'``: Min-max scaling. Transforms
-          values to the range [0, 1] using
-          :math:`(X - min) / (max - min)`. Useful for comparing
-          relative performance when metrics have different scales.
-        - ``'std'`` or ``'standard'``: Standard scaling (Z-score).
-          Transforms values to have zero mean and unit variance using
-          :math:`(X - mean) / std`. Preserves relative spacing better
-          than min-max but results can be negative.
-        - ``None``: Plot raw metric values without scaling. Use only
-          if metrics naturally share a comparable, non-negative range.
-
-    lower_bound : float, optional
-        Sets the minimum value for the radial axis (innermost circle).
-        Useful when using standard scaling ('std') which can produce
-        negative values, or to adjust the plot's center.
-        Default is ``0``.
-
-    savefig : str, optional
-        If provided, the file path (e.g., 'radar_comparison.svg')
-        where the figure will be saved. If ``None``, the plot is
-        displayed interactively. Default is ``None``.
-
-    loc : str, optional
-        Location argument passed to `matplotlib.pyplot.legend()` to
-        position the legend (e.g., 'upper right', 'lower left',
-        'center right'). Default is ``'upper right'``.
-
-    verbose : int, optional
-        Controls the verbosity level. ``0`` is silent. Higher values
-        may print debugging information during metric calculation or
-        scaling. Default is ``0``.
-
-    Returns
-    -------
-    ax : matplotlib.axes.Axes
-        The Matplotlib Axes object containing the radar chart. Allows
-        for further customization after the function call.
-
-    Raises
-    ------
-    ValueError
-        If lengths of `y_preds`, `names` (if provided), and
-        `train_times` (if provided) do not match. If an invalid
-        string is provided for `scale`. If a metric string name is
-        not recognized by the internal scorer.
-    TypeError
-        If `y_true` or `y_preds` contain non-numeric data.
-
-    See Also
-    --------
-    kdiagram.utils.metric_utils.get_scorer : Function likely used
-        internally to fetch metric callables (verify path).
-    sklearn.metrics : Scikit-learn metrics module.
-    matplotlib.pyplot.polar : Function for creating polar plots.
-
-    Notes
-    -----
-    This function provides a multi-dimensional view of model performance.
-
-    **Metric Calculation:**
-    For each model :math:`k` with predictions :math:`\hat{y}_k` and
-    each metric :math:`m` (from the `metrics` list), the score
-    :math:`S_{m,k}` is calculated:
-
-    .. math::
-        S_{m,k} = \text{Metric}_m(y_{true}, \hat{y}_k)
-
-    If `train_times` are provided, they are treated as an additional
-    metric axis.
-
-    **Scaling:**
-    If `scale` is specified, scaling is applied column-wise (per metric)
-    across all models before plotting:
-
-    - Min-Max ('norm'):
-
-      .. math::
-         S'_{m,k} = \frac{S_{m,k} - \min_j(S_{m,j})}{\max_j(S_{m,j}) - \min_j(S_{m,j})}
-
-    - Standard ('std'):
-
-      .. math::
-         S'_{m,k} = \frac{S_{m,k} - \text{mean}_j(S_{m,j})}{\text{std}_j(S_{m,j})}
-
-    **Plotting:**
-    The (scaled) scores :math:`S'_{m,k}` for each model :math:`k`
-    determine the radial distance along the axis corresponding to
-    metric :math:`m`. Points are connected to form a polygon for
-    each model.
-
-    References
-    ----------
-    .. [1] Wikipedia contributors. (2024). Radar chart. In Wikipedia,
-           The Free Encyclopedia. Retrieved April 14, 2025, from
-           https://en.wikipedia.org/wiki/Radar_chart
-           *(General reference for radar charts)*
-    .. [2] Kenny-Denecke, J. F., Hernandez-Amaro, A.,
-           Martin-Gorriz, M. L., & Castejon-Limos, P. (2024).
-           Lead-Time Prediction in Wind Tower Manufacturing: A Machine
-           Learning-Based Approach. *Mathematics*, 12(15), 2347.
-           https://doi.org/10.3390/math12152347
-           *(Example application using radar charts for ML comparison)*
-
-    Examples
-    --------
-    >>> from kdiagram.plot.comparison import plot_model_comparison
-    >>> import numpy as np
-    >>>
-    >>> # Example 1: Regression task
-    >>> y_true_reg = np.array([3, -0.5, 2, 7, 5])
-    >>> y_pred_r1 = np.array([2.5, 0.0, 2.1, 7.8, 5.2])
-    >>> y_pred_r2 = np.array([3.2, 0.2, 1.8, 6.5, 4.8])
-    >>> times = [0.1, 0.5] # Training times in seconds
-    >>> names = ['ModelLin', 'ModelTree']
-    >>> ax1 = plot_model_comparison(y_true_reg, y_pred_r1, y_pred_r2,
-    ...                        train_times=times, names=names,
-    ...                        metrics=['r2', 'mae', 'rmse'], # Specify metrics
-    ...                        title="Regression Model Comparison",
-    ...                        scale='norm') # Normalize for comparison
-    >>>
-    >>> # Example 2: Classification task (requires appropriate y_true/y_pred)
-    >>> y_true_clf = np.array([0, 1, 0, 1, 1, 0])
-    >>> y_pred_c1 = np.array([0, 1, 0, 1, 0, 0]) # Model 1 preds
-    >>> y_pred_c2 = np.array([0, 1, 1, 1, 1, 0]) # Model 2 preds
-    >>> ax2 = plot_model_comparison(y_true_clf, y_pred_c1, y_pred_c2,
-    ...                        names=["LogReg", "SVM"],
-    ...                        # Uses default classification metrics
-    ...                        title="Classification Model Comparison",
-    ...                        scale='norm')
-    """
+    # --- input clean/validate
     try:
-        # Remove NaN values and ensure consistency
         y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
-        # Validate y_true and each y_pred
-        temp_preds = []
-        for _, pred in enumerate(y_preds):
-            # Validate returns tuple, we need the second element
-            validated_pred = validate_yy(
-                y_true, pred, expected_type=None, flatten=True
+        tmp = []
+        for pred in y_preds:
+            pred_ok = validate_yy(
+                y_true,
+                pred,
+                expected_type=None,
+                flatten=True,
             )[1]
-            temp_preds.append(validated_pred)
-        y_preds = temp_preds
+            tmp.append(pred_ok)
+        y_preds = tmp
     except Exception as e:
-        # Catch potential errors during validation/NaN drop
         raise TypeError(f"Input validation failed: {e}") from e
 
     n_models = len(y_preds)
     if n_models == 0:
         warnings.warn(
-            "No prediction arrays (*y_preds) provided.", stacklevel=2
+            "No prediction arrays (*y_preds) provided.",
+            stacklevel=2,
         )
-        return None  # Cannot plot without predictions
+        return None
 
-    # --- Handle Names ---
+    if acov != "default":
+        warnings.warn(
+            "Non-default 'acov' for radar comparison. "
+            "Nice plot prefers full 360°; proceeding as "
+            "requested.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    # --- names
     if names is None:
         names = [f"Model_{i+1}" for i in range(n_models)]
     else:
-        names = columns_manager(
-            list(names), empty_as_none=False
-        )  # Ensure list
+        names = columns_manager(names, empty_as_none=False)
         if len(names) < n_models:
             names += [f"Model_{i+1}" for i in range(len(names), n_models)]
         elif len(names) > n_models:
             warnings.warn(
-                f"Received {len(names)} names for {n_models}"
-                f" models. Extra names ignored.",
+                f"Received {len(names)} names for {n_models} "
+                "models. Extra names ignored.",
                 UserWarning,
                 stacklevel=2,
             )
             names = names[:n_models]
 
-    # --- Handle Metrics ---
+    # --- metrics defaulting
     if metrics is None:
-        target_type = type_of_target(y_true)
-        if target_type in ["continuous", "continuous-multioutput"]:
-            # Default regression metrics
+        ttype = type_of_target(y_true)
+        if ttype in ["continuous", "continuous-multioutput"]:
             metrics = ["r2", "mae", "mape", "rmse"]
         else:
-            # Default classification metrics
             metrics = ["accuracy", "precision", "recall", "f1"]
         if verbose >= 1:
-            print(
-                f"[INFO] Auto-selected metrics for target type "
-                f"'{target_type}': {metrics}"
-            )
+            print(f"[INFO] Auto metrics for '{ttype}': {metrics}")
 
-    metrics = is_iterable(metrics, exclude_string=True, transform=True)
+    metrics = is_iterable(
+        metrics,
+        exclude_string=True,
+        transform=True,
+    )
 
     metric_funcs = []
     metric_names = []
-    error_metrics = []  # Track metrics needing sign inversion
+    error_metrics = []
 
-    for metric in metrics:
+    for m in metrics:
         try:
-            if isinstance(metric, str):
-                # get_scorer returns a callable scorer object
-                scorer_func = get_scorer(metric)
-                metric_funcs.append(scorer_func)
-                metric_names.append(metric)
-                # Identify error metrics (lower is better) for potential scaling flip
-                if metric in [
-                    "mae",
-                    "mape",
-                    "rmse",
-                    "mse",
-                ]:  # Add others if needed
-                    error_metrics.append(metric)
-            elif callable(metric):
-                metric_funcs.append(metric)
-                m_name = getattr(
-                    metric, "__name__", f"func_{len(metric_names)}"
-                )
-                metric_names.append(m_name)
-                # Cannot easily determine if callable is error/score metric
+            if isinstance(m, str):
+                f = get_scorer(m)
+                metric_funcs.append(f)
+                metric_names.append(m)
+                if m in ["mae", "mape", "rmse", "mse"]:
+                    error_metrics.append(m)
+            elif callable(m):
+                metric_funcs.append(m)
+                mname = getattr(m, "__name__", "metric")
+                metric_names.append(mname)
             else:
                 warnings.warn(
-                    f"Ignoring invalid metric type: {type(metric)}",
+                    f"Ignoring invalid metric type: {type(m)}",
                     stacklevel=2,
                 )
         except Exception as e:
             warnings.warn(
-                f"Could not retrieve scorer for metric '{metric}': {e}",
+                f"Could not retrieve scorer for metric '{m}': {e}",
                 stacklevel=2,
             )
 
     if not metric_funcs:
         raise ValueError("No valid metrics found or specified.")
 
-    # --- Handle Train Times ---
-    train_time_vals = None
+    # --- optional train time axis
+    tvals = None
     if train_times is not None:
-        if isinstance(
-            train_times, (int, float, np.number)
-        ):  # Handle single value
-            train_time_vals = np.array([float(train_times)] * n_models)
+        if isinstance(train_times, (int, float, np.number)):
+            tvals = np.array([float(train_times)] * n_models)
         else:
-            train_times = np.asarray(train_times, dtype=float)
-            if train_times.ndim != 1 or len(train_times) != n_models:
+            tvals = np.asarray(train_times, dtype=float)
+            if tvals.ndim != 1 or len(tvals) != n_models:
                 raise ValueError(
                     f"train_times must be a single float or a list/array "
                     f"of length n_models ({n_models}). "
-                    f"Got shape {train_times.shape}."
+                    f"Got shape {tvals.shape}."
                 )
-            train_time_vals = train_times
-        metric_names.append("Train Time (s)")  # Use clearer name
+        metric_names.append("Train Time (s)")
         # Add a placeholder for calculation loop, will substitute later
         metric_funcs.append("train_time_placeholder")
 
-    # --- Calculate Metric Results ---
+    # --- compute results [n_models, n_metrics]
     results = np.zeros((n_models, len(metric_names)), dtype=float)
     for i, y_pred in enumerate(y_preds):
-        for j, metric_func in enumerate(metric_funcs):
-            if metric_func == "train_time_placeholder":
-                results[i, j] = train_time_vals[i]
-            elif metric_func is not None:
+        for j, mfunc in enumerate(metric_funcs):
+            if mfunc == "train_time_placeholder":
+                results[i, j] = tvals[i]
+            elif mfunc is not None:
                 try:
-                    score = metric_func(y_true, y_pred)
-                    results[i, j] = score
+                    results[i, j] = mfunc(y_true, y_pred)
                 except Exception as e:
                     warnings.warn(
                         f"Could not compute metric "
@@ -1398,24 +1215,16 @@ def plot_model_comparison(
                     )
                     results[i, j] = np.nan
             else:
-                results[i, j] = (
-                    np.nan
-                )  # Should not happen if logic is correct
+                results[i, j] = np.nan
 
-    # --- Scale Results ---
-    # Make copy for scaling to preserve original results if needed later
-    results_scaled = results.copy()
-
-    # Handle potential NaNs before scaling
-    if np.isnan(results_scaled).any():
+    # --- scale results
+    R = results.copy()
+    if np.isnan(R).any():
         warnings.warn(
             "NaN values found in metric results. Scaling might "
             "be affected or rows/cols dropped depending on method.",
             stacklevel=2,
         )
-        # Option 1: Impute (e.g., with column mean) - complex
-        # Option 2: Use nan-aware numpy functions
-        # Let's use nan-aware functions
 
     # Note: Some metrics are better when *lower* (MAE, RMSE, MAPE, train_time).
     # For visualization where larger radius is better, we might invert these
@@ -1423,108 +1232,103 @@ def plot_model_comparison(
     if scale in ["norm", "min-max"]:
         if verbose >= 1:
             print("[INFO] Scaling metrics using Min-Max.")
-        min_vals = np.nanmin(results_scaled, axis=0)
-        max_vals = np.nanmax(results_scaled, axis=0)
-        range_vals = max_vals - min_vals
-        # Avoid division by zero for metrics with no variance
-        range_vals[range_vals < 1e-9] = 1.0
-        results_scaled = (results_scaled - min_vals) / range_vals
+        mn = np.nanmin(R, axis=0)
+        mx = np.nanmax(R, axis=0)
+        rg = mx - mn
+        rg[rg < 1e-9] = 1.0
+        R = (R - mn) / rg
         # Now, for error metrics, higher value (closer to 1) is WORSE.
         # Invert them so higher value (closer to 1) is BETTER.
         for j, name in enumerate(metric_names):
             if name in error_metrics or name == "Train Time (s)":
-                results_scaled[:, j] = 1.0 - results_scaled[:, j]
+                R[:, j] = 1.0 - R[:, j]
         # Scaled results are now in [0, 1], higher is better.
 
     elif scale in ["std", "standard"]:
         if verbose >= 1:
-            print("[INFO] Scaling metrics using Standard Scaler.")
-        mean_vals = np.nanmean(results_scaled, axis=0)
-        std_vals = np.nanstd(results_scaled, axis=0)
-        # Avoid division by zero
-        std_vals[std_vals < 1e-9] = 1.0
-        results_scaled = (results_scaled - mean_vals) / std_vals
-        # Std scaling preserves relative order but changes range.
-        # Lower errors become more negative. Higher scores become more positive.
-        # Maybe invert sign for error metrics?
+            print("[INFO] Standard scaling.")
+        mu = np.nanmean(R, axis=0)
+        sd = np.nanstd(R, axis=0)
+        sd[sd < 1e-9] = 1.0  #  Avoid division by zero
+        R = (R - mu) / sd
         for j, name in enumerate(metric_names):
             if name in error_metrics or name == "Train Time (s)":
-                results_scaled[:, j] = -results_scaled[:, j]
+                R[:, j] = -R[:, j]
         # Now higher value means better performance (higher score or lower error)
         # but range is not [0, 1]. We need to handle lower_bound.
-
     # Replace any potential NaNs resulting from scaling (e.g., if all NaNs)
-    results_scaled = np.nan_to_num(results_scaled, nan=lower_bound)
+    R = np.nan_to_num(R, nan=lower_bound)
 
-    # --- Plotting ---
-    fig = plt.figure(figsize=figsize or (8, 8))  # Default figsize here
-    ax = fig.add_subplot(111, polar=True)
+    # --- figure/axes with acov span
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize or (8.0, 8.0),
+    )
 
-    # Angles for each metric axis
-    num_metrics = len(metric_names)
-    angles = np.linspace(0, 2 * np.pi, num_metrics, endpoint=False).tolist()
-    angles_closed = angles + angles[:1]  # Repeat first angle to close plot
+    # metric angles inside requested span
+    m = len(metric_names)
+    angles = np.linspace(0.0, float(span), m, endpoint=False)
+    angles_closed = list(angles) + [angles[0]]
 
-    # Colors
+    # --- colors
     if colors is None:
-        # Use a robust colormap like tab10 if available
         try:
             cmap_obj = get_cmap("tab10", default="tab10", failsafe="discrete")
             plot_colors = [cmap_obj(i % 10) for i in range(n_models)]
-        except ValueError:  # Fallback if tab10 not found (unlikely)
+        except Exception:
             cmap_obj = get_cmap("viridis")
             plot_colors = [cmap_obj(i / n_models) for i in range(n_models)]
     else:
-        plot_colors = colors  # Use user-provided list
+        plot_colors = colors
 
-    # Plot each model
-    for i, row in enumerate(results_scaled):
-        values = np.concatenate((row, [row[0]]))  # Close the polygon
-        color = plot_colors[i % len(plot_colors)]  # Cycle colors if needed
+    # --- draw polygons
+    for i in range(n_models):
+        vals = np.concatenate((R[i], [R[i, 0]]))
         ax.plot(
             angles_closed,
-            values,
+            vals,
             label=names[i],
-            color=color,
+            color=plot_colors[i % len(plot_colors)],  # Cycle colors
             linewidth=1.5,
             alpha=alpha,
         )
-        ax.fill(angles_closed, values, color=color, alpha=0.1)  # Lighter fill
+        ax.fill(
+            angles_closed,
+            vals,
+            color=plot_colors[i % len(plot_colors)],
+            alpha=0.10,
+        )
 
-    # --- Configure Axes ---
+    # --- ticks/labels
     ax.set_xticks(angles)
     ax.set_xticklabels(metric_names)
 
-    # Adjust radial limits and labels
-    # If scaled to [0, 1], set limit slightly above 1
-    # If std scaled, auto-limit might be better, but respect lower_bound
     if scale in ["norm", "min-max"]:
         ax.set_ylim(bottom=lower_bound, top=1.05)
-        # Optional: Add radial ticks for [0, 1] scale
-        ax.set_yticks(np.linspace(lower_bound, 1, 5))
-    else:  # Raw or std scaled
+        ax.set_yticks(np.linspace(lower_bound, 1.0, 5))
+    else:
         ax.set_ylim(bottom=lower_bound)
-        # Let matplotlib auto-determine upper limit and ticks
 
-    ax.tick_params(axis="y", labelsize=8)  # Smaller radial labels
-    ax.tick_params(axis="x", pad=10)  # Pad angular labels outwards
+    ax.tick_params(axis="y", labelsize=8)
+    ax.tick_params(axis="x", pad=10)
 
-    # Grid
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    # Legend
     if legend:
-        ax.legend(loc=loc, bbox_to_anchor=(1.25, 1.05))  # Adjust position
+        ax.legend(loc=loc, bbox_to_anchor=(1.25, 1.05))
 
-    # Title
-    ax.set_title(title or "Model Performance Comparison", y=1.15, fontsize=14)
+    ax.set_title(
+        title or "Model Performance Comparison",
+        y=1.15,
+        fontsize=14,
+    )
 
-    # --- Output ---
-    plt.tight_layout(pad=2.0)  # Adjust layout
+    fig.tight_layout(pad=2.0)
 
     if savefig:
         try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
+            fig.savefig(savefig, bbox_inches="tight", dpi=300)
             print(f"Plot saved to {savefig}")
         except Exception as e:
             print(f"Error saving plot to {savefig}: {e}")
@@ -1533,13 +1337,245 @@ def plot_model_comparison(
             plt.show()
         except Exception as e:
             warnings.warn(
-                f"Could not display plot interactively ({e})."
-                f" Use savefig parameter.",
+                f"Could not display plot ({e}). Use 'savefig'.",
                 UserWarning,
                 stacklevel=2,
             )
 
     return ax
+
+
+plot_model_comparison.__doc__ = r"""
+Plot multi-metric model performance comparison on a radar chart.
+
+Generates a radar chart (spider chart) visualizing multiple
+performance metrics for one or more models simultaneously. Each
+axis corresponds to a metric (e.g., R2, MAE, accuracy,
+precision), and each polygon represents a model, allowing for a
+holistic comparison of their strengths and weaknesses across
+different evaluation criteria [1]_.
+
+This function is highly valuable for model selection, providing a
+compact overview that goes beyond single-score comparisons. Use
+it when you need to balance trade-offs between various metrics
+(like accuracy vs. training time) or understand how different
+models perform relative to each other across a spectrum of
+relevant performance indicators. Internally relies on helpers
+to handle potential NaN values and determine data types [2]_.
+
+Parameters
+----------
+y_true : array-like of shape (n_samples,)
+    The ground truth (correct) target values.
+
+*y_preds : array-like of shape (n_samples,)
+    Variable number of prediction arrays, one for each model to
+    be compared. Each array must have the same length as
+    `y_true`.
+
+train_times : float or list of float, optional
+    Training time in seconds for each model corresponding to
+    `*y_preds`. If provided:
+
+    - A single float assumes the same time for all models.
+    - A list must match the number of models.
+
+    It will be added as an additional axis/metric on the chart.
+    Default is ``None``.
+
+metrics : str, callable, list of these, optional
+    The performance metrics to calculate and plot. Default is
+    ``None``, which triggers automatic metric selection based on
+    the target type inferred from `y_true`:
+
+    - **Regression:** Defaults to ``["r2", "mae", "mape", "rmse"]``.
+    - **Classification:** Defaults to ``["accuracy", "precision",
+      "recall"]``.
+
+    Can be provided as:
+
+    - A list of strings: Names of metrics known by scikit-learn
+      or gofast's `get_scorer` (e.g., ``['r2', 'rmse']``).
+    - A list of callables: Functions with the signature
+      `metric(y_true, y_pred)`.
+    - A mix of strings and callables.
+
+names : list of str, optional
+    Names for each model corresponding to `*y_preds`. Used for
+    the legend. If ``None`` or too short, defaults like
+    "Model_1", "Model_2" are generated. Default is ``None``.
+
+title : str, optional
+    Title displayed above the radar chart. If ``None``, a generic
+    title may be used internally or omitted. Default is ``None``.
+
+figsize : tuple of (float, float), optional
+    Figure size ``(width, height)`` in inches. If ``None``, uses
+    Matplotlib's default (often similar to ``(8, 8)`` for this
+    type of plot).
+
+colors : list of str or None, optional
+    List of Matplotlib color specifications for each model's
+    polygon. If ``None``, colors are automatically assigned from
+    the default palette ('tab10'). If provided, the list length
+    should ideally match `n_models`.
+
+alpha : float, optional
+    Transparency level (between 0 and 1) for the plotted lines
+    and filled areas. Default is ``0.7``. (Note: Fill alpha is
+    often hardcoded lower, e.g., 0.1, in implementation).
+
+legend : bool, optional
+    If ``True``, display a legend mapping colors/lines to model
+    names. Default is ``True``.
+
+show_grid : bool, optional
+    If ``True``, display the radial grid lines on the chart.
+    Default is ``True``.
+
+scale : {'norm', 'min-max', 'std', 'standard'}, optional
+    Method for scaling metric values before plotting. Scaling is
+    applied independently to each metric (axis) across models.
+    Default is ``'norm'``.
+
+    - ``'norm'`` or ``'min-max'``: Min-max scaling. Transforms
+      values to the range [0, 1] using
+      :math:`(X - min) / (max - min)`. Useful for comparing
+      relative performance when metrics have different scales.
+    - ``'std'`` or ``'standard'``: Standard scaling (Z-score).
+      Transforms values to have zero mean and unit variance using
+      :math:`(X - mean) / std`. Preserves relative spacing better
+      than min-max but results can be negative.
+    - ``None``: Plot raw metric values without scaling. Use only
+      if metrics naturally share a comparable, non-negative range.
+
+lower_bound : float, optional
+    Sets the minimum value for the radial axis (innermost circle).
+    Useful when using standard scaling ('std') which can produce
+    negative values, or to adjust the plot's center.
+    Default is ``0``.
+
+savefig : str, optional
+    If provided, the file path (e.g., 'radar_comparison.svg')
+    where the figure will be saved. If ``None``, the plot is
+    displayed interactively. Default is ``None``.
+
+loc : str, optional
+    Location argument passed to `matplotlib.pyplot.legend()` to
+    position the legend (e.g., 'upper right', 'lower left',
+    'center right'). Default is ``'upper right'``.
+
+verbose : int, optional
+    Controls the verbosity level. ``0`` is silent. Higher values
+    may print debugging information during metric calculation or
+    scaling. Default is ``0``.
+acov : {'default', 'half_circle', 'quarter_circle',
+    'eighth_circle'}, default='default'
+    Angular coverage of the polar sector.
+
+    - ``'default'``        : full circle, :math:`2\pi` (360°)
+    - ``'half_circle'``    : :math:`\pi` (180°)
+    - ``'quarter_circle'`` : :math:`\pi/2` (90°)
+    - ``'eighth_circle'``  : :math:`\pi/4` (45°)
+    
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the radar chart. Allows
+    for further customization after the function call.
+
+Raises
+------
+ValueError
+    If lengths of `y_preds`, `names` (if provided), and
+    `train_times` (if provided) do not match. If an invalid
+    string is provided for `scale`. If a metric string name is
+    not recognized by the internal scorer.
+TypeError
+    If `y_true` or `y_preds` contain non-numeric data.
+
+See Also
+--------
+kdiagram.utils.metric_utils.get_scorer : Function likely used
+    internally to fetch metric callables (verify path).
+sklearn.metrics : Scikit-learn metrics module.
+matplotlib.pyplot.polar : Function for creating polar plots.
+
+Notes
+-----
+This function provides a multi-dimensional view of model performance.
+
+**Metric Calculation:**
+For each model :math:`k` with predictions :math:`\hat{y}_k` and
+each metric :math:`m` (from the `metrics` list), the score
+:math:`S_{m,k}` is calculated:
+
+.. math::
+    S_{m,k} = \text{Metric}_m(y_{true}, \hat{y}_k)
+
+If `train_times` are provided, they are treated as an additional
+metric axis.
+
+**Scaling:**
+If `scale` is specified, scaling is applied column-wise (per metric)
+across all models before plotting:
+
+- Min-Max ('norm'):
+
+  .. math::
+     S'_{m,k} = \frac{S_{m,k} - \min_j(S_{m,j})}{\max_j(S_{m,j}) - \min_j(S_{m,j})}
+
+- Standard ('std'):
+
+  .. math::
+     S'_{m,k} = \frac{S_{m,k} - \text{mean}_j(S_{m,j})}{\text{std}_j(S_{m,j})}
+
+**Plotting:**
+The (scaled) scores :math:`S'_{m,k}` for each model :math:`k`
+determine the radial distance along the axis corresponding to
+metric :math:`m`. Points are connected to form a polygon for
+each model.
+
+References
+----------
+.. [1] Wikipedia contributors. (2024). Radar chart. In Wikipedia,
+       The Free Encyclopedia. Retrieved April 14, 2025, from
+       https://en.wikipedia.org/wiki/Radar_chart
+       *(General reference for radar charts)*
+.. [2] Kenny-Denecke, J. F., Hernandez-Amaro, A.,
+       Martin-Gorriz, M. L., & Castejon-Limos, P. (2024).
+       Lead-Time Prediction in Wind Tower Manufacturing: A Machine
+       Learning-Based Approach. *Mathematics*, 12(15), 2347.
+       https://doi.org/10.3390/math12152347
+       *(Example application using radar charts for ML comparison)*
+
+Examples
+--------
+>>> from kdiagram.plot.comparison import plot_model_comparison
+>>> import numpy as np
+>>>
+>>> # Example 1: Regression task
+>>> y_true_reg = np.array([3, -0.5, 2, 7, 5])
+>>> y_pred_r1 = np.array([2.5, 0.0, 2.1, 7.8, 5.2])
+>>> y_pred_r2 = np.array([3.2, 0.2, 1.8, 6.5, 4.8])
+>>> times = [0.1, 0.5] # Training times in seconds
+>>> names = ['ModelLin', 'ModelTree']
+>>> ax1 = plot_model_comparison(y_true_reg, y_pred_r1, y_pred_r2,
+...                        train_times=times, names=names,
+...                        metrics=['r2', 'mae', 'rmse'], # Specify metrics
+...                        title="Regression Model Comparison",
+...                        scale='norm') # Normalize for comparison
+>>>
+>>> # Example 2: Classification task (requires appropriate y_true/y_pred)
+>>> y_true_clf = np.array([0, 1, 0, 1, 1, 0])
+>>> y_pred_c1 = np.array([0, 1, 0, 1, 0, 0]) # Model 1 preds
+>>> y_pred_c2 = np.array([0, 1, 1, 1, 1, 0]) # Model 2 preds
+>>> ax2 = plot_model_comparison(y_true_clf, y_pred_c1, y_pred_c2,
+...                        names=["LogReg", "SVM"],
+...                        # Uses default classification metrics
+...                        title="Classification Model Comparison",
+...                        scale='norm')
+"""
 
 
 @check_non_emptiness
@@ -1556,9 +1592,9 @@ def plot_horizon_metrics(
     cbar_label: str | None = None,
     r_label: str | None = None,
     cmap: str = "coolwarm",
-    acov: str = "default",
+    acov: Acov = "default",
     title: str | None = None,
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     alpha: float = 0.85,
     show_grid: bool = True,
     grid_props: dict | None = None,
@@ -1566,8 +1602,9 @@ def plot_horizon_metrics(
     savefig: str | None = None,
     dpi: int = 300,
     cbar: bool = True,
+    ax: Axes | None = None,
 ):
-    # --- Input Validation ---
+    # --- validate lengths
     if len(qlow_cols) != len(qup_cols):
         raise ValueError(
             "Mismatch in length between `qlow_cols` "
@@ -1579,53 +1616,46 @@ def plot_horizon_metrics(
             "quantile column lists."
         )
 
-    # --- Data Calculation ---
-    qlow_data = df[qlow_cols].values
-    qup_data = df[qup_cols].values
-    interval_widths = qup_data - qlow_data
+    # --- data
+    qlow_data = df[qlow_cols].to_numpy()
+    qup_data = df[qup_cols].to_numpy()
+    widths = qup_data - qlow_data
 
-    # Radial values are the mean width for each category/row
-    radial_values = np.mean(interval_widths, axis=1)
+    radial_vals = np.mean(widths, axis=1)
 
     if q50_cols:
-        color_vals = np.mean(df[q50_cols].values, axis=1)
+        color_vals = np.mean(df[q50_cols].to_numpy(), axis=1)
     else:
-        # Default color to the radial value if no q50 provided
-        color_vals = radial_values
+        color_vals = radial_vals
 
     if normalize_radius:
-        min_r, max_r = radial_values.min(), radial_values.max()
-        if (max_r - min_r) > 1e-9:
-            radial_values = (radial_values - min_r) / (max_r - min_r)
+        rmin, rmax = radial_vals.min(), radial_vals.max()
+        if (rmax - rmin) > 1e-9:
+            radial_vals = (radial_vals - rmin) / (rmax - rmin)
 
-    # --- Plot Setup ---
-    angular_map = {
-        "default": 2 * np.pi,
-        "half_circle": np.pi,
-        "quarter_circle": np.pi / 2,
-        "eighth_circle": np.pi / 4,
-    }
-    span = angular_map.get(acov.lower(), 2 * np.pi)
-    num_bars = len(df)
-    theta = np.linspace(0, span, num_bars, endpoint=False)
-
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # --- axes via utility (sets offset/dir/thetamax)
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
     )
-    ax.set_theta_offset(np.pi / 2)
-    ax.set_theta_direction(-1)
-    ax.set_thetamin(0)
-    ax.set_thetamax(np.degrees(span))
 
-    # --- Plot Bars ---
-    norm = Normalize(vmin=color_vals.min(), vmax=color_vals.max())
+    # --- bars
+    n = len(df)
+    theta = np.linspace(0.0, float(span), n, endpoint=False)
+
+    norm = Normalize(
+        vmin=float(np.min(color_vals)),
+        vmax=float(np.max(color_vals)),
+    )
     cmap_obj = get_cmap(cmap, default="coolwarm")
     colors = cmap_obj(norm(color_vals))
-    bar_width = (span / num_bars) * 0.9
+
+    bar_width = (float(span) / max(1, n)) * 0.9
 
     ax.bar(
         theta,
-        radial_values,
+        radial_vals,
         width=bar_width,
         color=colors,
         edgecolor="k",
@@ -1633,13 +1663,14 @@ def plot_horizon_metrics(
         linewidth=0.5,
     )
 
-    # --- Annotations and Labels (Now Controllable) ---
+    # --- annotations
     if show_value_labels:
-        for angle, radius in zip(theta, radial_values):
+        rpad = 0.03 * float(np.max(radial_vals)) if n else 0.0
+        for ang, rad in zip(theta, radial_vals):
             ax.text(
-                angle,
-                radius + 0.03 * radial_values.max(),
-                f"{radius:.2f}",
+                float(ang),
+                float(rad) + rpad,
+                f"{rad:.2f}",
                 ha="center",
                 va="bottom",
                 fontsize=8,
@@ -1651,8 +1682,9 @@ def plot_horizon_metrics(
     elif mask_angle:
         ax.set_xticklabels([])
 
-    ax.set_yticklabels([])  # Hide radial value ticks
+    ax.set_yticklabels([])
     ax.set_title(title or "Polar Bar Comparison", fontsize=14)
+
     if r_label:
         ax.set_ylabel(r_label, fontsize=12, labelpad=20)
 
@@ -1660,13 +1692,14 @@ def plot_horizon_metrics(
 
     if cbar:
         sm = cm.ScalarMappable(cmap=cmap_obj, norm=norm)
-        cbar_obj = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
-        cbar_obj.set_label(cbar_label or "Color Metric", fontsize=10)
+        sm.set_array([])  # mpl<3.8 compat
+        cax = fig.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
+        cax.set_label(cbar_label or "Color Metric", fontsize=10)
 
-    # --- Output ---
-    plt.tight_layout()
+    # --- output
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
