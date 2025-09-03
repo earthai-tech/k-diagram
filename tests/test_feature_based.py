@@ -112,7 +112,7 @@ def test_plot_feature_fingerprint_name_label_mismatch(
     if num_extra == 1:
         # A warning SHOULD be issued for MORE feature names
         longer_features = data["features"] + ["Extra Feature"]
-        with pytest.warns(UserWarning, match="More feature names"):
+        with pytest.warns(UserWarning, match="Extra feature names"):
             plot_feature_fingerprint(
                 importances=data["importances"],
                 features=longer_features,
@@ -132,7 +132,7 @@ def test_plot_feature_fingerprint_name_label_mismatch(
     if num_extra == 1:
         # A warning SHOULD be issued for MORE labels
         longer_labels = data["labels"] + ["Extra Label"]
-        with pytest.warns(UserWarning, match="More labels"):
+        with pytest.warns(UserWarning, match="Extra labels"):
             plot_feature_fingerprint(
                 importances=data["importances"],
                 features=data["features"],

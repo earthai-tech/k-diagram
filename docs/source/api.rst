@@ -129,6 +129,7 @@ Functions for visualizing feature importance and influence patterns.
 
    ~kdiagram.plot.feature_based.plot_feature_fingerprint
    ~kdiagram.plot.feature_based.plot_feature_interaction
+   ~kdiagram.plot.feature_based.plot_fingerprint
 
 .. _api_context:
 
@@ -166,6 +167,7 @@ featuring novel polar adaptations of standard diagnostic tools.
    ~kdiagram.plot.evaluation.plot_polar_pr_curve
    ~kdiagram.plot.evaluation.plot_polar_confusion_matrix
    ~kdiagram.plot.evaluation.plot_polar_confusion_matrix_in
+   ~kdiagram.plot.evaluation.plot_polar_confusion_multiclass
    ~kdiagram.plot.evaluation.plot_polar_classification_report
    ~kdiagram.plot.evaluation.plot_pinball_loss
    ~kdiagram.plot.evaluation.plot_regression_performance

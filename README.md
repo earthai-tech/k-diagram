@@ -94,48 +94,64 @@ python -m pip install . --no-deps --force-reinstall
 
 ## ⚡ Quick Start
 
-Generate an **Interval Width** plot colored by the median prediction
-in just a few lines:
+Visualize how the entire spatial pattern of forecast uncertainty evolves 
+over multiple time steps with `plot_uncertainty_drift`. This plot uses 
+concentric rings to represent each forecast period, revealing at a glance 
+how the "map" of uncertainty changes over time.
 
 ```python
+# Code Snippet
 import kdiagram as kd
+# (Requires df with multiple qlow/qup cols like sample_data_drift_uncertainty)
+# Example using dummy data generation:
 import pandas as pd
 import numpy as np
+years = range(2023, 2028) # 2028 excluded
+N=100
+df_drift = pd.DataFrame({'id': range(N)})
+qlow_cols, qup_cols = [], []
+for i, year in enumerate(years):
+   ql, qu = f'q10_{year}', f'q90_{year}'
+   qlow_cols.append(ql); qup_cols.append(qu)
+   base = np.random.rand(N)*5; width=(np.random.rand(N)+0.5)*(1+i)
+   df_drift[ql] = base; df_drift[qu]=base+width
 
-# 1. Create some sample data
-np.random.seed(77)
-n_points = 150
-df = pd.DataFrame({
-    'location': range(n_points),
-    'elevation': np.linspace(100, 500, n_points), # For color
-    'q10_val': np.random.rand(n_points) * 20
-})
-width = 5 + (df['elevation'] / 100) * np.random.uniform(0.5, 2, n_points)
-df['q90_val'] = df['q10_val'] + width
-df['q50_val'] = df['q10_val'] + width / 2
-
-# 2. Generate the plot
-ax = kd.plot_interval_width(
-    df=df,
-    q_cols=['q10_val', 'q90_val'],  # Lower and Upper quantiles
-    z_col='q50_val',                # Color points by Q50 prediction
-    title='Prediction Interval Width (Colored by Median)',
-    cmap='plasma',
-    s=35,
-    cbar=True                       # Show color bar
+kd.plot_uncertainty_drift(
+    df_drift,
+    qlow_cols=qlow_cols,
+    qup_cols=qup_cols,
+    acov="half_circle", 
+    dt_labels=[str(y) for y in years],
+    title='Uncertainty Drift (Interval Width)'
 )
-
-# Plot is shown automatically (or use savefig='path/to/plot.png')
-# import matplotlib.pyplot as plt
-# plt.show() # Not needed if savefig is None
 ```
+
 <p align="center">
     <img
-    src="docs/source/images/readme_prediction_interval_width.png"
-    alt="Interval Width Plot"
+    src="docs/source/_static/readme_uncertainty_drift_plot.png"
+    alt="Uncertainty Drift Plot"
     width="500"
     />
 </p>
+
+-----
+
+## 📊 Explore the Visualizations
+
+The Quick Start shows just one of the many specialized plots available. 
+The full documentation gallery showcases the complete suite of 
+diagnostic tools. Discover how to:
+
+- **Compare Models:** Use radar charts to weigh the trade-offs between 
+  accuracy, speed, and other metrics.
+- **Diagnose Reliability:** Go beyond accuracy with calibration spirals to 
+  see if your probability forecasts are trustworthy.
+- **Analyze Error Structures:** Uncover hidden biases and patterns in your 
+  model's mistakes with polar residual plots.
+- **Understand Feature Effects:** Visualize feature importance "fingerprints" 
+  and complex two-way feature interactions.
+
+➡️ **Explore the [Full Gallery](https://k-diagram.readthedocs.io/en/latest/gallery/index.html)**
 
 -----
 ## 📚 Documentation
@@ -168,149 +184,17 @@ k-diagram plot_coverage_diagnostic data.csv \
     --savefig coverage_plot.png
 ```
 
-*(See `k-diagram <command> --help` for options specific to each plot type).*
+See **[k-diagram <command> --help](https://k-diagram.readthedocs.io/en/latest/cli/introduction.html)**
+for options specific to each plot type).
 
 -----
-
-## 📊 Gallery Highlights
-
-A small selection of plots. See the full gallery in the docs.
-
-### 1. Coverage Diagnostic
-
-**Insight:** Assess if your prediction intervals (e.g., 90% interval) 
-are well-calibrated. Do they actually cover the observed values 
-at the expected rate?
-
-**Visualization:** Points plotted at radius 1 (covered) or 0 (not covered).
-A reference line shows the overall empirical coverage rate.
-
-```python
-# Code Snippet
-import kdiagram as kd
-import pandas as pd
-import numpy as np
-
-# Dummy Data
-N = 150
-df = pd.DataFrame({
-    'actual': np.random.normal(10, 2, N),
-    'q10': 10 - np.random.uniform(1, 3, N),
-    'q90': 10 + np.random.uniform(1, 3, N)
-})
-
-kd.plot_coverage_diagnostic(
-    df,
-    actual_col='actual',
-    q_cols=['q10', 'q90'],
-    title='Interval Coverage Check (Q10-Q90)',
-    verbose=1
-)
-````
-
-<p align="center">
-    <img
-    src="docs/source/images/readme_coverage_diagnostic_plot.png"
-    alt="Coverage Diagnostic Plot"
-    width="500"
-    />
-</p>
-
-
-### 2\. Uncertainty Drift Over Time
-
-**Insight:** See how the width of prediction intervals (uncertainty) 
-evolves across different time steps or forecast horizons. Identify locations 
-where uncertainty grows rapidly.
-
-**Visualization:** Concentric rings represent time steps. The radius/shape 
-of each ring indicates the (normalized) interval width at each location/angle.
-
-```python
-# Code Snippet
-import kdiagram as kd
-# (Requires df with multiple qlow/qup cols like sample_data_drift_uncertainty)
-# Example using dummy data generation:
-import pandas as pd
-import numpy as np
-years = range(2021, 2025)
-N=100
-df_drift = pd.DataFrame({'id': range(N)})
-qlow_cols, qup_cols = [], []
-for i, year in enumerate(years):
-   ql, qu = f'q10_{year}', f'q90_{year}'
-   qlow_cols.append(ql); qup_cols.append(qu)
-   base = np.random.rand(N)*5; width=(np.random.rand(N)+0.5)*(1+i)
-   df_drift[ql] = base; df_drift[qu]=base+width
-
-kd.plot_uncertainty_drift(
-    df_drift,
-    qlow_cols=qlow_cols,
-    qup_cols=qup_cols,
-    dt_labels=[str(y) for y in years],
-    title='Uncertainty Drift (Interval Width)'
-)
-```
-
-<p align="center">
-    <img
-    src="docs/source/images/readme_uncertainty_drift_plot.png"
-    alt="Uncertainty Drift Plot"
-    width="500"
-    />
-</p>
-
-
-### 3\. Actual vs. Predicted
-
-**Insight:** Directly compare actual observed values against model predictions
- (e.g., median forecast) point-by-point in a circular layout.
- 
-**Visualization:** Two lines or sets of points representing actual and predicted
- values. Vertical lines connect corresponding points, showing the error magnitude.
-
-```python
-# Code Snippet
-import kdiagram as kd
-import pandas as pd
-import numpy as np
-# Example using dummy data generation:
-N=120
-df_avp = pd.DataFrame({
-    'actual': 10+5*np.sin(np.linspace(0,4*np.pi,N))+np.random.randn(N),
-    'pred': 10+5*np.sin(np.linspace(0,4*np.pi,N))+np.random.randn(N)*0.5+1
-})
-
-kd.plot_actual_vs_predicted(
-    df_avp,
-    actual_col='actual',
-    pred_col='pred',
-    title='Actual vs. Predicted Comparison'
-)
-```
-
-<p align="center">
-    <img
-    src="docs/source/images/readme_actual_vs_predicted.png"
-    alt="Actual vs Predicted Plot"
-    width="500"
-    />
-</p>
-
------
-
-More examples, including plots for interval consistency, velocity,
-Taylor diagrams,feature fingerprints, etc are available in the documentation.
-
-➡️ **See the [Complete Gallery](https://k-diagram.readthedocs.io/en/latest/gallery/index.html)**
-
 
 ## 🙌 Contributing
 
 Contributions are welcome. Please:
 
 1.  Check the **[Issues Tracker](https://github.com/earthai-tech/k-diagram/issues)** 
-   for existing bugs or ideas.
+    for existing bugs or ideas.
 2.  Fork the repository.
 3.  Create a new branch for your feature or fix.
 4.  Make your changes and add tests.

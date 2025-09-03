@@ -8,6 +8,7 @@ from numbers import Integral
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
 from ..compat.sklearn import StrOptions, validate_params
 from ..utils.handlers import columns_manager
@@ -45,6 +46,7 @@ def taylor_diagram(
     size_props=None,
     title=None,
     savefig=None,
+    ax=None,
 ):
     r"""
     Plot a Taylor diagram to compare multiple predictions against
@@ -222,9 +224,13 @@ def taylor_diagram(
     """
 
     # Create polar subplot
-    fig, ax = plt.subplots(
-        subplot_kw={"projection": "polar"}, figsize=fig_size or (8, 6)
-    )
+    if ax is None:
+        fig, ax = plt.subplots(
+            subplot_kw={"projection": "polar"},
+            figsize=fig_size or (8, 6),
+        )
+    else:
+        fig = ax.figure
 
     # Handle reference properties
     ref_props = ref_props or {}
@@ -377,11 +383,12 @@ def taylor_diagram(
 
     # Legend and title
     ax.legend(loc="upper right")
-    plt.title(title or "Taylor Diagram")
+    ax.set_title(title or "Taylor Diagram")
 
+    fig.tight_layout()
     # Save or show figure
     if savefig:
-        plt.savefig(savefig, bbox_inches="tight")
+        fig.savefig(savefig, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -423,6 +430,7 @@ def plot_taylor_diagram_in(
     fig_size=None,
     title=None,
     savefig=None,
+    ax=None,
 ):
     r"""Plot Taylor Diagram with background color map.
 
@@ -632,9 +640,11 @@ def plot_taylor_diagram_in(
     ref_std = np.std(reference)
 
     # Setup figure & polar axis
-
-    fig = plt.figure(figsize=fig_size or (10, 8))
-    ax = fig.add_subplot(111, polar=True)
+    if ax is None:
+        fig = plt.figure(figsize=fig_size or (10, 8))
+        ax = fig.add_subplot(111, polar=True)
+    else:
+        fig = ax.figure
 
     # Decide coverage
     acov = acov or "half_circle"
@@ -798,9 +808,9 @@ def plot_taylor_diagram_in(
     if cbar not in ["off", False]:
         fig.colorbar(c, ax=ax, pad=0.1, label="Correlation")
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, bbox_inches="tight")
+        fig.savefig(savefig, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -835,6 +845,7 @@ def plot_taylor_diagram(
     fig_size: tuple[int, int] | None = None,
     title: str | None = None,
     savefig: str | None = None,
+    ax: Axes | None = None,
 ):
     r"""Plot a standard Taylor Diagram.
 
@@ -1034,8 +1045,11 @@ def plot_taylor_diagram(
     #     correlations, normalize = "auto", method="01"
     #     )
     # Create figure and polar subplot
-    fig = plt.figure(figsize=fig_size or (10, 8))
-    ax = fig.add_subplot(111, polar=True)
+    if ax is None:
+        fig = plt.figure(figsize=fig_size or (10, 8))
+        ax = fig.add_subplot(111, polar=True)
+    else:
+        fig = ax.figure
 
     # Convert correlation to angles (in radians)
     # angle = arccos(corr), so perfect correlation = 0 rad,
@@ -1156,12 +1170,12 @@ def plot_taylor_diagram(
     ax.set_title(title or "Taylor Diagram", pad=60)  # 50
     # ax.set_xlabel('Standard Deviation', labelpad=15)
 
-    plt.legend(loc="upper right", bbox_to_anchor=(1.25, 1.05))
+    ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.05))
     # plt.subplots_adjust(top=0.8)
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, bbox_inches="tight")
+        fig.savefig(savefig, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()

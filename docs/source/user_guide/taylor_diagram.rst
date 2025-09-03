@@ -33,16 +33,16 @@ The following functions generate variations of the Taylor Diagram:
 
    * - Function
      - Description
-   * - :func:`~kdiagram.plot.evaluation.taylor_diagram`
+   * - :func:`~kdiagram.plot.taylor_diagram.taylor_diagram`
      - Flexible Taylor Diagram plotter; accepts pre-computed statistics
        (std. dev., correlation) or raw prediction/reference arrays.
        Includes options for background shading based on different
        weighting strategies.
-   * - :func:`~kdiagram.plot.evaluation.plot_taylor_diagram_in`
+   * - :func:`~kdiagram.plot.taylor_diagram.plot_taylor_diagram_in`
      - Taylor Diagram plotter featuring a background colormap encoding
        correlation or performance zones, with specific shading strategies.
        Requires raw prediction/reference arrays.
-   * - :func:`~kdiagram.plot.evaluation.plot_taylor_diagram`
+   * - :func:`~kdiagram.plot.taylor_diagram.plot_taylor_diagram`
      - A potentially simpler interface for plotting Taylor Diagrams,
        requiring raw prediction/reference arrays. (May share features
        with the other functions).
@@ -81,8 +81,8 @@ Let's explore the specific functions.
 
 .. _ug_taylor_diagram:
 
-Flexible Taylor Diagram (:func:`~kdiagram.plot.evaluation.taylor_diagram`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flexible Taylor Diagram (:func:`~kdiagram.plot.taylor_diagram.taylor_diagram`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 This function provides a highly flexible way to generate Taylor Diagrams.
@@ -143,12 +143,10 @@ On the diagram:
 * Provides options for customizing reference display and label sizes.
 
 
-**Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_flexible>`
-
 .. _ug_plot_taylor_diagram_in:
 
-Taylor Diagram with Background Shading (:func:`~kdiagram.plot.evaluation.plot_taylor_diagram_in`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Taylor Diagram with Background Shading (:func:`~kdiagram.plot.taylor_diagram.plot_taylor_diagram_in`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 This function specializes in creating Taylor Diagrams with a prominent
@@ -197,12 +195,11 @@ of the background color field `CC` based on `radial_strategy`:
   focused on correlation or performance.
 * Offers fine control over plot orientation (`zero_location`, `direction`).
 
-**Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_background_shading_focus>`
 
 .. _ug_plot_taylor_diagram:
 
-Basic Taylor Diagram (:func:`~kdiagram.plot.evaluation.plot_taylor_diagram`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Basic Taylor Diagram (:func:`~kdiagram.plot.taylor_diagram.plot_taylor_diagram`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Purpose:**
 This function appears to offer a potentially simpler interface for
@@ -236,7 +233,197 @@ and correlation (:math:`\rho`) to the angular coordinate
 * May offer a more streamlined interface if fewer customization options
   are needed compared to `taylor_diagram` or `plot_taylor_diagram_in`.
 
-**Example:** :ref:`View Gallery Example <gallery_plot_taylor_diagram_basic>`
+
+.. _taylor_diagram_practical_example:
+
+A Practical Case Study: Evaluating Climate Models
+---------------------------------------------------
+
+The Taylor Diagram is an indispensable tool in fields like climate
+science for evaluating the performance of complex simulations. Let's
+walk through a realistic case study to see how each of the ``k-diagram``
+Taylor Diagram functions can be used in a complete analysis workflow.
+
+.. admonition:: Practical Example
+   :class: pratical-example
+
+   A climate research institute has developed three different Global
+   Climate Models (GCMs) to simulate historical monthly surface
+   temperatures. They need to compare how well each model's output
+   corresponds to a reference dataset of actual observations. The goal
+   is to find the model that best captures both the pattern
+   (correlation) and the magnitude of climate variability (standard
+   deviation).
+
+**Step 1: The Standard Comparison with ``plot_taylor_diagram``**
+
+The first step is always a clean, standard comparison. The
+researchers want to see the performance of their three models—"A
+(High-Var)", "B (Low-Corr)", and "C (Balanced)"—on a single,
+uncluttered plot. The ``plot_taylor_diagram`` function is perfect
+for this initial assessment.
+
+.. code-block:: pycon
+
+  >>> import numpy as np
+  >>> import kdiagram as kd
+  >>>
+  >>> # --- 1. Simulate historical observations and model outputs ---
+  >>> np.random.seed(0)
+  >>> reference = np.random.normal(15, 2.5, 360) # Observed temperatures
+  >>>
+  >>> # Model A: Good correlation, but too much variability
+  >>> y_pred_A = reference + np.random.normal(0, 1.5, 360)
+  >>> # Model B: Lower variability, but lower correlation
+  >>> y_pred_B = reference * 0.7 + np.random.normal(0, 1.2, 360)
+  >>> # Model C: A well-balanced model
+  >>> y_pred_C = reference * 0.95 + np.random.normal(0, 0.8, 360)
+  >>>
+  >>> # --- 2. Generate the standard Taylor Diagram ---
+  >>> ax1 = kd.plot_taylor_diagram(
+  ...     y_pred_A, y_pred_B, y_pred_C,
+  ...     reference=reference,
+  ...     names=['A (High-Var)', 'B (Low-Corr)', 'C (Balanced)'],
+  ...     title='Step 1: Standard Climate Model Comparison'
+  ... )
+
+
+.. figure:: ../images/userguide_plot_taylor_diagram.png
+  :align: center
+  :width: 80%
+  :alt: A standard Taylor Diagram comparing three climate models.
+
+  A standard Taylor Diagram showing the performance of three climate
+  models relative to the reference observations.
+
+This initial plot gives us our first look at the models' performance.
+Let's analyze the position of each point relative to the "Reference"
+marker.
+
+.. topic:: Quick Interpretation
+
+   This initial comparison shows that "Model C (Balanced)" is the best
+   performer among the three. Its point (gray) is located closest to the
+   red "Reference" point, indicating it has the lowest overall error.
+   The plot reveals the specific trade-offs: "Model A" achieves a high
+   correlation but overestimates the climate's variability (its standard
+   deviation is too high), while "Model B" both underestimates the
+   variability and has a lower correlation. Model C strikes the best
+   balance of both high correlation and realistic variability.
+
+**Step 2: Adding Context with ``plot_taylor_diagram_in``**
+
+Next, the researchers want to add more visual context to their
+analysis. They decide to create a version of the diagram where the
+background is colored based on the correlation value, providing an
+intuitive heatmap of performance. The ``plot_taylor_diagram_in``
+function, with its built-in background shading, is ideal for this.
+
+.. code-block:: pycon
+
+  >>> # --- Use the same data as Step 1 ---
+  >>>
+  >>> # --- Generate the Taylor Diagram with background shading ---
+  >>> ax2 = kd.plot_taylor_diagram_in(
+  ...     y_pred_A, y_pred_B, y_pred_C,
+  ...     reference=reference,
+  ...     names=['A (High-Var)', 'B (Low-Corr)', 'C (Balanced)'],
+  ...     radial_strategy='convergence', # Color by correlation
+  ...     cmap='plasma',
+  ...     title='Step 2: Comparison with Correlation Shading'
+  ... )
+
+.. figure:: ../images/userguide_plot_taylor_diagram_in.png
+  :align: center
+  :width: 80%
+  :alt: A Taylor Diagram with background shading for correlation.
+
+  A Taylor Diagram where the background color directly visualizes
+  the correlation, with warmer colors indicating higher correlation.
+
+The background color now provides an immediate visual guide to the
+high-performance regions of the plot, making the interpretation
+even more intuitive.
+
+.. topic:: Quick Interpretation
+
+   This diagram enhances the standard plot by adding a background color
+   gradient, where warmer, brighter colors (yellow) indicate higher
+   correlation. The shading provides immediate visual context for the
+   models' performance. It instantly highlights that "Model A" and
+   "Model C" fall within the high-performance yellow and orange regions,
+   visually confirming their strong correlation with the reference data.
+   In contrast, "Model B" is situated in a cooler, less vibrant area,
+   emphasizing its lower correlation score relative to the others.
+ 
+
+**Step 3: Incorporating External Data with ``taylor_diagram``**
+
+Finally, a collaborating institution sends in summary statistics
+for a fourth, computationally expensive model, "D (External)". The
+researchers do not have the raw prediction data, only the
+pre-computed standard deviation and correlation coefficient.
+
+The highly flexible ``taylor_diagram`` function is the only one that
+can handle this situation, as it accepts pre-computed statistics
+directly. They can use it to add Model D to their original comparison.
+
+.. code-block:: pycon
+
+  >>> # --- 1. Use pre-computed stats for the first three models ---
+  >>> stddevs = [np.std(y_pred_A), np.std(y_pred_B), np.std(y_pred_C)]
+  >>> corrs = [
+  ...     np.corrcoef(reference, y_pred_A)[0, 1],
+  ...     np.corrcoef(reference, y_pred_B)[0, 1],
+  ...     np.corrcoef(reference, y_pred_C)[0, 1]
+  ... ]
+  >>> names = ['A (High-Var)', 'B (Low-Corr)', 'C (Balanced)']
+  >>>
+  >>> # --- 2. Add the stats for the new external model ---
+  >>> stddevs.append(2.6) # Pre-computed std. dev. for Model D
+  >>> corrs.append(0.98)  # Pre-computed correlation for Model D
+  >>> names.append('D (External)')
+  >>>
+  >>> # --- 3. Generate the plot from statistics ---
+  >>> ax3 = kd.taylor_diagram(
+  ...     stddev=stddevs,
+  ...     corrcoef=corrs,
+  ...     names=names,
+  ...     reference=reference, # Still need reference for its std. dev.
+  ...     title='Step 3: Adding a Model from External Statistics'
+  ... )
+
+.. figure:: ../images/userguide_taylor_diagram_flexible.png
+  :align: center
+  :width: 80%
+  :alt: A Taylor Diagram plotted from pre-computed statistics.
+
+  A Taylor Diagram generated from a mix of calculated and
+  pre-computed statistics, demonstrating the function's
+  flexibility.
+
+This final diagram allows for a complete comparison across all four
+models, even when the raw data for one is unavailable.
+
+.. topic:: Quick Interpretation
+
+   This plot demonstrates the function's flexibility by incorporating
+   "Model D" using only its pre-computed statistics. The primary finding
+   is that all four models significantly overestimate the observed
+   climate variability, as their points are located at a much larger
+   radius than the "Reference" star. However, among them, "Model D
+   (External)" and "Model C" are the top performers due to their very
+   high correlation scores (angles close to zero). Model D is arguably
+   the best of the group, as its near-perfect correlation makes it the
+   closest to the reference point in terms of overall error (RMSD).
+
+This comprehensive workflow demonstrates how the different Taylor
+Diagram functions in ``k-diagram`` can be used together to conduct a
+thorough and flexible model evaluation. To explore these examples in
+more detail, please visit the gallery.
+
+**Example:**
+See the gallery :ref:`gallery_taylor_diagram` for code and plot examples.
 
 .. raw:: html
 

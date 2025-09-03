@@ -142,7 +142,7 @@ def test_plot_error_violins_no_cols_raises_error(multi_model_error_data):
 
 def test_plot_error_violins_mismatched_names_warns(multi_model_error_data):
     """Test that a warning is issued for mismatched names."""
-    with pytest.warns(UserWarning, match="Number of names"):
+    with pytest.warns(UserWarning, match="Names length does not"):
         ax = plot_error_violins(
             multi_model_error_data,
             "Model_A_Error",

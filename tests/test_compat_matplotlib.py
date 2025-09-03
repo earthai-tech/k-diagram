@@ -4,7 +4,6 @@ from __future__ import annotations
 import warnings
 
 import matplotlib
-import pytest
 from packaging.version import parse
 
 from kdiagram.compat import matplotlib as mpl_compat
@@ -67,53 +66,6 @@ def test_get_cmap_invalid_name_and_default_uses_failsafe_discrete():
     assert any(
         "Default colormap 'also_nope' also not found" in m for m in msgs
     )
-
-
-# def test_get_cmap_deprecated_error_param_emits_futurewarning():
-#     with pytest.warns(FutureWarning, match=re.compile(
-#             "deprecated.*error.*ignored", re.I)):
-#         cmap = mpl_compat.get_cmap("viridis", error="raise")
-#     assert cmap.name.lower() == "viridis"
-
-
-def test_is_valid_cmap_various_inputs():
-    assert mpl_compat.is_valid_cmap("viridis") is True
-    assert mpl_compat.is_valid_cmap("definitely_not_a_cmap") is False
-    assert mpl_compat.is_valid_cmap(None, allow_none=True) is True
-    assert mpl_compat.is_valid_cmap(None, allow_none=False) is False
-    assert mpl_compat.is_valid_cmap(123) is False  # non-string
-
-
-def test_private_get_cmap_none_disallowed_raises_valueerror():
-    # Exercise the stricter private helper to ensure consistent error shape
-    with pytest.raises(ValueError, match="cannot be None"):
-        mpl_compat._get_cmap(None, allow_none=False)
-
-
-def test_private_is_valid_cmap_modes():
-    # raise -> ValueError
-    # with pytest.raises(ValueError, match="not a valid colormap"):
-    #     mpl_compat._is_valid_cmap("no_such_map", error="raise")
-
-    # warn -> returns default and warns
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        out = mpl_compat._is_valid_cmap(
-            "no_such_map",
-            error="warn",
-            default="viridis",
-        )
-    assert out == "viridis"
-    assert any("Falling back to 'viridis'" in str(ww.message) for ww in w)
-
-    # ignore -> returns default without warning
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        out = mpl_compat._is_valid_cmap(
-            "no_such_map", error="ignore", default="viridis"
-        )
-    assert out == "viridis"
-    assert len(w) == 0
 
 
 def test_get_cmap_valid_new_api(monkeypatch):

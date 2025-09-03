@@ -136,7 +136,7 @@ def test_plot_credibility_bands_runs(probabilistic_data):
 def test_plot_credibility_bands_raises_error_on_wrong_qcols():
     """Test ValueError for incorrect number of q_cols."""
     df = pd.DataFrame({"q10": [1], "q50": [2], "q90": [3], "f": [1]})
-    with pytest.raises(ValueError, match="must be a tuple of three"):
+    with pytest.raises(ValueError, match=r"must be a 3-tuple"):
         plot_credibility_bands(df=df, q_cols=("q10", "q90"), theta_col="f")
 
 

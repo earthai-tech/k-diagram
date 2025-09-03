@@ -22,7 +22,8 @@ html[data-theme="light"] {
     /* A muted version of the secondary brown for borders and subtle text. */
     --color-brand-secondary-muted: #8D6E63;
 
-
+    --color-brand-code: #8B0B6F;
+    
     /* --- Sidebar Overrides (Light Mode) --- */
     --color-sidebar-background: var(--color-background-secondary);
     /* Use a tint of the new primary blue for sidebar hover. */
@@ -600,6 +601,287 @@ table.docutils caption {
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='15' y1='9' x2='9' y2='15'%3E%3C/line%3E%3Cline x1='9' y1='9' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
 }
 
+
+/* ----------------------------------------------------------------------
+ * PRACTICAL EXAMPLE(S) — hero admonition
+ * Use either:
+ *   .. admonition:: Practical example(s)
+ * --------------------------------------------------------------------*/
+
+/* Hide the built-in Sphinx/Furo icon on Practical Example(s) */
+.admonition.practical-examples .admonition-title::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
+/* 1. Define colors for the new lighter theme */
+:root {
+    /* MODIFIED: New lighter accent colors */
+    --admonition-example-accent-light: #E0E8F0; /* A very light blue/gray for borders */
+    --admonition-example-bg-light: #F8F9FA;      /* A very light, clean gray for the background */
+}
+
+/* Hide the built-in Sphinx/Furo icon */
+.admonition.practical-examples .admonition-title::before {
+    content: none !important; display: none !important;
+}
+
+/* ----------------------------------------------------------------------
+ * PRACTICAL EXAMPLE(S) — hero admonition
+ * --------------------------------------------------------------------*/
+.admonition.practical-examples {
+    position: relative;
+    /* MODIFIED: Use the new very light border color */
+    border: .5px solid var(--admonition-example-accent-light);
+    border-radius: 14px;
+    overflow: hidden;
+    /* MODIFIED: Removed the complex gradient for a simple light gray background */
+    background: none; /*var(--admonition-example-bg-light);*/
+    /* MODIFIED: Made the shadow much lighter and more subtle */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: box-shadow .18s ease, border-color .18s ease;
+}
+
+.admonition.practical-examples:hover {
+    /* MODIFIED: A slightly stronger but still subtle hover shadow */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    /* MODIFIED: A slightly darker border color on hover */
+    border-color: color-mix(in srgb, var(--color-brand-primary) 20%, #FFF);
+}
+
+/* Title bar: gradient from Primary -> Tertiary */
+.admonition.practical-examples .admonition-title {
+    display: flex;
+    align-items: center;
+    gap: .8em;
+    padding: .7em 1.2em;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: .2px;
+    background:
+        linear-gradient(90deg, var(--color-brand-code), #ffe0ff);
+}
+
+/* Icon (play-in-circle = “try it now”) */
+.admonition.practical-examples .admonition-title::before {
+    content: "";
+    width: 1.25em; height: 1.25em; flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-size: contain;      mask-size: contain;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolygon points='10,8 16,12 10,16'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolygon points='10,8 16,12 10,16'/%3E%3C/svg%3E");
+}
+
+/* Body spacing */
+.admonition.practical-examples > :not(.admonition-title) {
+    padding: 1.05em 1.2em 1.25em;
+}
+
+.admonition.practical-examples code,
+.admonition.practical-examples pre {
+    border-color: color-mix(in srgb, var(--color-brand-tertiary) 28%, var(--color-code-border));
+}
+
+/* Dark mode adjustments */
+html[data-theme="dark"] .admonition.practical-examples {
+    /* MODIFIED: Simple dark background, slightly lighter than main page */
+    background: var(--color-background-secondary);
+    /* MODIFIED: Darker, more subtle border for dark mode */
+    border-color: color-mix(in srgb, var(--color-brand-primary) 15%, #000);
+    /* MODIFIED: Subtle dark mode shadow */
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+html[data-theme="dark"] .admonition.practical-examples::before {
+    /* MODIFIED: Dark mode accent bar */
+    background: color-mix(in srgb, var(--color-brand-primary) 20%, #000);
+}
+html[data-theme="dark"] .admonition.practical-examples .admonition-title {
+    color: var(--color-background-primary);
+}
+
+/* ----------------------------------------------------------------------
+ * BEST PRACTICE(S) — green hero variant
+ * --------------------------------------------------------------------*/
+.admonition.best-practice {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--color-brand-quaternary) 30%, var(--color-border));
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--color-brand-quaternary) 7%, transparent) 0%,
+      transparent 65%),
+    var(--color-background-primary);
+  box-shadow: 0 8px 22px rgba(0,0,0,.08);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.admonition.best-practice:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.14);
+  border-color: color-mix(in srgb, var(--color-brand-quaternary) 48%, var(--color-border));
+}
+
+.admonition.best-practice .admonition-title {
+  display: flex; align-items: center; gap: .8em;
+  padding: .95em 1.2em; color: #fff; font-weight: 800; letter-spacing: .2px;
+  background: linear-gradient(90deg,
+    var(--color-brand-quaternary),
+    color-mix(in srgb, var(--color-brand-quaternary) 72%, var(--color-brand-primary)));
+}
+.admonition.best-practice .admonition-title::before {
+  content: ""; width: 1.2em; height: 1.2em; background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' \
+stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' \
+stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+}
+
+.admonition.best-practice::before {
+  content: "";
+  position: absolute; inset: 0 auto 0 0; width: 8px;
+  background: var(--color-brand-quaternary);
+  opacity: .95;
+}
+
+.admonition.best-practice::after {
+  content: attr(data-badge);
+  position: absolute; top: .85rem; right: -36px;
+  transform: rotate(45deg);
+  background: var(--color-brand-quaternary);
+  color: #fff; font-weight: 900; letter-spacing: .8px;
+  padding: .25rem 1.75rem; font-size: .70rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,.18);
+}
+
+html[data-theme="dark"] .admonition.best-practice {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--color-brand-quaternary) 14%, transparent) 0%,
+      transparent 65%),
+    var(--color-background-secondary);
+  box-shadow: 0 8px 22px rgba(0,0,0,.50);
+}
+html[data-theme="dark"] .admonition.best-practice .admonition-title {
+  color: var(--color-background-primary);
+}
+html[data-theme="dark"] .admonition.best-practice::after {
+  box-shadow: 0 2px 10px rgba(0,0,0,.55);
+}
+
+
+/* ----------------------------------------------------------------------
+ * PLOT ANATOMY — hero admonition
+ * Use:
+ * .. admonition:: Plot Anatomy
+ * --------------------------------------------------------------------*/
+/* Hide the built-in Sphinx/Furo icon */
+.admonition.plot-anatomy .admonition-title::before {
+    content: none !important;
+    display: none !important;
+}
+
+/* Main container styles */
+.admonition.plot-anatomy {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--color-brand-primary) 26%, var(--color-border));
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-brand-primary) 6%, transparent) 0%,
+            transparent 65%),
+        var(--color-background-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06); /* Softer shadow */
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+/* Hover effect: minimal movement, soft shadow */
+.admonition.plot-anatomy:hover {
+    transform: none;  /* No movement */
+    box-shadow: 0 4px 12px rgba(0,0,0,.14); /* Softer shadow */
+    border-color: color-mix(in srgb, var(--color-brand-primary) 42%, var(--color-border));
+}
+
+/* Title bar: gradient from Primary -> Tertiary */
+.admonition.plot-anatomy .admonition-title {
+    display: flex;
+    align-items: center;
+    gap: .8em;
+    padding: .95em 1.2em;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: .2px;
+    background:
+        linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-tertiary));
+}
+
+/* Icon (compass icon) */
+.admonition.plot-anatomy .admonition-title::before {
+    content: "";
+    width: 1.25em; height: 1.25em; flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-size: contain;      mask-size: contain;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolygon points='16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolygon points='16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76'/%3E%3C/svg%3E");
+}
+
+/* Body spacing - kept consistent */
+.admonition.plot-anatomy > :not(.admonition-title) {
+    padding: 1.05em 1.2em 1.25em;
+}
+
+/* Left accent bar */
+.admonition.plot-anatomy::before {
+    content: "";
+    position: absolute;
+    inset: 1px auto 1px 1px;
+    width: 1px;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-brand-primary) 82%, transparent),
+        color-mix(in srgb, var(--color-brand-tertiary) 82%, transparent)
+    );
+    border-top-left-radius: 14px;
+    border-bottom-left-radius: 14px;
+    opacity: .8;
+}
+
+/* Corner ribbon - customized to "KEY" */
+.admonition.plot-anatomy::after {
+    content: "KEY"; /* Changed text from attr(data-badge) to "KEY" */
+    position: absolute; top: .85rem; right: -22px; /* Adjusted position for shorter text */
+    transform: rotate(45deg);
+    background: var(--color-brand-primary);
+    color: #fff; font-weight: 900; letter-spacing: .8px;
+    padding: .25rem 1.75rem; font-size: .70rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,.18);
+}
+
+/* Dark mode adjustments */
+html[data-theme="dark"] .admonition.plot-anatomy {
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-brand-primary) 14%, transparent) 0%,
+            transparent 65%),
+        var(--color-background-secondary);
+    box-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+html[data-theme="dark"] .admonition.plot-anatomy .admonition-title {
+    color: var(--color-background-primary);
+}
+html[data-theme="dark"] .admonition.plot-anatomy::after {
+    box-shadow: 0 2px 10px rgba(0,0,0,.55);
+}
+
 /*--------------------------------------------------------------------------
  * Sidebar Customization (Furo) 
  *--------------------------------------------------------------------------*/
@@ -644,7 +926,73 @@ table.docutils caption {
   font-weight: normal !important;
 }
 
+/* Hide the built-in Sphinx/Furo icon on Practical Example(s) */
+.admonition.practical-examples .admonition-title::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 
+/* ----------------------------------------------------------------------
+ * PRACTICAL EXAMPLE(S) — hero admonition
+ * Use either:
+ *   .. admonition:: Practical example(s)
+ * --------------------------------------------------------------------*/
+/* Define a primary color for easy customization */
+:root {
+    --admonition-example-color:#047481;  /*#4A90E2; A nice, scholarly blue */
+    --admonition-example-bg: #F8FAFC;    /* #F8FAFC;A very light gray background */
+}
+
+/* Style the main admonition container */
+.admonition.practical-example {
+    border-left: 5px solid var(--admonition-example-color);
+    background-color: var(--admonition-example-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin: 2em 0; /* Add space above and below */
+    padding: 0; /* Remove default padding to have the title flush */
+    overflow: hidden; /* Keeps the title within the rounded corners */
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Add a subtle hover effect */
+.admonition.practical-example:hover {
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Style the title block of the admonition */
+.admonition.practical-example .admonition-title {
+    background-color: var(--admonition-example-color);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1em;
+    margin: 0;
+    padding: 12px 20px;
+    /* Add a lab flask icon using an inline SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-flask-conical'%3E%3Cpath d='M10 22h4M8.5 22l1.5-3.5L6 14.5l-2 3.5-2 3.5h16l-2-3.5-2-3.5L14 18.5l1.5 3.5'%3E%3C/path%3E%3Cpath d='M14 14.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4v0Z'%3E%3C/path%3E%3Cpath d='M6 10.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4.5'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 20px center;
+    padding-left: 55px; /* Make space for the icon */
+}
+
+/* Style the content inside the admonition box */
+.admonition.practical-example > *:not(.admonition-title) {
+    padding: 1em 25px;
+}
+
+/* Ensure the first element after the title has no extra top margin */
+.admonition.practical-example .admonition-title + * {
+    margin-top: 0;
+}
+/* Ensure the last element has no extra bottom margin */
+.admonition.practical-example > *:last-child {
+    margin-bottom: 0;
+    padding-bottom: 25px;
+}
 /*--------------------------------------------------------------------------
  * Sphinx Design Components 
  *--------------------------------------------------------------------------*/
@@ -1288,6 +1636,19 @@ html[data-theme="dark"] .see-also-tiles .sd-card:hover{
     border: 2px solid var(--color-background-primary);
     box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
 }
+
+/* Popup skin (JS provides layout/animation inline so this is purely visual) */
+.card-preview-popup {
+  border: 1px solid color-mix(in srgb, var(--color-brand-tertiary) 25%, var(--color-border));
+  background: var(--color-background-primary);
+}
+.card-preview-popup img {
+  display: block;
+}
+
+/* Ensure seealso cards can host absolute children (belt & suspenders) */
+.see-also-tiles .seealso-card { position: relative; }
+
 /*
  * Remove the html Raw htm line 
 */

@@ -1,4 +1,3 @@
-# File: kdiagram/compat/sklearn.py
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 
@@ -6,145 +5,21 @@
 A compatibility module to handle API changes across different
 versions of Matplotlib.
 """
+from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
+from typing import Any
 
 import matplotlib
+import numpy as np
 from packaging.version import parse
 
 # Get the installed Matplotlib version
 _MPL_VERSION = parse(matplotlib.__version__)
 
 
-__all__ = ["get_cmap", "is_valid_cmap"]
-
-
-def _get_cmap(name="viridis", lut=None, allow_none=False):
-    """Get a Matplotlib colormap with version compatibility.
-
-    This function acts as a robust wrapper to retrieve a colormap
-    object, ensuring consistent behavior across different
-    Matplotlib versions. It handles the API change from
-    `matplotlib.cm.get_cmap` to `matplotlib.colormaps.get`.
-
-    Parameters
-    ----------
-    name : str or None, optional
-        The name of the colormap to retrieve. Defaults to "viridis".
-    lut : int, optional
-        The number of colors in the lookup table. This parameter
-        is only used for Matplotlib versions older than 3.6 and
-        is ignored in newer versions. Defaults to None.
-    allow_none : bool, optional
-        If True, passing `name=None` will return `None` without
-        raising an error. If False (default), passing `name=None`
-        will raise a `ValueError`. This is the primary control for
-        preventing unexpected `TypeError` exceptions downstream.
-
-    Returns
-    -------
-    matplotlib.colors.Colormap or None
-        The requested colormap instance. Returns `None` only if
-        `name` is None and `allow_none` is True.
-
-    Raises
-    ------
-    ValueError
-        If `name` is `None` and `allow_none` is False, if `name` is
-        not a string (and not None), or if the named colormap
-        does not exist.
-    """
-    if name is None:
-        if allow_none:
-            return None
-        else:
-            raise ValueError(
-                "Colormap `name` cannot be None when `allow_none` is False."
-            )
-
-    if not isinstance(name, str):
-        raise ValueError(f"Colormap name must be a string, not {type(name)}.")
-
-    if _MPL_VERSION >= parse("3.6"):
-        # The new API raises KeyError for invalid names. We catch it and
-        # re-raise as ValueError to match the old API's behavior. This
-        # ensures that try/except ValueError blocks in the main code
-        # continue to work as expected.
-
-        try:
-            result = matplotlib.colormaps.get(name)
-            if result is None and not allow_none:
-                raise KeyError
-            else:
-                return result
-
-        except (TypeError, KeyError, ValueError) as err:
-            raise ValueError(
-                f"'{name}' is not a valid colormap name."
-            ) from err
-    else:
-        # The old API raises ValueError for invalid names.
-
-        return matplotlib.cm.get_cmap(name, lut)
-
-
-def _is_valid_cmap(cmap, default="viridis", error="raise"):
-    """Legacy check if a colormap name is valid by attempting to retrieve it.
-
-    This utility leverages the robust `get_cmap` wrapper to handle
-    different Matplotlib versions and input types seamlessly.
-
-    Parameters
-    ----------
-    cmap : str
-        The name of the colormap to validate.
-    default : str, optional
-        The colormap name to return if `cmap` is found to be
-        invalid. Defaults to "viridis".
-    error : {'raise', 'warn', 'ignore'}, optional
-        Defines how to handle an invalid `cmap` name.
-        - 'raise': Raise a `ValueError` (default).
-        - 'warn': Issue a `UserWarning` and return the `default`.
-        - 'ignore': Silently return the `default` value.
-
-    Returns
-    -------
-    str
-        A valid colormap name, which is either the original `cmap`
-        or the `default` value if `cmap` was invalid.
-
-    Raises
-    ------
-    ValueError
-        If `cmap` is invalid and `error` is 'raise', or if the
-        `error` parameter itself is given an invalid value.
-    """
-    try:
-        # We call get_cmap with its safe default (allow_none=False)
-        # because this function's purpose is to validate names.
-        # It will raise a ValueError for any invalid input.
-        cmap = _get_cmap(cmap, allow_none=False)
-        return cmap
-    except ValueError as err:
-        # The name is invalid, so handle it based on the 'error' flag.
-        if error == "raise":
-            raise ValueError(
-                f"'{cmap}' is not a valid colormap name."
-            ) from err
-        elif error == "warn":
-            warnings.warn(
-                f"Invalid `cmap` name '{cmap}'. Falling back to '{default}'.",
-                UserWarning,
-                stacklevel=2,
-            )
-            return default
-        elif error == "ignore":
-            return default
-        else:
-            raise ValueError(
-                "Invalid value for 'error' parameter. Must be 'raise', "
-                "'warn', or 'ignore'."
-            ) from err
+__all__ = ["get_cmap", "is_valid_cmap", "get_colors"]
 
 
 def is_valid_cmap(cmap, allow_none=False, **kw):  # **for future extension
@@ -297,3 +172,95 @@ def get_cmap(
         stacklevel=2,
     )
     return _retrieve("viridis")
+
+
+def get_colors(
+    n: int,
+    colors: str | Sequence | None = None,
+    cmap: str | None = "viridis",
+    *,
+    default: str = "viridis",
+    allow_none: bool = False,
+    error: str | None = None,
+    failsafe: str = "continuous",
+    **kw: Any,
+) -> list | None:
+    """
+    Return a list of exactly *n* colors with sensible fallbacks.
+
+    Priority:
+      1) If *colors* is a colormap name → sample that colormap.
+      2) If *colors* is a single color → use it for the first item and
+         pad remaining from a colormap.
+      3) If *colors* is a sequence → use as many as provided, then pad
+         from a colormap if shorter, or truncate if longer.
+      4) Else → sample from *cmap* (if given) or *default*.
+
+    Parameters
+    ----------
+    n : int
+        The number of colors required.
+    colors : str, list of str, optional
+        A list of user-specified colors. Can also be a single color
+        or a colormap name.
+    cmap : str, optional
+        A colormap name to sample from if no colors are provided.
+    default : str, default="viridis"
+        The fallback colormap name if `cmap` is invalid.
+    allow_none : bool, default=False
+        Whether to allow `None` as a valid return value if no valid
+        colors are provided or found.
+    error : str, optional
+        Deprecated. This argument is no longer used.
+    failsafe : str, default="continuous"
+        If both `cmap` and `default` are invalid, this defines the
+        fallback colormap type. Options are:
+        - "continuous": Uses a continuous colormap (default).
+        - "discrete": Uses a discrete colormap like `tab10`.
+
+    Returns
+    -------
+    list
+        A list of exactly `n` colors. The list may come from a colormap
+        or from the user-specified colors, padded/truncated as needed.
+    """
+    if n <= 0:
+        return [] if not allow_none else None
+
+    # Retrieve colormap (either from cmap or default)
+    cmap_obj = get_cmap(
+        cmap,
+        default=default,
+        allow_none=True,
+        error=error,
+        failsafe=failsafe,
+        **kw,
+    )
+
+    # Generate colors from the colormap
+    _COLORS = cmap_obj(np.linspace(0, 1, n))
+
+    # Case when colors is a sequence (either a list of colors or a single color)
+    if colors is not None:
+        # If colors is a single color, treat it as a list
+        if isinstance(colors, str):
+            colors = [colors]
+
+        # Ensure that we have a valid sequence of colors
+        user_colors = list(colors)
+        # If the provided colors are fewer than `n`, pad from the colormap
+        if len(user_colors) < n:
+            pad = _COLORS[: n - len(user_colors)]
+            return user_colors + list(pad)
+
+        # If the provided colors are more than `n`, truncate them
+        if len(user_colors) > n:
+            return list(user_colors[:n])
+
+        # If we have exactly `n` colors, return them
+        return list(user_colors)
+
+    # If no colors provided, sample from the colormap
+    if allow_none and cmap_obj is None:
+        return None
+    return _COLORS.tolist()

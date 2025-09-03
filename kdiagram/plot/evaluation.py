@@ -1,11 +1,14 @@
 #   License: Apache-2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
+from __future__ import annotations
+
 import warnings
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from sklearn.metrics import (
     auc,
     average_precision_score,
@@ -17,12 +20,17 @@ from sklearn.metrics import (
     roc_curve,
 )
 
-from ..compat.matplotlib import get_cmap
+from ..compat.matplotlib import get_colors
 from ..compat.sklearn import root_mean_squared_error, type_of_target
 from ..decorators import check_non_emptiness
 from ..utils.handlers import columns_manager
 from ..utils.mathext import compute_pinball_loss
-from ..utils.plot import set_axis_grid
+from ..utils.plot import (
+    canonical_acov,
+    set_axis_grid,
+    setup_polar_axes,
+    warn_acov_preference,
+)
 from ..utils.validator import validate_yy
 
 __all__ = [
@@ -41,14 +49,20 @@ __all__ = [
 def plot_polar_roc(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
-    names: Optional[list[str]] = None,
+    names: list[str] | None = None,
     title: str = "Polar ROC Curve",
     figsize: tuple[float, float] = (8, 8),
-    cmap: str = "viridis",
+    cmap: str = "tab10",
+    colors: list[str] = None,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    acov: str = "quarter_circle",
+    fill_alpha: float = 0.15,
+    show_no_skill: bool = True,
+    show_auc: bool = True,
+    savefig: str | None = None,
     dpi: int = 300,
+    ax: Axes | None = None,
 ):
     if not y_preds:
         raise ValueError(
@@ -66,29 +80,53 @@ def plot_polar_roc(
 
     y_true, _ = validate_yy(y_true, y_preds[0])  # Validate first pred
 
+    # Respect parameter but force quarter-circle
+    canon = canonical_acov(acov, raise_on_invalid=False)
+    if canon != "quarter_circle":
+        warnings.warn(
+            "plot_polar_roc currently renders best as a quarter circle. "
+            f"Received acov='{acov}'. For ROC, θ=0 at the right (East) and a "
+            "90° span give the clearest reading of FPR (angle) vs TPR (radius). "
+            "Proceeding with acov='quarter_circle'.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
+    else:
+        fig = ax.figure
+
+    # cmap_obj = get_cmap(cmap, default="viridis")
+    # colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+    colors = get_colors(
+        len(y_preds),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
     )
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
 
     # --- Plot No-Skill Reference Spiral ---
     # In polar, the y=x line becomes an Archimedean spiral
-    no_skill_theta = np.linspace(0, np.pi / 2, 100)
-    no_skill_radius = np.linspace(0, 1, 100)
-    ax.plot(
-        no_skill_theta,
-        no_skill_radius,
-        color="gray",
-        linestyle="--",
-        lw=1.5,
-        label="No-Skill (AUC = 0.5)",
-    )
+    if show_no_skill:
+        no_skill_theta = np.linspace(0, np.pi / 2, 100)
+        no_skill_radius = np.linspace(0, 1, 100)
+        ax.plot(
+            no_skill_theta,
+            no_skill_radius,
+            color="gray",
+            linestyle="--",
+            lw=1.5,
+            label="No-Skill (AUC = 0.5)",
+        )
 
     # --- Calculate and Plot ROC for Each Model ---
-    for i, y_pred in enumerate(y_preds):
-        fpr, tpr, _ = roc_curve(y_true, y_pred)
+    for i, (name, pred) in enumerate(zip(names, y_preds)):
+        fpr, tpr, _ = roc_curve(y_true, pred)
         roc_auc = auc(fpr, tpr)
 
         # Map FPR to angle and TPR to radius
@@ -96,16 +134,16 @@ def plot_polar_roc(
         model_radius = tpr
 
         # Plot the model's ROC spiral
+        label = f"{name} (AUC = {roc_auc:.2f})" if show_auc else name
         ax.plot(
             model_theta,
             model_radius,
             color=colors[i],
             lw=2.5,
-            label=f"{names[i]} (AUC = {roc_auc:.2f})",
+            label=label,
         )
-
         # Fill the area under the curve (AUC)
-        ax.fill(model_theta, model_radius, color=colors[i], alpha=0.15)
+        ax.fill(model_theta, model_radius, 0.0, color=colors[i], alpha=0.15)
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
@@ -117,14 +155,14 @@ def plot_polar_roc(
     ax.set_xticks(np.linspace(0, np.pi / 2, 6))
     ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
 
-    ax.set_xlabel("False Positive Rate")
+    ax.set_xlabel("False Positive Rate", labelpad=25)
     ax.set_ylabel("True Positive Rate", labelpad=25)
     ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -142,35 +180,62 @@ analytics framework in :footcite:p:`kouadiob2025`.
 
 Parameters
 ----------
-y_true : np.ndarray
-    1D array of true binary labels (0 or 1).
-*y_preds : np.ndarray
-    One or more 1D arrays of predicted probabilities or scores
-    for the positive class.
-names : list of str, optional
-    Display names for each of the models. If not provided,
-    generic names like ``'Model 1'`` will be generated.
+y_true : array-like of shape (n_samples,)
+    Ground-truth binary labels (0/1).  Values are validated and
+    flattened.  If labels are not in {0, 1}, they will be cast
+    to integers after validation.
+*y_preds : array-like of shape (n_samples,), required
+    One or more arrays of predicted *scores* or *probabilities*
+    for the positive class.  Each array is validated against
+    ``y_true`` and flattened.  At least one prediction vector
+    must be provided.
+names : list of str or None, default=None
+    Display names for the prediction series.  When ``None``,
+    generic names such as ``"Model 1"``, ``"Model 2"``, … are
+    generated.  If provided but the length differs from the
+    number of series, a warning is issued and generic names are
+    used.
 title : str, default="Polar ROC Curve"
-    The title for the plot.
-figsize : tuple of (float, float), default=(8, 8)
-    The figure size in inches.
-cmap : str, default='viridis'
-    The colormap used to assign a unique color to each model's
-    curve.
+    Figure title.
+figsize : tuple of float, default=(8, 8)
+    Figure size in inches.
+cmap : str, default="viridis"
+    Matplotlib colormap used to assign distinct colors to the
+    curves.
 show_grid : bool, default=True
-    Toggle the visibility of the polar grid lines.
-grid_props : dict, optional
-    Custom keyword arguments passed to the grid for styling.
-savefig : str, optional
-    The file path to save the plot. If ``None``, the plot is
-    displayed interactively.
+    Whether to display polar grid lines.  Styling can be tuned
+    through ``grid_props``.
+grid_props : dict or None, default=None
+    Keyword arguments forwarded to the internal grid helper to
+    adjust grid line style (e.g., ``{"linestyle": "--",
+    "alpha": 0.5}``).
+acov : {"quarter_circle", ...}, default="quarter_circle"
+    Angular coverage request.  **For this release it is accepted
+    only for compatibility; any value other than
+    ``"quarter_circle"`` causes a warning and the plot is reset
+    to a 0–90° span with θ=0 at East.**
+fill_alpha : float, default=0.15
+    Opacity used to fill the area under each ROC curve.
+show_no_skill : bool, default=True
+    If ``True``, draws the baseline no-skill curve (TPR = FPR)
+    as a dashed line.
+show_auc : bool, default=True
+    If ``True``, appends the numerical AUC value to each legend
+    label.
+savefig : str or None, default=None
+    When a path is given, the figure is saved to that location
+    (directory must exist).  If ``None``, the figure is shown.
 dpi : int, default=300
-    The resolution (dots per inch) for the saved figure.
+    Resolution used when saving the figure.
+ax : matplotlib.axes.Axes or None, default=None
+    Existing polar axes to draw on.  When ``None``, a new figure
+    and polar axes are created.
 
 Returns
 -------
 ax : matplotlib.axes.Axes
-    The Matplotlib Axes object containing the plot.
+    The polar axes containing the ROC visualization.  This can
+    be used for further customization.
 
 See Also
 --------
@@ -199,6 +264,13 @@ This function adapts the concept to a polar plot:
 A model with no skill (random guessing) is represented by a
 perfect Archimedean spiral. A good model will have a curve that
 bows outwards, maximizing the area under the curve (AUC).
+
+the plot is **always** rendered as a *quarter circle* (0–90°) with
+θ=0 placed at the **East** (right) of the plot.  Passing any
+value for ``acov`` other than ``"quarter_circle"`` will emit a
+warning and the setting will be reset to a quarter circle.  This
+layout yields the clearest reading of FPR (angle) versus TPR
+(radius) for ROC.
 
 Examples
 --------
@@ -233,17 +305,24 @@ References
 def plot_polar_confusion_matrix(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
-    names: Optional[list[str]] = None,
+    names: list[str] | None = None,
     normalize: bool = True,
     title: str = "Polar Confusion Matrix",
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
+    colors: list[str] = None,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
+    grid_props: dict[str, Any] | None = None,
     mask_radius: bool = False,
-    savefig: Optional[str] = None,
+    savefig: str | None = None,
     dpi: int = 300,
-):
+    ax: Axes | None = None,
+    acov: str = "default",
+    zero_at: Literal["N", "E", "S", "W"] = "N",
+    clockwise: bool = True,
+    categories: list[str] = None,
+) -> Axes:
+
     # --- Input Validation and Preparation ---
     if not y_preds:
         raise ValueError(
@@ -261,73 +340,113 @@ def plot_polar_confusion_matrix(
 
     y_true, _ = validate_yy(y_true, y_preds[0])
 
-    # Check for target type and handle multiclass
     target_type = type_of_target(y_true)
     if target_type != "binary":
-        raise NotImplementedError(
-            f"Polar confusion matrix currently only supports binary "
-            f"classification. Got target type '{target_type}'. A chord "
-            f"diagram is planned for multiclass support in the future."
+        raise ValueError(
+            "Polar confusion matrix currently supports only binary "
+            f"classification. Got target type '{target_type}'."
+            "For multiclass classification, use "
+            "`plot_polar_confusion_multiclass` instead."
         )
 
     # --- Calculate Confusion Matrices ---
     matrices = []
     for y_pred in y_preds:
-        # For binary classification, we assume predictions are probabilities
-        # and use a 0.5 threshold.
         y_pred_class = (np.asarray(y_pred) > 0.5).astype(int)
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred_class).ravel()
+        # order: TP, FP, TN, FN to match your categories below
         matrices.append([tp, fp, tn, fn])
 
-    matrices = np.array(matrices)
+    matrices = np.asarray(matrices, dtype=float)
     if normalize:
         totals = matrices.sum(axis=1, keepdims=True)
+        # guard against division by zero
+        totals[totals == 0] = 1.0
         matrices = matrices / totals
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # AXES with ACOV (angular coverage)
+    canon = canonical_acov(acov, raise_on_invalid=False, fallback="default")
+    # Optional, but recommended: nudge users toward a full 360° for CM
+    warn_acov_preference(canon, preferred="default")
+
+    # Create/configure a polar Axes and get the span in radians
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=canon,
+        figsize=figsize,
+        zero_at=zero_at,  # where θ=0 points, default "N"
+        clockwise=clockwise,  # True => clockwise
     )
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
 
-    # --- Plot Bars for Each Model ---
-    num_models = len(y_preds)
-    bar_width = (2 * np.pi / 4) / (num_models + 1)  # Width of each bar
+    # cmap_obj = get_cmap(cmap, default="viridis")
+    # colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+    colors = get_colors(
+        len(y_preds),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
 
-    categories = [
+    # Bars computed from the SPAN (no hard-coded 2pi)
+    categories = columns_manager(categories, empty_as_none=False)
+
+    _CATEGORIES = [
         "True Positive",
         "False Positive",
         "True Negative",
         "False Negative",
     ]
-    angles = np.linspace(0, 2 * np.pi, 4, endpoint=False)
 
-    for i, (name, matrix) in enumerate(zip(names, matrices)):
-        offsets = angles + (i - num_models / 2 + 0.5) * bar_width
+    categories += _CATEGORIES
+    categories = categories[:4]
+
+    n_sectors = len(categories)
+
+    # Centers of each sector over the chosen span
+    angles = np.linspace(0.0, span, n_sectors, endpoint=False)
+
+    # Each sector is span / n_sectors wide; share it across models
+    sector_width = span / n_sectors
+    # 80% of sector width total for bars; split among models
+    bar_width = (sector_width * 0.80) / max(1, len(y_preds))
+
+    for i, (name, row) in enumerate(zip(names, matrices)):
+        # offset bars around the sector center for side-by-side display
+        offset = (i - (len(y_preds) - 1) / 2.0) * bar_width
+        centers = angles + offset
         ax.bar(
-            offsets,
-            matrix,
+            centers,
+            row,  # 4 values: TP, FP, TN, FN
             width=bar_width,
             color=colors[i],
             alpha=0.7,
             label=name,
+            edgecolor="black",
+            linewidth=0.5,
         )
 
-    # --- Formatting ---
-    ax.set_title(title, fontsize=16, y=1.1)
+    # Formatting
+    ax.set_title(title, fontsize=16, y=1.10)
     ax.set_xticks(angles)
     ax.set_xticklabels(categories)
-    ax.set_ylabel("Proportion" if normalize else "Count", labelpad=25)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+
+    ax.set_ylabel(
+        "Proportion" if normalize else "Count",
+        labelpad=30,
+    )
+
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    # Legends can get cramped on small spans; keep outside on the right
+    ax.legend(loc="upper right", bbox_to_anchor=(1.30, 1.10))
+
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -346,36 +465,64 @@ Negatives (FN).
 Parameters
 ----------
 y_true : np.ndarray
-    1D array of true binary labels (0 or 1).
+    1D array of true binary labels (0 or 1). Shape
+    ``(n_samples,)``.
 *y_preds : np.ndarray
-    One or more 1D arrays of predicted probabilities or scores
-    for the positive class. A threshold of 0.5 is used to
-    convert probabilities to class labels.
+    One or more 1D arrays of predicted probabilities or
+    scores for the positive class. A fixed threshold of
+    ``0.5`` is applied to derive class labels.
 names : list of str, optional
-    Display names for each of the models. If not provided,
-    generic names like ``'Model 1'`` will be generated.
+    Display names for the models. If not provided, generic
+    names like ``'Model 1'`` are generated.
 normalize : bool, default=True
-    If ``True``, the confusion matrix values are normalized to
-    proportions (summing to 1.0 for each model). If ``False``,
-    raw counts are shown.
+    If ``True``, values are converted to proportions that sum
+    to ``1.0`` within each model. If ``False``, raw counts
+    are shown.
 title : str, default="Polar Confusion Matrix"
-    The title for the plot.
+    Title to place above the figure.
 figsize : tuple of (float, float), default=(8, 8)
-    The figure size in inches.
+    Figure size in inches.
 cmap : str, default='viridis'
-    The colormap used to assign a unique color to each model's
-    set of bars.
+    Colormap used to assign distinct colors to the bars of
+    each model.
 show_grid : bool, default=True
-    Toggle the visibility of the polar grid lines.
+    Toggle the polar grid. Set to ``False`` for a minimal
+    look.
 grid_props : dict, optional
-    Custom keyword arguments passed to the grid for styling.
+    Keyword arguments forwarded to the grid styling helper,
+    e.g. ``{'linestyle': '--', 'alpha': 0.5}``.
 mask_radius : bool, default=False
-    If ``True``, hide the radial tick labels.
+    If ``True``, hide the radial tick labels to declutter
+    the plot.
 savefig : str, optional
-    The file path to save the plot. If ``None``, the plot is
-    displayed interactively.
+    File path where the figure is saved. If ``None``, the
+    plot is shown interactively.
 dpi : int, default=300
-    The resolution (dots per inch) for the saved figure.
+    Resolution in dots per inch used when saving.
+ax : matplotlib.axes.Axes, optional
+    Existing polar axes to draw on. If ``None``, a new
+    figure and polar axes are created.
+acov : {'default', 'half_circle', 'quarter_circle',
+    'eighth_circle'}, default='default'
+    Angular coverage (span) of the polar plot. ``'default'``
+    covers 360°, ``'half_circle'`` 180°, ``'quarter_circle'``
+    90°, and ``'eighth_circle'`` 45°. Fewer degrees compress
+    the four sectors into a smaller sweep.
+zero_at : {'N', 'E', 'S', 'W'}, default='N'
+    Cardinal direction where ``θ = 0`` is placed. For
+    example, ``'E'`` puts zero at the right-hand side.
+clockwise : bool, default=True
+    Direction of increasing angle. ``True`` draws clockwise;
+    ``False`` draws counter-clockwise.
+categories : list of str, optional
+    Custom labels for the four sectors. Must contain exactly
+    four items. If ``None``, uses::
+        
+        ['True Positive', 'False Positive',
+         'True Negative', 'False Negative']
+        
+    The sectors are laid out starting at ``θ = 0`` and follow
+    the chosen direction.
 
 Returns
 -------
@@ -443,18 +590,30 @@ References
 def plot_polar_confusion_matrix_in(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    class_labels: Optional[list[str]] = None,
+    class_labels: list[str] | None = None,
     normalize: bool = True,
     title: str = "Polar Confusion Matrix",
     figsize: tuple[float, float] = (8, 8),
-    cmap: str = "viridis",
+    cmap: str = "tab10",
+    colors: list[str] = None,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
+    grid_props: dict[str, Any] | None = None,
     mask_radius: bool = False,
-    savefig: Optional[str] = None,
+    acov: str = "default",
+    zero_at: Literal["N", "E", "S", "W"] = "N",
+    clockwise: bool = True,
+    categories: list[str] = None,
+    savefig: str | None = None,
     dpi: int = 300,
-):
-    # --- Input Validation and Preparation ---
+    ax: Axes | None = None,
+) -> Axes:
+
+    if categories is not None:
+        warnings.warn(
+            "Categories is kept for API symmetry; unused", stacklevel=2
+        )
+
+    # ----- validate inputs -----
     y_true, y_pred = validate_yy(y_true, y_pred)
 
     labels = np.unique(np.concatenate((y_true, y_pred)))
@@ -462,69 +621,100 @@ def plot_polar_confusion_matrix_in(
 
     if class_labels and len(class_labels) != n_classes:
         warnings.warn(
-            "Length of class_labels does not match number of classes.",
+            "Length of class_labels does not match number of classes. "
+            "Falling back to generic labels.",
             stacklevel=2,
         )
         class_labels = None
+
     if not class_labels:
         class_labels = [f"Class {lo}" for lo in labels]
 
-    # --- Calculate Confusion Matrix ---
+    # ----- compute confusion matrix (row-normalize if asked) -----
     cm = confusion_matrix(y_true, y_pred, labels=labels)
-
     if normalize:
-        # Normalize across rows (true labels)
         row_sums = cm.sum(axis=1, keepdims=True)
-        row_sums[row_sums == 0] = 1  # Avoid division by zero
-        cm = cm.astype("float") / row_sums
+        row_sums[row_sums == 0] = 1  # avoid div-by-zero
+        cm = cm.astype(float) / row_sums
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # ----- configure polar axes with acov helpers -----
+    canon = canonical_acov(acov, raise_on_invalid=False, fallback="default")
+    # Heuristic: full 360° usually looks best for multiclass CM
+    warn_acov_preference(canon, preferred="default")
+
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=canon,
+        figsize=figsize,
+        zero_at=zero_at,  # where θ=0 points (N/E/S/W)
+        clockwise=clockwise,  # True => clockwise
     )
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, n_classes))
+    # ----- colors -----
+    colors = get_colors(
+        n_classes,
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
+    # cmap_obj = get_cmap(cmap, default="viridis")
+    # colors = cmap_obj(np.linspace(0, 1, n_classes))
 
-    # --- Plot Grouped Bars ---
-    bar_width = (2 * np.pi / n_classes) / (n_classes + 1)
-    # Angles for each "True Label" group
-    group_angles = np.linspace(0, 2 * np.pi, n_classes, endpoint=False)
+    # ----- layout: sectors and bar widths driven by 'span' -----
+    # One sector per TRUE class across the chosen angular span
+    sector_width = span / max(1, n_classes)
+    group_angles = np.linspace(0.0, span, n_classes, endpoint=False)
 
-    for i in range(n_classes):  # For each true class
-        # Calculate offsets for the predicted class bars within the group
-        offsets = group_angles + (i - n_classes / 2 + 0.5) * bar_width
-        # The values are the predictions for that true class
+    # Inside each sector, render 'n_classes' bars (one per PRED class).
+    # Reserve ~80% of the sector for bars, split evenly among them.
+    bar_width = (sector_width * 0.80) / max(1, n_classes)
+
+    # ----- draw grouped bars -----
+    # Loop over predicted class index; draw its bar in every sector.
+    for i in range(n_classes):
+        # offset bars around the sector center for side-by-side display
+        offset = (i - (n_classes - 1) / 2.0) * bar_width
+        centers = group_angles + offset
+        # values: column i => predicted==class i across all true classes
         values = cm[:, i]
         ax.bar(
-            offsets,
+            centers,
             values,
             width=bar_width,
             color=colors[i],
             alpha=0.7,
             label=f"Predicted {class_labels[i]}",
+            edgecolor="black",
+            linewidth=0.5,
         )
 
-    # --- Formatting ---
-    ax.set_title(title, fontsize=16, y=1.1)
+    # ----- cosmetics -----
+    ax.set_title(title, fontsize=16, y=1.10)
     ax.set_xticks(group_angles)
     ax.set_xticklabels([f"True\n{lo}" for lo in class_labels], fontsize=10)
-    ax.set_ylabel("Proportion" if normalize else "Count", labelpad=25)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+
+    # Slightly larger pad raises the radial label to avoid clashes
+    ax.set_ylabel("Proportion" if normalize else "Count", labelpad=30)
+
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    # Legends can get cramped on narrow spans; keep it outside
+    ax.legend(loc="upper right", bbox_to_anchor=(1.30, 1.10))
+
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
+
     return ax
 
 
-# Create a more convenient alias for the function
+# Convenient alias
 plot_polar_confusion_multiclass = plot_polar_confusion_matrix_in
 
 plot_polar_confusion_matrix_in.__doc__ = r"""
@@ -634,86 +824,123 @@ References
 def plot_polar_pr_curve(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
-    names: Optional[list[str]] = None,
+    names: list[str] | None = None,
     title: str = "Polar Precision-Recall Curve",
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
+    colors: list[str] = None,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
-    savefig: Optional[str] = None,
+    grid_props: dict[str, Any] | None = None,
+    acov: str = "quarter_circle",
+    fill_alpha: float = 0.15,
+    show_no_skill: bool = True,
+    show_ap: bool = True,
+    savefig: str | None = None,
     dpi: int = 300,
-):
-    # --- Input Validation ---
+    ax: Axes | None = None,
+) -> Axes:
+
+    # ---------- validation ----------
     if not y_preds:
         raise ValueError("Provide at least one prediction array (*y_preds).")
 
     if names and len(names) != len(y_preds):
         warnings.warn(
-            "Number of names does not match models. Using defaults.",
+            ("Number of names does not match models. " "Using defaults."),
             stacklevel=2,
         )
         names = None
     if not names:
-        names = [f"Model {i+1}" for i in range(len(y_preds))]
+        names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
+    # Canonicalize and enforce quarter-circle coverage
+    canon = canonical_acov(acov, raise_on_invalid=False)
+    if canon != "quarter_circle":
+        warnings.warn(
+            (
+                "Non-default 'acov' received (acov="
+                f"'{acov}'). The polar PR plot is fixed to a "
+                "quarter circle (0–90°) with θ=0 at the right "
+                "(East) so Recall maps cleanly to angle and "
+                "Precision to radius. Proceeding with "
+                "acov='quarter_circle'."
+            ),
+            UserWarning,
+            stacklevel=2,
+        )
+
+    # Validate arrays and drop/align NaNs consistently
     y_true, _ = validate_yy(y_true, y_preds[0])
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
-
-    # --- Plot No-Skill Reference Circle ---
-    no_skill = np.mean(y_true)
-    ax.plot(
-        np.linspace(0, np.pi / 2, 100),
-        [no_skill] * 100,
-        color="gray",
-        linestyle="--",
-        lw=1.5,
-        label=f"No-Skill (AP = {no_skill:.2f})",
-    )
-
-    # --- Calculate and Plot PR Curve for Each Model ---
-    for i, y_pred in enumerate(y_preds):
-        precision, recall, _ = precision_recall_curve(y_true, y_pred)
-        ap_score = average_precision_score(y_true, y_pred)
-
-        # Map Recall to angle and Precision to radius
-        model_theta = recall * (np.pi / 2)
-        model_radius = precision
-
-        # Plot the model's PR curve
-        ax.plot(
-            model_theta,
-            model_radius,
-            color=colors[i],
-            lw=2.5,
-            label=f"{names[i]} (AP = {ap_score:.2f})",
+    #  figure / axis
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
         )
-        # Optional: Fill area
-        ax.fill(model_theta, model_radius, color=colors[i], alpha=0.15)
+    else:
+        fig = ax.figure
 
-    # --- Formatting ---
+    # Colors for each series
+    colors = get_colors(
+        len(y_preds),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
+
+    # reference: no-skill line
+    # For PR, the no-skill level equals the positive prevalence.
+    if show_no_skill:
+        base = float(np.mean(y_true))
+        ax.plot(
+            np.linspace(0.0, np.pi / 2.0, 100),
+            [base] * 100,
+            color="gray",
+            linestyle="--",
+            lw=1.5,
+            label=f"No-Skill (AP = {base:.2f})",
+        )
+
+    #  curves
+    for i, y_pred in enumerate(y_preds):
+        # Compute PR
+        prec, rec, _ = precision_recall_curve(y_true, y_pred)
+        ap = average_precision_score(y_true, y_pred)
+
+        # Map recall->angle, precision->radius
+        theta = rec * (np.pi / 2.0)
+        radius = prec
+
+        # Draw line and an optional filled band
+        lbl = f"{names[i]} (AP = {ap:.2f})" if show_ap else names[i]
+        ax.plot(theta, radius, color=colors[i], lw=2.5, label=lbl)
+        ax.fill(theta, radius, color=colors[i], alpha=fill_alpha)
+
+    # formatting
     ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_thetamin(0)
-    ax.set_thetamax(90)
-    ax.set_ylim(0, 1.0)
 
-    # Set angular tick labels to represent Recall
-    ax.set_xticks(np.linspace(0, np.pi / 2, 6))
-    ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
+    # Limit to quarter circle explicitly
+    ax.set_thetamin(0.0)
+    ax.set_thetamax(90.0)
+    ax.set_ylim(0.0, 1.0)
 
-    ax.set_xlabel("Recall")
+    # Angle ticks show recall ∈ [0,1]
+    ax.set_xticks(np.linspace(0.0, np.pi / 2.0, 6))
+    ax.set_xticklabels([f"{v:.1f}" for v in np.linspace(0.0, 1.0, 6)])
+
+    # Axis labels
+    ax.set_xlabel("Recall", labelpad=25)
     ax.set_ylabel("Precision", labelpad=25)
+
+    # Legend and grid
     ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    plt.tight_layout()
+    # I/O
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -731,30 +958,70 @@ imbalanced datasets where ROC curves can be misleading.
 
 Parameters
 ----------
-y_true : np.ndarray
-    1D array of true binary labels (0 or 1).
-*y_preds : np.ndarray
-    One or more 1D arrays of predicted probabilities or scores
-    for the positive class.
+y_true : ndarray of shape (n_samples,)
+    Ground-truth binary labels in {0, 1}. Values are cast to
+    1D and validated against the first prediction.
+
+*y_preds : array-like of shape (n_samples,), optional
+    One or more score/probability arrays for the positive
+    class. Each must be 1D, numeric, and the same length as
+    `y_true`.
+
 names : list of str, optional
-    Display names for each of the models. If not provided,
-    generic names like ``'Model 1'`` will be generated.
+    Display names for each model. If not given or length does
+    not match `y_preds`, generic labels like "Model 1" are
+    used.
+
 title : str, default="Polar Precision-Recall Curve"
-    The title for the plot.
-figsize : tuple of (float, float), default=(8, 8)
-    The figure size in inches.
-cmap : str, default='viridis'
-    The colormap used to assign a unique color to each model's
-    curve.
+    Title displayed above the plot.
+
+figsize : (float, float), default=(8, 8)
+    Figure size in inches passed to Matplotlib.
+
+cmap : str, default="viridis"
+    Colormap name used to assign distinct colors to curves.
+    Any valid Matplotlib colormap string is accepted.
+
 show_grid : bool, default=True
-    Toggle the visibility of the polar grid lines.
+    Whether to draw the polar grid (spokes and rings).
+
 grid_props : dict, optional
-    Custom keyword arguments passed to the grid for styling.
-savefig : str, optional
-    The file path to save the plot. If ``None``, the plot is
-    displayed interactively.
+    Styling for the grid. For example:
+        
+    `{"linestyle": "--", "linewidth": 0.6, "alpha": 0.6}`.
+    
+    Passed to the internal grid helper.
+
+acov : {"quarter_circle", "half_circle", "default",
+    "full", "full_circle", "eighth_circle"}, default="quarter_circle"
+
+    Requested angular coverage. For PR, the plot is fixed to
+    a quarter circle (0–90°) with θ=0 at the right. If a
+    different value is provided, a warning is issued and the
+    quarter-circle layout is used.
+
+fill_alpha : float, default=0.15
+    Opacity of the area fill under each PR curve. Must be in
+    [0, 1].
+
+show_no_skill : bool, default=True
+    If True, draws a dashed reference at the positive class
+    prevalence and labels it as the no-skill baseline.
+
+show_ap : bool, default=True
+    If True, appends "AP = ..." to each curve label using the
+    average precision of that model.
+
+savefig : str or path-like, optional
+    Path to write the figure. If None, the figure is shown
+    instead.
+
 dpi : int, default=300
-    The resolution (dots per inch) for the saved figure.
+    Resolution (dots per inch) used when saving the figure.
+
+ax : matplotlib.axes.Axes, optional
+    Existing polar Axes to draw into. If None, a new figure
+    and polar Axes are created.
 
 Returns
 -------
@@ -830,15 +1097,20 @@ References
 def plot_polar_classification_report(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    class_labels: Optional[list[str]] = None,
+    class_labels: list[str] | None = None,
     title: str = "Polar Classification Report",
     figsize: tuple[float, float] = (8, 8),
-    cmap: str = "viridis",
+    cmap: str = "tab10",
+    colors: list[str] | None = None,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
+    grid_props: dict[str, Any] | None = None,
     mask_radius: bool = False,
-    savefig: Optional[str] = None,
+    acov: str = "full",
+    zero_at: Literal["N", "E", "S", "W"] = "N",
+    clockwise: bool = True,
+    savefig: str | None = None,
     dpi: int = 300,
+    ax: Axes | None = None,
 ):
     # --- Input Validation ---
     y_true, y_pred = validate_yy(y_true, y_pred)
@@ -865,16 +1137,30 @@ def plot_polar_classification_report(
         metrics["F1-Score"].append(report[str(label)]["f1-score"])
 
     # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # ----- Configure polar axes with acov helpers -----
+    canon = canonical_acov(acov, raise_on_invalid=False, fallback="defaut")
+    warn_acov_preference(canon, preferred="default")
+
+    # Create/configure a polar Axes and get the span in radians
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=canon,
+        figsize=figsize,
+        zero_at=zero_at,  # Where θ=0 points (N/E/S/W)
+        clockwise=clockwise,  # True => clockwise
     )
-    cmap_obj = get_cmap(cmap, default="viridis")
-    metric_colors = cmap_obj(np.linspace(0, 1, 3))
+
+    # cmap_obj = get_cmap(cmap, default="viridis")
+    # metric_colors = cmap_obj(np.linspace(0, 1, 3))
+    # Get colors based on user input or defaults
+    metric_colors = get_colors(
+        3, colors=colors, cmap=cmap, default="tab10", failsafe="discrete"
+    )
 
     # --- Plot Grouped Bars ---
     n_metrics = 3
-    bar_width = (2 * np.pi / n_classes) / (n_metrics + 1)
-    group_angles = np.linspace(0, 2 * np.pi, n_classes, endpoint=False)
+    bar_width = (span / n_classes) / (n_metrics + 1)
+    group_angles = np.linspace(0, span, n_classes, endpoint=False)
 
     for i, (metric_name, values) in enumerate(metrics.items()):
         offsets = group_angles + (i - n_metrics / 2 + 0.5) * bar_width
@@ -899,9 +1185,9 @@ def plot_polar_classification_report(
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
@@ -1029,20 +1315,26 @@ def plot_pinball_loss(
     y_true: np.ndarray,
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
-    names: Optional[list[str]] = None,
+    names: list[str] | None = None,
     title: str = "Pinball Loss per Quantile",
     figsize: tuple[float, float] = (8, 8),
-    cmap: str = "viridis",
+    cmap: str = "tab10",
+    colors: list[str] | None = None,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
+    grid_props: dict[str, Any] | None = None,
     mask_radius: bool = False,
-    savefig: Optional[str] = None,
+    acov: str = "default",
+    zero_at: Literal["N", "E", "S", "W"] = "E",
+    clockwise: bool = True,
+    savefig: str | None = None,
     dpi: int = 300,
+    ax: Axes | None = None,
 ):
     # --- Input Validation ---
     y_true, y_preds_quantiles = validate_yy(
         y_true, y_preds_quantiles, allow_2d_pred=True
     )
+
     # Ensure quantiles are sorted for plotting
     sort_idx = np.argsort(quantiles)
     quantiles = np.asarray(quantiles)[sort_idx]
@@ -1056,25 +1348,43 @@ def plot_pinball_loss(
         )
         losses.append(loss)
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
+    # ----- Configure polar axes with acov helpers -----
+    canon = canonical_acov(acov, raise_on_invalid=False, fallback="defaut")
+    warn_acov_preference(canon, preferred="default")
+
+    # Create/configure a polar Axes and get the span in radians
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=canon,
+        figsize=figsize,
+        zero_at=zero_at,  # Where θ=0 points (N/E/S/W)
+        clockwise=clockwise,  # True => clockwise
     )
 
-    # Angle is the quantile level, radius is the loss
-    angles = quantiles * 2 * np.pi
-    radii = losses
+    # --- Get Colors ---
+    colors_list = get_colors(
+        len(quantiles),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
 
-    # --- Plotting ---
-    ax.plot(angles, radii, "o-", label="Pinball Loss")
-    ax.fill(angles, radii, alpha=0.25)
+    # --- Plotting Setup ---
+    angles = quantiles * span  # Quantile level as angle
+    radii = losses  # Pinball loss as radius
+
+    # Plotting the loss per quantile as a line
+    ax.plot(angles, radii, "o-", label="Pinball Loss", color=colors_list[0])
+    ax.fill(angles, radii, alpha=0.25, color=colors_list[0])
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_xticks(np.linspace(0, 2 * np.pi, 8, endpoint=False))
+    ax.set_xticks(np.linspace(0, span, 8, endpoint=False))
     ax.set_xticklabels(
         [f"{q:.2f}" for q in np.linspace(0, 1, 8, endpoint=False)]
     )
+
     ax.set_xlabel("Quantile Level")
     ax.set_ylabel("Average Pinball Loss (Lower is Better)", labelpad=25)
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
@@ -1082,12 +1392,13 @@ def plot_pinball_loss(
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
+
     return ax
 
 
@@ -1199,8 +1510,8 @@ References
 def _get_scores(
     y_true: np.ndarray,
     y_preds: list[np.ndarray],
-    metrics: list[Union[str, Callable]],
-    higher_is_better: Optional[dict[str, bool]] = None,
+    metrics: list[str | Callable],
+    higher_is_better: dict[str, bool] | None = None,
 ):
     """
     Internal helper to compute scores, ensuring higher is always better.
@@ -1272,29 +1583,49 @@ def _get_scores(
 
 
 def plot_regression_performance(
-    y_true: Optional[np.ndarray] = None,
+    y_true: np.ndarray | None = None,
     *y_preds: np.ndarray,
-    names: Optional[list[str]] = None,
-    metrics: Optional[
-        Union[str, Callable, list[Union[str, Callable]]]
-    ] = None,
-    metric_values: Optional[dict[str, list[float]]] = None,
+    names: list[str] | None = None,
+    metrics: str | Callable | list[str | Callable] | None = None,
+    metric_values: dict[str, list[float]] | None = None,
     add_to_defaults: bool = False,
-    metric_labels: Optional[Union[dict[str, str], bool, list]] = None,
-    higher_is_better: Optional[dict[str, bool]] = None,
+    metric_labels: dict[str, str] | bool | list | None = None,
+    higher_is_better: dict[str, bool] | None = None,
     norm: Literal["per_metric", "global", "none"] = "per_metric",
-    global_bounds: Optional[dict[str, tuple[float, float]]] = None,
-    min_radius: float = 0.02,
+    global_bounds: dict[str, tuple[float, float]] | None = None,
+    min_radius: float = 0.05,
     clip_to_bounds: bool = True,
     title: str = "Regression Model Performance",
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
+    colors: list[str] = None,
+    bp_padding: float = 1.0,
+    acov: str = "full",
+    zero_at: Literal["N", "E", "S", "W"] = "E",
+    clockwise: bool = True,
     show_grid: bool = True,
-    grid_props: Optional[dict[str, Any]] = None,
+    grid_props: dict[str, Any] | None = None,
     mask_radius: bool = False,
-    savefig: Optional[str] = None,
+    savefig: str | None = None,
     dpi: int = 300,
+    ax: Axes | None = None,
 ):
+    # --- Input Validation and Warnings ---
+    if not (0 < bp_padding <= 1):
+        raise ValueError(
+            "`bp_padding` must be between 0 and 1,"
+            " and cannot be exactly 0."
+        )
+    if bp_padding < 0.5:
+        warnings.warn(
+            f"The value of `bp_padding` ({bp_padding}) is less than 0.5. "
+            "This may cause the 'Best Performance' ring to become"
+            " too small and unreadable. Consider increasing the padding"
+            " or minimizing the figure for better clarity.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     # --- 1. Determine Mode and Calculate Scores ---
     # The function operates in two modes:
     # a) "Values Mode": Pre-computed scores are provided.
@@ -1423,23 +1754,42 @@ def plot_regression_performance(
         tick_lbls = [f"{t:.2g}" for t in tick_vals]
 
     # --- 3. Create the Polar Plot ---
-    fig, ax = plt.subplots(
+
+    # Create/configure a polar Axes and get the span in radians
+    canon = canonical_acov(acov, raise_on_invalid=False, fallback="defaut")
+    warn_acov_preference(canon, preferred="default")
+
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=canon,
         figsize=figsize,
-        subplot_kw={"projection": "polar"},
+        zero_at=zero_at,  # Where θ=0 points (N/E/S/W)
+        clockwise=clockwise,  # True => clockwise
     )
 
+    # rescale radial max based on best performance padding.
+    radial_max_best = radial_max * bp_padding
+
+    # scale radias mak
     # Prepare angles and widths for the grouped bars
     n_metrics = len(metric_names)
-    group_angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False)
-    bar_width = (2 * np.pi / n_metrics) / (len(names) + 1)
+
+    # group_angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False)
+    # bar_width = (2 * np.pi / n_metrics) / (len(names) + 1)
+    group_angles = np.linspace(0, span, n_metrics, endpoint=False)
+    bar_width = (span / n_metrics) / (len(names) + 1)
 
     # Get a color for each model
-    cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, len(names)))
+    # --- Get Colors ---
+    colors = get_colors(
+        len(names), colors=colors, cmap=cmap, default="viridis"
+    )
+    # cmap_obj = get_cmap(cmap, default="viridis")
+    # colors = cmap_obj(np.linspace(0, 1, len(names)))
 
     # Draw the bars for each model
     for i, name in enumerate(names):
-        radii = [normalized[m][i] for m in metric_names]
+        radii = [normalized[m][i] * radial_max_best for m in metric_names]
         # Calculate the angular offset for each bar in the group
         offsets = group_angles + ((i - len(names) / 2 + 0.5) * bar_width)
         ax.bar(
@@ -1453,10 +1803,10 @@ def plot_regression_performance(
 
     # --- 4. Add Formatting and Rings ---
     # Draw the 'Best' and 'Worst' performance rings for reference
-    theta = np.linspace(0, 2 * np.pi, 200)
+    theta = np.linspace(0, span, 200)
     ax.plot(
         theta,
-        np.full_like(theta, radial_max),
+        np.full_like(theta, radial_max_best),
         color="green",
         linestyle="-",
         lw=1.5,
@@ -1509,9 +1859,9 @@ def plot_regression_performance(
         ax.set_yticklabels([])
 
     # --- 5. Finalize and Show/Save ---
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(
+        fig.savefig(
             savefig,
             dpi=dpi,
             bbox_inches="tight",
@@ -1606,6 +1956,32 @@ figsize : tuple of (float, float), default=(8, 8)
 cmap : str, default='viridis'
     The colormap used to assign a unique color to each model's
     bars.
+colors : list of str, optional
+    A list of custom colors for the bars. If ``None``, the function
+    will use the colormap specified in ``cmap`` to generate the colors.
+bp_padding : float, default=1.0
+    Padding factor for the "Best Performance" ring. A value of 1.0
+    places the ring at the maximum radius, while smaller values
+    decrease its size.
+acov : str, default="full"
+    The angular coverage for the plot. Can be one of:
+        
+    - 'full': 360° (default)
+    - 'half': 180°
+    - 'quarter': 90°
+    - 'eighth': 45°
+    
+zero_at : {'N', 'E', 'S', 'W'}, default='E'
+    The point where θ=0 is located on the plot. Options are:
+        
+    - 'N': North
+    - 'E': East
+    - 'S': South
+    - 'W': West
+    
+clockwise : bool, default=True
+    If ``True``, the plot is drawn clockwise. If ``False``, the plot
+    is drawn counter-clockwise.
 show_grid : bool, default=True
     Toggle the visibility of the polar grid lines.
 grid_props : dict, optional
@@ -1617,7 +1993,10 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
-
+ax : Axes, optional
+    The Matplotlib Axes object to use for plotting. If ``None``,
+    a new figure and axes will be created.
+    
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -1651,6 +2030,14 @@ performance, making it easy to identify trade-offs.
     - The normalized score of each model is mapped to the
       **radius** (height) of its bar within that sector.
 
+The radial bars are colored according to the model performance, 
+and the best and worst performance rings are shown for reference.
+
+The "Best Performance" ring is drawn at the maximum radial
+distance, and the "Worst Performance" ring is drawn at the minimum
+distance. Each model's performance is shown as a radial bar, with
+the length of the bar corresponding to the normalized score.
+    
 Examples
 --------
 >>> import numpy as np

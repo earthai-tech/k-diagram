@@ -1,16 +1,23 @@
 #   License: Apache 2.0
 #   Author: LKouadio <etanoyau@gmail.com>
 
+from __future__ import annotations
+
 import re
-from typing import Optional, Union
+import warnings
+from collections.abc import Sequence
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.colors import Colormap
 from scipy.stats import gaussian_kde
 
+from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from .generic_utils import get_valid_kwargs
+from .handlers import columns_manager
 
 
 def set_axis_grid(
@@ -46,7 +53,7 @@ def set_axis_grid(
 
 def is_valid_kind(
     kind: str,
-    valid_kinds: Optional[list[str]] = None,
+    valid_kinds: list[str] | None = None,
     error: str = "raise",
 ) -> str:
     r"""
@@ -165,7 +172,7 @@ def is_valid_kind(
 
 
 def prepare_data_for_kde(
-    data: np.ndarray, bandwidth: Optional[float] = None
+    data: np.ndarray, bandwidth: float | None = None
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""
     Prepares the data for Kernel Density Estimate (KDE) calculation.
@@ -225,7 +232,7 @@ def prepare_data_for_kde(
 
 
 def _kde_pdf(
-    x: np.ndarray, grid: np.ndarray, bandwidth: Optional[float] = None
+    x: np.ndarray, grid: np.ndarray, bandwidth: float | None = None
 ) -> np.ndarray:
     r"""
     Helper function to calculate the Kernel Density Estimate (KDE).
@@ -573,7 +580,7 @@ def setup_polar_plot(
 
 
 def _sample_colors(
-    cm: Union[str, Colormap, None],
+    cm: str | Colormap | None,
     n: int,
     *,
     trim: float = 0.08,
@@ -692,3 +699,377 @@ def _sample_colors(
     else:
         xs = np.linspace(trim, 1.0 - trim, n)
     return [tuple(cmap_obj(float(x))) for x in xs]
+
+
+def _setup_axes_for_reliability(
+    ax: Axes | None,
+    counts_panel: str,
+    figsize: tuple[float, float] | None,
+) -> tuple:
+    """
+    Return (fig, ax, axb) given an optional `ax` and `counts_panel` setting.
+
+    - If `ax` is None:
+        * counts_panel == "bottom": new Figure + GridSpec (main + bottom)
+        * else:                      new Figure + single Axes
+    - If `ax` is provided:
+        * counts_panel == "bottom": append a bottom axis to the same figure
+                                     (using axes_grid1 divider) that shares x.
+        * else:                      reuse `ax` and no bottom axis.
+    """
+    if ax is None:
+        if counts_panel == "bottom":
+            fig = plt.figure(figsize=figsize)
+            gs = fig.add_gridspec(2, 1, height_ratios=(3.0, 1.0), hspace=0.12)
+            ax = fig.add_subplot(gs[0, 0])
+            axb = fig.add_subplot(gs[1, 0], sharex=ax)
+        else:
+            fig, ax = plt.subplots(figsize=figsize)
+            axb = None
+    else:
+        fig = ax.figure
+        if counts_panel == "bottom":
+            # Append a bottom panel below the provided `ax`
+            try:
+                from mpl_toolkits.axes_grid1 import make_axes_locatable
+            except ModuleNotFoundError as err:
+                raise RuntimeError(
+                    "counts_panel='bottom' with a provided `ax` requires "
+                    "mpl_toolkits.axes_grid1 (install matplotlib's toolkits)."
+                ) from err
+            divider = make_axes_locatable(ax)
+            # ~20% height for counts; tweak pad as you like
+            axb = divider.append_axes(
+                "bottom", size="20%", pad=0.25, sharex=ax
+            )
+        else:
+            axb = None
+    return fig, ax, axb
+
+
+def canonical_acov(
+    key: str | None,
+    *,
+    raise_on_invalid: bool = True,
+    fallback: str = "default",
+) -> str:
+    """
+    Normalize an acov alias to its canonical key.
+
+    Accepts: "default"/"full", "half_circle"/"half",
+             "quarter_circle"/"quarter", "eighth_circle"/"eighth".
+    Hyphens/underscores/case/whitespace are ignored.
+    """
+    if key is None:
+        return fallback
+
+    norm = str(key).strip().lower().replace("-", "_")
+
+    # map aliases -> canonical keys
+    alias = {
+        "default": "default",
+        "full": "default",
+        "full_circle": "default",
+        "half": "half_circle",
+        "half_circle": "half_circle",
+        "quarter": "quarter_circle",
+        "quarter_circle": "quarter_circle",
+        "eighth": "eighth_circle",
+        "eighth_circle": "eighth_circle",
+    }
+
+    canon = alias.get(norm)
+    if canon is not None:
+        return canon
+
+    if raise_on_invalid:
+        valid = "', '".join(
+            ["default", "half_circle", "quarter_circle", "eighth_circle"]
+        )
+        raise ValueError(
+            f"Invalid acov={key!r}. Use one of: '{valid}', "
+            "or their aliases: 'full', 'half', 'quarter', 'eighth'."
+        )
+
+    return fallback
+
+
+def resolve_polar_span(acov: Acov = "default") -> float:
+    """
+    Return angular span (radians) for a coverage keyword.
+    Accepted aliases:
+      - default: 'default', 'full', 'full-circle', 'full_circle'
+      - half:    'half', 'half-circle', 'half_circle'
+      - quarter: 'quarter', 'quarter-circle', 'quarter_circle'
+      - eighth:  'eighth', 'eighth-circle', 'eighth_circle'
+    """
+    # normalize: lower, trim, hyphen/space -> underscore
+    key = acov or "default"
+    key = str(key).strip().lower().replace("-", "_").replace(" ", "_")
+
+    canon = canonical_acov(acov, raise_on_invalid=False, fallback=key)
+    # canon = alias.get(key, key)
+
+    spans = {
+        "default": 2 * np.pi,  # 360°
+        "half_circle": 1 * np.pi,  # 180°
+        "quarter_circle": 0.5 * np.pi,  # 90°
+        "eighth_circle": 0.25 * np.pi,  # 45°
+    }
+    try:
+        return spans[canon]
+    except KeyError as e:
+        valid = (
+            "{'default|full', 'half_circle|half', "
+            "'quarter_circle|quarter', 'eighth_circle|eighth'}"
+        )
+        raise ValueError(f"Invalid acov={acov!r}. Use one of {valid}.") from e
+
+
+def setup_polar_axes(
+    ax: Axes | None,
+    *,
+    acov: Acov = "default",
+    figsize: tuple[float, float] | None = None,
+    zero_at: Literal["N", "E", "S", "W"] = "N",  # where theta=0 points
+    clockwise: bool = True,  # plot direction
+) -> tuple[plt.Figure, Axes, float]:
+    """
+    Ensure we have a polar Axes configured to the requested angular span.
+
+    Returns (fig, ax, span_radians).
+    """
+    span = resolve_polar_span(acov)
+
+    # Create axes if needed
+    if ax is None:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
+    else:
+        fig = ax.figure
+
+    # Set zero direction
+    zero_at = str(zero_at).upper()
+
+    offsets = {"E": 0.0, "N": np.pi / 2, "W": np.pi, "S": 3 * np.pi / 2}
+
+    if zero_at not in offsets.keys():
+        warnings.warn(
+            f"Unknow plot direction {zero_at!r}. Fallback to 'N'.",
+            stacklevel=2,
+        )
+        zero_at = "N"
+
+    ax.set_theta_offset(offsets[zero_at])
+
+    # Clockwise or counter-clockwise
+    ax.set_theta_direction(-1 if clockwise else 1)
+
+    # Limit angular range to [0, span]
+    ax.set_thetamin(0.0)
+    ax.set_thetamax(np.degrees(span))
+
+    return fig, ax, span
+
+
+def map_theta_to_span(
+    theta_raw: np.ndarray,
+    *,
+    span: float,
+    theta_period: float | None = None,
+    data_min: float | None = None,
+    data_max: float | None = None,
+) -> np.ndarray:
+    """
+    Map arbitrary theta values to [0, span].
+
+    - If theta_period is given, uses modulo scaling.
+    - Else if data_min/max are given, min-max scale.
+    - Else assumes theta_raw already in [0, 2π] and rescales to [0, span].
+    """
+    theta_raw = np.asarray(theta_raw)
+
+    if theta_period is not None:
+        t = (theta_raw % theta_period) / theta_period  # [0,1]
+        return t * span
+
+    if (
+        (data_min is not None)
+        and (data_max is not None)
+        and (data_max > data_min)
+    ):
+        t = (theta_raw - data_min) / (data_max - data_min)  # [0,1]
+        return t * span
+
+    # Default: assume input is in [0, 2π]
+    return (theta_raw % (2 * np.pi)) / (2 * np.pi) * span
+
+
+def _default_theta_ticks(span: float) -> tuple[np.ndarray, list[str]]:
+    # nice ticks for 360/180/90/45 deg spans
+    deg = np.degrees(span)
+    if np.isclose(deg, 360):
+        vals = np.arange(0, 360, 30)
+    elif np.isclose(deg, 180):
+        vals = np.arange(0, 180 + 1e-9, 15)
+    elif np.isclose(deg, 90):
+        vals = np.arange(0, 90 + 1e-9, 10)
+    else:
+        vals = np.arange(0, 45 + 1e-9, 5)
+
+    return np.radians(vals), [f"{int(v)}°" for v in vals]
+
+
+# Usage
+# ticks, labels = _default_theta_ticks(span)
+# ax.set_thetagrids(np.degrees(ticks), labels)
+
+
+def acov_to_span(acov: Acov = "default") -> float:
+    """
+    Thin alias over `resolve_polar_span` so older call-sites keep
+    working. Returns the angular span in radians.
+    """
+    return resolve_polar_span(acov)
+
+
+def set_polar_angular_span(ax: Axes, acov: Acov = "default") -> float:
+    """
+    Apply the `[thetamin, thetamax]` corresponding to `acov` on an
+    existing polar axes. Returns the span in radians.
+    """
+    span = resolve_polar_span(acov)
+    ax.set_thetamin(0.0)
+    ax.set_thetamax(np.degrees(span))
+    return span
+
+
+def resolve_polar_axes(
+    ax: Axes | None = None,
+    *,
+    acov: Acov = "default",
+    figsize: tuple[float, float] | None = None,
+    zero_at: Literal["N", "E", "S", "W"] = "N",
+    clockwise: bool = True,
+) -> Axes:
+    """
+    Convenience wrapper that reuses/creates a polar axes configured
+    with the requested angular coverage. Returns the Axes only.
+    """
+    _, ax, _ = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
+        zero_at=zero_at,
+        clockwise=clockwise,
+    )
+    return ax
+
+
+def _acov_to_deg(acov: str) -> float:
+    """Safe degree lookup; returns NaN on invalid acov."""
+    try:
+        return float(np.degrees(resolve_polar_span(acov)))
+    except Exception:
+        return float("nan")
+
+
+def _fmt_pref_list(
+    prefs: Sequence[str],
+    *,
+    include_deg: bool = True,
+) -> str:
+    """Human-friendly list: 'default (360°)' or 'A or B'."""
+    parts = []
+    for p in prefs:
+        if include_deg:
+            d = _acov_to_deg(p)
+            suf = f" ({int(round(d))}°)" if np.isfinite(d) else ""
+        else:
+            suf = ""
+        parts.append(f"'{p}'{suf}")
+    if len(parts) <= 1:
+        return parts[0] if parts else ""
+    if len(parts) == 2:
+        return " or ".join(parts)
+    return ", ".join(parts[:-1]) + f", or {parts[-1]}"
+
+
+def warn_acov_preference(
+    acov: str,
+    *,
+    preferred: str | Sequence[str] = "default",
+    plot_name: str | None = None,
+    reason: str | None = None,
+    advice: str | None = None,
+    warn_cls: type[Warning] = UserWarning,
+    stacklevel: int = 2,
+    enable: bool = True,
+    include_deg: bool = True,
+) -> bool:
+    """
+    Emit a gentle, configurable warning when `acov` deviates from a
+    preferred set. Returns True iff a warning was issued.
+
+    Parameters
+    ----------
+    acov
+        The requested angular coverage keyword.
+    preferred
+        Single value or list of acceptable/ideal acov values.
+    plot_name
+        Short context label (e.g. 'relationship', 'fingerprint').
+    reason
+        Why the preference exists (readability, conventions, etc.).
+    advice
+        Closing note; defaults to 'proceeding with the requested span.'
+    warn_cls
+        Warning class to emit (UserWarning by default).
+    stacklevel
+        Passed to `warnings.warn` for correct source pointing.
+    enable
+        If False, does nothing and returns False.
+    include_deg
+        If True, append degree hints like '(360°)' to names.
+    """
+    if not enable:
+        return False
+
+    acov_l = (acov or "").lower()
+    acov_l = canonical_acov(acov_l)
+    prefs = columns_manager(preferred, empty_as_none=False, to_string=True)
+    prefs = [canonical_acov(str(p).lower()) for p in prefs]
+
+    if acov_l in prefs:
+        return False
+
+    # sensible defaults
+    if reason is None:
+        if "default" in prefs:
+            reason = "a full 360° span is often clearest for comparison"
+        elif "half_circle" in prefs:
+            reason = "a half-circle (180°) often improves label readability"
+        else:
+            reason = "the preferred span usually yields better readability"
+
+    if advice is None:
+        advice = "proceeding with the requested span."
+
+    # compose message
+    d_req = _acov_to_deg(acov_l)
+    req_suf = (
+        f" ({int(round(d_req))}°)"
+        if include_deg and np.isfinite(d_req)
+        else ""
+    )
+    ctx = f" for {plot_name}" if plot_name else ""
+    want = _fmt_pref_list(prefs, include_deg=include_deg)
+
+    msg = (
+        f"Using acov='{acov_l}'{req_suf}{ctx}. "
+        f"Tip: {want} is preferred; {reason}; {advice}"
+    )
+
+    warnings.warn(msg, warn_cls, stacklevel=stacklevel)
+    return True

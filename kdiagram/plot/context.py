@@ -475,6 +475,7 @@ def plot_error_autocorrelation(
     fig, ax = plt.subplots(figsize=figsize)
 
     # --- Generate ACF Plot ---
+    acf_kwargs = get_valid_kwargs(autocorrelation_plot, acf_kwargs)
     autocorrelation_plot(errors, ax=ax, **acf_kwargs)
 
     # --- Formatting ---
