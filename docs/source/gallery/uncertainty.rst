@@ -214,7 +214,7 @@ layout to make the details easier to see.
    :linenos:
 
    # --- 1. Use the multi-model DataFrame from the previous step ---
-   # (Assumes df_multi is available)
+   # (Assumes df_multi is available, i.e from the previous step)
 
    # --- 2. Create a focused and styled plot ---
    kd.plot_actual_vs_predicted(

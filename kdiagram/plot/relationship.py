@@ -7,11 +7,17 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
+from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from ..compat.sklearn import StrOptions, validate_params
 from ..utils.generic_utils import drop_nan_in
-from ..utils.plot import set_axis_grid
+from ..utils.plot import (
+    map_theta_to_span,
+    set_axis_grid,
+    setup_polar_axes,
+)
 from ..utils.validator import validate_yy
 
 __all__ = [
@@ -22,17 +28,13 @@ __all__ = [
 ]
 
 
-@validate_params(
-    {
-        "y_true": ["array-like"],
-    }
-)
+@validate_params({"y_true": ["array-like"]})
 def plot_residual_relationship(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
     names: list[str] | None = None,
     title: str = "Residual vs. Predicted Relationship",
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     cmap: str = "viridis",
     s: int = 50,
     alpha: float = 0.7,
@@ -41,80 +43,84 @@ def plot_residual_relationship(
     grid_props: dict[str, Any] | None = None,
     savefig: str | None = None,
     dpi: int = 300,
+    mask_angle: bool = False,
+    mask_radius: bool = False,
+    acov: Acov = "default",
+    ax: Axes | None = None,
 ):
-
-    # --- Input Validation and Preparation ---
+    # --- validate / prepare
     if not y_preds:
-        raise ValueError("At least one prediction array must be provided.")
+        raise ValueError("At least one prediction array is required.")
 
     y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
     y_true_val, _ = validate_yy(y_true, y_preds[0])
 
     if not names:
-        names = [f"Model {i+1}" for i in range(len(y_preds))]
+        names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
-    # --- Error and Coordinate Calculation ---
-    errors_list = [y_true_val - np.asarray(yp) for yp in y_preds]
-    all_errors = np.concatenate(errors_list)
+    # errors and r-offset (to allow negatives on polar radius)
+    errs_list = [y_true_val - np.asarray(yp) for yp in y_preds]
+    all_errs = np.concatenate(errs_list)
+    r_offset = np.abs(np.min(all_errs)) if np.min(all_errs) < 0 else 0.0
 
-    # Shift the origin to handle negative error values on the radial axis
-    r_offset = np.abs(np.min(all_errors)) if np.min(all_errors) < 0 else 0
-
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    # --- axes & colors
+    fig, ax, span = setup_polar_axes(ax, acov=acov, figsize=figsize)
     cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+    colors = cmap_obj(np.linspace(0.0, 1.0, len(y_preds)))
 
-    # --- Plot Zero-Error Line ---
+    # zero-error circle over current span
     if show_zero_line:
         ax.plot(
-            np.linspace(0, 2 * np.pi, 100),
-            [r_offset] * 100,
+            np.linspace(0.0, float(span), 120),
+            np.full(120, r_offset),
             color="black",
             linestyle="--",
-            lw=1.5,
+            lw=1.4,
             label="Zero Error",
         )
 
-    # --- Plot Error Points for Each Model ---
-    for i, (yp, errors) in enumerate(zip(y_preds, errors_list)):
+    # --- plot each model
+    for i, (yp, errs) in enumerate(zip(y_preds, errs_list)):
         y_pred_val = np.asarray(yp)
+        idx = np.argsort(y_pred_val)
+        y_pred_sorted = y_pred_val[idx]
+        errs_sorted = errs[idx]
 
-        # Sort by the predicted value for a smooth spiral
-        sort_idx = np.argsort(y_pred_val)
-        y_pred_sorted = y_pred_val[sort_idx]
-        errors_sorted = errors[sort_idx]
+        # map predicted values -> [0, span] (radians)
+        if y_pred_sorted.max() > y_pred_sorted.min():
+            theta = map_theta_to_span(
+                y_pred_sorted,
+                span=span,
+                data_min=float(y_pred_sorted.min()),
+                data_max=float(y_pred_sorted.max()),
+            )
+        else:
+            theta = np.zeros_like(y_pred_sorted, dtype=float)
 
-        # Map sorted predicted value to angle
-        theta = (
-            (y_pred_sorted - y_pred_sorted.min())
-            / (y_pred_sorted.max() - y_pred_sorted.min())
-            * 2
-            * np.pi
-        )
-
-        radii = errors_sorted + r_offset
-
+        radii = errs_sorted + r_offset
         ax.scatter(
             theta, radii, color=colors[i], s=s, alpha=alpha, label=names[i]
         )
 
-    # --- Formatting ---
-    ax.set_title(title, fontsize=16, y=1.1)
+    # --- formatting
+    ax.set_title(title, fontsize=16, y=1.08)
     ax.set_xlabel("Based on Predicted Value")
-    ax.set_ylabel("Forecast Error (Actual - Predicted)", labelpad=25)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    ax.set_ylabel("Forecast Error (Actual - Predicted)", labelpad=22)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.32, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    plt.tight_layout()
+    if mask_angle:
+        ax.set_xticklabels([])
+
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
-
     return ax
 
 
@@ -160,7 +166,19 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels.
+mask_radius : bool, default=False
+    If ``True``, hide the radial tick labels.
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
+    default='default'
+    Angular coverage (span) of the plot:
 
+    - ``'default'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+    
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -227,104 +245,100 @@ References
 """
 
 
-@validate_params(
-    {
-        "y_true": ["array-like"],
-    }
-)
+@validate_params({"y_true": ["array-like"]})
 def plot_error_relationship(
     y_true: np.ndarray,
     *y_preds: np.ndarray,
     names: list[str] | None = None,
     title: str = "Error vs. True Value Relationship",
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     cmap: str = "viridis",
     s: int = 50,
     alpha: float = 0.7,
     show_zero_line: bool = True,
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
+    mask_angle: bool = False,
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
+    acov: Acov = "default",
+    ax: Axes | None = None,
 ):
-
-    # --- Input Validation and Preparation ---
+    # --- validate / prepare
     if not y_preds:
-        raise ValueError("At least one prediction array must be provided.")
+        raise ValueError("At least one prediction array is required.")
 
     y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
-    y_true, _ = validate_yy(
-        y_true, y_preds[0]
-    )  # Validate first pred against true
+    y_true, _ = validate_yy(y_true, y_preds[0])
 
     if not names:
-        names = [f"Model {i+1}" for i in range(len(y_preds))]
+        names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
-    # --- Error and Coordinate Calculation ---
-    errors_list = [y_true - np.asarray(yp) for yp in y_preds]
-    all_errors = np.concatenate(errors_list)
-
+    errs_list = [y_true - np.asarray(yp) for yp in y_preds]
+    all_errs = np.concatenate(errs_list)
     # To handle negative errors on a polar plot, we shift the origin.
     # The zero-error line will be a circle.
-    r_offset = np.abs(np.min(all_errors)) if np.min(all_errors) < 0 else 0
+    r_offset = np.abs(np.min(all_errs)) if np.min(all_errs) < 0 else 0.0
 
-    # Sort by true value to create a smooth spiral effect
-    sort_idx = np.argsort(y_true)
-    y_true_sorted = y_true[sort_idx]
+    # sort true values for a smooth angle mapping
+    idx = np.argsort(y_true)
+    y_true_sorted = y_true[idx]
 
-    # Map sorted true value to angle
-    theta = (
-        (y_true_sorted - y_true_sorted.min())
-        / (y_true_sorted.max() - y_true_sorted.min())
-        * 2
-        * np.pi
-    )
+    # map true values -> [0, span] (radians)
+    fig, ax, span = setup_polar_axes(ax, acov=acov, figsize=figsize)
+    if y_true_sorted.max() > y_true_sorted.min():
+        theta = map_theta_to_span(
+            y_true_sorted,
+            span=span,
+            data_min=float(y_true_sorted.min()),
+            data_max=float(y_true_sorted.max()),
+        )
+    else:
+        theta = np.zeros_like(y_true_sorted, dtype=float)
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
     cmap_obj = get_cmap(cmap, default="viridis")
-    colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+    colors = cmap_obj(np.linspace(0.0, 1.0, len(y_preds)))
 
-    # --- Plot Zero-Error Line ---
+    # zero-error circle
     if show_zero_line:
         ax.plot(
-            np.linspace(0, 2 * np.pi, 100),
-            [r_offset] * 100,
+            np.linspace(0.0, float(span), 120),
+            np.full(120, r_offset),
             color="black",
             linestyle="--",
-            lw=1.5,
+            lw=1.4,
             label="Zero Error",
         )
 
-    # --- Plot Error Points for Each Model ---
-    for i, errors in enumerate(errors_list):
-        errors_sorted = errors[sort_idx]
-        radii = errors_sorted + r_offset
-
+    # plot each model’s errors
+    for i, errs in enumerate(errs_list):
+        errs_sorted = errs[idx]
+        radii = errs_sorted + r_offset
         ax.scatter(
             theta, radii, color=colors[i], s=s, alpha=alpha, label=names[i]
         )
 
-    # --- Formatting ---
-    ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_xlabel(f"Based on {getattr(y_true, 'name', 'True Value')}")
-    ax.set_ylabel("Forecast Error", labelpad=25)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    # --- formatting
+    ax.set_title(title, fontsize=16, y=1.08)
+    nm = getattr(y_true, "name", "True Value")
+    ax.set_xlabel(f"Based on {nm}")
+    ax.set_ylabel("Forecast Error", labelpad=22)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.32, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_angle:
+        ax.set_xticklabels([])
 
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
-
     return ax
 
 
@@ -364,6 +378,8 @@ show_grid : bool, default=True
     Toggle the visibility of the polar grid lines.
 grid_props : dict, optional
     Custom keyword arguments passed to the grid for styling.
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels.
 mask_radius : bool, default=False
     If ``True``, hide the radial tick labels.
 savefig : str, optional
@@ -371,7 +387,15 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
+    default='default'
+    Angular coverage (span) of the plot:
 
+    - ``'default'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+    
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -452,18 +476,20 @@ def plot_conditional_quantiles(
     *,
     bands: list[int] | None = None,
     title: str = "Conditional Quantile Plot",
-    figsize: tuple[float, float] = (8, 8),
+    figsize: tuple[float, float] = (8.0, 8.0),
     cmap: str = "viridis",
     alpha_min: float = 0.2,
     alpha_max: float = 0.5,
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
+    mask_angle: bool = False,
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
+    acov: Acov = "default",
+    ax: Axes | None = None,
 ):
-
-    # --- Input Validation ---
+    # --- validate inputs
     y_true, y_preds_quantiles = validate_yy(
         y_true, y_preds_quantiles, allow_2d_pred=True
     )
@@ -471,100 +497,106 @@ def plot_conditional_quantiles(
     if y_preds_quantiles.shape[1] != len(quantiles):
         raise ValueError("Shape mismatch between predictions and quantiles.")
 
-    # Sort data by y_true to ensure a smooth spiral plot
-    sort_idx = np.argsort(y_true)
-    y_true_sorted = y_true[sort_idx]
-    y_preds_sorted = y_preds_quantiles[sort_idx, :]
+    # sort by y_true for a smooth angular sweep
+    idx = np.argsort(y_true)
+    y_true_sorted = y_true[idx]
+    y_preds_sorted = y_preds_quantiles[idx, :]
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    # --- axes with requested angular coverage
+    fig, ax, span = setup_polar_axes(ax, acov=acov, figsize=figsize)
 
-    # Map y_true to the angular coordinate
-    theta = (
-        (y_true_sorted - y_true_sorted.min())
-        / (y_true_sorted.max() - y_true_sorted.min())
-        * 2
-        * np.pi
-    )
+    # map y_true -> [0, span] radians (handles constant case)
+    if y_true_sorted.max() > y_true_sorted.min():
+        theta = map_theta_to_span(
+            y_true_sorted,
+            span=span,
+            data_min=float(y_true_sorted.min()),
+            data_max=float(y_true_sorted.max()),
+        )
+    else:
+        theta = np.zeros_like(y_true_sorted, dtype=float)
+        warnings.warn(
+            "y_true has zero range; mapping all angles to 0.",
+            UserWarning,
+            stacklevel=2,
+        )
 
-    # --- Identify Median and Bands ---
-    median_q = 0.5
-    if median_q not in quantiles:
+    # --- median + bands setup
+    med_q = 0.5
+    if med_q in quantiles:
+        med_idx = int(np.where(np.isclose(quantiles, med_q))[0][0])
+    else:
+        med_idx = -1
         warnings.warn(
             "Median (0.5) not found in quantiles."
             " No central line will be plotted.",
+            UserWarning,
             stacklevel=2,
         )
-        median_idx = -1
-    else:
-        median_idx = np.where(np.isclose(quantiles, median_q))[0][0]
 
     if bands is None:
-        # Default to the widest possible interval
-        min_q, max_q = np.min(quantiles), np.max(quantiles)
-        bands = [int((max_q - min_q) * 100)]
+        qmin, qmax = float(np.min(quantiles)), float(np.max(quantiles))
+        bands = [int((qmax - qmin) * 100)]
 
-    bands = sorted(bands, reverse=True)  # Plot widest band first
-
+    bands = sorted(bands, reverse=True)
     cmap_obj = get_cmap(cmap, default="viridis")
     alphas = np.linspace(alpha_min, alpha_max, len(bands))
     colors = cmap_obj(np.linspace(0.3, 0.9, len(bands)))
 
-    # --- Plot Bands ---
-    for i, band_pct in enumerate(bands):
-        lower_q = (100 - band_pct) / 200.0
-        upper_q = 1 - lower_q
-
+    # --- draw quantile bands
+    for i, pct in enumerate(bands):
+        lo_q = (100 - pct) / 200.0
+        hi_q = 1.0 - lo_q
         try:
-            lower_idx = np.where(np.isclose(quantiles, lower_q))[0][0]
-            upper_idx = np.where(np.isclose(quantiles, upper_q))[0][0]
+            lo_idx = int(np.where(np.isclose(quantiles, lo_q))[0][0])
+            hi_idx = int(np.where(np.isclose(quantiles, hi_q))[0][0])
         except IndexError:
             warnings.warn(
-                f"Quantiles for {band_pct}% interval not found. Skipping.",
+                f"Quantiles for {pct}% interval not found; skip.",
+                UserWarning,
                 stacklevel=2,
             )
             continue
 
         ax.fill_between(
             theta,
-            y_preds_sorted[:, lower_idx],
-            y_preds_sorted[:, upper_idx],
+            y_preds_sorted[:, lo_idx],
+            y_preds_sorted[:, hi_idx],
             color=colors[i],
-            alpha=alphas[i],
-            label=f"{band_pct}% Interval",
+            alpha=float(alphas[i]),
+            label=f"{pct}% Interval",
         )
 
-    # --- Plot Median Line ---
-    if median_idx != -1:
+    # --- median curve
+    if med_idx != -1:
         ax.plot(
             theta,
-            y_preds_sorted[:, median_idx],
+            y_preds_sorted[:, med_idx],
             color="black",
             lw=1.5,
             label="Median (Q50)",
         )
 
-    # --- Formatting ---
-    ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_xlabel(
-        f"Based on {y_true.name if hasattr(y_true, 'name') else 'True Value'}"
-    )
-    ax.set_ylabel("Predicted Value", labelpad=25)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.1))
+    # --- formatting
+    nm = getattr(y_true, "name", "True Value")
+    ax.set_title(title, fontsize=16, y=1.08)
+    ax.set_xlabel(f"Based on {nm}")
+    ax.set_ylabel("Predicted Value", labelpad=22)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.32, 1.1))
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    if mask_angle:
+        ax.set_xticklabels([])
 
     if mask_radius:
         ax.set_yticklabels([])
 
-    plt.tight_layout()
+    fig.tight_layout()
     if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
     else:
         plt.show()
-
     return ax
 
 
@@ -608,6 +640,8 @@ show_grid : bool, default=True
     Toggle the visibility of the polar grid lines.
 grid_props : dict, optional
     Custom keyword arguments passed to the grid for styling.
+mask_angle : bool, default=False
+    If ``True``, hide the angular tick labels.
 mask_radius : bool, default=False
     If ``True``, hide the radial tick labels.
 savefig : str, optional
@@ -615,7 +649,15 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
+    default='default'
+    Angular coverage (span) of the plot:
 
+    - ``'default'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+    
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -701,9 +743,9 @@ def plot_relationship(
     *y_preds,
     names=None,
     title=None,
-    theta_offset=0,
+    theta_offset=0.0,
     theta_scale="proportional",
-    acov="default",
+    acov: Acov = "default",
     figsize=None,
     cmap="tab10",
     s=50,
@@ -717,11 +759,10 @@ def plot_relationship(
     z_values=None,
     z_label=None,
     savefig=None,
+    ax: Axes | None = None,
 ):
-    # Remove NaN values from y_true and all y_pred arrays
+    # --- validate / clean
     y_true, *y_preds = drop_nan_in(y_true, *y_preds, error="raise")
-
-    # Validate y_true and each y_pred to ensure consistency and continuity
     try:
         y_preds = [
             validate_yy(
@@ -731,134 +772,88 @@ def plot_relationship(
         ]
     except Exception as err:
         raise ValueError(
-            "Validation failed. Please check your y_pred"
+            "Validation failed. Please check your y_pred."
         ) from err
 
-    # Generate default model names if none are provided
-    num_preds = len(y_preds)
+    # names
+    n = len(y_preds)
     if names is None:
-        names = [f"Model_{i+1}" for i in range(num_preds)]
+        names = [f"Model_{i + 1}" for i in range(n)]
     else:
-        # Ensure names is a list
         names = list(names)
-        # Ensure the length of names matches y_preds
-        if len(names) < num_preds:
-            names += [f"Model_{i+1}" for i in range(len(names), num_preds)]
-        elif len(names) > num_preds:
+        if len(names) < n:
+            names += [f"Model_{i + 1}" for i in range(len(names), n)]
+        elif len(names) > n:
             warnings.warn(
-                f"Received {len(names)} names for {num_preds}"
-                f" predictions. Extra names ignored.",
+                f"Received {len(names)} names for {n} preds; "
+                "extra names ignored.",
                 UserWarning,
                 stacklevel=2,
             )
-            names = names[:num_preds]
+            names = names[:n]
 
-    # --- Color Handling ---
+    # colors
     if color_palette is None:
-        # Generate colors from cmap if palette not given
         try:
             cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
-            # Sample enough distinct colors
-            if (
-                hasattr(cmap_obj, "colors")
-                and len(cmap_obj.colors) >= num_preds
-            ):
-                # Use colors directly from discrete map if enough
-                color_palette = cmap_obj.colors[:num_preds]
+            if hasattr(cmap_obj, "colors") and len(cmap_obj.colors) >= n:
+                color_palette = cmap_obj.colors[:n]
             else:
                 color_palette = [
-                    (
-                        cmap_obj(i / max(1, num_preds - 1))
-                        if num_preds > 1
-                        else cmap_obj(0.5)
-                    )
-                    for i in range(num_preds)
+                    (cmap_obj(i / max(1, n - 1)) if n > 1 else cmap_obj(0.5))
+                    for i in range(n)
                 ]
         except ValueError:
             warnings.warn(
-                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.",
+                f"Invalid cmap '{cmap}'; using 'tab10'.",
+                UserWarning,
                 stacklevel=2,
             )
-            color_palette = plt.cm.tab10.colors  # Default palette
-    # Ensure palette has enough colors, repeat if necessary
-    final_colors = [
-        color_palette[i % len(color_palette)] for i in range(num_preds)
-    ]
+            color_palette = plt.cm.tab10.colors
+    final_colors = [color_palette[i % len(color_palette)] for i in range(n)]
 
-    # Determine the angular range based on `acov`
-    if acov == "default":
-        angular_range = 2 * np.pi
-    elif acov == "half_circle":
-        angular_range = np.pi
-    elif acov == "quarter_circle":
-        angular_range = np.pi / 2
-    elif acov == "eighth_circle":
-        angular_range = np.pi / 4
-    else:
-        # This case should be caught by @validate_params,
-        # but keep as safeguard
-        raise ValueError(
-            "Invalid value for `acov`. Choose from 'default',"
-            " 'half_circle', 'quarter_circle', or 'eighth_circle'."
-        )
+    # --- axes with requested angular coverage
+    fig, ax, span = setup_polar_axes(ax, acov=acov, figsize=figsize or (8, 8))
 
-    # Create the polar plot
-    fig, ax = plt.subplots(
-        figsize=figsize or (8, 8),  # Provide default here
-        subplot_kw={"projection": "polar"},
-    )
-
-    # Limit the visible angular range
-    ax.set_thetamin(0)  # Start angle (in degrees)
-    ax.set_thetamax(np.degrees(angular_range))  # End angle (in degrees)
-
-    # Map `y_true` to angular coordinates (theta)
-    # Handle potential division by zero if y_true is constant
-    y_true_range = np.ptp(y_true)  # Peak-to-peak range
+    # map y_true -> theta
+    y_true = np.asarray(y_true, dtype=float)
     if theta_scale == "proportional":
-        if y_true_range > 1e-9:  # Avoid division by zero
-            theta = angular_range * (y_true - np.min(y_true)) / y_true_range
-        else:  # Handle constant y_true case - map all to start angle?
-            theta = np.zeros_like(y_true)
+        if np.ptp(y_true) > 1e-9:
+            theta = map_theta_to_span(
+                y_true,
+                span=span,
+                data_min=float(np.min(y_true)),
+                data_max=float(np.max(y_true)),
+            )
+        else:
+            theta = np.zeros_like(y_true, dtype=float)
             warnings.warn(
-                "y_true has zero range. Mapping all points to angle 0"
-                " with 'proportional' scaling.",
+                "y_true has zero range; mapping all angles to 0.",
                 UserWarning,
                 stacklevel=2,
             )
     elif theta_scale == "uniform":
-        # linspace handles len=1 case correctly
-        theta = np.linspace(0, angular_range, len(y_true), endpoint=False)
+        theta = np.linspace(0.0, float(span), len(y_true), endpoint=False)
     else:
-        # This case should be caught by @validate_params
-        raise ValueError(
-            "`theta_scale` must be either 'proportional' or 'uniform'."
-        )
+        raise ValueError("`theta_scale` must be 'proportional' or 'uniform'.")
 
-    # Apply theta offset
-    theta += theta_offset
+    # optional user offset (in radians)
+    theta = theta + float(theta_offset)
 
-    # Plot each model's predictions
+    # plot each prediction series
     for i, y_pred in enumerate(y_preds):
-        # Ensure `y_pred` is a numpy array
-        y_pred = np.asarray(y_pred, dtype=float)  # Convert early
-
-        # Normalize `y_pred` for radial coordinates
-        # Handle potential division by zero if y_pred is constant
-        y_pred_range = np.ptp(y_pred)
-        if y_pred_range > 1e-9:
-            r = (y_pred - np.min(y_pred)) / y_pred_range
+        y_pred = np.asarray(y_pred, dtype=float)
+        # normalize radius to [0, 1] per series
+        if np.ptp(y_pred) > 1e-9:
+            r = (y_pred - np.min(y_pred)) / np.ptp(y_pred)
         else:
-            # If constant, map all to 0.5 radius (midpoint)? Or 0? Let's use 0.5
             r = np.full_like(y_pred, 0.5)
             warnings.warn(
-                f"Prediction series '{names[i]}' has zero range."
-                f" Plotting all its points at normalized radius 0.5.",
+                f"Series '{names[i]}' has zero range; " "radius set to 0.5.",
                 UserWarning,
                 stacklevel=2,
             )
 
-        # Plot on the polar axis
         ax.scatter(
             theta,
             r,
@@ -869,29 +864,17 @@ def plot_relationship(
             edgecolor="black",
         )
 
-    # If z_values are provided, replace angle labels with z_values
+    # replace angle ticks with z_values if provided
     if z_values is not None:
-        z_values = np.asarray(z_values)  # Ensure numpy array
+        z_values = np.asarray(z_values)
         if len(z_values) != len(y_true):
             raise ValueError(
-                "Length of `z_values` must match the length of `y_true`."
+                "Length of `z_values` must match length of `y_true`."
             )
-
-        # Decide number of ticks, e.g., 5-10 depending on range/preference
-        num_z_ticks = min(len(z_values), 8)  # Example: max 8 ticks
-        tick_indices = np.linspace(
-            0, len(z_values) - 1, num_z_ticks, dtype=int, endpoint=True
-        )
-
-        # Get theta values corresponding to these indices
-        theta_ticks = theta[tick_indices]  # Use theta calculated earlier
-        z_tick_labels = [
-            f"{z_values[ix]:.2g}" for ix in tick_indices
-        ]  # Format labels
-
-        ax.set_xticks(theta_ticks)
-        ax.set_xticklabels(z_tick_labels)
-        # Set label for z-axis if z_label is provided
+        k = min(len(z_values), 8)
+        idx = np.linspace(0, len(z_values) - 1, k, dtype=int)
+        ax.set_xticks(theta[idx])
+        ax.set_xticklabels([f"{z_values[j]:.2g}" for j in idx])
         if z_label:
             ax.text(
                 1.1,
@@ -903,37 +886,23 @@ def plot_relationship(
                 ha="left",
             )
 
-    # Add labels for radial and angular axes (only if z_values are not used for angles)
+    # labels / grid / legend
     if z_values is None:
         ax.set_ylabel(ylabel or "Angular Mapping (θ)", labelpad=15)
-    # Radial label
     ax.set_xlabel(xlabel or "Normalized Predictions (r)", labelpad=15)
-    # Position radial labels better
-    ax.set_rlabel_position(22.5)  # Adjust angle for radial labels
-
+    ax.set_rlabel_position(22.5)
     ax.set_title(title or "Relationship Visualization", va="bottom", pad=20)
-
-    # Add grid using helper or directly
     set_axis_grid(ax, show_grid, grid_props=grid_props)
-
-    # Add legend
     if legend:
-        ax.legend(
-            loc="upper right", bbox_to_anchor=(1.25, 1.1)
-        )  # Adjust position
+        ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.08))
 
-    plt.tight_layout()  # Adjust layout to prevent overlap
-
-    # --- Save or Show ---
+    fig.tight_layout()
     if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
+        fig.savefig(savefig, bbox_inches="tight", dpi=300)
+        plt.close(fig)
     else:
-        # Warning for non-GUI backend is expected here in test envs
         plt.show()
+    return ax
 
 
 plot_relationship.__doc__ = r"""

@@ -310,7 +310,7 @@ See the gallery :ref:`gallery_plot_error_violins` for code and plot examples.
 
     <hr>
 
-.. _ug_plot_polar_error_ellipses:
+.. _ug_plot_error_ellipses:
 
 Visualizing 2D Uncertainty (:func:`~kdiagram.plot.errors.plot_error_ellipses`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -440,7 +440,7 @@ error data. For a complete, step-by-step example, please see the
 full implementation in the gallery.
 
 **Example:**
-See the gallery :ref:`gallery_plot_polar_error_ellipses` for code and plot examples.
+See the gallery :ref:`gallery_plot_error_ellipses` for code and plot examples.
 
 
 .. raw:: html

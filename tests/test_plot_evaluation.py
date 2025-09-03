@@ -101,7 +101,7 @@ def test_plot_polar_confusion_matrix_runs(binary_class_data):
 
 
 def test_plot_polar_confusion_matrix_raises_on_multiclass(multiclass_data):
-    with pytest.raises(NotImplementedError, match="only supports binary"):
+    with pytest.raises(ValueError, match="supports only binary"):
         plot_polar_confusion_matrix(
             multiclass_data["y_true"], multiclass_data["y_pred"]
         )

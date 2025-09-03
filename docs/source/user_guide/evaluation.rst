@@ -557,7 +557,8 @@ confusion between three or more classes.
 
    This grouped polar bar chart will show us, for each true crop type,
    how the model distributed its predictions. (You can also use the
-   convenient alias ``plot_polar_confusion_multiclass`` for this function.)
+   convenient alias :func:`kdiagram.plot.evaluation.plot_polar_confusion_multiclass`
+   for this function.)
 
    .. code-block:: pycon
 

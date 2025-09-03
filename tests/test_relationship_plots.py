@@ -54,7 +54,7 @@ def test_extra_names_warning(tmp_path):
     y_pred = y_true
 
     out = tmp_path / "extra_names.png"
-    with pytest.warns(UserWarning, match="Extra names ignored"):
+    with pytest.warns(UserWarning, match=r"extra names ignored"):
         plot_relationship(
             y_true,
             y_pred,
@@ -88,7 +88,7 @@ def test_uniform_half_circle_and_z_values_labeling(tmp_path):
     z_vals = np.linspace(10, 50, len(y_true))
 
     out = tmp_path / "uniform_half.png"
-    plot_relationship(
+    ax = plot_relationship(
         y_true,
         y_pred,
         theta_scale="uniform",
@@ -100,7 +100,7 @@ def test_uniform_half_circle_and_z_values_labeling(tmp_path):
     assert out.exists()
 
     # Inspect current polar axes
-    ax = plt.gca()
+    # ax = plt.gca()
     # Thetamax should be ~180 degrees for half_circle
     # Matplotlib uses degrees in get_thetamax
     assert pytest.approx(ax.get_thetamax(), rel=1e-3) == 180.0

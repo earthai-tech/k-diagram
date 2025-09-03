@@ -21,113 +21,483 @@ the Feature Importance Fingerprint plot.
 Feature Importance Fingerprint
 --------------------------------
 
-Uses :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`.
-This radar chart compares the importance profiles ("fingerprints") of
-several features across different groups or layers (e.g., different
-years or models). This example shows raw (unnormalized) importance
-values comparing feature influence across three years.
+The :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`
+function is a  tool for model interpretation. It creates a polar
+radar chart to visualize and compare the importance profiles of multiple
+features across different contexts (e.g., different models or time
+periods). Each context is represented by a unique "fingerprint,"
+allowing for an immediate visual comparison of what drives the model's
+decisions.
+
+First, let's break down the components of this comparative plot.
+
+.. admonition:: Plot Anatomy
+   :class: anatomy
+
+   * **Angle (θ):** Each angular axis is assigned to a specific **input
+     feature** (e.g., 'Rainfall', 'Temperature').
+   * **Radius (r):** Corresponds to the **importance score** of that
+     feature for a given layer. This can be the raw score or, more
+     commonly, a normalized score (``normalize=True``) where 1.0 is the
+     most important feature *within that layer*.
+   * **Polygon (Layer):** Each colored polygon represents a different
+     **layer** or context, such as a different model, a different time
+     period, or a different customer segment. The polygon's shape is the
+     "fingerprint" of feature influence for that layer.
+
+With this framework, let's apply the plot to a real-world problem,
+starting with a classic model comparison and then moving to a more
+advanced analysis of concept drift.
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 1: Comparing Different Models' "Logic"**
+
+A primary use of this plot is to compare the internal "logic" of two or
+more competing models. Do they rely on the same features to make
+decisions, or do they have fundamentally different approaches to solving
+the problem?
+
+Let's imagine a telecommunications company has trained a simple
+`Logistic Regression` model and a complex `Gradient Boosting` model to
+predict customer churn. They need to understand what each model has
+learned before deploying it.
 
 .. code-block:: python
    :linenos:
 
-   # Assuming plot function is in kd.plot.feature_based
-   import kdiagram.plot.feature_based as kdf
+   import kdiagram as kd
    import numpy as np
    import matplotlib.pyplot as plt
 
-   # --- Data Generation ---
-   features = ['Rainfall', 'Temperature', 'Wind Speed',
-               'Soil Moisture', 'Solar Radiation', 'Topography']
-   n_features = len(features)
-   years = ['2022', '2023', '2024']
-   n_layers = len(years)
+   # --- 1. Data Generation: Feature Importances for Two Models ---
+   features = [
+       'Tenure', 'Monthly Charges', 'Total Charges',
+       'Data Usage', 'Support Calls', 'Contract Type'
+   ]
+   labels = ['Logistic Regression', 'Gradient Boosting']
 
-   # Generate importance scores (rows=years, cols=features)
-   # Make them slightly different per year
-   np.random.seed(123)
-   importances = np.random.rand(n_layers, n_features) * 0.5
-   importances[0, 0] = 0.8 # Rainfall important in 2022
-   importances[1, 3] = 0.9 # Soil Moisture important in 2023
-   importances[2, 1] = 0.7 # Temperature important in 2024
-   importances[2, 4] = 0.75# Solar Radiation also important in 2024
+   # A simple model might rely heavily on a few key features
+   logreg_importances = [0.9, 0.8, 0.7, 0.1, 0.2, 0.6]
+   # A more complex model might learn from a wider array of signals
+   boosting_importances = [0.5, 0.6, 0.6, 0.9, 0.8, 0.4]
 
-   # --- Plotting ---
-   kdf.plot_feature_fingerprint(
+   importances = np.array([logreg_importances, boosting_importances])
+
+   # --- 2. Plotting ---
+   kd.plot_feature_fingerprint(
        importances=importances,
        features=features,
-       labels=years,
-       normalize=False, # Show raw importance scores
-       fill=True,
-       cmap='Pastel1',
-       title="Gallery: Feature Importance Fingerprint (Yearly)",
-       # Save the plot relative to this file's location
-       savefig="images/gallery_feature_fingerprint.png"
+       labels=labels,
+       normalize=True, # Focus on the relative pattern of importance
+       title="Use Case 1: Churn Model Feature Importance Fingerprints",
+       acov="full", # use full circle.
+       savefig="gallery/images/gallery_feature_fingerprint_models.png"
    )
    plt.close()
 
-.. image:: ../images/gallery_feature_fingerprint.png
-   :alt: Feature Importance Fingerprint Plot Example
+.. figure:: ../images/feature_based/gallery_feature_fingerprint_models.png
    :align: center
-   :width: 75%
+   :width: 70%
+   :alt: A radar chart comparing the feature importance of two different models.
+
+   The "fingerprints" of two models, showing that the Logistic
+   Regression (blue) relies on tenure and charges, while the Gradient
+   Boosting model (orange) relies more on usage and support calls.
 
 .. topic:: 🧠 Analysis and Interpretation
    :class: hint
 
-   The **Feature Importance Fingerprint** (a radar plot) visually
-   represents the importance of various features across different
-   groups or "layers". Each axis corresponds to a feature, and each
-   colored polygon represents a layer (here, different years). The
-   distance from the center along an axis indicates that feature's
-   importance for that specific layer.
+   This plot immediately reveals the different "worldviews" of the two
+   models. The **Logistic Regression** model (blue polygon) has a spiky
+   fingerprint, extending furthest on the ``Tenure`` and ``Monthly Charges``
+   axes. This indicates it has learned a simple, strong relationship based
+   primarily on contract length and cost. In contrast, the **Gradient
+   Boosting** model (cyan polygon) shows a more distributed profile. Its
+   most important features are ``Data Usage`` and ``Support Calls``,
+   suggesting it has learned a more nuanced, behavior-based pattern of
+   churn. This insight is critical for deciding which model's logic is
+   more aligned with the company's business strategy.
 
-   **Analysis and Interpretation:**
+.. raw:: html
 
-   * **Axes:** Represent Rainfall, Temperature, Wind Speed, Soil
-     Moisture, Solar Radiation, and Topography.
-   * **Layers (Colors/Polygons):** Represent the years 2022, 2023,
-     and 2024, showing how feature importance changes annually.
-   * **Radius:** Since ``normalize=False``, the radius shows the
-     *raw* importance score. Larger extensions along an axis mean
-     higher importance.
-   * **Shape ("Fingerprint"):** The overall shape of each polygon
-     gives a unique "fingerprint" of feature influence for that year.
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
 
-   **🔍 Key Insights from this Example:**
+**Use Case 2: Diagnosing Feature Importance Drift Over Time**
 
-   * **2022:** The polygon extends furthest along the **Rainfall**
-     axis, indicating it was the dominant feature in that year's
-     model or context.
-   * **2023:** The **Soil Moisture** axis shows the largest value,
-     suggesting a shift in primary drivers compared to 2022.
-   * **2024:** **Temperature** and **Solar Radiation** show the
-     highest importance, indicating another change in the factors
-     influencing the outcome for this year.
-   * **Comparison:** We can easily see that the relative importance
-     of features is not static but changes from year to year.
+A model's logic may not be static. The factors that predict an outcome
+one year might be different the next, a phenomenon known as **concept
+drift**. This plot is an excellent tool for diagnosing this drift by
+comparing a model's feature importance fingerprints calculated from
+different time periods.
 
-   **💡 When to Use This Plot:**
+Let's analyze a model that predicts crop yield. We'll simulate how the
+importance of different environmental factors might change over three
+consecutive years due to changing climate patterns.
 
-   * **Compare Feature Importance:** Visualize differences between
-     models, time periods, or groups (e.g., spatial zones).
-   * **Identify Dominant Features:** Quickly see which features have
-     the most impact for each layer.
-   * **Analyze Importance Drift:** Track how feature influence evolves
-     over time, as shown in this yearly example.
-   * **Model Interpretation:** Understand and communicate the key
-     drivers behind model predictions for different scenarios.
-  
+.. code-block:: python
+   :linenos:
 
+   # --- 1. Data Generation: Feature Importances for Three Years ---
+   features = ['Rainfall', 'Temperature', 'Wind Speed',
+               'Soil Moisture', 'Solar Radiation', 'Topography']
+   years = ['2022 (Wet Year)', '2023 (Dry Year)', '2024 (Hot Year)']
+   
+   # Simulate importance scores that change each year
+   importances_yearly = np.array([
+       # 2022: A wet year, so rainfall and topography are key
+       [0.9, 0.3, 0.2, 0.5, 0.4, 0.6],
+       # 2023: A dry year, so soil moisture becomes critical
+       [0.4, 0.5, 0.1, 0.9, 0.6, 0.3],
+       # 2024: A hot year, so temperature and solar radiation dominate
+       [0.2, 0.9, 0.3, 0.4, 0.8, 0.1]
+   ])
+
+   # --- 2. Plotting ---
+   kd.plot_feature_fingerprint(
+       importances=importances_yearly,
+       features=features,
+       labels=years,
+       normalize=True,
+       title="Use Case 2: Yearly Drift in Crop Yield Feature Importance",
+       cmap='Set2',
+       savefig="gallery/images/gallery_feature_fingerprint_drift.png"
+   )
+   plt.close()
+
+.. figure:: ../images/feature_based/gallery_feature_fingerprint_drift.png
+   :align: center
+   :width: 70%
+   :alt: A radar chart showing how feature importances change over three years.
+
+   Three overlapping polygons, each with a different shape, showing that
+   the most important feature for the model changes each year.
+
+.. topic:: 🧠 Interpretation
+   :class: hint
+
+   This plot clearly visualizes the phenomenon of concept drift. Each
+   year has a distinctly shaped "fingerprint," revealing how the model's
+   reliance on different features has evolved. In the **2022 (Wet Year)**,
+   the model's predictions were overwhelmingly driven by **Rainfall**. In
+   the **2023 (Dry Year)**, the most important feature shifted dramatically
+   to **Soil Moisture**. Finally, in the **2024 (Hot Year)**, **Temperature**
+   and **Solar Radiation** became the dominant factors. This is a critical
+   insight, suggesting that a single, static model is not sufficient and
+   that the model may need to be retrained or adapted regularly to account
+   for these changing environmental drivers.
+
+.. raw:: html
+
+   <hr style="border-top: 2px solid #ccc; margin: 40px 0;">
+
+For a deeper understanding of the statistical concepts behind feature
+importance and model interpretation, please refer back to the main
+:ref:`ug_feature_fingerprint` section.
       
+
+.. _gallery_plot_fingerprint:
+
+------------------------------------
+Feature Fingerprint (Dynamic)
+------------------------------------
+
+The :func:`~kdiagram.plot.feature_based.plot_fingerprint` function is a
+versatile tool for model and data interpretation. As a next-generation
+evolution of the feature fingerprint plot, it not only visualizes
+pre-computed importance scores but can also **dynamically calculate
+them from raw data**. This allows for rapid, code-efficient exploration
+of feature significance across different groups or contexts.
+
+It can operate in two primary modes:
+
+1.  **Unsupervised**: To find the most variable or dispersed features
+    within different data segments (e.g., using standard deviation).
+2.  **Supervised**: To find features most correlated with a target
+    variable.
+
+First, let's review the plot's structure.
+
+.. admonition:: Plot Anatomy
+   :class: anatomy
+
+   * **Angle (θ):** Each angular axis is assigned to a specific **input
+     feature** (e.g., 'Alcohol', 'Flavanoids').
+   * **Radius (r):** Corresponds to the **importance score** of that
+     feature. When calculated dynamically, this could be a standard
+     deviation, variance, or correlation value. Normalizing this score
+     (``normalize=True``) is common to compare the relative patterns.
+   * **Polygon (Layer):** Each colored polygon represents a different
+     **layer** or context. This function can automatically generate
+     these layers by splitting the data using a ``group_col``.
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 1: Unsupervised Fingerprint for Variability Analysis**
+
+An ideal use of this function is to understand the intrinsic
+properties of a dataset. Let's imagine we have a dataset of different
+wine cultivars and want to identify which chemical properties are the
+most *variable* for each type. This can reveal the defining, or most
+inconsistent, characteristics of each group without respect to a target.
+
+Here, we'll use ``method='std'`` to compute the standard deviation for
+each feature, grouped by wine type.
+
+.. code-block:: python
+   :linenos:
+
+   import numpy as np
+   import pandas as pd
+   import matplotlib.pyplot as plt
+   from sklearn.datasets import load_wine
+   import kdiagram as kd
+
+   # --- 1) Load and tidy
+   wine = load_wine()
+   df = pd.DataFrame(wine.data, columns=wine.feature_names)
+   df["wine_type"] = pd.Series(wine.target).map(
+       {0: "Cultivar A", 1: "Cultivar B", 2: "Cultivar C"}
+   )
+
+   # --- 2) Standardize features globally (z-score) to remove scale effects
+   X = df.drop(columns=["wine_type"])
+   Z = (X - X.mean()) / X.std(ddof=0)
+
+   # --- 3) Per-cultivar variability on standardized features
+   std_by_type = (
+       pd.concat([Z, df["wine_type"]], axis=1)
+         .groupby("wine_type")
+         .std(ddof=0)
+   )
+
+   # --- 4) Keep a compact, readable set of axes
+   # Pick the top-8 features by average variability across cultivars
+   features_top8 = (
+       std_by_type.mean(axis=0)
+       .sort_values(ascending=False)
+       .head(8)
+       .index
+       .tolist()
+   )
+
+   # --- 5) Plot: pass precomputed matrix (layers x features)
+   kd.plot_fingerprint(
+       std_by_type[features_top8],   # precomputed importances (DataFrame)
+       precomputed=True,
+       labels=std_by_type.index.tolist(),
+       features=features_top8,
+       normalize=True,               # compare shapes per cultivar
+       title="Chemical Variability Fingerprint by Wine Cultivar",
+       acov="half_circle",           # cleaner labels
+       # savefig="gallery/images/plot_fingerprint_variability.png",
+   )
+   plt.close()
+
+
+.. figure:: ../images/feature_based/plot_fingerprint_variability.png
+   :align: center
+   :width: 80%
+   :alt: A semi-circular radar chart showing feature variability for wines.
+
+   The "fingerprints" show that 'Cultivar A' is most variable in its
+   'flavanoids', while 'Cultivar C' is most variable in 'proline'.
+
+.. topic:: 🧠 Analysis and Interpretation
+   :class: hint
+
+   This unsupervised analysis, laid out on a semi-circle for clarity,
+   reveals the unique variability signature of each wine type. The
+   fingerprints show a clear divergence in chemical consistency:
+
+   * **Cultivar C (cyan)** has a profile dominated by extreme
+     variability in **color_intensity**, which reaches a normalized
+     score of 1.0. This suggests color is the least consistent, and
+     therefore most defining, trait for this group.
+   * **Cultivars A (blue) and B (brown)**, in contrast, are both most
+     variable in **magnesium**. However, their overall shapes differ,
+     with Cultivar A showing higher relative variability in ash-related
+     properties compared to Cultivar B.
+
+   This kind of analysis is invaluable for characterization and
+   identifying which features make each group distinct.
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 2: Supervised Fingerprint for Correlation Analysis**
+
+Now, let's switch to a supervised problem. We want to understand what
+drives the *quality* of a wine. We can use the function to compute the
+absolute correlation of each feature with a target variable (`y_col`).
+
+Let's simulate a scenario where the factors driving quality differ
+between two vineyards. This is a common real-world problem where the
+context (the vineyard) changes the feature importance landscape.
+
+.. code-block:: python
+   :linenos:
+
+   # --- 1. Generate Synthetic Quality Data ---
+   import numpy as np
+   import pandas as pd
+   import matplotlib.pyplot as plt
+   import kdiagram as kd
+
+   # Reuse df from Use Case 1 (already has features + wine_type)
+   # If running standalone, rebuild df with load_wine() as above.
+
+   np.random.seed(42)
+
+   # --- 1) Create vineyard context
+   df["vineyard"] = np.random.choice(["Hillside", "Valley"], size=len(df), p=[0.5, 0.5])
+   hillside = df["vineyard"] == "Hillside"
+   valley   = ~hillside
+
+   # --- 2) Build a full-length, index-aligned quality Series
+   quality = pd.Series(0.0, index=df.index)
+
+   # Hillside: alcohol & flavanoids drive quality
+   quality.loc[hillside] += (
+       1.2 * df.loc[hillside, "alcohol"]
+       + 2.0 * df.loc[hillside, "flavanoids"]
+   )
+
+   # Valley: proline & color_intensity drive quality
+   quality.loc[valley] += (
+       0.005 * df.loc[valley, "proline"]      # rescale proline so it isn’t dominating
+       + 1.5   * df.loc[valley, "color_intensity"]
+   )
+
+   # Add modest noise everywhere
+   quality += np.random.normal(0, 0.5, size=len(df))
+
+   df["quality_score"] = quality
+
+   # --- 3) Choose a compact, interpretable feature set
+   drivers = ["alcohol", "flavanoids", "proline", "color_intensity"]
+   # Add a few supporting axes with high overall variance to improve context
+   extra = (
+       df.drop(columns=["wine_type", "vineyard", "quality_score"])
+         .std()
+         .sort_values(ascending=False)
+         .index.difference(drivers)
+         .tolist()[:4]
+   )
+   features_to_show = drivers + extra   # 8 axes total
+
+   # --- 4) Plot absolute correlation per vineyard
+   kd.plot_fingerprint(
+       df,
+       precomputed=False,
+       y_col="quality_score",
+       group_col="vineyard",
+       method="abs_corr",                 # |corr(y, x)| per group
+       features=features_to_show,
+       normalize=True,
+       acov="full",                       # full-circle works nicely here
+       title="Quality Driver Fingerprints by Vineyard",
+       # savefig="gallery/images/plot_fingerprint_correlation.png",
+   )
+   plt.close()
+
+
+.. figure:: ../images/feature_based/plot_fingerprint_correlation.png
+   :align: center
+   :width: 75%
+   :alt: A full radar chart comparing feature correlations for two vineyards.
+
+   The plot shows that for the 'Hillside' vineyard, 'flavanoids' and
+   'alcohol' are most correlated with quality, while for the 'Valley'
+   vineyard, it's 'proline' and 'color_intensity'.
+
+.. topic:: 💡 Interpretation
+   :class: hint
+
+   The plot immediately reveals a story about "terroir"—how
+   the vineyard's location fundamentally changes the formula for a
+   high-quality wine. The two fingerprints are nearly inverted.
+   The **Hillside** vineyard's fingerprint (blue) is sharply peaked,
+   showing that its quality is overwhelmingly correlated with
+   **alcohol** and, to a lesser extent, **flavanoids**. In stark contrast, 
+   the **Valley** vineyard (cyan) relies on a completely different set 
+   of drivers. Its quality is most strongly correlated with **color_intensity** 
+   and **proline**, while alcohol and flavanoids are of minor importance.
+
+   This critical insight shows there is no single path to quality;
+   optimal harvesting and blending strategies must be tailored to each
+   vineyard's unique fingerprint.
+
+.. admonition:: Best Practice
+   :class: hint
+
+   * **Method Selection**: Use unsupervised methods (``'std'``, ``'var'``)
+     for data characterization and supervised methods (``'abs_corr'``)
+     when you have a clear prediction target.
+   * **Normalization**: Keep ``normalize=True`` (the default) when you
+     care about the *relative* pattern of importances within each
+     group. This answers: "What is the most important feature *for this
+     group*?"
+   * **Angular Coverage**: The default ``acov="half_circle"`` is often
+     excellent for readability, especially with many features, as it
+     prevents labels from overlapping at the top and bottom. Use
+     ``"full"`` when a circular metaphor is more intuitive.
+
+.. raw:: html
+
+   <hr style="border-top: 2px solid #ccc; margin: 40px 0;">
+
+For more details on the statistical calculations, please see the
+main User Guide section on :ref:`ug_plot_fingerprint`.
+
 .. _gallery_plot_feature_interaction:
 
 ---------------------------
 Polar Feature Interaction
 ---------------------------
 
-Visualizes the interaction between two features by plotting a target
-variable's aggregated value on a polar heatmap. This plot is designed to
-reveal complex, non-linear relationships that are not apparent from 1D
-feature-importance plots.
+The :func:`~kdiagram.plot.feature_based.plot_feature_interaction`
+function is a powerful diagnostic tool for visualizing the joint effect
+of two features on a target variable. By mapping these interactions
+onto a polar heatmap, it excels at revealing complex, non-linear
+relationships and conditional patterns that are often missed by
+traditional 1D or 2D Cartesian plots.
+
+First, let's break down the components of this insightful plot.
+
+.. admonition:: Plot Anatomy
+   :class: anatomy
+
+   * **Angle (θ):** Represents the first independent feature. This axis
+     is ideal for cyclical data (e.g., 'hour of day', 'month of year'),
+     where the start and end points connect seamlessly.
+   * **Radius (r):** Represents the second independent feature, plotted
+     concentrically. The lowest value is at the center, and the
+     highest is at the periphery.
+   * **Color:** Represents the aggregated value of the dependent
+     (target) variable for all data points falling within a specific
+     angle-radius bin. The aggregation statistic (e.g., 'mean' or
+     'std') can be specified.
+
+With this framework, we can explore how seemingly independent features
+can conspire to influence an outcome.
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 1: Basic Interaction in Energy Production**
+
+A classic application is modeling solar panel energy output. The output
+is not determined by the hour of the day or the cloud cover alone,
+but by the strong interaction between them. High output is only
+possible during daylight hours *and* when cloud cover is low. This plot
+makes that relationship immediately obvious.
 
 .. code-block:: python
    :linenos:
@@ -138,77 +508,224 @@ feature-importance plots.
    import matplotlib.pyplot as plt
 
    # --- Data Generation ---
-
    np.random.seed(0)
    n_points = 5000
-
-   # Feature 1 (Angle): Hour of day
    hour_of_day = np.random.uniform(0, 24, n_points)
-
-   # Feature 2 (Radius): Cloud cover
    cloud_cover = np.random.rand(n_points)
 
-   # Target (Color): Solar panel output, which depends on the
-   # interaction between daylight and cloud cover.
-   daylight_factor = np.sin(hour_of_day * np.pi / 24) ** 2
+   # Target depends on the interaction between daylight and cloud cover
+   daylight = np.sin(hour_of_day * np.pi / 24) ** 2
    cloud_factor = (1 - cloud_cover ** 0.5)
-   panel_output = 100 * daylight_factor * cloud_factor + np.random.rand(n_points) * 5
-   panel_output[(hour_of_day < 6) | (hour_of_day > 18)] = 0
+   output = 100 * daylight * cloud_factor + np.random.rand(n_points) * 5
+   output[(hour_of_day < 6) | (hour_of_day > 18)] = 0 # No output at night
 
    df_solar = pd.DataFrame({
        'hour': hour_of_day,
        'cloud_cover': cloud_cover,
-       'panel_output': panel_output,
+       'panel_output': output,
    })
 
    # --- Plotting ---
-
    kd.plot_feature_interaction(
        df=df_solar,
        theta_col='hour',
        r_col='cloud_cover',
        color_col='panel_output',
        theta_period=24,
-       theta_bins=24,  # One bin per hour
+       theta_bins=24,
        r_bins=8,
        cmap='inferno',
        title='Solar Panel Output by Hour and Cloud Cover',
-       savefig='gallery/images/plot_feature_based_interaction.png',
+       savefig='gallery/images/plot_feature_interaction_solar.png',
    )
    plt.close()
 
-.. image:: ../images/plot_feature_based_interaction.png
-   :alt: Example of a Polar Feature Interaction Plot
+.. figure:: ../images/feature_based/plot_feature_interaction_solar.png
    :align: center
    :width: 75%
+   :alt: Polar heatmap showing solar panel output.
+
+   The interaction plot reveals a "hot spot" of high energy output
+   (yellow) during midday hours (top) and with low cloud cover (center).
 
 .. topic:: 🧠 Analysis and Interpretation
    :class: hint
 
-   The **Polar Feature Interaction** plot provides a powerful diagnostic
-   for understanding how two features jointly influence a target variable.
+   The plot presents a striking visual narrative of solar energy
+   generation. The most immediate feature is the stark day/night
+   divide, with the entire right hemisphere of the plot rendered in
+   black, confirming zero output between 6 PM and 6 AM regardless of
+   cloud conditions.
 
-   **Key Features:**
+   The "hot spot" of peak performance—a bright yellow core—is precisely
+   located at an angle of 180° (representing noon) and at the plot's
+   center (representing minimal cloud cover). From this peak, the
+   power output decays along two clear gradients:
    
-   * **Angle (θ):** First feature, often cyclical (here, hour of day).
-   * **Radius (r):** Second feature (here, cloud cover, with 0 at the center).
-   * **Color:** Mean value of the target for points within each angle–radius bin.
+   1. **Radially:** Moving outwards along the 180° line shows output
+      fading from yellow to purple, illustrating how increasing cloud
+      cover diminishes power, even at the sun's zenith.
+   2. **Angularly:** Following any concentric circle away from 180°
+      shows the color darkening, representing the natural decline in
+      solar intensity as the day progresses from noon towards dusk or
+      dawn.
 
-   **🔍 In this Example:**
-   
-   * **Interaction “Hot Spot”:** Bright region at low radius (low cloud
-     cover) and angle ~90° (midday) shows output is high **only when it is
-     noon AND cloud cover is low**.
-   * **No-Interaction Zones:** Night hours are dark (zero output) regardless
-     of cloud cover; outer rings (high cloud cover) remain dark even during
-     the day.
+.. raw:: html
 
-   **💡 When to Use:**
-   
-   * Move beyond simple feature importance to diagnose **pairwise feature
-     interactions** affecting predictions or errors.
-   * Identify non-linear relationships and conditional patterns.
-   * Visually confirm expected interaction effects learned by a model.
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 2: Identifying Market Volatility**
+
+Beyond simple averages, this plot can visualize higher-order moments
+like standard deviation to uncover volatility. Consider a financial
+dataset where we want to understand stock price volatility based on the
+time of day and a real-time market sentiment score. Here, we set
+``statistic='std'`` to find combinations of time and sentiment that
+lead to the most unpredictable pricing.
+
+.. code-block:: python
+   :linenos:
+
+   # --- Data Generation for Market Volatility ---
+   np.random.seed(42)
+   n_trades = 10000
+   trade_hour = np.random.uniform(9.5, 16, n_trades) # Trading hours
+   sentiment = np.random.uniform(-1, 1, n_trades)   # Sentiment score
+
+   # Volatility is highest at market open/close and during high sentiment
+   time_vol = 1 / ((trade_hour - 12.75)**2 + 0.5)
+   senti_vol = (sentiment + 1.1)**2
+   price_change = np.random.randn(n_trades) * time_vol * senti_vol
+
+   df_market = pd.DataFrame({
+       'hour': trade_hour,
+       'sentiment_score': sentiment,
+       'price_change_abs': np.abs(price_change)
+   })
+
+   # --- Plotting Volatility ---
+   kd.plot_feature_interaction(
+       df=df_market,
+       theta_col='hour',
+       r_col='sentiment_score',
+       color_col='price_change_abs',
+       statistic='std', # Visualize standard deviation
+       theta_period=24,
+       theta_bins=16,
+       r_bins=10,
+       cmap='plasma',
+       title='Market Price Volatility by Hour and Sentiment',
+       savefig='gallery/images/plot_feature_interaction_volatility.png',
+   )
+   plt.close()
+
+.. figure:: ../images/feature_based/plot_feature_interaction_volatility.png
+   :align: center
+   :width: 75%
+   :alt: Polar plot showing market volatility by hour and sentiment.
+
+   Volatility (bright colors) is highest at market open/close and when
+   sentiment is most positive (outermost ring).
+
+.. topic:: 🧠 Interpretation
+   :class: hint
+
+   This visualization uncovers the precise conditions that trigger
+   market instability. The plot is dominated by a vast, calm sea of
+   deep blue in the center, indicating that mid-day trading with
+   neutral sentiment is highly predictable.
+
+   However, two distinct "horns" of high volatility, colored bright
+   yellow, erupt at the market's open (~140° or 9:30 AM) and close
+   (~240° or 4:00 PM). The plot reveals a critical interaction: this
+   instability is most extreme at the outer radius, meaning that high
+   positive sentiment dramatically amplifies the volatility inherent
+   at the start and end of the trading day. This insight allows traders
+   to pinpoint the riskiest conditions: not just *when* to be cautious,
+   but under *what market sentiment* that caution is most warranted.
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 3: Focused Analysis in Manufacturing**
+
+Sometimes, a full 360° view is not necessary, especially when one
+feature is not cyclical. We can use the ``acov`` (angular coverage)
+parameter to create a sector plot for a more focused analysis.
+Imagine a process where product defects are related to machine speed
+and lubricant viscosity. We can map the linear viscosity scale to a
+180° arc using ``acov='half_circle'``.
+
+.. code-block:: python
+   :linenos:
+
+   # --- Data Generation for Manufacturing Defects ---
+   np.random.seed(123)
+   n_samples = 8000
+   speed = np.random.uniform(100, 500, n_samples)      # Speed in RPM
+   viscosity = np.random.uniform(20, 80, n_samples) # Viscosity in cSt
+
+   # Defects occur primarily at high speeds with low viscosity
+   defect_prob = 1 / (1 + np.exp(
+       -0.02 * ((speed - 400) - (viscosity - 50) * 5)
+   ))
+   defects = np.random.binomial(1, defect_prob)
+
+   df_qc = pd.DataFrame({
+       'speed_rpm': speed, 'viscosity_cst': viscosity, 'is_defect': defects
+   })
+
+   # --- Plotting with Angular Coverage Control ---
+   kd.plot_feature_interaction(
+       df=df_qc,
+       theta_col='viscosity_cst', # Non-cyclical feature
+       r_col='speed_rpm',
+       color_col='is_defect',
+       statistic='mean',     # Mean of binary = defect rate
+       acov='half_circle',   # Use a 180-degree view
+       theta_bins=15,
+       r_bins=10,
+       cmap='cividis',
+       title='Product Defect Rate by Speed and Viscosity',
+       savefig='gallery/images/plot_feature_interaction_defects.png',
+   )
+   plt.close()
+
+.. figure:: ../images/feature_based/plot_feature_interaction_defects.png
+   :align: center
+   :width: 75%
+   :alt: Semi-circular plot for manufacturing defect analysis.
+
+   The focused semi-circle plot pinpoints the highest defect rate
+   (bright yellow) at high speeds and low-to-mid viscosity.
+
+.. topic:: 🧠 Interpretation
+   :class: hint
+
+   The semi-circular plot acts as a diagnostic map, pinpointing a
+   critical failure zone with high precision. The defect rate,
+   represented by the mean of a binary outcome, escalates to nearly
+   100% (bright yellow) in a specific operational window: when machine
+   speeds are highest (the outermost rings, >400 RPM) **and** when
+   lubricant viscosity is in the low-to-mid range (an angular sector
+   between roughly 30° and 60°).
+
+   Conversely, the plot clearly defines "safe zones." The deep blue
+   inner rings indicate that low speeds (<200 RPM) are consistently
+   safe, irrespective of viscosity. Furthermore, high viscosity (angles
+   approaching 180°) appears to mitigate defect risk, even at high
+   speeds. This provides an immediate, actionable insight for
+   engineers: to eliminate defects, they must either reduce speed or
+   significantly increase lubricant viscosity.
+
+.. raw:: html
+
+   <hr style="border-top: 2px solid #ccc; margin: 40px 0;">
+
+For a deeper dive into the underlying mathematics of polar mapping and
+binning, please refer to the main User Guide section on
+:ref:`ug_plot_feature_interaction`.
 
 .. raw:: html
 

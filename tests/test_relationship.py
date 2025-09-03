@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # Noqa  Often useful for data setup
 import pytest
+from matplotlib.axes import Axes
 
 # --- Import function to test ---
 # Adjust the import path based on your project structure
@@ -83,7 +84,7 @@ def test_plot_relationship_runs_ok(
             title=f"Test: {n_preds} preds, {theta_scale}, {acov}",
             savefig=None,  # Ensure plt.show() is covered if no savefig
         )
-        assert result is None, "Function should return None"
+        assert isinstance(result, Axes), "Function should return Axes"
         # Check if a figure was managed by plt.show/close implicitly
         # Hard to assert reliably without mocking show, focus on no error
     except Exception as e:

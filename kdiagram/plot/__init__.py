@@ -15,7 +15,11 @@ from .evaluation import (
     plot_polar_roc,
     plot_regression_performance,
 )
-from .feature_based import plot_feature_fingerprint, plot_feature_interaction
+from .feature_based import (
+    plot_feature_fingerprint,
+    plot_feature_interaction,
+    plot_fingerprint,
+)
 from .probabilistic import (
     plot_calibration_sharpness,
     plot_credibility_bands,
@@ -67,6 +71,7 @@ __all__ = [
     "taylor_diagram",
     "plot_feature_fingerprint",
     "plot_feature_interaction",
+    "plot_fingerprint",
     "plot_relationship",
     "plot_radial_density_ring",
     "plot_reliability_diagram",

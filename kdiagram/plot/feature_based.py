@@ -9,14 +9,28 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
 
+from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
 from ..utils.handlers import columns_manager
-from ..utils.plot import set_axis_grid
+from ..utils.plot import (
+    acov_to_span,
+    map_theta_to_span,
+    resolve_polar_axes,
+    set_axis_grid,
+    set_polar_angular_span,
+    setup_polar_axes,
+    warn_acov_preference,
+)
 from ..utils.validator import ensure_2d, exist_features
 
-__all__ = ["plot_feature_fingerprint", "plot_feature_interaction"]
+__all__ = [
+    "plot_feature_fingerprint",
+    "plot_feature_interaction",
+    "plot_fingerprint",
+]
 
 
 @check_non_emptiness(params=["df"])
@@ -31,6 +45,7 @@ def plot_feature_interaction(
     theta_period: float | None = None,
     theta_bins: int = 24,
     r_bins: int = 10,
+    acov: Acov = "default",
     title: str | None = None,
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
@@ -39,11 +54,23 @@ def plot_feature_interaction(
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
+    ax: Axes | None = None,
 ):
-    # --- Input Validation ---
-    required_cols = [theta_col, r_col, color_col]
-    exist_features(df, features=required_cols)
-    data = df[required_cols].dropna().copy()
+
+    warn_acov_preference(
+        acov,
+        preferred="default",
+        plot_name="feature_interaction",
+        advice=(
+            "A full 360° span usually produces the most readable comparison; "
+            "proceeding with the requested span."
+        ),
+    )
+    # ---- validate & subset
+    required = [theta_col, r_col, color_col]
+    exist_features(df, features=required)
+
+    data = df[required].dropna().copy()
     if data.empty:
         warnings.warn(
             "DataFrame is empty after dropping NaNs.",
@@ -52,67 +79,114 @@ def plot_feature_interaction(
         )
         return None
 
-    # --- Binning and Aggregation ---
-    if theta_period:
-        data["theta_rad"] = (
-            ((data[theta_col] % theta_period) / theta_period) * 2 * np.pi
+    # axes setup (acov-aware)
+    # - returns (fig, ax, span_radians)
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
+        zero_at="N",  # 0° at north by default
+        clockwise=True,  # CW increasing angles (common in polar charts)
+    )
+
+    # map theta data to [0, span]
+    th_raw = data[theta_col].to_numpy()
+    if theta_period is not None:
+        th_scaled = map_theta_to_span(
+            th_raw,
+            span=span,
+            theta_period=theta_period,
         )
     else:
-        min_theta, max_theta = data[theta_col].min(), data[theta_col].max()
-        if (max_theta - min_theta) > 1e-9:
-            data["theta_rad"] = (
-                ((data[theta_col] - min_theta) / (max_theta - min_theta))
-                * 2
-                * np.pi
-            )
-        else:
-            data["theta_rad"] = 0
+        # min-max scale to the selected span
+        tmin, tmax = float(data[theta_col].min()), float(
+            data[theta_col].max()
+        )
+        th_scaled = map_theta_to_span(
+            th_raw,
+            span=span,
+            data_min=tmin,
+            data_max=tmax,
+        )
+    data["theta_mapped"] = th_scaled
 
-    data["theta_bin"] = pd.cut(data["theta_rad"], bins=theta_bins)
-    data["r_bin"] = pd.cut(data[r_col], bins=r_bins)
+    #  build bin edges
+    theta_edges = np.linspace(0.0, span, theta_bins + 1)
+    r_min, r_max = float(data[r_col].min()), float(data[r_col].max())
+    r_edges = np.linspace(r_min, r_max, r_bins + 1)
 
-    # Group by both bins and calculate the statistic
-    heatmap_data = (
-        data.groupby(["theta_bin", "r_bin"], observed=False)[color_col]
+    # bin assignments (include_lowest=True keeps left edge)
+    data["theta_bin"] = pd.cut(
+        data["theta_mapped"],
+        bins=theta_edges,
+        include_lowest=True,
+    )
+    data["r_bin"] = pd.cut(
+        data[r_col],
+        bins=r_edges,
+        include_lowest=True,
+    )
+
+    #  aggregate to a 2D grid (r x theta)
+    agg = (
+        data.groupby(["r_bin", "theta_bin"], observed=False)[color_col]
         .agg(statistic)
-        .unstack()
+        .reset_index()
+    )
+    # pivot so rows=r, cols=theta -> shape (r_bins, theta_bins)
+    grid = agg.pivot(
+        index="r_bin",
+        columns="theta_bin",
+        values=color_col,
     )
 
-    # Get bin edges for plotting
-    theta_edges = np.linspace(0, 2 * np.pi, theta_bins + 1)
-    r_edges = np.linspace(data[r_col].min(), data[r_col].max(), r_bins + 1)
+    # ensure grid has the correct shape even if some bins are missing
+    # (fill absent bin categories)
+    if grid.shape != (r_bins, theta_bins):
+        # reindex rows/cols to complete the grid
+        grid = grid.reindex(
+            index=pd.IntervalIndex.from_breaks(r_edges, closed="right"),
+            columns=pd.IntervalIndex.from_breaks(theta_edges, closed="right"),
+        )
 
-    # --- Plotting ---
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw={"projection": "polar"}
-    )
+    Z = grid.to_numpy()  # may contain NaNs (rendered as gaps)
 
+    #  draw heatmap
     T, R = np.meshgrid(theta_edges, r_edges)
+    cmap_obj = get_cmap(cmap, default="viridis")
+    ax.grid(False)  # background grid off; we'll add styled grid next
 
-    # Note: pcolormesh expects C with shape (num_r_bins, num_theta_bins)
-    # The unstacked heatmap_data has shape (num_theta_bins, num_r_bins)
-    ax.grid(False)  # New version set to False explicitly
     pcm = ax.pcolormesh(
-        T, R, heatmap_data.T.values, cmap=cmap, shading="auto"
+        T,
+        R,
+        Z,
+        cmap=cmap_obj,
+        shading="auto",
     )
 
-    # --- Formatting ---
-    cbar = fig.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
-    cbar.set_label(f"{statistic.capitalize()} of {color_col}", fontsize=10)
+    # colorbar
+    cb = fig.colorbar(pcm, ax=ax, pad=0.1, shrink=0.75)
+    cb.set_label(
+        f"{statistic.capitalize()} of {color_col}",
+        fontsize=10,
+    )
 
+    #  cosmetics
     ax.set_title(
         title or f"Interaction between {theta_col} and {r_col}",
         fontsize=14,
-        y=1.1,
+        y=1.08,
     )
     ax.set_xlabel(theta_col)
-    ax.set_ylabel(r_col, labelpad=25)
+    ax.set_ylabel(r_col, labelpad=22)
+
+    # styled grid from shared utility
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
     if mask_radius:
-        # Hide radial tick labels (often preferred for normalized data)
         ax.set_yticklabels([])
 
+    # output
     plt.tight_layout()
     if savefig:
         plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
@@ -168,6 +242,15 @@ theta_bins : int, default=24
     The number of bins to create for the angular feature.
 r_bins : int, default=10
     The number of bins to create for the radial feature.
+acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
+    default='default'
+    Angular coverage (span) of the plot:
+
+    - ``'default'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+    
 title : str, optional
     The title for the plot. If ``None``, a default is generated.
 figsize : tuple of (float, float), default=(8, 8)
@@ -293,212 +376,170 @@ def plot_feature_fingerprint(
     title: str = "Feature Impact Fingerprint",
     figsize: tuple[float, float] | None = None,
     show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    acov: Acov = "half_circle",
+    ax: Axes | None = None,
     savefig: str | None = None,
+    dpi: int = 300,
 ):
-    # Ensure importances is a 2D NumPy array
-    importance_matrix = ensure_2d(importances)
 
-    n_layers, n_features_data = importance_matrix.shape
+    warn_acov_preference(
+        acov,
+        preferred="half_circle",
+        plot_name="fingerprint",
+        reason="best shows symmetry across prediction levels",
+        advice="we'll still render with your chosen span.",
+    )
 
-    # Manage feature names
+    # -- shape: (n_layers, n_features)
+    imp_mat = ensure_2d(importances)
+    n_layers, n_feat_data = imp_mat.shape
+
+    # -- feature names
     if features is None:
-        # Generate default feature names if none provided
-        features_list = [f"feature {i+1}" for i in range(n_features_data)]
+        feat_list = [f"feature {i+1}" for i in range(n_feat_data)]
     else:
-        # Ensure features is a list and handle potential discrepancies
-        features_list = columns_manager(features, empty_as_none=False)
+        feat_list = columns_manager(features, empty_as_none=False)
 
-    # If user provided fewer feature names than data columns, append
-    # generic names
-    if len(features_list) < n_features_data:
-        features_list.extend(
-            [
-                f"feature {ix + 1}"
-                for ix in range(len(features_list), n_features_data)
-            ]
+    if len(feat_list) < n_feat_data:
+        feat_list.extend(
+            [f"feature {i+1}" for i in range(len(feat_list), n_feat_data)]
         )
-    # Truncate if user provided more names than needed (optional,
-    # could also raise error)
-    elif len(features_list) > n_features_data:
+    # Truncate if user provided more names than needed
+    elif len(feat_list) > n_feat_data:
         warnings.warn(
-            f"More feature names ({len(features_list)}) provided "
-            f"than data columns ({n_features_data}). "
-            "Extra names ignored.",
-            UserWarning,
-            stacklevel=2,
+            "Extra feature names ignored.", UserWarning, stacklevel=2
         )
-        features_list = features_list[:n_features_data]
+        feat_list = feat_list[:n_feat_data]
 
-    n_features = len(features_list)  # Final number of features used
+    n_features = len(feat_list)
 
-    # Manage labels
+    # -- layer labels
     if labels is None:
-        # Generate default layer labels if none provided
-        labels_list = [f"Layer {idx+1}" for idx in range(n_layers)]
+        # Generate default layer labels
+        lab_list = [f"Layer {i+1}" for i in range(n_layers)]
     else:
-        labels_list = list(labels)  # Ensure it's a list
-        # Check label count consistency
-        if len(labels_list) < n_layers:
+        lab_list = list(labels)
+        if len(lab_list) < n_layers:
             warnings.warn(
-                f"Fewer labels ({len(labels_list)}) provided than "
-                f"layers ({n_layers}). Using generic names for the rest.",
+                "Fewer labels than layers. Auto-filling.",
                 UserWarning,
                 stacklevel=2,
             )
-            labels_list.extend(
-                [
-                    f"Layer {ix + 1}"
-                    for ix in range(len(labels_list), n_layers)
-                ]
+            lab_list.extend(
+                [f"Layer {i+1}" for i in range(len(lab_list), n_layers)]
             )
-        elif len(labels_list) > n_layers:
-            warnings.warn(
-                f"More labels ({len(labels_list)}) provided than "
-                f"layers ({n_layers}). Extra labels ignored.",
-                UserWarning,
-                stacklevel=2,
-            )
-            labels_list = labels_list[:n_layers]
+        elif len(lab_list) > n_layers:
+            warnings.warn("Extra labels ignored.", UserWarning, stacklevel=2)
+            lab_list = lab_list[:n_layers]
 
-    # --- Normalization (if requested) ---
+    # -- normalization per layer (row-wise)
     if normalize:
-        # Calculate max per row (layer), keep dimensions for broadcasting
-        # max_per_row shape: (n_layers, 1), e.g., (3, 1)
-        importance_matrix = (
-            importance_matrix.values
-            if isinstance(importance_matrix, pd.DataFrame)
-            else importance_matrix
+        # allow DataFrame or ndarray
+        imp_arr = (
+            imp_mat.values if isinstance(imp_mat, pd.DataFrame) else imp_mat
+        )
+        max_row = imp_arr.max(axis=1, keepdims=True)
+        valid = max_row > 1e-9
+        norm = np.zeros_like(imp_arr, dtype=float)
+        if np.any(valid[:, 0]):
+            rows = imp_arr[valid[:, 0]]
+            mx = max_row[valid[:, 0]]
+            norm[valid[:, 0]] = rows / mx
+        imp_arr = norm
+    else:
+        imp_arr = (
+            imp_mat.values if isinstance(imp_mat, pd.DataFrame) else imp_mat
         )
 
-        max_per_row = importance_matrix.max(axis=1, keepdims=True)
-
-        # Create a mask for rows with max_val > 0 (where normalization is safe)
-        # valid_max_mask shape: (n_layers, 1), e.g., (3, 1)
-        valid_max_mask = max_per_row > 1e-9
-
-        # Initialize normalized matrix
-        normalized_matrix = np.zeros_like(importance_matrix, dtype=float)
-
-        # Get boolean index for valid rows, shape (n_layers,) e.g., (3,)
-        valid_rows_indices = valid_max_mask[:, 0]
-
-        # Proceed only if there are any rows to normalize
-        if np.any(valid_rows_indices):
-            # Select the rows from the original matrix that need normalization
-            # Shape: (n_valid_rows, n_features), e.g., (3, 6)
-            rows_to_normalize = importance_matrix[valid_rows_indices]
-
-            # Select the corresponding max values for these rows
-            # Since max_per_row is (n_layers, 1) and valid_rows_indices is (n_layers,),
-            # this indexing correctly results in shape (n_valid_rows, 1), e.g., (3, 1)
-            max_values_for_valid_rows = max_per_row[valid_rows_indices]
-
-            # Perform the division using broadcasting: (MxN / Mx1 works)
-            normalized_rows = rows_to_normalize / max_values_for_valid_rows
-
-            # Place the normalized rows back into the result matrix
-            normalized_matrix[valid_rows_indices] = normalized_rows
-
-        # Rows where max_val <= 0 remain zero (already initialized)
-        # Update importance_matrix with normalized values
-        importance_matrix = normalized_matrix
-
-    # --- Angle Calculation for Radar Axes ---
-    # Calculate evenly spaced angles for each feature axis
-    angles = np.linspace(0, 2 * np.pi, n_features, endpoint=False).tolist()
-    # Add the first angle to the end to close the loop for plotting
+    # -- angular span per `acov`
+    span = acov_to_span(acov)  # 2pi, pi, pi/2, or pi/4
+    # spread features across the chosen span
+    angles = np.linspace(0.0, span, n_features, endpoint=False).tolist()
     angles_closed = angles + angles[:1]
 
-    # --- Plotting Setup ---
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
+    # -- axes construction / reuse
+    ax = resolve_polar_axes(
+        ax=ax, acov=acov, figsize=figsize, clockwise=False, zero_at="E"
+    )
+    # set [thetamin, thetamax] for the chosen coverage
+    set_polar_angular_span(ax, acov)
 
-    # Get colors from specified colormap or list
+    # -- color handling (cmap or list)
     try:
         cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
-        # Sample colors if it's a standard Matplotlib cmap
-        colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
-    except ValueError:  # Handle case where cmap might be a list of colors
+        cols = [cmap_obj(i / max(1, n_layers - 1)) for i in range(n_layers)]
+    except ValueError:
         if isinstance(cmap, list):
-            colors = cmap
-            if len(colors) < n_layers:
+            cols = list(cmap)
+            if len(cols) < n_layers:
                 warnings.warn(
-                    f"Provided color list has fewer colors "
-                    f"({len(colors)}) than layers ({n_layers}). "
-                    f"Colors will repeat.",
+                    "Provided color list shorter than layers; "
+                    "colors will repeat.",
                     UserWarning,
                     stacklevel=2,
                 )
-        else:  # Fallback if cmap is invalid string or list
+        else:
             warnings.warn(
-                f"Invalid cmap '{cmap}'. Falling back to 'tab10'.",
+                "Invalid cmap. Falling back to 'tab10'.",
                 UserWarning,
                 stacklevel=2,
             )
             cmap_obj = get_cmap("tab10", default="tab10", failsafe="discrete")
-            colors = [cmap_obj(i / n_layers) for i in range(n_layers)]
+            cols = [
+                cmap_obj(i / max(1, n_layers - 1)) for i in range(n_layers)
+            ]
 
-    # --- Plot Each Layer ---
-    for idx, row in enumerate(importance_matrix):
-        # Get the importance values for the current layer
-        values = row.tolist()
-        # Add the first value to the end to close the loop
-        values_closed = values + values[:1]
+    # -- draw each layer polygon -
+    for idx, row in enumerate(imp_arr):
+        vals = row.tolist()
+        vals_closed = vals + vals[:1]
+        color = cols[idx % len(cols)]
+        label = lab_list[idx]
 
-        # Determine the label for the legend
-        label = labels_list[idx]
-        # Determine the color, cycling if necessary
-        color = colors[idx % len(colors)]
-
-        # Plot the outline
+        # outline
         ax.plot(
             angles_closed,
-            values_closed,
-            label=label,
+            vals_closed,
             color=color,
             linewidth=2,
+            label=label,
         )
-
-        # Fill the area if requested
+        # fill
         if fill:
-            ax.fill(angles_closed, values_closed, color=color, alpha=0.25)
+            ax.fill(angles_closed, vals_closed, color=color, alpha=0.25)
 
-    # --- Customize Plot Appearance ---
-    ax.set_title(title, size=16, y=1.1)  # Adjust title position
-
-    # Set feature labels on the angular axes
+    # -- labels, ticks, limits
+    ax.set_title(title, size=16, y=1.1)
     ax.set_xticks(angles)
-    ax.set_xticklabels(features_list, fontsize=11)
+    ax.set_xticklabels(feat_list, fontsize=11)
 
-    # Hide radial tick labels (often preferred for normalized data)
-    ax.set_yticklabels([])
-    # Set radial limits (optional, e.g., enforce 0 start)
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(bottom=0.0)
     if normalize:
-        # Optionally add a single radial label for the max value (1.0)
         ax.set_yticks([0.25, 0.5, 0.75, 1.0])
         ax.set_yticklabels(
             ["0.25", "0.50", "0.75", "1.00"], fontsize=9, color="gray"
         )
-
-    # Show grid lines if requested
-    if show_grid:
-        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
     else:
-        ax.grid(False)
+        # let Matplotlib pick; still hide crowded labels if desired
+        pass
 
-    # Add legend, positioned outside the plot area
+    # -- grid styling via helper
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+
+    # -- legend outside the plot
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1), fontsize=10)
 
-    # Adjust layout to prevent labels/title overlapping
+    # -- layout + save/show
     plt.tight_layout(pad=2.0)
-
-    # --- Save or Show ---
     if savefig:
         try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
+            plt.savefig(savefig, bbox_inches="tight", dpi=dpi)
             print(f"Plot saved to {savefig}")
         except Exception as e:
             print(f"Error saving plot to {savefig}: {e}")
+
+        plt.close()
     else:
         plt.show()
 
@@ -727,3 +768,254 @@ References
 ----------
 .. footbibliography::
 """
+
+
+@check_non_emptiness(params=["importances"])
+def plot_fingerprint(
+    importances: pd.DataFrame | np.ndarray,
+    *,
+    precomputed: bool = True,
+    y_col: str | None = None,
+    group_col: str | None = None,
+    method: str = "abs_corr",
+    features: list[str] | None = None,
+    labels: list[str] | None = None,
+    normalize: bool = True,
+    fill: bool = True,
+    cmap: str | list[Any] = "tab10",
+    title: str = "Feature Impact Fingerprint",
+    figsize: tuple[float, float] | None = None,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
+    acov: str = "full",
+    ax: Axes | None = None,
+    dpi: int = 300,
+):
+    # 1) Prepare the importance matrix M (layers x features)
+    if precomputed:
+        if isinstance(importances, pd.DataFrame):
+            # numeric columns only (order preserved)
+            num = importances.select_dtypes(include=[np.number])
+            if num.empty:
+                raise ValueError(
+                    "No numeric columns found in precomputed DataFrame."
+                )
+            M = num.to_numpy()
+            feat_names = list(num.columns)
+            layer_labels = [
+                str(x)
+                for x in (num.index if len(num.index) else range(len(M)))
+            ]
+        else:
+            M = ensure_2d(importances)
+            feat_names = features or [
+                f"feature {i+1}" for i in range(M.shape[1])
+            ]
+            layer_labels = labels or [
+                f"Layer {i+1}" for i in range(M.shape[0])
+            ]
+    else:
+        # must be a DataFrame to compute importance
+        if not isinstance(importances, pd.DataFrame):
+            raise ValueError(
+                "When precomputed=False, `importances` must be a DataFrame."
+            )
+
+        df = importances.copy()
+        if y_col is not None and y_col not in df.columns:
+            raise ValueError(f"y_col '{y_col}' not in DataFrame.")
+
+        # choose numeric feature columns (exclude y/group)
+        drop_cols = {c for c in [y_col, group_col] if c is not None}
+        feat_candidates = df.drop(columns=list(drop_cols), errors="ignore")
+        feat_candidates = feat_candidates.select_dtypes(include=[np.number])
+        if feat_candidates.empty:
+            raise ValueError("No numeric feature columns to compute from.")
+
+        feat_names = features or list(feat_candidates.columns)
+
+        def _compute_one(block: pd.DataFrame) -> pd.Series:
+            X = block[feat_names]
+            if method == "abs_corr" and y_col is not None:
+                # abs Pearson correlation; NaNs->0
+                vals = []
+                yv = block[y_col].to_numpy()
+                for c in feat_names:
+                    xc = block[c].to_numpy()
+                    if np.std(xc) < 1e-12 or np.std(yv) < 1e-12:
+                        vals.append(0.0)
+                    else:
+                        corr = np.corrcoef(xc, yv)[0, 1]
+                        vals.append(abs(corr))
+                return pd.Series(vals, index=feat_names)
+            elif method in {"std", "var", "mad"}:
+                if method == "std":
+                    s = X.std(axis=0, ddof=1)
+                elif method == "var":
+                    s = X.var(axis=0, ddof=1)
+                else:
+                    s = (X - X.median()).abs().median(axis=0)
+                return s.fillna(0.0)
+            else:
+                raise ValueError(
+                    "Unknown method. Use 'abs_corr', 'std', 'var', or 'mad'."
+                )
+
+        if group_col is not None and group_col in df.columns:
+            groups = df[group_col].dropna().unique().tolist()
+            groups = sorted(groups, key=lambda x: str(x))
+            rows = []
+            for g in groups:
+                part = df[df[group_col] == g]
+                if len(part) == 0:
+                    rows.append(np.zeros(len(feat_names)))
+                else:
+                    rows.append(
+                        _compute_one(part).reindex(feat_names).to_numpy()
+                    )
+            M = np.vstack(rows)
+            layer_labels = [str(g) for g in groups]
+        else:
+            s = _compute_one(df).reindex(feat_names).to_numpy()
+            M = s.reshape(1, -1)
+            layer_labels = ["Layer 1"]
+
+    n_layers, n_feats = M.shape
+
+    # 2) Normalize row-wise (optional)
+    if normalize:
+        rmax = M.max(axis=1, keepdims=True)
+        ok = rmax > 1e-9
+        M_norm = np.zeros_like(M, dtype=float)
+        if np.any(ok[:, 0]):
+            M_norm[ok[:, 0]] = M[ok[:, 0]] / rmax[ok[:, 0]]
+        M = M_norm
+
+    # ensure features/labels list lengths
+    if len(feat_names) < n_feats:
+        feat_names += [
+            f"feature {i+1}" for i in range(len(feat_names), n_feats)
+        ]
+    elif len(feat_names) > n_feats:
+        warnings.warn(
+            "More feature names than columns; extra ignored.",
+            UserWarning,
+            stacklevel=2,
+        )
+        feat_names = feat_names[:n_feats]
+
+    if len(layer_labels) < n_layers:
+        layer_labels += [
+            f"Layer {i+1}" for i in range(len(layer_labels), n_layers)
+        ]
+    elif len(layer_labels) > n_layers:
+        warnings.warn(
+            "More labels than layers; extra ignored.",
+            UserWarning,
+            stacklevel=2,
+        )
+        layer_labels = layer_labels[:n_layers]
+
+    # 3) Axes set-up (polar, acov)
+    fig, ax, span = setup_polar_axes(
+        ax, acov=acov, figsize=figsize or (9, 6), zero_at="N", clockwise=True
+    )
+
+    # angles along the visible span
+    ang = np.linspace(0.0, span, n_feats, endpoint=False)
+    ang_closed = np.r_[ang, ang[:1]]
+
+    # 4) Colors
+    try:
+        cmap_obj = get_cmap(cmap, default="tab10", failsafe="discrete")
+        cols = [cmap_obj(i / max(1, n_layers - 1)) for i in range(n_layers)]
+    except ValueError:
+        if isinstance(cmap, list):
+            cols = [cmap[i % len(cmap)] for i in range(n_layers)]
+        else:  # fallback
+            cmap_obj = get_cmap("tab10", default="tab10", failsafe="discrete")
+            cols = [
+                cmap_obj(i / max(1, n_layers - 1)) for i in range(n_layers)
+            ]
+
+    # 5) Plot layers
+    for i in range(n_layers):
+        vals = M[i].tolist()
+        vals_closed = vals + vals[:1]
+        col = cols[i % len(cols)]
+
+        ax.plot(
+            ang_closed, vals_closed, color=col, lw=2, label=layer_labels[i]
+        )
+        if fill:
+            ax.fill(ang_closed, vals_closed, color=col, alpha=0.25)
+
+    # 6) Grid, ticks, and custom angular labels
+    set_axis_grid(
+        ax, show_grid=show_grid, grid_props=grid_props or {"alpha": 0.45}
+    )
+    if normalize:
+        ax.set_ylim(0, 1.05)
+        ax.set_yticks([0.25, 0.5, 0.75, 1.0])
+        ax.set_yticklabels(["0.25", "0.50", "0.75", "1.00"], color="0.45")
+    else:
+        ax.set_ylim(bottom=0)
+
+    # Hide default xticklabels and draw our own to reduce overlap
+    ax.set_xticks([])
+    _draw_angular_labels(
+        ax=ax, angles=ang, labels=feat_names, r=ax.get_ylim()[1], span=span
+    )
+
+    # 7) Title / legend / layout
+    ax.set_title(title, fontsize=16, pad=14, y=1.06)
+    ax.legend(
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1.02),
+        frameon=False,
+        borderaxespad=0.0,
+    )
+    plt.subplots_adjust(right=0.78, top=0.90, bottom=0.08, left=0.08)
+
+    if savefig:
+        try:
+            fig.savefig(savefig, bbox_inches="tight", dpi=dpi)
+        except Exception as e:  # pragma: no cover
+            print(f"Error saving plot to {savefig}: {e}")
+    else:
+        plt.show()
+
+    return ax
+
+
+# ---------- helpers ----------
+def _draw_angular_labels(
+    *,
+    ax: plt.Axes,
+    angles: np.ndarray,
+    labels: list[str],
+    r: float,
+    span: float,
+) -> None:
+    """Readable, rotated labels, with slight staggering on smaller spans."""
+    n = len(labels)
+    fs = max(8, 13 - int(0.25 * n))  # shrink font as labels grow
+    r_base = r * 1.06
+    narrow = np.degrees(span) <= 180 + 1e-6
+
+    for k, (theta, lab) in enumerate(zip(angles, labels)):
+        deg = np.degrees(theta)
+        rot = deg - 90.0
+        ha = "left" if 0.0 <= deg <= 180.0 else "right"
+        r_off = r_base * (1.0 + (0.03 if (narrow and (k % 2)) else 0.0))
+        ax.text(
+            theta,
+            r_off,
+            lab,
+            rotation=rot,
+            rotation_mode="anchor",
+            ha=ha,
+            va="center",
+            fontsize=fs,
+        )

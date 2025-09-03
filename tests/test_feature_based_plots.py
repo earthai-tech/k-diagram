@@ -5,6 +5,10 @@ import pytest
 
 from kdiagram.plot.feature_based import plot_feature_fingerprint
 
+# We have a test specific for acov so
+# block acov to test only with default values.
+ACOV = "half_circle"
+
 
 def _close_ax(ax):
     try:
@@ -23,7 +27,7 @@ def test_basic_success_normalized_save(tmp_path):
         ]
     )
     out = tmp_path / "fingerprint.png"
-    ax = plot_feature_fingerprint(imp, savefig=str(out))
+    ax = plot_feature_fingerprint(imp, savefig=str(out), acov=ACOV)
     assert out.exists()
     # a couple of sanity checks on plot
     assert len(ax.get_xticklabels()) == 4
@@ -35,7 +39,9 @@ def test_features_too_few_autofilled(tmp_path):
     # provide fewer names than n_features -> auto-extend
     features = ["f1"]
     out = tmp_path / "a.png"
-    ax = plot_feature_fingerprint(imp, features=features, savefig=str(out))
+    ax = plot_feature_fingerprint(
+        imp, features=features, savefig=str(out), acov=ACOV
+    )
     assert out.exists()
     lbls = [t.get_text() for t in ax.get_xticklabels()]
     assert lbls == ["f1", "feature 2", "feature 3"]
@@ -46,9 +52,9 @@ def test_features_too_many_truncated_warn(tmp_path):
     imp = np.ones((2, 2))
     features = ["f1", "f2", "f3", "f4"]
     out = tmp_path / "b.png"
-    with pytest.warns(UserWarning, match="More feature names"):
+    with pytest.warns(UserWarning, match="Extra feature names"):
         ax = plot_feature_fingerprint(
-            imp, features=features, savefig=str(out)
+            imp, features=features, savefig=str(out), acov=ACOV
         )
     assert out.exists()
     lbls = [t.get_text() for t in ax.get_xticklabels()]
@@ -60,8 +66,10 @@ def test_labels_too_few_warn_and_autofill(tmp_path):
     imp = np.ones((3, 2))
     labels = ["L1"]  # too few -> warn + extend
     out = tmp_path / "c.png"
-    with pytest.warns(UserWarning, match="Fewer labels .* provided"):
-        ax = plot_feature_fingerprint(imp, labels=labels, savefig=str(out))
+    with pytest.warns(UserWarning, match="Fewer labels .*"):
+        ax = plot_feature_fingerprint(
+            imp, labels=labels, savefig=str(out), acov=ACOV
+        )
     assert out.exists()
     # should have 3 legend entries after autofill
     handles, legend_labels = ax.get_legend_handles_labels()
@@ -73,8 +81,10 @@ def test_labels_too_many_warn_and_truncate(tmp_path):
     imp = np.ones((2, 2))
     labels = ["A", "B", "C"]  # too many -> warn + truncate
     out = tmp_path / "d.png"
-    with pytest.warns(UserWarning, match="More labels .* provided"):
-        ax = plot_feature_fingerprint(imp, labels=labels, savefig=str(out))
+    with pytest.warns(UserWarning, match="Extra labels .*"):
+        ax = plot_feature_fingerprint(
+            imp, labels=labels, savefig=str(out), acov=ACOV
+        )
     assert out.exists()
     handles, legend_labels = ax.get_legend_handles_labels()
     assert legend_labels == ["A", "B"]
@@ -91,6 +101,7 @@ def test_no_normalize_no_fill_no_grid(tmp_path):
         show_grid=False,
         title="NoNorm",
         savefig=str(out),
+        acov=ACOV,
     )
     assert out.exists()
     # grid off: no visible gridlines
@@ -104,6 +115,6 @@ def test_importances_as_dataframe_hits_values_branch(tmp_path):
     imp_df = pd.DataFrame([[0, 1, 2], [2, 1, 0]], columns=list("abc"))
     out = tmp_path / "h.png"
     # normalize=True path uses `.values` when DataFrame is detected
-    ax = plot_feature_fingerprint(imp_df, savefig=str(out))
+    ax = plot_feature_fingerprint(imp_df, savefig=str(out), acov=ACOV)
     assert out.exists()
     _close_ax(ax)

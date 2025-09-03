@@ -5563,7 +5563,7 @@ Plot a polar quiver plot to visualize vector data.
 This function draws arrows (vectors) on a polar grid. Each arrow's
 origin, direction, and magnitude are determined by the data. This is
 highly effective for visualizing dynamic phenomena like forecast
-revisions, error vectors, or flow fields footcite:p:`Brewer2003`.
+revisions, error vectors, or flow fields :footcite:p:`2020SciPy-NMeth`.
 
 Parameters
 ----------
