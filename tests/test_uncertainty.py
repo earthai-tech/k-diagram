@@ -6,6 +6,7 @@
 Pytest suite for testing uncertainty visualization functions in
 kdiagram.plot.uncertainty.
 """
+
 import re
 from datetime import datetime, timedelta
 from unittest.mock import patch
@@ -133,9 +134,9 @@ def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
             figsize=(6, 6),
         )
 
-        assert (
-            len(plt.get_fignums()) > 0
-        ), f"Plot should be created for kind='{kind}'"
+        assert len(plt.get_fignums()) > 0, (
+            f"Plot should be created for kind='{kind}'"
+        )
 
     except Exception as e:
         pytest.fail(
@@ -1118,7 +1119,7 @@ def test_plot_temporal_uncertainty_runs_ok(
         pytest.skip("Invalid q_cols_option")
 
     names = (
-        [f"Series {i+1}" for i in range(len(data["q_cols_list"]))]
+        [f"Series {i + 1}" for i in range(len(data["q_cols_list"]))]
         if q_cols_option == "explicit_list"
         else None
     )

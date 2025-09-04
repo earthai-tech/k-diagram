@@ -99,9 +99,7 @@ def _add_plot_error_violins_subparser(
         nargs="+",
         default=None,
         dest="error",
-        help=(
-            "Error columns (CSV or tokens). Repeat to add more " "columns."
-        ),
+        help=("Error columns (CSV or tokens). Repeat to add more columns."),
     )
     p.add_argument(
         "--error-cols",

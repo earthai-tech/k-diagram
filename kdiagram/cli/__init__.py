@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"kdiagram { _VERSION }",
+        version=f"kdiagram {_VERSION}",
         help="Show version and exit.",
     )
 

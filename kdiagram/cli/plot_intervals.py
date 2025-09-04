@@ -122,7 +122,7 @@ def add_plot_intervals(
     # ---- plot-interval-width -----------------------------------
     p = subparsers.add_parser(
         "plot-interval-width",
-        help=("Polar scatter of interval width " "(upper - lower)."),
+        help=("Polar scatter of interval width (upper - lower)."),
         description=(
             "Visualize the magnitude of prediction "
             "uncertainty as width between two "
@@ -221,7 +221,7 @@ def add_plot_intervals(
     # ---- plot-interval-consistency -----------------------------
     p2 = subparsers.add_parser(
         "plot-interval-consistency",
-        help=("Polar scatter of temporal consistency " "of interval widths."),
+        help=("Polar scatter of temporal consistency of interval widths."),
         description=(
             "Compute CV or Std of widths across "
             "time columns, plot per-location."

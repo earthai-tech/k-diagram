@@ -9,6 +9,7 @@ This module provides functions to create synthetic datasets tailored
 for demonstrating and testing the various plotting functions within
 the `k-diagram` package, particularly those focused on uncertainty.
 """
+
 from __future__ import annotations
 
 import re
@@ -99,7 +100,9 @@ def make_cyclical_data(
 
     # --- Generate Model Names & Prediction Columns ---
     if series_names is None:
-        series_names_list = [f"{prefix}_{chr(65+i)}" for i in range(n_series)]
+        series_names_list = [
+            f"{prefix}_{chr(65 + i)}" for i in range(n_series)
+        ]
     elif len(series_names) != n_series:
         raise ValueError(
             f"Length of series_names ({len(series_names)}) must "
@@ -163,10 +166,10 @@ def make_cyclical_data(
         - noise_level           : {noise_level:.2f} (base for y_true)
         - amplitude_true        : {amplitude_true:.2f}
         - offset_true           : {offset_true:.2f}
-        - pred_bias             : {processed_params['pred_bias']}
-        - pred_noise_factor     : {processed_params['pred_noise_factor']}
-        - pred_amplitude_factor : {processed_params['pred_amplitude_factor']}
-        - pred_phase_shift      : {processed_params['pred_phase_shift']} (radians)
+        - pred_bias             : {processed_params["pred_bias"]}
+        - pred_noise_factor     : {processed_params["pred_noise_factor"]}
+        - pred_amplitude_factor : {processed_params["pred_amplitude_factor"]}
+        - pred_phase_shift      : {processed_params["pred_phase_shift"]} (radians)
         - prefix                : '{prefix}'
         - seed                  : {seed}
 
@@ -403,7 +406,6 @@ def make_fingerprint_data(
     seed: int | None = 303,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-
     # --- Input Validation & Setup ---
     if not (0.0 <= sparsity <= 1.0):
         raise ValueError("sparsity must be between 0.0 and 1.0")
@@ -413,7 +415,7 @@ def make_fingerprint_data(
         and value_range[0] <= value_range[1]
     ):
         raise ValueError(
-            "value_range must be a tuple (min, max)" " with min <= max."
+            "value_range must be a tuple (min, max) with min <= max."
         )
 
     if seed is not None:
@@ -423,7 +425,7 @@ def make_fingerprint_data(
 
     # Generate names if needed
     if feature_names is None:
-        feature_names = [f"Feature_{i+1}" for i in range(n_features)]
+        feature_names = [f"Feature_{i + 1}" for i in range(n_features)]
     elif len(feature_names) != n_features:
         raise ValueError(
             f"Length of feature_names ({len(feature_names)}) "
@@ -431,7 +433,7 @@ def make_fingerprint_data(
         )
 
     if layer_names is None:
-        layer_names = [f"Layer_{chr(65+i)}" for i in range(n_layers)]
+        layer_names = [f"Layer_{chr(65 + i)}" for i in range(n_layers)]
     elif len(layer_names) != n_layers:
         raise ValueError(
             f"Length of layer_names ({len(layer_names)}) "
@@ -483,9 +485,10 @@ def make_fingerprint_data(
         **Description:**
         Simulated feature importance matrix for {n_layers} layers/groups
         and {n_features} features. Values were sampled uniformly from
-        the range {value_range} and approximately {sparsity*100:.0f}% were
-        randomly set to zero (sparsity).{' Some basic structure was added.'
-        if add_structure else ''} This dataset is suitable for use with
+        the range {value_range} and approximately {sparsity * 100:.0f}% were
+        randomly set to zero (sparsity).{
+                " Some basic structure was added." if add_structure else ""
+            } This dataset is suitable for use with
         plot_feature_fingerprint.
 
         **Generation Parameters:**
@@ -669,7 +672,6 @@ def make_uncertainty_data(
     seed: int | None = 42,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-
     # --- Generation Logic (same as before) ---
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -797,7 +799,7 @@ def make_uncertainty_data(
         locations. It includes simulated spatial coordinates and an
         auxiliary feature ('elevation'). An 'actual' value column
         (``{actual_col_name}``) corresponding to the *first* time
-        period is provided, with ~{anomaly_frac*100:.0f}% of these values
+        period is provided, with ~{anomaly_frac * 100:.0f}% of these values
         artificially placed outside the first period's Q10-Q90 interval
         to simulate prediction anomalies.
 
@@ -1117,7 +1119,7 @@ def make_taylor_data(
     calculated_corrs = []
 
     for i in range(n_models):
-        model_name = f"Model_{chr(65+i)}"  # Model A, B, C...
+        model_name = f"Model_{chr(65 + i)}"  # Model A, B, C...
         model_names.append(model_name)
 
         # Sample target stats for this model
@@ -1379,7 +1381,6 @@ def make_multi_model_quantile_data(
     seed: int | None = 202,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-
     # --- Input Validation ---
     if quantiles is None:
         quantiles = [0.1, 0.5, 0.9]
@@ -1436,7 +1437,7 @@ def make_multi_model_quantile_data(
 
     # Generate Model Names
     if model_names is None:
-        model_names_list = [f"Model_{chr(65+i)}" for i in range(n_models)]
+        model_names_list = [f"Model_{chr(65 + i)}" for i in range(n_models)]
     elif len(model_names) != n_models:
         raise ValueError(
             f"Length of model_names ({len(model_names)}) must "
@@ -1759,7 +1760,6 @@ def make_regression_data(
     model_names: list[str] | None = None,
     feature_names: list[str] | None = None,
 ) -> Bunch | pd.DataFrame:
-
     # ---------- RNG ----------
     rng = np.random.default_rng(seed)
 
@@ -1771,7 +1771,7 @@ def make_regression_data(
     X = rng.uniform(lo, hi, size=(n_samples, n_features))
 
     if not feature_names:
-        feature_names = [f"feature_{i+1}" for i in range(n_features)]
+        feature_names = [f"feature_{i + 1}" for i in range(n_features)]
     elif len(feature_names) != n_features:
         raise ValueError("len(feature_names) must equal n_features.")
 
@@ -1866,7 +1866,7 @@ def make_regression_data(
         if n_models > 3:
             # pad with reasonable defaults for extra models
             for i in range(3, n_models):
-                model_profiles[f"Model_{i+1}"] = {
+                model_profiles[f"Model_{i + 1}"] = {
                     "bias": 0.0,
                     "noise_std": 10.0,
                     "error_type": "additive",
@@ -2217,7 +2217,6 @@ def make_classification_data(
     include_binary_pred_cols: bool = False,
     as_frame: bool = False,
 ) -> Bunch | pd.DataFrame:
-
     rng = np.random.default_rng(seed)
 
     # -------- class priors --------
@@ -2295,7 +2294,7 @@ def make_classification_data(
         stdevs = np.linspace(0.6, 0.2, n_models)
         temps = np.linspace(1.2, 0.8, n_models)
         for i in range(n_models):
-            model_profiles[f"Model_{i+1}"] = {
+            model_profiles[f"Model_{i + 1}"] = {
                 "logit_scale": float(scales[i]),
                 "noise_std": float(stdevs[i]),
                 "bias": 0.0 if n_classes == 2 else [0.0] * n_classes,
@@ -2304,7 +2303,7 @@ def make_classification_data(
 
     if model_names is None:
         # convenient names for CLI tests (m1, m2, ...)
-        model_names = [f"m{i+1}" for i in range(n_models)]
+        model_names = [f"m{i + 1}" for i in range(n_models)]
     if len(model_names) != len(model_profiles):
         raise ValueError("len(model_names) must match model_profiles.")
 
@@ -2320,7 +2319,7 @@ def make_classification_data(
         base_logits = Z @ W
 
     # -------- build dataframe --------
-    df = pd.DataFrame(Z, columns=[f"x{i+1}" for i in range(n_features)])
+    df = pd.DataFrame(Z, columns=[f"x{i + 1}" for i in range(n_features)])
     df[true_col] = y.astype(int)
 
     pred_label_cols: list[str] = []
@@ -2418,7 +2417,7 @@ def make_classification_data(
     return Bunch(
         frame=df,
         data=df.drop(columns=[true_col]).values,
-        feature_names=[f"x{i+1}" for i in range(n_features)],
+        feature_names=[f"x{i + 1}" for i in range(n_features)],
         target_names=[true_col],
         target=df[true_col].values,
         model_names=model_names,

@@ -111,7 +111,6 @@ def plot_hist_kde(
         plt.show()
 
     if return_ax:
-
         return ax
 
     return grid, pdf

@@ -66,17 +66,17 @@ def plot_polar_roc(
 ):
     if not y_preds:
         raise ValueError(
-            "At least one prediction array" " (*y_preds) must be provided."
+            "At least one prediction array (*y_preds) must be provided."
         )
 
     if names and len(names) != len(y_preds):
         warnings.warn(
-            "Number of names does not match models." " Using defaults.",
+            "Number of names does not match models. Using defaults.",
             stacklevel=2,
         )
         names = None
     if not names:
-        names = [f"Model {i+1}" for i in range(len(y_preds))]
+        names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
     y_true, _ = validate_yy(y_true, y_preds[0])  # Validate first pred
 
@@ -322,7 +322,6 @@ def plot_polar_confusion_matrix(
     clockwise: bool = True,
     categories: list[str] = None,
 ) -> Axes:
-
     # --- Input Validation and Preparation ---
     if not y_preds:
         raise ValueError(
@@ -336,7 +335,7 @@ def plot_polar_confusion_matrix(
         )
         names = None
     if not names:
-        names = [f"Model {i+1}" for i in range(len(y_preds))]
+        names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
     y_true, _ = validate_yy(y_true, y_preds[0])
 
@@ -607,7 +606,6 @@ def plot_polar_confusion_matrix_in(
     dpi: int = 300,
     ax: Axes | None = None,
 ) -> Axes:
-
     if categories is not None:
         warnings.warn(
             "Categories is kept for API symmetry; unused", stacklevel=2
@@ -839,14 +837,13 @@ def plot_polar_pr_curve(
     dpi: int = 300,
     ax: Axes | None = None,
 ) -> Axes:
-
     # ---------- validation ----------
     if not y_preds:
         raise ValueError("Provide at least one prediction array (*y_preds).")
 
     if names and len(names) != len(y_preds):
         warnings.warn(
-            ("Number of names does not match models. " "Using defaults."),
+            ("Number of names does not match models. Using defaults."),
             stacklevel=2,
         )
         names = None
@@ -1613,8 +1610,7 @@ def plot_regression_performance(
     # --- Input Validation and Warnings ---
     if not (0 < bp_padding <= 1):
         raise ValueError(
-            "`bp_padding` must be between 0 and 1,"
-            " and cannot be exactly 0."
+            "`bp_padding` must be between 0 and 1, and cannot be exactly 0."
         )
     if bp_padding < 0.5:
         warnings.warn(

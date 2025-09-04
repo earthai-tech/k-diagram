@@ -34,8 +34,7 @@ def _cmd_plot_pit_hist(ns: argparse.Namespace) -> None:
     specs = _collect_pred_specs(ns)
     if not specs:
         raise SystemExit(
-            "provide one pred group via "
-            "--pred/--pred-cols/--model/--q-cols"
+            "provide one pred group via --pred/--pred-cols/--model/--q-cols"
         )
     # Be permissive: take the first group if multiple were passed.
     if len(specs) > 1:
@@ -243,7 +242,7 @@ def _cmd_plot_crps_comparison(ns: argparse.Namespace) -> None:
     specs = _collect_pred_specs(ns)
     if not specs:
         raise SystemExit(
-            "provide one or more groups via " "--pred/--pred-cols/--model"
+            "provide one or more groups via --pred/--pred-cols/--model"
         )
 
     # quantiles, then check group sizes first
@@ -329,7 +328,7 @@ def add_plot_crps_comparison_subparser(
         "--model",
         action="append",
         default=None,
-        help=("Model spec 'name:col1[,col2,...]'. Repeat to add " "models."),
+        help=("Model spec 'name:col1[,col2,...]'. Repeat to add models."),
     )
     p.add_argument(
         "--pred",

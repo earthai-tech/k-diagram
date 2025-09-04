@@ -849,7 +849,7 @@ def plot_relationship(
         else:
             r = np.full_like(y_pred, 0.5)
             warnings.warn(
-                f"Series '{names[i]}' has zero range; " "radius set to 0.5.",
+                f"Series '{names[i]}' has zero range; radius set to 0.5.",
                 UserWarning,
                 stacklevel=2,
             )

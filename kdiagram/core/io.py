@@ -170,7 +170,7 @@ def read_data(
     # unsupported formats return empty or raise
     if ext not in handlers.parsers:
         avail = sorted(handlers.parsers.keys())
-        msg = f"Unsupported format '{ext}'. " f"Available: {avail}"
+        msg = f"Unsupported format '{ext}'. Available: {avail}"
         if errors == "raise":
             raise ValueError(msg)
         _handle_error(msg, errors)
@@ -190,7 +190,7 @@ def read_data(
             kwargs = _get_valid_kwargs(pd.read_html, kwargs)
             tables = pd.read_html(source, **kwargs)
             if verbose >= 2:
-                print(f"[read_data] html: found " f"{len(tables)} tables")
+                print(f"[read_data] html: found {len(tables)} tables")
             if html == "first":
                 out = tables[0] if tables else pd.DataFrame()
             elif html == "concat":
@@ -203,7 +203,7 @@ def read_data(
                 out = tables
             else:
                 raise ValueError(
-                    "html must be one of " "{'first','concat','list'}"
+                    "html must be one of {'first','concat','list'}"
                 )
             # post-process when a single frame
             if isinstance(out, pd.DataFrame):
@@ -501,7 +501,7 @@ def write_data(
         # --- SQL ---
         if ext == ".sql":
             if sql_con is None or not sql_table:
-                msg = "Writing '.sql' requires 'sql_con' and " "'sql_table'."
+                msg = "Writing '.sql' requires 'sql_con' and 'sql_table'."
                 if errors == "raise":
                     raise ValueError(msg)
                 _handle_error(msg, errors)
@@ -528,8 +528,7 @@ def write_data(
             obj = writer(**call_kw)
             if isinstance(dest, (str, Path, io.IOBase)):
                 warnings.warn(
-                    "[write_data] '.rec' ignores path; returning "
-                    "recarray.",
+                    "[write_data] '.rec' ignores path; returning recarray.",
                     stacklevel=2,
                 )
             return obj

@@ -100,7 +100,7 @@ def add_plot_reliability_subparser(
 ) -> None:
     p = sub.add_parser(
         "plot-reliability-diagram",
-        help=("Reliability (calibration) diagram for " "one or more models."),
+        help=("Reliability (calibration) diagram for one or more models."),
         description=(
             "Compare predicted probabilities to observed "
             "frequencies across probability bins. Supports "
@@ -137,7 +137,7 @@ def add_plot_reliability_subparser(
         "--sample-weight",
         dest="sample_weight",
         default=None,
-        help=("Optional weight column for bins, ECE, and " "Brier score."),
+        help=("Optional weight column for bins, ECE, and Brier score."),
     )
 
     # predictions (point probs)
@@ -198,9 +198,7 @@ def add_plot_reliability_subparser(
     p.add_argument(
         "--positive-label",
         default="1",
-        help=(
-            "Label in y_true treated as positive class " "(int/float/str)."
-        ),
+        help=("Label in y_true treated as positive class (int/float/str)."),
     )
     p.add_argument(
         "--class-index",
@@ -267,15 +265,13 @@ def add_plot_reliability_subparser(
         "--counts-panel",
         default="bottom",
         choices=["bottom", "none"],
-        help=("Show compact per-bin totals below the plot " "or disable it."),
+        help=("Show compact per-bin totals below the plot or disable it."),
     )
     p.add_argument(
         "--counts-norm",
         default="fraction",
         choices=["fraction", "count"],
-        help=(
-            "Normalize counts by total weight or show raw " "weighted sums."
-        ),
+        help=("Normalize counts by total weight or show raw weighted sums."),
     )
     p.add_argument(
         "--counts-alpha",
@@ -422,8 +418,7 @@ def add_plot_polar_reliability_subparser(
     p = sub.add_parser(
         "plot-polar-reliability",
         help=(
-            "Polar reliability (calibration spiral) for "
-            "one or more models."
+            "Polar reliability (calibration spiral) for one or more models."
         ),
         description=(
             "Map reliability diagram into polar axes: angle is "
@@ -464,8 +459,7 @@ def add_plot_polar_reliability_subparser(
         action="append",
         default=None,
         help=(
-            "Model spec 'name:col' or 'name:c1,c2,...'. "
-            "Repeat to add models."
+            "Model spec 'name:col' or 'name:c1,c2,...'. Repeat to add models."
         ),
     )
     p.add_argument(

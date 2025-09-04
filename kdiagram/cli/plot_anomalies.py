@@ -70,8 +70,7 @@ def add_plot_anomalies(
     p = subparsers.add_parser(
         "plot-anomaly-magnitude",
         help=(
-            "Polar scatter of anomaly magnitudes for "
-            "under/over predictions."
+            "Polar scatter of anomaly magnitudes for under/over predictions."
         ),
         description=(
             "Plot magnitude of violations where actual falls "

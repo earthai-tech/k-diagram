@@ -1876,7 +1876,7 @@ def validate_qcols(
     # Step‑1  : convert <q_cols> to a list of strings
     if q_cols is None:
         raise ValueError(
-            "`q_cols` cannot be None. Provide at least " "one column name."
+            "`q_cols` cannot be None. Provide at least one column name."
         )
 
     if isinstance(q_cols, (str, int)):
@@ -1885,7 +1885,7 @@ def validate_qcols(
         q_cols = [str(col) for col in q_cols]
     else:
         raise TypeError(
-            "`q_cols` must be a list, tuple, set or " "single string."
+            "`q_cols` must be a list, tuple, set or single string."
         )
 
     # Remove blanks and strip white‑space
@@ -1912,7 +1912,7 @@ def validate_qcols(
                 num_str = ncols_exp[len(sym) :].strip()
                 if not num_str.isdigit():
                     raise ValueError(
-                        f"Invalid expectation syntax " f"'{ncols_exp}'."
+                        f"Invalid expectation syntax '{ncols_exp}'."
                     )
                 expected = int(num_str)
                 if not _ops[sym](len(q_cols), expected):
@@ -1923,7 +1923,7 @@ def validate_qcols(
                     )
                 break
         else:
-            raise ValueError(f"Invalid `ncols_exp` format: " f"{ncols_exp}")
+            raise ValueError(f"Invalid `ncols_exp` format: {ncols_exp}")
 
     return q_cols
 
@@ -2050,7 +2050,7 @@ def build_qcols_multiple(
         )
     if len(qlow_cols) != len(qup_cols):
         raise ValueError(
-            "`qlow_cols` and `qup_cols` must be the same " "length."
+            "`qlow_cols` and `qup_cols` must be the same length."
         )
 
     # -- median logic
@@ -2064,8 +2064,7 @@ def build_qcols_multiple(
     else:
         if enforce_triplet:
             raise ValueError(
-                "`enforce_triplet=True` but no median "
-                "columns were supplied."
+                "`enforce_triplet=True` but no median columns were supplied."
             )
         tuples = list(zip(qlow_cols, qup_cols))
 

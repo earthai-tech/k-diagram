@@ -6,6 +6,7 @@
 Pytest suite for testing relationship visualization functions in
 kdiagram.plot.relationship.
 """
+
 import re
 
 import matplotlib

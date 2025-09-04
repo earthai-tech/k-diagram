@@ -135,7 +135,6 @@ def ensure_pkg(  # noqa: D401
     errors: str = "raise",
     verbose: int = 1,
 ) -> Callable[[T], T]:
-
     if errors not in {"raise", "warn", "ignore"}:
         raise ValueError("errors must be one of {'raise','warn','ignore'}")
 

@@ -60,8 +60,7 @@ def _cmd_plot_pinball_loss(ns: argparse.Namespace) -> None:
     qpred_cols = _flatten_cols(ns.qpreds)
     if not qpred_cols:
         raise SystemExit(
-            "Provide quantile prediction columns via "
-            "--qpreds/--qpred-cols."
+            "Provide quantile prediction columns via --qpreds/--qpred-cols."
         )
 
     # quantiles list
@@ -72,8 +71,7 @@ def _cmd_plot_pinball_loss(ns: argparse.Namespace) -> None:
     # lengths must match
     if len(qpred_cols) != len(quantiles):
         raise SystemExit(
-            "Number of --qpreds columns must match "
-            "the number of --quantiles."
+            "Number of --qpreds columns must match the number of --quantiles."
         )
 
     # required numeric columns
@@ -109,8 +107,7 @@ def add_plot_polar_classification_report(
     p = sub.add_parser(
         "plot-polar-cr",
         help=(
-            "Polar grouped bars for per-class metrics "
-            "(Precision/Recall/F1)."
+            "Polar grouped bars for per-class metrics (Precision/Recall/F1)."
         ),
         description=(
             "Compute a classification report per class and display it "

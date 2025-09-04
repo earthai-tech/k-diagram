@@ -47,9 +47,6 @@ jobs:
         run: |
           echo "Checking for linter issues with Ruff..."
           ruff check .  # Checks for linting issues
-          
-          echo "Running Black to automatically fix formatting issues..."
-          black .  # Automatically formats the code with Black
 
       - name: Test with pytest + coverage
         run: |

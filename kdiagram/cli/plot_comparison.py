@@ -84,7 +84,7 @@ def add_plot_model_comparison_subparser(
 ) -> None:
     p = sub.add_parser(
         "plot-model-comparison",
-        help=("Radar plot of multiple metrics for one " "or more models."),
+        help=("Radar plot of multiple metrics for one or more models."),
         description=(
             "Compute selected metrics per model and show "
             "them on a radar (spider) plot. Accepts point "
@@ -228,8 +228,7 @@ def add_plot_model_comparison_subparser(
         default="norm",
         choices=["norm", "min-max", "std", "standard", "none"],
         help=(
-            "Per-metric scaling across models. Use 'none' "
-            "to disable scaling."
+            "Per-metric scaling across models. Use 'none' to disable scaling."
         ),
     )
     p.add_argument(
@@ -346,9 +345,7 @@ def add_plot_horizon_metrics_subparser(
         nargs="+",
         required=True,
         dest="qlow",
-        help=(
-            "Lower quantile cols (CSV/tokens). Length must " "match --qup."
-        ),
+        help=("Lower quantile cols (CSV/tokens). Length must match --qup."),
     )
     p.add_argument(
         "--qup",
@@ -356,9 +353,7 @@ def add_plot_horizon_metrics_subparser(
         nargs="+",
         required=True,
         dest="qup",
-        help=(
-            "Upper quantile cols (CSV/tokens). Length must " "match --qlow."
-        ),
+        help=("Upper quantile cols (CSV/tokens). Length must match --qlow."),
     )
     p.add_argument(
         "--q50",

@@ -98,7 +98,7 @@ def plot_reliability_diagram(
     names = columns_manager(names, to_string=True) or []
     if len(names) < len(y_preds):
         names.extend(
-            [f"Model_{i+1}" for i in range(len(names), len(y_preds))]
+            [f"Model_{i + 1}" for i in range(len(names), len(y_preds))]
         )
     if len(names) > len(y_preds):
         warnings.warn(
@@ -340,7 +340,7 @@ def _to_prob_vector(arr: np.ndarray, ci: int | None) -> np.ndarray:
         if idx < 0 or idx >= arr.shape[1]:
             raise ValueError(
                 "class_index out of bounds for 2D predictions: "
-                f"{idx} not in [0, {arr.shape[1]-1}]"
+                f"{idx} not in [0, {arr.shape[1] - 1}]"
             )
         return arr[:, idx].astype(float, copy=False)
     raise ValueError(
@@ -775,7 +775,7 @@ def plot_polar_reliability(
     if not y_preds:
         raise ValueError("At least one prediction array must be provided.")
     if not names:
-        names = [f"Model {i+1}" for i in range(len(y_preds))]
+        names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
     y_true = np.asarray(y_true)
     prob_list = [_to_prob_vector(p, ci=None) for p in y_preds]
@@ -1120,11 +1120,11 @@ def plot_model_comparison(
 
     # --- names
     if names is None:
-        names = [f"Model_{i+1}" for i in range(n_models)]
+        names = [f"Model_{i + 1}" for i in range(n_models)]
     else:
         names = columns_manager(names, empty_as_none=False)
         if len(names) < n_models:
-            names += [f"Model_{i+1}" for i in range(len(names), n_models)]
+            names += [f"Model_{i + 1}" for i in range(len(names), n_models)]
         elif len(names) > n_models:
             warnings.warn(
                 f"Received {len(names)} names for {n_models} "

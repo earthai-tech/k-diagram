@@ -71,9 +71,9 @@ them effectively.
 
 `k-diagram` addresses this gap by providing a scalable and intuitive 
 toolkit designed specifically for the visual diagnosis of spatiotemporal 
-probabilistic forecasts [@Liu2024; @kouadiob2025]. The package's novelty lies  
+probabilistic forecasts [@Liu2024; @kouadiob2025]. The package's novelty lies 
 in its use of polar coordinates to map different dimensions of forecast 
-performance—such as uncertainty magnitude, reliability, and temporal stability—onto 
+performance, such as uncertainty magnitude, reliability, and temporal stability, onto 
 angle and radius. This approach provides compact overviews that reveal patterns 
 obscured in traditional Cartesian plots. By providing clear visual 
 answers to key diagnostic questions (e.g., "Where is a forecast least certain?", 
@@ -165,7 +165,7 @@ and its corresponding prediction interval $[L_i, U_i]$, a binary
 coverage value $c_i$ is determined as:
 
 $$
-c_i = \mathbf{1}\!\left( L_i \le y_i \le U_i \right)
+c_i = \mathbf{1}\!\left( L_i \le y_i \le U_i \right) \label{eq:coverage}
 $$
 
 where $\mathbf{1}(\cdot)$ is the indicator function. The plot visualizes each $c_i$, 
@@ -189,7 +189,7 @@ it calculates the mean interval width, $\bar{w}_j$, across all $N$ spatial
 locations as:
 
 $$
-\bar{w}_{j} = \frac{1}{N} \sum_{i=1}^{N} \left( U_{i,j} - L_{i,j} \right)
+\bar{w}_{j} = \frac{1}{N} \sum_{i=1}^{N} \left( U_{i,j} - L_{i,j} \right) \label{eq:width}
 $$
 
 The increasing height of the bars from 2023 to 2026 provides an immediate 

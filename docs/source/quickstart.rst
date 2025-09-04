@@ -71,7 +71,7 @@ example.
            'r2': 'R²',
            'neg_mean_absolute_error': 'MAE',
            'neg_root_mean_squared_error': 'RMSE',
-       }
+       }, 
    )
    
    plt.show()
@@ -133,11 +133,11 @@ Here’s how to read it.
 The plot tells a very clear story: the **"Upgraded" model is a significant 
 improvement** over the "Baseline".
 
-* The **Upgraded model** (yellow) has long bars on all three axes, forming 
+* The **Upgraded model** (green) has long bars on all three axes, forming 
   a large, balanced shape. This indicates it is a strong all-around performer 
   with a high R² (good fit) and low MAE and RMSE (low errors).
 
-* The **Baseline model** (purple) reveals a critical flaw. While its MAE bar 
+* The **Baseline model** (blue) reveals a critical flaw. While its MAE bar 
   is not zero, its bars for **R² and RMSE are extremely short**. This is a 
   classic sign of a model with a **severe, systematic bias**. The large, 
   consistent errors are heavily penalized by the R² and RMSE metrics, 
@@ -153,6 +153,20 @@ advanced use cases, including how to add custom metrics or control the
 normalization, check out the detailed examples in our gallery.
 
 *See more examples in* :ref:`gallery_plot_regression_performance`
+
+-----------------------------------
+From Synthetic to Real-World Data
+-----------------------------------
+
+This quick start guide uses a synthetic dataset to demonstrate the plotting
+workflow in a simple and reproducible way.
+
+However, the true power of ``k-diagram`` shines when analyzing the
+complex uncertainty of real-world forecasts. To see these same diagnostic
+charts applied to an environmental forecasting challenge, we highly
+recommend exploring our detailed case study on land subsidence.
+
+*See the full analysis in* :ref:`case_history_zhongshan`
 
 -------------
 Next Steps

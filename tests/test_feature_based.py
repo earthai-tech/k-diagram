@@ -37,8 +37,8 @@ def sample_data_fingerprint():
     importances[0, 0] = 0.9  # Layer 0 high on Feature 1
     importances[1, 2:4] = 0.85  # Layer 1 high on Features 3, 4
     importances[2, -1] = 0.95  # Layer 2 high on Last Feature
-    features = [f"Feature_{i+1}" for i in range(n_features)]
-    labels = [f"Group {chr(65+i)}" for i in range(n_layers)]  # A, B, C
+    features = [f"Feature_{i + 1}" for i in range(n_features)]
+    labels = [f"Group {chr(65 + i)}" for i in range(n_layers)]  # A, B, C
 
     return {
         "importances": importances,
@@ -180,9 +180,9 @@ def test_plot_feature_fingerprint_normalize_zeros(sample_data_fingerprint):
         # Assuming lines are plotted in order: Layer A outline, Layer B, Layer C
         # Layer B is lines[1]
         r_data_layer_b = lines[1].get_ydata()
-        assert np.allclose(
-            r_data_layer_b, 0
-        ), "Normalized zero row should be zero"
+        assert np.allclose(r_data_layer_b, 0), (
+            "Normalized zero row should be zero"
+        )
 
     except Exception as e:
         pytest.fail(

@@ -35,9 +35,9 @@ def _close(ax):
 def _synth_df(n_rows: int = 12, n_cols: int = 4) -> pd.DataFrame:
     rng = np.random.default_rng(42)
     # build matched qlow/qup pairs across multiple columns
-    qlow_cols = [f"q10_c{i+1}" for i in range(n_cols)]
-    qup_cols = [f"q90_c{i+1}" for i in range(n_cols)]
-    q50_cols = [f"q50_c{i+1}" for i in range(n_cols)]
+    qlow_cols = [f"q10_c{i + 1}" for i in range(n_cols)]
+    qup_cols = [f"q90_c{i + 1}" for i in range(n_cols)]
+    q50_cols = [f"q50_c{i + 1}" for i in range(n_cols)]
 
     base = rng.normal(10.0, 2.0, size=(n_rows, n_cols))
     width = np.abs(rng.normal(2.0, 0.7, size=(n_rows, n_cols)))
@@ -81,7 +81,7 @@ def test_horizon_metrics_respects_acov_minimal():
 
 def test_horizon_metrics_with_q50_and_xticks_and_cbar():
     df, ql, qu, q50 = _synth_df(n_rows=8, n_cols=4)
-    labels = [f"H{i+1}" for i in range(len(df))]
+    labels = [f"H{i + 1}" for i in range(len(df))]
 
     ax = plot_horizon_metrics(
         df=df,

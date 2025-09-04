@@ -719,7 +719,7 @@ def plot_taylor_diagram_in(
     names = columns_manager(names, empty_as_none=False)
     # plot predictions
     for i, (ang, rd) in enumerate(zip(angles, radii)):
-        label = names[i] if (names and i < len(names)) else f"Pred {i+1}"
+        label = names[i] if (names and i < len(names)) else f"Pred {i + 1}"
         if not only_points:
             ax.plot([ang, ang], [0, rd], color=colors[i], lw=2, alpha=0.8)
         ax.plot(ang, rd, marker=marker, color=colors[i], label=label)
@@ -1029,9 +1029,9 @@ def plot_taylor_diagram(
     reference = np.asarray(reference).flatten()
 
     # Check consistency of lengths
-    assert all(
-        pred.size == reference.size for pred in y_preds
-    ), "All predictions and the reference must be of the same length."
+    assert all(pred.size == reference.size for pred in y_preds), (
+        "All predictions and the reference must be of the same length."
+    )
 
     # Compute correlation and std dev for each prediction
     correlations = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]
@@ -1062,7 +1062,7 @@ def plot_taylor_diagram(
     colors = plt.cm.Set1(np.linspace(0, 1, len(y_preds)))
     for i, (angle, radius) in enumerate(zip(angles, radii)):
         label = (
-            names[i] if (names and i < len(names)) else f"Prediction {i+1}"
+            names[i] if (names and i < len(names)) else f"Prediction {i + 1}"
         )
         if not only_points:
             # Draw the radial line from origin to the point

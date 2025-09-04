@@ -568,7 +568,7 @@ Generating Taylor Data and Plotting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example generates data suitable for Taylor diagrams using
 :func:`~kdiagram.datasets.make_taylor_data` and plots it using
-:func:`~kdiagram.plot.evaluation.plot_taylor_diagram`. The data is
+:func:`~kdiagram.plot.taylor_diagram.plot_taylor_diagram`. The data is
 retrieved as a Bunch object, and relevant attributes are passed to the
 plot function.
 
@@ -588,7 +588,6 @@ plot function.
    )
 
    # 2. Create the plot using data from the Bunch
-   # Assuming plot function is kd.plot_taylor_diagram
    ax = kd.plot_taylor_diagram(
        *taylor_data.predictions, # Unpack list of prediction arrays
        reference=taylor_data.reference,
@@ -613,7 +612,7 @@ plot function.
    :func:`~kdiagram.datasets.make_taylor_data` to generate a
    reference dataset and four simulated model prediction datasets
    with varying statistical properties. It then visualizes these
-   using :func:`~kdiagram.plot.evaluation.plot_taylor_diagram`.
+   using :func:`~kdiagram.plot.taylor_diagram.plot_taylor_diagram`.
 
    **Analysis and Interpretation:**
 

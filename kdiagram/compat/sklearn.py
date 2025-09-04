@@ -17,6 +17,7 @@ Provides helper utilities and compatibility shims for interacting with
 different versions of scikit-learn, ensuring smoother integration
 within the k-diagram package.
 """
+
 import inspect
 
 import numpy as np

@@ -77,7 +77,7 @@ def _cmd_plot_conditional_quantiles(ns: argparse.Namespace) -> None:
     specs = _collect_pred_specs(ns)
     if not specs:
         raise SystemExit(
-            "provide one quantile group via " "--pred/--pred-cols/--model"
+            "provide one quantile group via --pred/--pred-cols/--model"
         )
     if len(specs) != 1:
         raise SystemExit("expect exactly one group of quantile columns")
@@ -91,8 +91,7 @@ def _cmd_plot_conditional_quantiles(ns: argparse.Namespace) -> None:
     q = _parse_q_levels(ns.q_levels)
     if len(cols) != len(q):
         raise SystemExit(
-            f"group {name!r} has {len(cols)} cols but "
-            f"--q-levels has {len(q)}"
+            f"group {name!r} has {len(cols)} cols but --q-levels has {len(q)}"
         )
 
     # bands -> list[int] or None
