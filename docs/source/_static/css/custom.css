@@ -734,6 +734,7 @@ html[data-theme="dark"] .admonition.practical-examples .admonition-title {
     var(--color-brand-quaternary),
     color-mix(in srgb, var(--color-brand-quaternary) 72%, var(--color-brand-primary)));
 }
+
 .admonition.best-practice .admonition-title::before {
   content: ""; width: 1.2em; height: 1.2em; background-color: currentColor;
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' \
@@ -774,6 +775,21 @@ html[data-theme="dark"] .admonition.best-practice .admonition-title {
 }
 html[data-theme="dark"] .admonition.best-practice::after {
   box-shadow: 0 2px 10px rgba(0,0,0,.55);
+}
+
+/* Hide Best pratice Icon */ 
+/* Hide the leading icon for the "best-practice" variant */
+.admonition.best-practice .admonition-title::before{
+  content: none !important;   /* don’t generate the icon */
+  display: none !important;   /* don’t reserve space */
+  width: 0; height: 0;        /* extra safety across engines */
+  -webkit-mask-image: none;   /* clear masks in WebKit */
+          mask-image: none;
+}
+
+/* Remove the extra space that was for the icon */
+.admonition.best-practice .admonition-title{
+  gap: 0;
 }
 
 
