@@ -28,7 +28,6 @@ def calculate_probabilistic_scores(
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
 ) -> pd.DataFrame:
-
     y_true, y_preds_quantiles = validate_yy(
         y_true, y_preds_quantiles, allow_2d_pred=True
     )
@@ -173,7 +172,7 @@ def pivot_forecasts_long(
         raise ValueError("Quantile column lists must have the same length.")
 
     if not horizon_labels:
-        horizon_labels = [f"H{i+1}" for i in range(len(qlow_cols))]
+        horizon_labels = [f"H{i + 1}" for i in range(len(qlow_cols))]
 
     if len(horizon_labels) != len(qlow_cols):
         raise ValueError(
@@ -288,10 +287,9 @@ def compute_interval_width(
     prefix: str = "width_",
     inplace: bool = False,
 ) -> pd.DataFrame:
-
     if not quantile_pairs:
         raise ValueError(
-            "At least one pair of quantile" " columns must be provided."
+            "At least one pair of quantile columns must be provided."
         )
 
     output_df = df if inplace else df.copy()
@@ -495,7 +493,6 @@ def compute_forecast_errors(
     prefix: str = "error_",
     inplace: bool = False,
 ) -> pd.DataFrame:
-
     if not pred_cols:
         raise ValueError("At least one prediction column must be provided.")
 

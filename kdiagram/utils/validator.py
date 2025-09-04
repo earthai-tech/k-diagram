@@ -819,7 +819,6 @@ def build_data_if(
         # If the user provided a non-integer, handle it
         # based on the value of `error`
         if error == "raise":
-
             raise TypeError(
                 f"Expected integer for start_incr_at, got "
                 f"{type(start_incr_at)} instead."

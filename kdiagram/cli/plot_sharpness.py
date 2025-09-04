@@ -135,7 +135,7 @@ def add_plot_sharpness(
         "--model",
         action="append",
         default=None,
-        help=("Model spec 'NAME:col1[,col2,...]'. Repeat to add " "models."),
+        help=("Model spec 'NAME:col1[,col2,...]'. Repeat to add models."),
     )
     p.add_argument(
         "--pred",
@@ -279,7 +279,7 @@ def add_plot_sharpness(
         "--model",
         action="append",
         default=None,
-        help=("Model spec 'NAME:col1[,col2,...]'. Repeat to add " "models."),
+        help=("Model spec 'NAME:col1[,col2,...]'. Repeat to add models."),
     )
     p2.add_argument(
         "--pred",

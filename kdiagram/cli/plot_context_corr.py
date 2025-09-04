@@ -78,8 +78,7 @@ def _cmd_plot_error_autocorrelation(ns: argparse.Namespace) -> None:
     pred_cols = _flatten_cols(ns.pred) + _flatten_cols(ns.pred_col)
     if len(pred_cols) != 1:
         raise SystemExit(
-            "Provide exactly one prediction column via "
-            "--pred or --pred-col."
+            "Provide exactly one prediction column via --pred or --pred-col."
         )
     pred_col = pred_cols[0]
 
@@ -109,9 +108,7 @@ def add_plot_scatter_correlation(
 ) -> None:
     p = sub.add_parser(
         "plot-scatter-corr",
-        help=(
-            "Scatter of true vs predicted values for one or " "more models."
-        ),
+        help=("Scatter of true vs predicted values for one or more models."),
         description=(
             "Visualize correlation by plotting actual values on "
             "the x-axis and predictions on the y-axis for one or "
@@ -221,9 +218,7 @@ def add_plot_error_autocorrelation(
 ) -> None:
     p = sub.add_parser(
         "plot-error-autocorr",
-        help=(
-            "Autocorrelation (ACF) of forecast errors for a " "single model."
-        ),
+        help=("Autocorrelation (ACF) of forecast errors for a single model."),
         description=(
             "Compute residuals (actual - predicted) and plot the "
             "autocorrelation function to diagnose remaining "

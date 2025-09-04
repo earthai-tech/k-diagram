@@ -140,8 +140,7 @@ def _cmd_taylor_diagram(ns: argparse.Namespace) -> None:
     if stds is not None or cors is not None:
         if not stds or not cors or len(stds) != len(cors):
             raise SystemExit(
-                "--stddev and --corrcoef must be provided "
-                "with equal lengths."
+                "--stddev and --corrcoef must be provided with equal lengths."
             )
         taylor_diagram(
             stddev=stds,
@@ -259,7 +258,7 @@ def add_plot_taylor_diagram(
         nargs="+",
         default=None,
         dest="pred",
-        help=("Prediction columns (CSV or tokens). Repeat to " "add models."),
+        help=("Prediction columns (CSV or tokens). Repeat to add models."),
     )
     p.add_argument(
         "--pred-cols",
@@ -413,7 +412,7 @@ def add_plot_taylor_diagram_in(
         nargs="+",
         default=None,
         dest="pred",
-        help=("Prediction columns (CSV or tokens). Repeat to " "add models."),
+        help=("Prediction columns (CSV or tokens). Repeat to add models."),
     )
     p.add_argument(
         "--pred-cols",
@@ -623,7 +622,7 @@ def add_taylor_diagram(sub: argparse._SubParsersAction) -> None:
         nargs="+",
         default=None,
         dest="pred",
-        help=("Prediction columns (CSV or tokens). Repeat to " "add models."),
+        help=("Prediction columns (CSV or tokens). Repeat to add models."),
     )
     p.add_argument(
         "--pred-cols",

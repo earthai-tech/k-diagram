@@ -5,6 +5,7 @@
 A compatibility module to handle API changes across different
 versions of Matplotlib.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -118,6 +119,7 @@ def get_cmap(
         )
 
         # but does nothing
+
     # Private helper to prevent repeating the retrieval code
     def _retrieve(cmap_name):
         """Retrieves the colormap object using the correct API."""

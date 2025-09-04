@@ -191,8 +191,7 @@ def add_plot_coverage_subparser(
         action="append",
         default=None,
         help=(
-            "Model spec 'name:col1[,col2,...]'. "
-            "Repeat for multiple models."
+            "Model spec 'name:col1[,col2,...]'. Repeat for multiple models."
         ),
     )
     p.add_argument(

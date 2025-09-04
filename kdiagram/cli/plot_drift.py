@@ -149,8 +149,7 @@ def add_plot_drift(
     p1 = subparsers.add_parser(
         "plot-model-drift",
         help=(
-            "Polar bar chart of average interval width "
-            "per forecast horizon."
+            "Polar bar chart of average interval width per forecast horizon."
         ),
         description=(
             "Visualize how uncertainty (or another metric) evolves "
@@ -203,7 +202,7 @@ def add_plot_drift(
         nargs="+",
         default=None,
         help=(
-            "Optional columns used for bar colors " "(e.g. RMSE per horizon)."
+            "Optional columns used for bar colors (e.g. RMSE per horizon)."
         ),
     )
 
@@ -260,9 +259,7 @@ def add_plot_drift(
     # ---- plot-uncertainty-drift ---- #
     p2 = subparsers.add_parser(
         "plot-uncertainty-drift",
-        help=(
-            "Polar rings of normalized interval widths across " "time steps."
-        ),
+        help=("Polar rings of normalized interval widths across time steps."),
         description=(
             "Draw a ring per time step (year/horizon) where radius "
             "encodes normalized interval width."

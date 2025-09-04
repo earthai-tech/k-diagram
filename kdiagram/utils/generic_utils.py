@@ -330,12 +330,11 @@ def drop_nan_in(y_true, *y_preds, error="raise", nan_policy=None):
     # Handle error or nan_policy logic
     if np.any(np.isnan(y_true)) and error == "raise":
         raise ValueError(
-            "NaN values found in y_true, " "cannot proceed with NaN values."
+            "NaN values found in y_true, cannot proceed with NaN values."
         )
     elif np.any(np.isnan(y_true)) and error == "warn":
-
         warnings.warn(
-            "NaN values found in y_true," " they will be ignored.",
+            "NaN values found in y_true, they will be ignored.",
             stacklevel=2,
         )
     elif np.any(np.isnan(y_true)) and error == "ignore":

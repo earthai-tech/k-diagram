@@ -9,6 +9,7 @@ prediction uncertainty, model drift, interval coverage, anomaly
 magnitude, actual vs. predicted performance, feature influence, and
 related diagnostics using polar coordinates.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -2056,8 +2057,7 @@ def plot_anomaly_magnitude(
         cmap_under_obj = get_cmap(cmap_under)
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap_under` ('{cmap_under}'). "
-            f"Using default 'Blues'.",
+            f"Invalid `cmap_under` ('{cmap_under}'). Using default 'Blues'.",
             UserWarning,
             stacklevel=2,
         )
@@ -2066,7 +2066,7 @@ def plot_anomaly_magnitude(
         cmap_over_obj = get_cmap(cmap_over)
     except ValueError:
         warnings.warn(
-            f"Invalid `cmap_over` ('{cmap_over}'). " f"Using default 'Reds'.",
+            f"Invalid `cmap_over` ('{cmap_over}'). Using default 'Reds'.",
             UserWarning,
             stacklevel=2,
         )
@@ -2513,7 +2513,7 @@ def plot_uncertainty_drift(
     # Generate default labels if none provided
     if dt_labels is None:
         # Use the 'label' param as base for default labels
-        time_labels = [f"{label}_{i+1}" for i in range(num_time_steps)]
+        time_labels = [f"{label}_{i + 1}" for i in range(num_time_steps)]
     else:
         if len(dt_labels) != num_time_steps:
             raise ValueError(
@@ -3281,8 +3281,7 @@ def plot_actual_vs_predicted(
     # If theta_col is provided but currently unused, warn:
     if theta_col is not None:
         warnings.warn(
-            "`theta_col` is currently ignored"
-            " by plot_actual_vs_predicted.",
+            "`theta_col` is currently ignored by plot_actual_vs_predicted.",
             UserWarning,
             stacklevel=2,
         )
@@ -4982,7 +4981,7 @@ def plot_temporal_uncertainty(
             plot_labels = [c.replace("_", " ").title() for c in q_cols_list]
         else:
             # Generic default if explicit list or auto-detection failed context
-            plot_labels = [f"Series {i+1}" for i in range(num_series)]
+            plot_labels = [f"Series {i + 1}" for i in range(num_series)]
     else:
         # Use provided names, check length
         if len(names) != num_series:
@@ -5132,7 +5131,7 @@ def plot_radial_density_ring(
     if kind == "direct":
         if len(cols) != 1:
             raise ValueError(
-                "`kind='direct'` needs one column in " "`target_cols`."
+                "`kind='direct'` needs one column in `target_cols`."
             )
         data_1d = df[cols[0]]
         r_label = r_label or cols[0]
@@ -5140,14 +5139,14 @@ def plot_radial_density_ring(
     elif kind in ("width", "velocity"):
         if len(cols) != 2:
             raise ValueError(
-                f"`kind='{kind}'` needs two columns in " "`target_cols`."
+                f"`kind='{kind}'` needs two columns in `target_cols`."
             )
         data_1d = df[cols[1]] - df[cols[0]]
         r_label = r_label or f"{cols[1]} - {cols[0]}"
         title = title or f"Distribution of {kind.title()}"
     else:
         raise ValueError(
-            f"Invalid kind={kind!r}. Use 'width', " "'velocity', or 'direct'."
+            f"Invalid kind={kind!r}. Use 'width', 'velocity', or 'direct'."
         )
 
     # drop NaNs and bail if empty
@@ -5745,7 +5744,6 @@ def plot_polar_heatmap(
     dpi: int = 300,
     ax: Axes | None = None,
 ) -> Axes | None:
-
     # ---- Validate required columns & drop NaNs
     exist_features(df, features=[r_col, theta_col])
     data = df[[r_col, theta_col]].dropna()

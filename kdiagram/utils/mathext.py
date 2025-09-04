@@ -206,7 +206,7 @@ def get_forecast_arrays(
 ):
     if actual_col is None and pred_cols is None:
         raise ValueError(
-            "Provide at least one of 'actual_col' or " "'pred_cols'."
+            "Provide at least one of 'actual_col' or 'pred_cols'."
         )
 
     # collect required columns
@@ -544,7 +544,6 @@ def compute_crps(
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
 ) -> float:
-
     y_true, y_preds_quantiles = validate_yy(
         y_true, y_preds_quantiles, allow_2d_pred=True
     )
@@ -646,7 +645,6 @@ def calculate_calibration_error(
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
 ) -> float:
-
     # Validate inputs
     y_true, y_preds_quantiles = validate_yy(
         y_true, y_preds_quantiles, allow_2d_pred=True
@@ -671,7 +669,6 @@ def build_cdf_interpolator(
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,
 ) -> Callable[[np.ndarray], np.ndarray]:
-
     # Sort quantiles and predictions to ensure correct interpolation
     sort_idx = np.argsort(quantiles)
     sorted_quantiles = quantiles[sort_idx]
@@ -794,7 +791,6 @@ def compute_coverage_score(
     method: Literal["within", "above", "below"] = "within",
     return_counts: bool = False,
 ) -> float | int:
-
     # Validate and convert inputs
     y_true, y_pred_lower = validate_yy(y_true, y_pred_lower)
     _, y_pred_upper = validate_yy(y_true, y_pred_upper)
@@ -930,7 +926,6 @@ def compute_pinball_loss(
     y_pred_quantile: np.ndarray,
     quantile: float,
 ) -> float:
-
     # Validate and handle NaNs
     y_true, y_pred_quantile = validate_yy(y_true, y_pred_quantile)
 
@@ -1177,7 +1172,6 @@ def minmax_scaler(
     feature_range: tuple[float, float] = (0.0, 1.0),
     eps: float = 1e-8,
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
-
     def _to_array(obj: FrameLike) -> np.ndarray:
         if isinstance(obj, (pd.DataFrame, pd.Series)):
             return obj.to_numpy()

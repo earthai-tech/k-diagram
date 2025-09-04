@@ -50,7 +50,7 @@ def plot_error_violins(
 
     if names and len(names) != len(error_cols):
         warnings.warn(
-            "Names length does not match error columns. " "Using defaults.",
+            "Names length does not match error columns. Using defaults.",
             UserWarning,
             stacklevel=2,
         )
@@ -304,7 +304,7 @@ def plot_error_bands(
     data = df[[error_col, theta_col]].dropna()
     if data.empty:
         warnings.warn(
-            "DataFrame is empty after dropping NaNs in required " "columns.",
+            "DataFrame is empty after dropping NaNs in required columns.",
             UserWarning,
             stacklevel=2,
         )

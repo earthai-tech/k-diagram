@@ -60,8 +60,7 @@ def _add_cmd_ring(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser(
         "plot-radial-density-ring",
         help=(
-            "Radial density ring from direct values, widths, "
-            "or velocities."
+            "Radial density ring from direct values, widths, or velocities."
         ),
         description=(
             "Visualize a 1D distribution as a ring. When kind=width "

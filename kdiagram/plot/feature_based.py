@@ -56,7 +56,6 @@ def plot_feature_interaction(
     dpi: int = 300,
     ax: Axes | None = None,
 ):
-
     warn_acov_preference(
         acov,
         preferred="default",
@@ -99,8 +98,9 @@ def plot_feature_interaction(
         )
     else:
         # min-max scale to the selected span
-        tmin, tmax = float(data[theta_col].min()), float(
-            data[theta_col].max()
+        tmin, tmax = (
+            float(data[theta_col].min()),
+            float(data[theta_col].max()),
         )
         th_scaled = map_theta_to_span(
             th_raw,
@@ -382,7 +382,6 @@ def plot_feature_fingerprint(
     savefig: str | None = None,
     dpi: int = 300,
 ):
-
     warn_acov_preference(
         acov,
         preferred="half_circle",
@@ -397,13 +396,13 @@ def plot_feature_fingerprint(
 
     # -- feature names
     if features is None:
-        feat_list = [f"feature {i+1}" for i in range(n_feat_data)]
+        feat_list = [f"feature {i + 1}" for i in range(n_feat_data)]
     else:
         feat_list = columns_manager(features, empty_as_none=False)
 
     if len(feat_list) < n_feat_data:
         feat_list.extend(
-            [f"feature {i+1}" for i in range(len(feat_list), n_feat_data)]
+            [f"feature {i + 1}" for i in range(len(feat_list), n_feat_data)]
         )
     # Truncate if user provided more names than needed
     elif len(feat_list) > n_feat_data:
@@ -417,7 +416,7 @@ def plot_feature_fingerprint(
     # -- layer labels
     if labels is None:
         # Generate default layer labels
-        lab_list = [f"Layer {i+1}" for i in range(n_layers)]
+        lab_list = [f"Layer {i + 1}" for i in range(n_layers)]
     else:
         lab_list = list(labels)
         if len(lab_list) < n_layers:
@@ -427,7 +426,7 @@ def plot_feature_fingerprint(
                 stacklevel=2,
             )
             lab_list.extend(
-                [f"Layer {i+1}" for i in range(len(lab_list), n_layers)]
+                [f"Layer {i + 1}" for i in range(len(lab_list), n_layers)]
             )
         elif len(lab_list) > n_layers:
             warnings.warn("Extra labels ignored.", UserWarning, stacklevel=2)
@@ -810,10 +809,10 @@ def plot_fingerprint(
         else:
             M = ensure_2d(importances)
             feat_names = features or [
-                f"feature {i+1}" for i in range(M.shape[1])
+                f"feature {i + 1}" for i in range(M.shape[1])
             ]
             layer_labels = labels or [
-                f"Layer {i+1}" for i in range(M.shape[0])
+                f"Layer {i + 1}" for i in range(M.shape[0])
             ]
     else:
         # must be a DataFrame to compute importance
@@ -895,7 +894,7 @@ def plot_fingerprint(
     # ensure features/labels list lengths
     if len(feat_names) < n_feats:
         feat_names += [
-            f"feature {i+1}" for i in range(len(feat_names), n_feats)
+            f"feature {i + 1}" for i in range(len(feat_names), n_feats)
         ]
     elif len(feat_names) > n_feats:
         warnings.warn(
@@ -907,7 +906,7 @@ def plot_fingerprint(
 
     if len(layer_labels) < n_layers:
         layer_labels += [
-            f"Layer {i+1}" for i in range(len(layer_labels), n_layers)
+            f"Layer {i + 1}" for i in range(len(layer_labels), n_layers)
         ]
     elif len(layer_labels) > n_layers:
         warnings.warn(

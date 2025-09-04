@@ -13,6 +13,7 @@ datasets suitable for demonstrating and testing `k-diagram`
 visualizations. Datasets can be returned as pandas DataFrames or
 structured Bunch objects.
 """
+
 from __future__ import annotations
 
 import os
@@ -346,8 +347,8 @@ def load_zhongshan_subsidence(
 
         **Data Characteristics:**
         - Samples: {len(df_subset)} (Locations)
-        - Features: {len(feature_names)} ({', '.join(feature_names)})
-        - Target Columns: {len(target_names)} ({', '.join(target_names)})
+        - Features: {len(feature_names)} ({", ".join(feature_names)})
+        - Target Columns: {len(target_names)} ({", ".join(target_names)})
         - Quantile Columns: {len(all_q_cols_found)} (Subset based on request)
         - Available Years (in original file): {available_years}
         - Available Quantiles (in original file): {available_quantiles}
@@ -722,7 +723,7 @@ def load_uncertainty_data(
         spatial coordinates, an 'elevation' feature, and an 'actual'
         value (``{actual_col_name}``) for the first period. Anomalies
         (actual values outside the first period's Q10-Q90 interval)
-        are introduced for ~{anomaly_frac*100:.0f}% of samples. Both the
+        are introduced for ~{anomaly_frac * 100:.0f}% of samples. Both the
         median (Q50) and the interval width can exhibit configurable
         trends and noise.
 

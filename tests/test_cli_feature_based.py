@@ -46,8 +46,8 @@ def demo_csv_fingerprint_layers(tmp_path: Path) -> Path:
     n_layers = 3
     n_feats = 6
     imp = rng.random((n_layers, n_feats))
-    df = pd.DataFrame(imp, columns=[f"f{i+1}" for i in range(n_feats)])
-    df.insert(0, "layer", [f"M{i+1}" for i in range(n_layers)])
+    df = pd.DataFrame(imp, columns=[f"f{i + 1}" for i in range(n_feats)])
+    df.insert(0, "layer", [f"M{i + 1}" for i in range(n_layers)])
     path = tmp_path / "fingerprint_layers.csv"
     df.to_csv(path, index=False)
     return path
@@ -64,8 +64,8 @@ def demo_csv_fingerprint_features(tmp_path: Path) -> Path:
     n_feats = 5
     n_layers = 3
     imp = rng.random((n_feats, n_layers))
-    df = pd.DataFrame(imp, columns=[f"L{i+1}" for i in range(n_layers)])
-    df.insert(0, "feature", [f"Feat{i+1}" for i in range(n_feats)])
+    df = pd.DataFrame(imp, columns=[f"L{i + 1}" for i in range(n_layers)])
+    df.insert(0, "feature", [f"Feat{i + 1}" for i in range(n_feats)])
     path = tmp_path / "fingerprint_features.csv"
     df.to_csv(path, index=False)
     return path

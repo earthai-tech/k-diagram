@@ -87,7 +87,6 @@ class ResultSummary(FlexDict):
         mute_note=False,
         **kwargs,
     ):
-
         super().__init__(**kwargs)
         self.name = name or "Result"
         self.pad_keys = pad_keys

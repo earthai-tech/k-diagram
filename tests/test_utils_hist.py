@@ -18,9 +18,9 @@ def test_plot_hist_kde_with_numpy_array():
     assert isinstance(pdf, np.ndarray), "PDF should be of type np.ndarray"
 
     # Check the shape of the returned arrays (should match the number of grid points)
-    assert (
-        grid.shape[0] == pdf.shape[0]
-    ), "Grid and PDF should have the same length"
+    assert grid.shape[0] == pdf.shape[0], (
+        "Grid and PDF should have the same length"
+    )
 
 
 def test_plot_hist_kde_with_pandas_series():
@@ -30,9 +30,9 @@ def test_plot_hist_kde_with_pandas_series():
 
     assert isinstance(grid, np.ndarray), "Grid should be of type np.ndarray"
     assert isinstance(pdf, np.ndarray), "PDF should be of type np.ndarray"
-    assert (
-        grid.shape[0] == pdf.shape[0]
-    ), "Grid and PDF should have the same length"
+    assert grid.shape[0] == pdf.shape[0], (
+        "Grid and PDF should have the same length"
+    )
 
 
 def test_plot_hist_kde_with_pandas_dataframe():
@@ -42,9 +42,9 @@ def test_plot_hist_kde_with_pandas_dataframe():
 
     assert isinstance(grid, np.ndarray), "Grid should be of type np.ndarray"
     assert isinstance(pdf, np.ndarray), "PDF should be of type np.ndarray"
-    assert (
-        grid.shape[0] == pdf.shape[0]
-    ), "Grid and PDF should have the same length"
+    assert grid.shape[0] == pdf.shape[0], (
+        "Grid and PDF should have the same length"
+    )
 
 
 def test_plot_hist_kde_savefig():

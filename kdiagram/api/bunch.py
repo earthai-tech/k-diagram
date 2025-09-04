@@ -8,6 +8,7 @@ Bunch Data Structure (:mod:`kdiagram.bunch`)
 Provides a dictionary-like object that allows accessing keys as
 attributes.
 """
+
 from __future__ import annotations
 
 import copy

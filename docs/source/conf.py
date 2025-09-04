@@ -45,22 +45,6 @@ except Exception:
         "kdiagram not importable in docs environment; using 0+unknown"
     )
 
-# -- Silence SyntaxWarnings during docs build --------------------------------
-if "kd" not in globals():
-    # If package is not importable, apply warning filters manually
-    warnings.filterwarnings(
-        "ignore",
-        category=SyntaxWarning,
-        module=r"^(numpy|matplotlib|pandas)\.",
-    )
-else:
-    # If package is importable, configure warnings for specific packages
-    kd.configure_warnings(
-        "ignore",
-        categories=["SyntaxWarning"],
-        modules=[r"^(numpy|matplotlib|pandas)\."],
-    )
-
 # -- Project information -----------------------------------------------------
 
 project = "k-diagram"

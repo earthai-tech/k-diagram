@@ -81,7 +81,6 @@ def test_configure_warnings_module_regex_scoped():
 
 
 def test_configure_warnings_clear_resets_prior_filters():
-
     # Now clear and set default -> warning shows up again
     configure_warnings("default", categories=[RuntimeWarning], clear=True)
     with warnings.catch_warnings(record=True) as rec:

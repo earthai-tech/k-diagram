@@ -601,7 +601,7 @@ class SaveFile:
                     )
                 else:
                     if self.verbose:
-                        print("[INFO] DataFrame saved to " f"'{savefile}'.")
+                        print(f"[INFO] DataFrame saved to '{savefile}'.")
 
             return result
 
@@ -744,7 +744,7 @@ def _perform_save(df_to_save, savefile, ext):
 
     if writer_func is None:
         warnings.warn(
-            f"Unsupported file extension '{ext}'. " "Cannot save DataFrame.",
+            f"Unsupported file extension '{ext}'. Cannot save DataFrame.",
             stacklevel=2,
         )
         return

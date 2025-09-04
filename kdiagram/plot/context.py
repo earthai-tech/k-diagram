@@ -49,7 +49,7 @@ def plot_time_series(
 
     if not actual_col and not pred_cols:
         raise ValueError(
-            "At least one of `actual_col`" " or `pred_cols` must be provided."
+            "At least one of `actual_col` or `pred_cols` must be provided."
         )
 
     required_cols = []
@@ -73,8 +73,7 @@ def plot_time_series(
     num_preds = len(pred_cols)
     if names and len(names) != num_preds:
         warnings.warn(
-            "Length of `names` does not match"
-            " `pred_cols`. Using defaults.",
+            "Length of `names` does not match `pred_cols`. Using defaults.",
             stacklevel=2,
         )
         names = None
@@ -261,8 +260,7 @@ def plot_scatter_correlation(
     pred_cols = columns_manager(pred_cols, empty_as_none=False)
     if not pred_cols:
         raise ValueError(
-            "At least one prediction column"
-            " (`pred_cols`) must be provided."
+            "At least one prediction column (`pred_cols`) must be provided."
         )
 
     required_cols = [actual_col] + list(pred_cols)
@@ -275,8 +273,7 @@ def plot_scatter_correlation(
     num_preds = len(pred_cols)
     if names and len(names) != num_preds:
         warnings.warn(
-            "Length of `names` does not match"
-            " `pred_cols`. Using defaults.",
+            "Length of `names` does not match `pred_cols`. Using defaults.",
             stacklevel=2,
         )
         names = None

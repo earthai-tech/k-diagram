@@ -79,8 +79,7 @@ def add_plot_velocities(
         nargs="+",
         required=True,
         help=(
-            "List of q50/median columns in order (space- or "
-            "comma-separated)."
+            "List of q50/median columns in order (space- or comma-separated)."
         ),
     )
     p.add_argument(

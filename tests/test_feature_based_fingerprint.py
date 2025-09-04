@@ -14,8 +14,8 @@ matplotlib.use("Agg")
 def _df_precomputed(layers=3, feats=6, seed=0):
     rng = np.random.default_rng(seed)
     M = rng.random((layers, feats))
-    cols = [f"feat_{i+1}" for i in range(feats)]
-    idx = [f"Layer {i+1}" for i in range(layers)]
+    cols = [f"feat_{i + 1}" for i in range(feats)]
+    idx = [f"Layer {i + 1}" for i in range(layers)]
     return pd.DataFrame(M, index=idx, columns=cols)
 
 

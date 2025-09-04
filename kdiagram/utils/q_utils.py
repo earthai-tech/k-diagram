@@ -4,6 +4,7 @@
 """
 Provides utility functions for quantile extraction and validation.
 """
+
 from __future__ import annotations
 
 import re
@@ -288,7 +289,7 @@ def melt_q_data(
     if spatial_cols:
         check_spatial_columns(df, spatial_cols)
         if verbose >= 2:
-            print("[INFO] Spatial columns detected: " f"{spatial_cols}")
+            print(f"[INFO] Spatial columns detected: {spatial_cols}")
 
     # Prepare for melting
     id_vars = list(spatial_cols) if spatial_cols else []
@@ -300,7 +301,7 @@ def melt_q_data(
         value_name=value_prefix,
     )
     if verbose >= 4:
-        print("[DEBUG] After melt, shape: " f"{melt_df.shape}")
+        print(f"[DEBUG] After melt, shape: {melt_df.shape}")
 
     # Merge with metadata (columns -> dt & quantile)
     meta_df = pd.DataFrame(meta, columns=["column", dt_name, "quantile"])
@@ -331,12 +332,10 @@ def melt_q_data(
     pivot_df = pivot_df.sort_values(sort_cols).reset_index(drop=True)
 
     if verbose >= 4:
-        print("[DEBUG] After pivot, shape: " f"{pivot_df.shape}")
+        print(f"[DEBUG] After pivot, shape: {pivot_df.shape}")
 
     if verbose >= 1:
-        print(
-            f"[INFO] melt_q_data complete. Final shape: " f"{pivot_df.shape}"
-        )
+        print(f"[INFO] melt_q_data complete. Final shape: {pivot_df.shape}")
 
     # Sort if requested
     if sort_values is not None:
@@ -357,8 +356,7 @@ def melt_q_data(
             except Exception as e:
                 if verbose >= 2:
                     print(
-                        f"[WARN] Sorting failed: {str(e)}. "
-                        "No sort applied."
+                        f"[WARN] Sorting failed: {str(e)}. No sort applied."
                     )
     return pivot_df
 
@@ -537,7 +535,6 @@ def pivot_q_data(
     error: str = "raise",
     verbose: int = 0,
 ) -> pd.DataFrame:
-
     def handle_error(
         msg: str, error: str, default: pd.DataFrame
     ) -> pd.DataFrame:
