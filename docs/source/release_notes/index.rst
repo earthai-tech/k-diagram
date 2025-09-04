@@ -3,10 +3,6 @@
 =============
 Release Notes
 =============
-
-.. raw:: html
-
-   <span class="new-badge" data-release-date="2025-08-29">NEW</span>
    
 This section documents notable changes to **k-diagram** across official
 releases. We follow semantic versioning (MAJOR.MINOR.PATCH). For upgrade
