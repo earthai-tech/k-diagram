@@ -164,9 +164,9 @@ point-wise diagnostic of interval performance. For each observation $y_i$
 and its corresponding prediction interval $[L_i, U_i]$, a binary 
 coverage value $c_i$ is determined as:
 
-$$
-c_i = \\mathbf{1}\\{\\, L_i \le y_i \\le U_i \\,\\}
-$$
+\[
+c_i = \mathbf{1}\!\left( L_i \le y_i \le U_i \right)
+\]
 
 where $\mathbf{1}$ is the indicator function. The plot visualizes each $c_i$, 
 allowing for a granular analysis of where interval failures occur. The 
@@ -185,12 +185,12 @@ error score would miss.
 
 Finally, the **Forecast Horizon Drift** diagram (\autoref{fig2:performance}c) 
 visualizes how uncertainty evolves over time. For each forecast horizon $j$, 
-it calculates the mean interval width, $\\bar{w}_j$, across all $N$ spatial 
+it calculates the mean interval width, $\bar{w}_j$, across all $N$ spatial 
 locations as:
 
-$$
-\\bar{w}_j = \\frac{1}{N} \\sum_{i=1}^{N} \\bigl(U_{i,j} - L_{i,j}\\bigr)
-$$
+\[
+\bar{w}_{j} = \frac{1}{N} \sum_{i=1}^{N} \left( U_{i,j} - L_{i,j} \right)
+\]
 
 The increasing height of the bars from 2023 to 2026 provides an immediate 
 and intuitive confirmation that the model's uncertainty grows as it forecasts 
@@ -205,10 +205,12 @@ these polar diagnostics were utilized to analyze and interpret the uncertainty
 associated with land subsidence predictions using an Extreme Temporal 
 Fusion Transformer model [@Kouadio2025] in Nansha city, China.
 
-Full usage examples and a gallery of all plot types are available in the 
-official documentation's [gallery section](https://k-diagram.readthedocs.io/en/latest/gallery/uncertainty.html).
-For a deeper understanding of the mathematical concepts behind each plot
-and interpretation guides, please refer to the detailed [User Guide](https://k-diagram.readthedocs.io/en/latest/user_guide/index.html).
+Full usage examples and a gallery of all plot types are available in the official 
+documentation's [gallery section](https://k-diagram.readthedocs.io/en/latest/gallery/index.html).
+For a deeper understanding of the mathematical concepts and interpretation guides, please 
+refer to the detailed [User Guide](https://k-diagram.readthedocs.io/en/latest/user_guide/index.html). 
+The complete mathematical foundations and derivations for all visualizations are provided in the official 
+Technical Report [@kouadiob2025].
 
 [^1]: For an overview of the concepts behind Physics-Informed Neural
       Networks (PINNs), see:
