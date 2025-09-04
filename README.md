@@ -15,6 +15,7 @@
     <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md"><img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square"></a>
     <a href="https://codecov.io/gh/earthai-tech/k-diagram" ><img src="https://codecov.io/gh/earthai-tech/k-diagram/branch/main/graph/badge.svg?token=4I4C9P46RQ"/></a>
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/earthai-tech/k-diagram">
+  <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/k-diagram">
 
   </p>
   
