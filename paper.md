@@ -89,68 +89,59 @@ core scientific libraries including `numpy` [@harris2020array],
 `pandas` [@mckinney-proc-scipy-2010; @reback2020pandas],
 `matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth], and
 `scikit-learn` [@scikit-learn]. The core functionality is organized
-around a cohesive API for diagnosing key aspects of forecast quality
-(see \autoref{fig1:workflow}):
+around a cohesive API designed to diagnose key aspects of forecast
+quality through four primary pillars of analysis 
+(see \autoref{fig1:workflow}).
 
-* **Uncertainty and Error Diagnostics:** The primary contribution
-  of `k-diagram` is a suite of novel polar visualizations for
-  dissecting forecast performance [@kouadiob2025]. The
-  `kdiagram.plot.uncertainty`, `kdiagram.plot.errors`, and 
-  `kdiagram.plot.probabilistic` modules provide functions to visualize:
-
-    * **Interval Performance:** Metrics such as prediction interval
-      coverage, the magnitude of interval failures (anomalies), and
-      the temporal consistency of interval widths.
-    * **Error Distributions:** Polar error bands are used to separate
-      systemic bias from random error, while polar violins—a novel
-      adaptation of the traditional violin plot [@Hintze1998]—are
-      used to compare the full error distributions of multiple models.
-    * **Probabilistic Diagnostics:** A dedicated suite of plots for
-      evaluating the full predictive distribution, including Polar 
-      Probability Integral Transform (PIT) Histograms for calibration, 
-      Sharpness Diagrams for precision, and Continuous Ranked Probability
-      Score (CRPS) plots for overall skill, based on the foundational 
-      concepts of probabilistic forecasting [@Gneiting2007b].
-    * **2D Uncertainty:** The package introduces velocity diagram, polar 
-      heatmaps, quiver plots, and error ellipses to visualize complex, 
-      multi-dimensional error and uncertainty structures.
-
-* **Model Evaluation and Comparison:** The package implements
-  established, well-regarded evaluation methods, adapting them for
-  clarity and comparison:
-
-    * **Taylor Diagrams:** Functions in `kdiagram.plot.evaluation`
-      generate Taylor Diagrams based on the original formulation by
-      [@Taylor2001] to compare models on correlation, standard
-      deviation, and RMSD.
-    * **Reliability Diagrams:** The `kdiagram.plot.comparison` module
-      provides functions to plot reliability diagrams, a standard method
-      in forecast verification for assessing calibration [@Jolliffe2012].
-
-* **Distribution and Feature Visualization:**
-
-    * **1D Distributions:** Utilities are provided for plotting
-      histograms and Kernel Density Estimates (KDEs), a standard
-      non-parametric density estimation technique [@Silverman1986],
-      both in Cartesian and novel polar ring formats.
-    * **Feature Importance:** Radar charts under `kdiagram.plot.feature_based`
-      visualize and compare feature importance profiles ("fingerprints")
-      across models.
-      
-* **Relationship Visualization**: Polar plots in `kdiagram.plot.relationship` 
-  offer a novel perspective on the correlation between true and predicted 
-  values by mapping them to angle and radius.
-
-* **Utilities and Interface:** The package is supported by a 
-  set of helper functions for reshaping quantile-based forecast data
-  and a command-line interface (CLI) for generating key plots directly
-  from data files.
-  
 ![Structure of the k-diagram, illustrating the identification of global components.\label{fig1:workflow}](docs/source/_static/paper_fig1.png)
 
-The package is designed for ease of use and customization, allowing
-users to control plot aesthetics, angular coverage (`acov`), and color mapping
-to tailor the visualizations for their specific domain. 
+
+The first and primary contribution of `k-diagram` is a suite of novel
+polar visualizations for **Uncertainty and Error Diagnostics**
+[@kouadiob2025]. The `kdiagram.plot.uncertainty`,
+`kdiagram.plot.errors`, and `kdiagram.plot.probabilistic` modules
+provide a comprehensive toolkit for dissecting forecast performance.
+This includes functions to evaluate prediction **interval performance** by
+visualizing coverage, the magnitude of anomalous failures, and the
+temporal consistency of interval widths. Furthermore, the library
+introduces innovative methods for visualizing **error distributions**,
+such as polar error bands to separate systemic bias from random
+error, and polar violins—a novel adaptation of the traditional violin
+plot [@Hintze1998] to compare the full error profiles of multiple
+models. For a complete assessment of the predictive distribution, a
+dedicated suite of **probabilistic diagnostics** offers Polar PIT
+Histograms for calibration, Sharpness Diagrams for precision, and
+Continuous Ranked Probability Score (CRPS) plots for overall skill,
+based on the foundational concepts of probabilistic forecasting
+[@Gneiting2007b].
+
+Building on this, the second pillar focuses on established methods for
+**Model Evaluation and Comparison**. The package implements well-regarded
+evaluation techniques, adapting them for enhanced clarity. Functions in
+`kdiagram.plot.evaluation` generate **Taylor Diagrams**, based on the
+original formulation by [@Taylor2001], to holistically compare models
+on correlation, standard deviation, and RMSD. Complementing this,
+the `kdiagram.plot.comparison` module provides standard **Reliability
+Diagrams** for assessing probability calibration, a cornerstone of
+forecast verification [@Jolliffe2012].
+
+The third pillar of functionality addresses **Distribution and Feature
+Visualization**. `k-diagram` provides utilities for plotting 1D
+distributions and Kernel Density Estimates (KDEs) [@Silverman1986] in
+both Cartesian and innovative polar ring formats. To facilitate model
+interpretability, the `kdiagram.plot.feature_based` module offers
+radar charts to visualize and compare feature importance profiles,
+creating unique model "fingerprints".
+
+Finally, the package provides tools for **Relationship Visualization**,
+where polar plots in `kdiagram.plot.relationship` offer a novel
+perspective on the correlation between true and predicted values by
+mapping them to angle and radius. All functionalities are supported by
+a set of helper utilities and a command-line interface (CLI) for
+generating key plots directly from data files. The entire package is
+designed for ease of use, allowing users to control plot aesthetics,
+angular coverage (`acov`), and color mapping to tailor the
+visualizations for their specific domain.
 
 
 # Illustrative Diagnostics and Application
@@ -159,7 +150,7 @@ The practical utility of `k-diagram` is best demonstrated through its key
 diagnostic plots, which are grounded in clear statistical concepts and reveal 
 model behaviors often hidden by aggregate metrics (see \autoref{fig2:performance}).
 
-The **Coverage Evaluation** plot (\autoref{fig2:performance}a) provides a 
+For instance, the **Coverage Evaluation** plot in \autoref{fig2:performance}a provides a 
 point-wise diagnostic of interval performance. For each observation $y_i$ 
 and its corresponding prediction interval $[L_i, U_i]$, a binary 
 coverage value $c_i$ is determined as:
