@@ -106,8 +106,8 @@ visualizing coverage, the magnitude of anomalous failures, and the
 temporal consistency of interval widths. Furthermore, the library
 introduces innovative methods for visualizing **error distributions**,
 such as polar error bands to separate systemic bias from random
-error, and polar violins—a novel adaptation of the traditional violin
-plot [@Hintze1998] to compare the full error profiles of multiple
+error, and polar violins, a novel adaptation of the traditional violin
+plot [@Hintze1998], to compare the full error profiles of multiple
 models. For a complete assessment of the predictive distribution, a
 dedicated suite of **probabilistic diagnostics** offers Polar PIT
 Histograms for calibration, Sharpness Diagrams for precision, and
