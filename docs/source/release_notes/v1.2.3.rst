@@ -1,10 +1,10 @@
 .. _release_v1_3_0:
 
 ----------------
-Version 1.2.2
+Version 1.2.3
 ----------------
 
-*(Released: 2025-08-25)*
+*(Released: 2025-09-04)*
 
 This is a major feature release that introduces a new ``context``
 module for standard Cartesian diagnostic plots and adds a 
