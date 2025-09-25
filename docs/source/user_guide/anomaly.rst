@@ -508,7 +508,7 @@ This plot uses a standard Cartesian coordinate system to visualize
 the key components of the Clustered Anomaly Severity (CAS) score.
 It is the direct, non-polar counterpart to the polar glyph plot,
 maintaining the same core principles for encoding information
-as described in the framework of :footcite:t:`kouadioc2025`.
+:footcite:t:`kouadioc2025`.
 
 1.  **X-axis**: Represents the sample index, showing *when* or
     *where* in the sequence a failure occurred.
