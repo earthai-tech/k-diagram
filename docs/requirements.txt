@@ -1,5 +1,5 @@
 # Sphinx and Core Extensions
-sphinx>=4.0,<8.0
+sphinx>=7.0,<8.0
 sphinx-copybutton
 myst-parser
 sphinx-design
