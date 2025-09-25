@@ -79,6 +79,8 @@ dev = [
 ]
 
 
+# Testing and development
+pytest-mock
 [tool.setuptools.packages.find]
 include = ["kdiagram*"]
 

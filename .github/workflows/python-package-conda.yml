@@ -1,4 +1,3 @@
-# .github/workflows/python-package-conda.yml
 name: Python Package (k-diagram)
 
 on:
@@ -17,49 +16,49 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]  
+        python-version: ["3.9","3.10","3.11","3.12","3.13"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Miniforge (Miniforge3)
+      - name: Set up Miniforge (conda)
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-variant: Miniforge3  # Updated from Mambaforge
+          miniforge-variant: Miniforge3
           miniforge-version: latest
           use-mamba: true
           activate-environment: k-diagram-dev
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          # NOTE: intentionally omit auto-activate-base to avoid alias warning
 
       - name: Show conda info
         run: |
           conda info
           conda list
+          python -V
+          pip -V
 
-      - name: Install k-diagram (no deps; conda handled them)
+      # Now Install deps from pyproject (single source of truth)
+      - name: Install package (dev extras from pyproject)
         run: |
-          python -m pip install . --no-deps --force-reinstall
+          python -m pip install -U pip
+          pip install -e .[dev]
 
-      - name: Lint (ruff and black)
+      - name: Lint (Ruff)
         run: |
-          echo "Checking for linter issues with Ruff..."
-          ruff check .  # Checks for linting issues
+          ruff check .
 
       - name: Test with pytest + coverage
         run: |
-          echo "Running pytest with coverage..."
           pytest -n auto --cov=kdiagram --cov-report=xml --cov-report=term-missing tests/
 
       - name: Upload coverage to Codecov
-        # Run unless it's a PR from a fork AND ensure a token is present
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}  # This is the correct way to reference secrets
-          files: ./coverage.xml                 # default path from pytest-cov
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
           name: linux-py${{ matrix.python-version }}
           flags: unittests
           fail_ci_if_error: true
@@ -71,4 +70,5 @@ jobs:
           echo "PATH=$PATH"
           conda info
           conda list
+          pip list
           echo "::endgroup::"
