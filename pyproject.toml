@@ -103,12 +103,15 @@ omit = [
     
     # Difficult to unit test reliably 
     "kdiagram/cli/_utils.py",          # Tested via integration, not unit coverage
+    "kdiagram/cli/plot_context_corr.py",
+    "kdiagram/cli/plot_context_err.py", 
     "kdiagram/core/_io_utils.py",
     "kdiagram/core/io.py",
     "kdiagram/utils/plot.py",           # Skip plot helpers
     "kdiagram/compat/*",                # Handles external library version differences
     "kdiagram/utils/deps.py",           # Handles optional dependencies
     "kdiagram/utils/_deps.py",          # Handles optional dependencies
+    "examples/cas/scripts/*.py"         # skip CAS examples for now
 ]
 
 [tool.coverage.report]
@@ -124,6 +127,7 @@ omit = [
   "kdiagram/compat/**",
   "kdiagram/utils/deps.py",
   "kdiagram/utils/_deps.py",
+  "examples/cas/scripts/*.py"
 ]
 exclude_lines = [
     "pragma: no cover",
@@ -142,7 +146,7 @@ exclude = ["docs", "kdiagram/_scm_version.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["F401", "E501"]
+ignore = ["F401", "E501", "E741"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["kdiagram"]

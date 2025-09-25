@@ -181,3 +181,16 @@ cython_debug/
 # Local draft docs
 _drafts/
 joss_reviews.md
+
+# data artifacts
+/data/processed/
+/data/modeling_results_ok/
+/data/outputs/
+/**/*.parquet
+/**/*.csv.gz
+.ipynb_checkpoints/
+
+# remove the data and examples for now 
+data/ 
+examples/
+docs/source/_autosummary/

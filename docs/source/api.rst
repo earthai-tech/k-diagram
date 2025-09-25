@@ -172,6 +172,24 @@ featuring novel polar adaptations of standard diagnostic tools.
    ~kdiagram.plot.evaluation.plot_pinball_loss
    ~kdiagram.plot.evaluation.plot_regression_performance
 
+.. _api_anomaly:
+
+Anomaly Diagnostics (`kdiagram.plot.anomaly`)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Functions for creating detailed visualizations of forecast
+failures (anomalies) and their characteristics.
+
+.. autosummary::
+   :toctree: _autosummary/anomaly
+   :nosignatures:
+
+   ~kdiagram.plot.anomaly.plot_anomaly_severity
+   ~kdiagram.plot.anomaly.plot_anomaly_profile
+   ~kdiagram.plot.anomaly.plot_glyphs
+   ~kdiagram.plot.anomaly.plot_cas_layers
+   ~kdiagram.plot.anomaly.plot_cas_profile
+
 .. _api_taylor_diagram:
 
 Taylor Diagram (`kdiagram.plot.taylor_diagram`)
@@ -188,7 +206,21 @@ using Taylor Diagrams.
    ~kdiagram.plot.taylor_diagram.plot_taylor_diagram_in
    ~kdiagram.plot.taylor_diagram.plot_taylor_diagram
 
+.. _api_metrics:
 
+Specialized Forecasting Metrics (`kdiagram.metrics`)
+------------------------------------------------------
+
+Functions for computing specialized scores for forecast
+evaluation, such as the Clustered Anomaly Severity (CAS) score.
+
+.. autosummary::
+   :toctree: _autosummary/metrics
+   :nosignatures:
+
+   ~kdiagram.metrics.cluster_aware_severity_score
+   ~kdiagram.metrics.clustered_anomaly_severity
+   
 .. _api_utils:
 
 Utility Functions (`kdiagram.utils`)
@@ -247,7 +279,7 @@ for examples and testing.
 .. _api_cli:
 
 Command-Line Interface (CLI)
-----------------------------
+------------------------------
 
 In addition to the Python API, ``k-diagram`` also provides a 
 command-line interface for generating plots directly from your

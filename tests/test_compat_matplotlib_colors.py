@@ -16,9 +16,9 @@ def test_get_cmap_invalid():
     # Test for invalid colormap name
     with pytest.warns(UserWarning):
         cmap = get_cmap("invalid_cmap")
-    assert cmap is not None, (
-        "Invalid colormap name should fall back to default"
-    )
+    assert (
+        cmap is not None
+    ), "Invalid colormap name should fall back to default"
 
     # Test for None input with allow_none=False (default behavior)
     with pytest.warns(UserWarning):
@@ -45,9 +45,9 @@ def test_get_colors_invalid():
     # Test for an invalid color input
     colors = get_colors(3, "invalid_color")
     assert len(colors) == 3, "Should return 3 colors even for invalid color"
-    assert colors[0] == "invalid_color", (
-        "The first color should be the user-provided color"
-    )
+    assert (
+        colors[0] == "invalid_color"
+    ), "The first color should be the user-provided color"
 
 
 def test_is_valid_cmap_valid():
@@ -58,9 +58,9 @@ def test_is_valid_cmap_valid():
 
 def test_is_valid_cmap_invalid():
     # Test for invalid colormap name
-    assert is_valid_cmap("invalid_cmap") is False, (
-        "Should be invalid colormap"
-    )
+    assert (
+        is_valid_cmap("invalid_cmap") is False
+    ), "Should be invalid colormap"
     assert is_valid_cmap("notacmap") is False, "Should be invalid colormap"
 
 
@@ -74,6 +74,6 @@ def test_is_valid_cmap_invalid():
 )
 def test_get_colors_parametrized(n, colors, expected_length):
     colors_list = get_colors(n, colors)
-    assert len(colors_list) == expected_length, (
-        f"Should return {expected_length} colors"
-    )
+    assert (
+        len(colors_list) == expected_length
+    ), f"Should return {expected_length} colors"

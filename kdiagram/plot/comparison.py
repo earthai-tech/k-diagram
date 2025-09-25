@@ -1,5 +1,6 @@
 # License: Apache 2.0
 # Author: LKouadio <etanoyau@gmail.com>
+
 """Model comparison plots."""
 
 from __future__ import annotations

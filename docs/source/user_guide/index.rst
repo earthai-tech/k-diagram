@@ -34,9 +34,11 @@ forecasting models and data.
    relationship
    feature_based
    evaluation
+   anomaly
    taylor_diagram
    context
    hist
+   metric
    forecast_utils
    quantile_utils
    math_utils

@@ -584,7 +584,7 @@ True
 >>> _ = load_zhongshan_subsidence(force_download=True)
 
 References
-------------
+----------
 
 .. footbibliography::
     
@@ -882,7 +882,7 @@ Examples
 True
 
 References 
-------------
+----------
 
 .. footbibliography::
     
