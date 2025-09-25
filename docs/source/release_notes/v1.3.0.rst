@@ -1,10 +1,10 @@
 .. _release_v1_3_0:
 
 ----------------
-Version 1.2.3
+Version 1.3.0
 ----------------
 
-*(Released: 2025-09-04)*
+*(Released: 2025-09-25)*
 
 This is a major feature release that introduces a new ``context``
 module for standard Cartesian diagnostic plots and adds a 
@@ -78,6 +78,19 @@ New Features
     and :func:`~kdiagram.utils.compute_winkler_score` (for interval
     accuracy).
 
+* |Feature| **New Anomaly Plotting Module** (``kdiagram.plot.anomaly``):
+  A toolkit for exploring and reporting on anomalies, designed to work with
+  your favorite detection model.
+
+  - Visualize anomaly scores over time with event markers and threshold bands.
+  - Spot seasonal patterns and incident clusters at a glance with calendar heatmaps.
+
+* |Feature| **New Metrics** (:func:`~kdiagram.metrics.cluster_aware_severity_score`)
+  to compute the Cluster-Aware Severity (CAS) score and 
+  (:func:`~kdiagram.metrics.clustered_anomaly_severity`) to serve as a direct 
+  helper for calculating the CAS score. 
+
+
 Enhancements
 ~~~~~~~~~~~~~~
 
@@ -91,6 +104,21 @@ Enhancements
 * |Enhancement| Added ``metric_labels`` and ``higher_is_better`` parameters to
   ``plot_regression_performance`` for more flexible and intuitive
   visualization of custom metrics.
+  
+* |Enhancement| Smarter Polar Labels: We've improved how polar plot labels 
+  are placed. Your custom settings are now applied more reliably, and text 
+  rotation works consistently.
+
+* |Enhancement| More Robust Feature Plots:
+
+  - plot_feature_fingerprint is now better at handling its color palette 
+    and arranging legends, especially when plots get crowded.
+  - plot_feature_interaction handles missing data more gracefully and 
+    features a more intuitive colorbar.
+
+* |Enhancement| Utility Polish: We tidied up some internal helper 
+  functions to use the latest methods, getting rid of pesky deprecation 
+  warnings and making our data scaler more stable.
   
 Documentation
 ~~~~~~~~~~~~~~~

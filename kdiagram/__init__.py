@@ -69,8 +69,13 @@ if _missing_dependencies:
 from .config import configure_warnings, warnings_config  # noqa: F401, E402
 from .plot import (  # noqa: E402
     plot_actual_vs_predicted,
+    plot_anomaly_glyphs,
     plot_anomaly_magnitude,
+    plot_anomaly_profile,
+    plot_anomaly_severity,
     plot_calibration_sharpness,
+    plot_cas_layers,
+    plot_cas_profile,
     plot_conditional_quantiles,
     plot_coverage,
     plot_coverage_diagnostic,
@@ -83,6 +88,7 @@ from .plot import (  # noqa: E402
     plot_feature_fingerprint,
     plot_feature_interaction,
     plot_fingerprint,
+    plot_glyphs,
     plot_horizon_metrics,
     plot_interval_consistency,
     plot_interval_width,
@@ -161,4 +167,10 @@ __all__ = [
     "plot_polar_pr_curve",
     "plot_polar_roc",
     "plot_regression_performance",
+    "plot_anomaly_severity",
+    "plot_anomaly_profile",
+    "plot_anomaly_glyphs",
+    "plot_cas_profile",
+    "plot_glyphs",
+    "plot_cas_layers",
 ]

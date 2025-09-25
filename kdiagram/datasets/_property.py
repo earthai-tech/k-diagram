@@ -30,39 +30,23 @@ import os
 import shutil
 import warnings
 from collections import namedtuple
-from importlib import resources  # Used in download_file_if # noqa
+from importlib import resources
 from urllib.parse import urljoin
 
-# Assuming io utils are now one level up relative to datasets/_property.py
-# Adjust if kdiagram.utils doesn't exist or io is elsewhere
 try:
-    from ..utils.io import check_file_exists, fancier_downloader
+    from ..utils.io import fancier_downloader
 except ImportError:
-    # Handle case where utils might not be structured like this yet
-    # Or raise a more specific error if these are essential internal deps
     warnings.warn(
         "Could not import IO utilities from kdiagram.utils.io", stacklevel=2
     )
 
-    # Define dummy functions if needed for static analysis, but runtime will fail
-    def check_file_exists(*args, **kwargs):
-        return False
-
-    def fancier_downloader(*args, **kwargs):
-        raise NotImplementedError
-
-
-# TODO: Update if k-diagram will host data/descriptions
-KD_DMODULE = "kdiagram.datasets.data"  # Path for potential packaged data
-KD_DESCR = (
-    "kdiagram.datasets.descr"  # Path for potential packaged descriptions
-)
-KD_REMOTE_DATA_URL = (  # Example URL if k-diagram hosts data samples
+KD_DMODULE = "kdiagram.datasets.data"
+KD_DESCR = "kdiagram.datasets.descr"
+KD_REMOTE_DATA_URL = (
     "https://raw.githubusercontent.com/earthai-tech/k-diagram/main/"
     "kdiagram/datasets/data/"
 )
 
-# Define structure for remote dataset metadata
 RemoteMetadata = namedtuple(
     "RemoteMetadata",
     ["file", "url", "checksum", "descr_module", "data_module"],
@@ -77,7 +61,6 @@ __all__ = [
 ]
 
 
-# --- Function Definitions ---
 def get_data(data_home: str | None = None) -> str:
     r"""Get the path to the k-diagram data cache directory.
 
@@ -344,22 +327,44 @@ def download_file_if(
             )
             # Fall through to check package/cache normally
 
+    # # 4. Check Package Resources First (if download wasn't forced or failed)
+    # package_filepath = None
+    # try:
+    #     if resources.is_resource(meta.data_module, filename):
+    #         if verbose:
+    #             print(
+    #                 f"Dataset '{filename}' found in package resource: "
+    #                 f"{meta.data_module}"
+    #             )
+    #         # Get path via context manager
+    #         with resources.path(meta.data_module, filename) as rpath:
+    #             package_filepath = str(rpath)
+    # except (ModuleNotFoundError, TypeError, Exception) as e:
+    #     # ModuleNotFoundError if data_module path is wrong
+    #     # TypeError if non-string arguments
+    #     # Catch broad Exception for other potential resource issues
+    #     if verbose:
+    #         warnings.warn(
+    #             f"Could not check package resources for "
+    #             f"'{meta.data_module}/{filename}': {e}",
+    #             stacklevel=2,
+    #         )
+
     # 4. Check Package Resources First (if download wasn't forced or failed)
     package_filepath = None
     try:
-        if resources.is_resource(meta.data_module, filename):
+        pkg_root = resources.files(meta.data_module)  # Traversable
+        candidate = pkg_root.joinpath(filename)
+        if candidate.is_file():
             if verbose:
                 print(
                     f"Dataset '{filename}' found in package resource: "
                     f"{meta.data_module}"
                 )
-            # Get path via context manager
-            with resources.path(meta.data_module, filename) as rpath:
+            # Obtain a real filesystem path even if packaged in a zip/wheel
+            with resources.as_file(candidate) as rpath:
                 package_filepath = str(rpath)
-    except (ModuleNotFoundError, TypeError, Exception) as e:
-        # ModuleNotFoundError if data_module path is wrong
-        # TypeError if non-string arguments
-        # Catch broad Exception for other potential resource issues
+    except (ModuleNotFoundError, AttributeError, TypeError, Exception) as e:
         if verbose:
             warnings.warn(
                 f"Could not check package resources for "

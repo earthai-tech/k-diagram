@@ -1,3 +1,11 @@
+from .anomaly import (
+    plot_anomaly_glyphs,
+    plot_anomaly_profile,
+    plot_anomaly_severity,
+    plot_cas_layers,
+    plot_cas_profile,
+    plot_glyphs,
+)
 from .comparison import (
     plot_horizon_metrics,
     plot_model_comparison,
@@ -98,4 +106,10 @@ __all__ = [
     "plot_polar_pr_curve",
     "plot_polar_roc",
     "plot_regression_performance",
+    "plot_anomaly_severity",
+    "plot_anomaly_profile",
+    "plot_anomaly_glyphs",
+    "plot_cas_profile",
+    "plot_glyphs",
+    "plot_cas_layers",
 ]

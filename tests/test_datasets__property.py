@@ -1,4 +1,5 @@
 import shutil
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -59,17 +60,39 @@ def test_remove_data_deletes_dir(tmp_path):
 
 def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
     cache_dir = tmp_path / "cache"
-    filename = "sample.txt"
-    pkg_file = tmp_path / "pkg" / filename
-    _touch(pkg_file, b"pkgdata")
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
-    # Mock importlib.resources APIs used by the module
-    monkeypatch.setattr(
-        prop.resources, "is_resource", lambda mod, name: name == filename
-    )
-    monkeypatch.setattr(
-        prop.resources, "path", lambda mod, name: _PathCtx(pkg_file)
-    )
+    filename = "sample.txt"
+    pkg_dir = tmp_path / "pkg"
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+    pkg_file = pkg_dir / filename
+    pkg_file.write_bytes(b"pkgdata")
+
+    # --- Fake Traversable objects for the modern resources API ---
+    class _Candidate:
+        def __init__(self, path: Path):
+            self._path = path
+
+        def is_file(self):
+            return True  # signal that the resource exists
+
+    class _Root:
+        def __init__(self, base: Path):
+            self._base = base
+
+        def joinpath(self, name: str):
+            assert name == filename
+            return _Candidate(self._base / name)
+
+    # files(<pkg>) -> our fake root
+    monkeypatch.setattr(prop.resources, "files", lambda pkg: _Root(pkg_dir))
+
+    # as_file(candidate) -> yield the real path to pkg_file
+    @contextmanager
+    def _as_file(traversable):
+        yield pkg_file
+
+    monkeypatch.setattr(prop.resources, "as_file", _as_file)
 
     # Ensure downloader is never called in this path
     monkeypatch.setattr(
@@ -86,8 +109,8 @@ def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
     )
     assert out is not None
     out_path = Path(out)
-    assert out_path.parent == cache_dir
-    assert out_path.read_bytes() == b"pkgdata"
+    assert out_path.parent == cache_dir  # copied into cache
+    assert out_path.read_bytes() == b"pkgdata"  # content preserved
 
 
 def test_download_uses_cache_if_already_present(tmp_path, monkeypatch):
@@ -286,24 +309,45 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
     tmp_path, monkeypatch
 ):
     cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
     filename = "copyfail.txt"
-    pkg_file = tmp_path / "pkg2" / filename
-    _touch(pkg_file, b"pkg2")
+    pkg_dir = tmp_path / "pkg2"
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+    pkg_file = pkg_dir / filename
+    pkg_file.write_bytes(b"pkg2")
 
-    # Mock resource present
-    monkeypatch.setattr(prop.resources, "is_resource", lambda mod, name: True)
-    monkeypatch.setattr(
-        prop.resources, "path", lambda mod, name: _PathCtx(pkg_file)
-    )
+    # --- Fake Traversable (modern API) ---
+    class _Candidate:
+        def __init__(self, path: Path):
+            self._path = path
 
-    # Force copyfile to fail to hit the warning branch
+        def is_file(self):
+            return True
+
+    class _Root:
+        def __init__(self, base: Path):
+            self._base = base
+
+        def joinpath(self, name: str):
+            assert name == filename
+            return _Candidate(self._base / name)
+
+    monkeypatch.setattr(prop.resources, "files", lambda pkg: _Root(pkg_dir))
+
+    @contextmanager
+    def _as_file(traversable):
+        yield pkg_file
+
+    monkeypatch.setattr(prop.resources, "as_file", _as_file)
+
+    # Force copyfile to fail -> should warn, then fall back
     def bad_copy(src, dst):
         raise OSError("nope")
 
     monkeypatch.setattr(shutil, "copyfile", bad_copy)
 
-    # Wrap the function call to catch the expected UserWarning
-    with pytest.warns(UserWarning, match="Could not copy dataset"):
+    with pytest.warns(UserWarning, match=r"Could not copy dataset"):
         out = prop.download_file_if(
             filename,
             data_home=str(cache_dir),
@@ -311,6 +355,7 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
             verbose=False,
         )
 
-    # Function returns cache path if exists, else package path.
-    # Here cache doesn't exist, so it should return package or cache per code.
-    assert out in {str(cache_dir / filename), str(pkg_file)}
+    # Since copy failed and cache file was never created, function should
+    # return the package file path (fallback). If your implementation instead
+    # prefers cache when it exists, adjust this assertion accordingly.
+    assert out == str(pkg_file) or out == str(cache_dir / filename)

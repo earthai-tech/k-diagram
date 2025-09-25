@@ -1,47 +1,12 @@
-# environment.yml (for k-diagram)
-
+# environment.yml 
 name: k-diagram-dev
-
 channels:
   - conda-forge
-  - defaults
-
 dependencies:
-  # Core Python
   - python>=3.9
-
-  # Runtime dependencies (from pyproject [project].dependencies)
-  - numpydoc>=1.6
-  - numpy>=1.22
-  - pandas
-  - scipy
-  - matplotlib
-  - seaborn
-  - scikit-learn
-
-  # Testing / coverage dependencies
-  - pytest>=8.0
-  - pytest-xdist
-  - pytest-cov
-  - coverage
-
-  # Dev utilities (match pyproject dev extras)
-  - ruff>=0.4
-  - black>=24.0
-
-  # Optional extras (like tqdm)
-  - tqdm
-
-  # Docs toolchain (from docs requirements + pyproject dev)
-  # Pip-only packages (especially Sphinx extensions)
+  - pip
   - pip:
-    - pytest-mock
-    - sphinx>=7.0,<8.0
-    - furo
-    - sphinx-copybutton
-    - myst-parser
-    - sphinx-design
-    - sphinx-gallery
-    - sphinx-mathjax-offline
-    - sphinx-issues
-    - sphinx-prompt
+      - -e .[dev]        # or .[dev,docs] if you also build docs here
+
+
+

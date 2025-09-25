@@ -9,7 +9,7 @@ predictions is fundamental to evaluation (see :footcite:t:`Murphy1993What, Jolli
 While standard scatter plots are common, visualizing this relationship in a polar
 context can sometimes reveal different patterns or allow for comparing multiple
 prediction series against the true values in a compact format (see also the wider
-discussion on calibration and sharpness in probabilistic evaluation,
+discussion on calibration and sharpness in probabilistic evaluation
 :footcite:p:`Gneiting2007b`).
 
 `k-diagram` provides the ``plot_relationship`` function to explore these

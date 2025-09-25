@@ -97,7 +97,7 @@ observed ground truth values and the model's point predictions
 (typically the median forecast, Q50) for each sample or location.
 It's a fundamental diagnostic for assessing basic model accuracy and
 identifying systematic biases (see general discussion of “good” forecasts
-and verification practice, :footcite:p:`Murphy1993What, Jolliffe2012`)
+and verification practice :footcite:p:`Murphy1993What, Jolliffe2012`)
 
 **Mathematical Concept:**
 For each data point :math:`i`, we have an actual value :math:`y_i` and a
@@ -1058,9 +1058,9 @@ horizons**. It creates a polar *bar* chart to show how the *average*
 prediction uncertainty (specifically, the mean interval width
 :math:`\mathbb{E}[Q_{up} - Q_{low}]`) changes as the forecast lead time
 increases—useful for diagnosing lead-time skill decay and concept/model
-aging effects (see lead-time verification practice and tooling,
-:footcite:p:`Brady2021`; general verification principles, :footcite:p:`Jolliffe2012`;
-spatiotemporal forecasters where horizon behavior matters,
+aging effects (see lead-time verification practice and tooling
+:footcite:p:`Brady2021`; general verification principles :footcite:p:`Jolliffe2012`;
+spatiotemporal forecasters where horizon behavior matters
 :footcite:p:`Hong2025`). It helps diagnose *concept drift* or *model aging* 
 effects related to uncertainty.
 
@@ -1999,7 +1999,7 @@ Visualizing Vector Fields (:func:`~kdiagram.plot.uncertainty.plot_polar_quiver`)
 **Purpose:**
 This function produces a **polar quiver plot** to visualize vector data
 (magnitude + direction)—handy for forecast revisions, error vectors, or
-physical flows within verification workflows (see tooling context,
+physical flows within verification workflows (see tooling context
 :footcite:p:`Brady2021`) and rendered with Matplotlib primitives
 :footcite:p:`Hunter:2007`. It complements scalar uncertainty views by
 showing directional structure in model dynamics :footcite:p:`kouadiob2025`.

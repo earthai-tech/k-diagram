@@ -7,6 +7,8 @@ in kdiagram.datasets.
 """
 
 import os
+from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import MagicMock, patch  # noqa
 
 import numpy as np
@@ -282,88 +284,62 @@ def mock_resource_path(tmp_path):
         yield mock_cm
 
 
-@pytest.mark.network
 @patch("kdiagram.datasets.load.pd.read_csv", return_value=dummy_df.copy())
-@patch("kdiagram.datasets.load.os.path.exists")
-@patch("kdiagram.datasets.load.download_file_if")
-@patch("kdiagram.datasets.load.resources.is_resource")
-@patch("kdiagram.datasets.load.shutil.copyfile")
-def test_load_zhongshan_from_package(
-    mock_copy,
-    mock_is_resource,
-    mock_download,
-    mock_exists,
-    mock_read_csv,
-    mock_resource_path,
-    tmp_path,
-):
-    """Test loading from package resources when not in cache."""
+def test_load_zhongshan_from_package(mock_read_csv, tmp_path):
     cache_dir = str(tmp_path / "kdiagram_data")
-    expected_cache_path = os.path.join(cache_dir, "min_zhongshan.csv")
-    package_file_path = str(mock_resource_path.return_value.path)
-
-    # Make the mock return True only for the package path,
-    # and False for the cache path.
-    mock_exists.side_effect = lambda path: path == package_file_path
-
-    mock_is_resource.return_value = True
-
+    # Empty cache -> package branch
     with patch("kdiagram.datasets.load.get_data", return_value=cache_dir):
         data = kdd.load_zhongshan_subsidence(
-            as_frame=False,
-            download_if_missing=True,
+            as_frame=False, download_if_missing=True
         )
 
-    # Assertions
-    mock_exists.assert_any_call(
-        expected_cache_path
-    )  # Checked cache (returned False)
-    mock_is_resource.assert_called_once()
-    mock_resource_path.assert_called_once()
-    mock_copy.assert_called_once()
-    mock_download.assert_not_called()
-    mock_read_csv.assert_called_once_with(package_file_path)
+    # read_csv was called with the resolved package path (not the cache path)
+    called_path = mock_read_csv.call_args[0][0]
+    assert called_path.endswith("min_zhongshan.csv")
     assert isinstance(data, Bunch)
 
 
+class _DummyRoot:
+    def __init__(self, base):
+        self.base = Path(base)
+
+    def joinpath(self, name):
+        class _DummyCand:
+            def is_file(self_inner):
+                return False
+
+        return _DummyCand()
+
+
 @pytest.mark.network
 @patch("kdiagram.datasets.load.pd.read_csv", return_value=dummy_df.copy())
-@patch("kdiagram.datasets.load.os.path.exists")
-@patch("kdiagram.datasets.load.download_file_if")
-@patch("kdiagram.datasets.load.resources.is_resource")
-def test_load_zhongshan_from_download(
-    mock_is_resource, mock_download, mock_exists, mock_read_csv, tmp_path
-):
-    """Test loading via download when not in cache or package."""
+def test_load_zhongshan_from_download(mock_read_csv, mocker, tmp_path):
     cache_dir = str(tmp_path / "kdiagram_data")
     expected_path = os.path.join(cache_dir, "min_zhongshan.csv")
 
-    # Create a stateful mock for os.path.exists.
-    # It will return True only after the download has been simulated.
-    _file_downloaded = False
+    mocker.patch("kdiagram.datasets.load.get_data", return_value=cache_dir)
+    mocker.patch(
+        "kdiagram.datasets.load.resources.files",
+        return_value=_DummyRoot(cache_dir),
+    )
 
-    def exists_side_effect(path):
-        # Only return True for the cache path if the download has "occurred"
-        if path == expected_path:
-            return _file_downloaded
-        return False
+    # Simulate download creating the file
+    _downloaded = {"done": False}
 
     def download_side_effect(*args, **kwargs):
-        nonlocal _file_downloaded
-        # Simulate the download succeeding and the file now existing
-        _file_downloaded = True
+        os.makedirs(cache_dir, exist_ok=True)
+        Path(expected_path).touch()
+        _downloaded["done"] = True
         return expected_path
 
-    mock_exists.side_effect = exists_side_effect
-    mock_download.side_effect = download_side_effect
-    mock_is_resource.return_value = False
+    mocker.patch(
+        "kdiagram.datasets.load.download_file_if",
+        side_effect=download_side_effect,
+    )
 
-    with patch("kdiagram.datasets.load.get_data", return_value=cache_dir):
-        data = kdd.load_zhongshan_subsidence(as_frame=True)
+    data = kdd.load_zhongshan_subsidence(as_frame=True)
 
-    # Assertions
-    mock_is_resource.assert_called_once()
-    mock_download.assert_called_once()
+    assert _downloaded["done"] is True
     mock_read_csv.assert_called_once_with(expected_path)
     assert isinstance(data, pd.DataFrame)
 

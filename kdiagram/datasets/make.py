@@ -388,7 +388,7 @@ Examples
 True
 
 References 
-------------
+----------
 
 .. footbibliography::
     
@@ -1393,12 +1393,16 @@ def make_multi_model_quantile_data(
     else:
         rng = np.random.default_rng()
 
-    if not width_range[0] <= width_range[1] or width_range[0] < 0:
-        raise ValueError(
-            "width_range must be (min, max) with min >= 0 and min <= max."
-        )
-    if not bias_range[0] <= bias_range[1]:
-        raise ValueError("bias_range must be (min, max) with min <= max.")
+    _validate_range_or_list(
+        width_range, "width_range", require_nonneg_min=True
+    )
+    _validate_range_or_list(
+        bias_range, "bias_range", require_nonneg_min=False
+    )
+
+    # now expand to per-model lists
+    bias_ranges = _expand_param(bias_range, n_models, "bias_range")
+    width_ranges = _expand_param(width_range, n_models, "width_range")
 
     bias_ranges = _expand_param(bias_range, n_models, "bias_range")
     width_ranges = _expand_param(width_range, n_models, "width_range")
@@ -2742,3 +2746,32 @@ def _safe_name(s: str) -> str:
     # turn any string into a simple identifier for column names
     s = re.sub(r"\W+", "_", str(s).strip())
     return s.strip("_") or "model"
+
+
+def _validate_range_or_list(val, name, require_nonneg_min: bool):
+    """
+    Accept (min, max) or a list of (min, max).
+    Only check ordering and (optionally) non-negativity of min.
+    """
+
+    def _check(lo, hi):
+        if require_nonneg_min and lo < 0:
+            raise ValueError(
+                f"{name} must be (min, max) with min >= 0 and min <= max."
+            )
+        if lo > hi:
+            raise ValueError(f"{name} must be (min, max) with min <= max.")
+
+    if isinstance(val, list):
+        if len(val) == 0:
+            raise ValueError(f"{name} list must be non-empty.")
+        for pair in val:
+            if not (isinstance(pair, (list, tuple)) and len(pair) == 2):
+                raise TypeError(
+                    f"Each element of `{name}` must be a (min, max) tuple."
+                )
+            lo, hi = float(pair[0]), float(pair[1])
+            _check(lo, hi)
+    else:
+        lo, hi = float(val[0]), float(val[1])  # tuple-like
+        _check(lo, hi)

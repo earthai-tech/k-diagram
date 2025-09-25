@@ -85,27 +85,49 @@ def test_download_from_package_resources_copies_to_cache(
 ):
     """
     Simulate a file shipped inside the package resources and ensure it is
-    copied into the user cache dir and returned.
+    copied into the user cache dir and returned. (Modern resources API)
     """
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()
 
-    # Create a "package" file somewhere, we will yield its path via fake resources.path
+    # Create a "package" file on disk
     pkg_dir = tmp_path / "pkg"
     pkg_dir.mkdir()
     pkg_file = _write_temp_file(pkg_dir, "data.txt", b"FROM_PKG")
 
-    # Monkeypatch importlib.resources API used by the module
-    monkeypatch.setattr(
-        prop_mod.resources, "is_resource", lambda pkg, nm: nm == "data.txt"
-    )
-    monkeypatch.setattr(
-        prop_mod.resources,
-        "path",
-        lambda pkg, nm: _fake_resources_path(pkg, nm, pkg_file),
-    )
+    # ---- Mock the modern importlib.resources API used by the code ----
+    # files(<pkg>) -> traversable root with .joinpath('data.txt') -> candidate
+    class _Candidate:
+        def __init__(self, path):
+            self._path = pkg_file
 
-    # Ensure module constants are reasonable
+        def is_file(self):
+            return True  # make the code think it exists
+
+    class _Root:
+        def __init__(self, cand):
+            self._cand = cand
+
+        def joinpath(self, name):
+            assert name == "data.txt"
+            return self._cand
+
+    cand = _Candidate(pkg_file)
+    root = _Root(cand)
+
+    # resources.files(...) should return our fake root
+    monkeypatch.setattr(prop_mod.resources, "files", lambda pkg: root)
+
+    # resources.as_file(candidate) should yield the real filesystem path to pkg_file
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _as_file(_traversable):
+        yield pkg_file
+
+    monkeypatch.setattr(prop_mod.resources, "as_file", _as_file)
+
+    # Ensure module constants are in place
     monkeypatch.setattr(prop_mod, "KD_DMODULE", "kdiagram.datasets.data")
     monkeypatch.setattr(
         prop_mod, "KD_REMOTE_DATA_URL", "https://example.com/datasets/"
@@ -117,11 +139,13 @@ def test_download_from_package_resources_copies_to_cache(
         download_if_missing=True,
         verbose=False,
     )
+
     assert out is not None
     assert os.path.isfile(out)
-    # copied into cache
+    # Copied into cache
     assert os.path.dirname(out) == str(cache_dir)
-    assert open(out, "rb").read() == b"FROM_PKG"
+    with open(out, "rb") as fh:
+        assert fh.read() == b"FROM_PKG"
 
 
 def test_download_when_missing_calls_downloader(monkeypatch, tmp_path):

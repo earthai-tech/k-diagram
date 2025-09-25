@@ -28,17 +28,15 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix"
 ]
+
 dependencies = [
     "numpy>=1.22",
-    "pandas",
-    "scipy",
-    "matplotlib",
-    "seaborn",
-    "scikit-learn"
+    "pandas>=1.0",
+    "scipy>=1.5",
+    "matplotlib>=3.3",
+    "seaborn>=0.11",
+    "scikit-learn>=0.24",
 ]
-
-[tool.setuptools_scm]
-write_to = "kdiagram/_scm_version.py"
 
 [project.urls]
 "Home page" = "https://k-diagram.readthedocs.io"
@@ -53,27 +51,33 @@ k-diagram = "kdiagram.cli:main"
 kdiagram = "kdiagram.cli:main"   # optional alias
 
 [project.optional-dependencies]
+
+docs = [
+  "sphinx>=7.0,<8.0",
+  "furo",
+  "sphinx-copybutton",
+  "myst-parser",
+  "sphinx-design",
+  "sphinx-gallery",
+  "sphinxcontrib-jsmath",
+  "sphinx-mathjax-offline",
+  "sphinx-issues",
+  "sphinx-prompt",
+  "sphinxcontrib-bibtex",
+  "numpydoc>=1.6",
+]
+
 dev = [
-    "pytest>=8.0",
-    "pytest-cov>=4.1",
-    "pytest-xdist",
-    "black>=24.0",
-    "ruff>=0.4",
-    "coverage[toml]>=7.0",
-    "tqdm",
-    # for docs
-    "sphinx>=7.0",
-    "furo",
-    "sphinx-copybutton",
-    "myst-parser",
-    "sphinx-design",
-    "sphinx-gallery",
-    "sphinxcontrib-jsmath",
-    "sphinx-mathjax-offline",
-    "sphinx-issues",
-    "sphinx-prompt",
-    "sphinxcontrib-bibtex",
-    "numpydoc>=1.6"
+  "pytest>=8.0",
+  "pytest-cov>=4.1",
+  "pytest-xdist",
+  "pytest-mock",
+  "black>=24.0",
+  "ruff>=0.4",
+  "coverage[toml]>=7.0",
+  "tqdm",
+  "statsmodels",
+  "requests"
 ]
 
 [tool.setuptools.packages.find]
@@ -103,12 +107,15 @@ omit = [
     
     # Difficult to unit test reliably 
     "kdiagram/cli/_utils.py",          # Tested via integration, not unit coverage
+    "kdiagram/cli/plot_context_corr.py",
+    "kdiagram/cli/plot_context_err.py", 
     "kdiagram/core/_io_utils.py",
     "kdiagram/core/io.py",
     "kdiagram/utils/plot.py",           # Skip plot helpers
     "kdiagram/compat/*",                # Handles external library version differences
     "kdiagram/utils/deps.py",           # Handles optional dependencies
     "kdiagram/utils/_deps.py",          # Handles optional dependencies
+    "examples/cas/scripts/*.py"         # skip CAS examples for now
 ]
 
 [tool.coverage.report]
@@ -124,6 +131,7 @@ omit = [
   "kdiagram/compat/**",
   "kdiagram/utils/deps.py",
   "kdiagram/utils/_deps.py",
+  "examples/cas/scripts/*.py"
 ]
 exclude_lines = [
     "pragma: no cover",
@@ -138,11 +146,11 @@ target-version = ["py39", "py310", "py311", "py312", "py313"]
 [tool.ruff]
 line-length = 78
 target-version = "py39"
-exclude = ["docs", "kdiagram/_scm_version.py"]
+exclude = ["docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["F401", "E501"]
+ignore = ["F401", "E501", "E741"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["kdiagram"]

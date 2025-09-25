@@ -1711,7 +1711,7 @@ numpy.mean : Compute the arithmetic mean.
 matplotlib.pyplot.scatter : Create scatter plots.
 
 Notes
--------
+-----
 
 Interval-width consistency is assessed from paired lower/upper quantiles
 for multiple time steps. For each location and time step, the width is
@@ -2868,7 +2868,7 @@ numpy.linspace : Generate evenly spaced numbers.
 matplotlib.pyplot.plot : Plot lines.
 
 Notes
--------
+-----
 
 - Interval widths (:math:`W = Q_{upper} - Q_{lower}`) are calculated
   for each location and time step.
@@ -3165,7 +3165,7 @@ def plot_actual_vs_predicted(
     matplotlib.pyplot.scatter : Function for scatter plots.
 
     Notes
-    --------
+    -----
 
     - Rows with NaN values in `actual_col` or `pred_col` (or `theta_col`
       if specified, though currently unused for position) are dropped.
@@ -3859,7 +3859,7 @@ matplotlib.pyplot.scatter : Function used for plotting points.
 matplotlib.colors.Normalize : Used for scaling color values.
 
 Notes
-------
+-----
 
 - Rows with NaN values in any of the required columns (`q_cols`,
   `theta_col` if used, `z_col` if used) are dropped before plotting.
@@ -4713,7 +4713,7 @@ def plot_temporal_uncertainty(
     matplotlib.pyplot.scatter : Underlying function for plotting points.
 
     Notes
-    ------
+    -----
 
     - Normalization :math:`\aleph` (`normalize=True`) is applied independently to each
       column in `q_cols`, scaling each series to its own [0, 1] range.

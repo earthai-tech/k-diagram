@@ -180,9 +180,9 @@ def test_plot_feature_fingerprint_normalize_zeros(sample_data_fingerprint):
         # Assuming lines are plotted in order: Layer A outline, Layer B, Layer C
         # Layer B is lines[1]
         r_data_layer_b = lines[1].get_ydata()
-        assert np.allclose(r_data_layer_b, 0), (
-            "Normalized zero row should be zero"
-        )
+        assert np.allclose(
+            r_data_layer_b, 0
+        ), "Normalized zero row should be zero"
 
     except Exception as e:
         pytest.fail(

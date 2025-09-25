@@ -970,7 +970,7 @@ def detect_quantiles_in(
         no quantiles detected.
 
     Notes
-    --------
+    -----
     The detection adjustment can be formulated as :
 
     .. math::
@@ -1211,7 +1211,7 @@ def build_q_column_names(
         quantile naming pattern.
 
     Notes
-    -------
+    -----
     Constructs column names using the pattern:
 
     .. math::

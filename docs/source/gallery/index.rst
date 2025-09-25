@@ -23,6 +23,7 @@ Browse through the sections below to see `k-diagram` in action.
    comparison
    relationship
    feature_based
+   anomaly
    evaluation
    taylor_diagram
    context

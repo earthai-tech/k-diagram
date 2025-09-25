@@ -226,10 +226,17 @@ def get_forecast_arrays(
 
     # optional fill
     if fillna is not None:
-        if fillna in ("ffill", "bfill"):
-            sub = sub.fillna(method=str(fillna))
+        if fillna == "ffill":
+            sub = sub.ffill()
+        elif fillna == "bfill":
+            sub = sub.bfill()
         else:
             sub = sub.fillna(fillna)
+
+        # if fillna in ("ffill", "bfill"):
+        #     sub = sub.fillna(method=str(fillna))
+        # else:
+        #     sub = sub.fillna(fillna)
 
     # drop NA per policy
     if drop_na and na_policy != "none":
