@@ -162,20 +162,26 @@ can build the documentation locally with `Sphinx
 **1) Install documentation dependencies**
 
 If you followed the editable :ref:`development_install_source`
-with the ``[dev]`` extra, you’re all set. Otherwise, 
+with the ``[docs]`` extra, you’re all set. Otherwise, 
 install the doc tools:
 
 .. code-block:: bash
 
-   pip install -e .[dev]
+   pip install -e .[docs]
 
-Or (if you prefer to keep testing/linting tools out of your
-environment) use the docs requirements file:
+Or (if you prefer a requirements file) use the docs requirements file:
 
 .. code-block:: bash
-
+   
+   # If this file lives at repo root:
    pip install -r docs/requirements.txt
-
+   
+   # where docs/requirements.txt contains:
+   #   -e .[docs]
+   #
+   # If requirements.txt lives inside docs/ and you run from docs/:
+   #   -e ..[docs]
+   
 **2) Build the HTML site**
 
 Using the Makefile (created by ``sphinx-quickstart``):

@@ -59,7 +59,7 @@ on (NumPy, Pandas, SciPy, Matplotlib, Seaborn, scikit-learn). Python
 
 ### Development install (editable)
 
-If you plan to contribute or run tests and docs locally:
+If you plan to contribute or run tests locally:
 
 ```bash
 git clone https://github.com/earthai-tech/k-diagram.git
@@ -67,7 +67,7 @@ cd k-diagram
 pip install -e .[dev]
 ```
 
-The `[dev]` extra installs pytest, coverage, Sphinx, Ruff, Black, and
+The `[dev]` extra installs pytest, coverage, Sphinx, Ruff (Black), and
 other developer tools defined in `pyproject.toml`.
 
 ### Reproducible dev environment via conda
