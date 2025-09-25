@@ -1,8 +1,10 @@
 # Author: LKouadio <etanoyau@gmail.com>
 # License: Apache License 2.0
 
+from __future__ import annotations
+
 import warnings
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -44,7 +46,7 @@ def plot_anomaly_severity(
     q_up_col: str,
     *,
     window_size: int = 21,
-    title: Optional[str] = None,
+    title: str | None = None,
     figsize: tuple[float, float] = (9.0, 9.0),
     cmap: str = "plasma",
     s: int = 40,
@@ -54,10 +56,10 @@ def plot_anomaly_severity(
     mask_radius: bool = False,
     show_grid: bool = True,
     grid_props: dict = None,
-    ax: Optional[Axes] = None,
-    savefig: Optional[str] = None,
+    ax: Axes | None = None,
+    savefig: str | None = None,
     **kwargs: Any,
-) -> Optional[Axes]:
+) -> Axes | None:
     required_cols = [actual_col, q_low_col, q_up_col]
     exist_features(df, features=required_cols)
 
@@ -298,7 +300,7 @@ def plot_anomaly_profile(
     *,
     window_size: int = 21,
     theta_bins: int = 72,
-    title: Optional[str] = None,
+    title: str | None = None,
     figsize: tuple[float, float] = (9.0, 9.0),
     cmap: str = "plasma",
     colors: list[str] = None,
@@ -306,18 +308,18 @@ def plot_anomaly_profile(
     acov: str = "default",
     show_grid: bool = True,
     grid_props: dict = None,
-    ax: Optional[Axes] = None,
-    savefig: Optional[str] = None,
+    ax: Axes | None = None,
+    savefig: str | None = None,
     jitter: float = 0.85,
-    max_flares_per_bin: Optional[int] = None,
+    max_flares_per_bin: int | None = None,
     flare_scale: str = "sqrt",
-    flare_clip: Optional[float] = None,
+    flare_clip: float | None = None,
     flare_linewidth: float = 1.4,
     ring_height: float = 0.06,
     ring_alpha: float = 0.95,
     legend_anchor: tuple[float, float] = (1.35, 1.04),
     **kwargs: Any,
-) -> Optional[Axes]:
+) -> Axes | None:
     # ---- data & metric
     req = [actual_col, q_low_col, q_up_col]
     data = df[req].dropna().copy()
@@ -703,7 +705,7 @@ def plot_anomaly_glyphs(
     q_up_col: str,
     *,
     window_size: int = 21,
-    title: Optional[str] = None,
+    title: str | None = None,
     figsize: tuple[float, float] = (9.0, 9.0),
     cmap: str = "inferno",
     s: int = 70,
@@ -713,10 +715,10 @@ def plot_anomaly_glyphs(
     mask_radius: bool = False,
     show_grid: bool = True,
     grid_props: dict = None,
-    ax: Optional[Axes] = None,
-    savefig: Optional[str] = None,
+    ax: Axes | None = None,
+    savefig: str | None = None,
     **kwargs: Any,
-) -> Optional[Axes]:
+) -> Axes | None:
     required_cols = [actual_col, q_low_col, q_up_col]
     data = df[required_cols].dropna().copy()
     if data.empty:
@@ -946,15 +948,15 @@ def plot_cas_profile(
     q_up_col: str,
     *,
     window_size: int = 21,
-    title: Optional[str] = None,
+    title: str | None = None,
     figsize: tuple[float, float] = (12.0, 6.0),
     cmap: str = "plasma",
     s: int = 60,
     alpha: float = 0.85,
-    ax: Optional[Axes] = None,
-    savefig: Optional[str] = None,
+    ax: Axes | None = None,
+    savefig: str | None = None,
     **kwargs: Any,
-) -> Optional[Axes]:
+) -> Axes | None:
     required_cols = [actual_col, q_low_col, q_up_col]
     data = df[required_cols].dropna().copy()
     if data.empty:
@@ -1278,7 +1280,7 @@ def plot_glyphs(
     cmap: str = "inferno",
     s: int = 70,
     alpha: float = 0.85,
-    acov: "Acov" = "default",
+    acov: Acov = "default",
     mask_angle: bool = True,
     mask_radius: bool = False,
     show_grid: bool = True,
@@ -1289,7 +1291,7 @@ def plot_glyphs(
     vmax: float | None = None,
     zero_at: Literal["N", "E", "S", "W"] = "N",
     clockwise: bool = True,
-    ax: "Axes | None" = None,
+    ax: Axes | None = None,
     savefig: str | None = None,
     **kwargs,
 ) -> Axes | None:
@@ -1687,7 +1689,7 @@ def plot_cas_layers(
     show_grid: bool = True,
     grid_props: dict = None,
     lw: float = 1.4,
-    ax: "Axes | None" = None,
+    ax: Axes | None = None,
     savefig: str | None = None,
     **kwargs,
 ) -> Axes | tuple[Axes, Axes] | None:
