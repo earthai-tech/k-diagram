@@ -82,7 +82,6 @@ def test_fancier_downloader_fallback_without_tqdm(monkeypatch, tmp_path):
     assert out == "returned-path"
     assert called["args"] == ("http://x", "f.bin", str(tmp_path))
 
-
 def test_fancier_downloader_success_with_progress(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     data = b"abcdef" * 10  # 60 bytes
