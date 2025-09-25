@@ -76,6 +76,7 @@ dev = [
   "ruff>=0.4",
   "coverage[toml]>=7.0",
   "tqdm",
+  "statsmodels",
 ]
 
 [tool.setuptools.packages.find]
