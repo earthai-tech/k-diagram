@@ -1,6 +1,7 @@
 import shutil
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
+
 import pytest
 
 from kdiagram.datasets import _property as prop
@@ -56,6 +57,7 @@ def test_remove_data_deletes_dir(tmp_path):
 
 # ---------- download_file_if : package resource path ----------
 
+
 def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -68,11 +70,16 @@ def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
 
     # --- Fake Traversable objects for the modern resources API ---
     class _Candidate:
-        def __init__(self, path: Path): self._path = path
-        def is_file(self): return True  # signal that the resource exists
+        def __init__(self, path: Path):
+            self._path = path
+
+        def is_file(self):
+            return True  # signal that the resource exists
 
     class _Root:
-        def __init__(self, base: Path): self._base = base
+        def __init__(self, base: Path):
+            self._base = base
+
         def joinpath(self, name: str):
             assert name == filename
             return _Candidate(self._base / name)
@@ -84,6 +91,7 @@ def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
     @contextmanager
     def _as_file(traversable):
         yield pkg_file
+
     monkeypatch.setattr(prop.resources, "as_file", _as_file)
 
     # Ensure downloader is never called in this path
@@ -101,8 +109,8 @@ def test_download_from_package_copies_to_cache(tmp_path, monkeypatch):
     )
     assert out is not None
     out_path = Path(out)
-    assert out_path.parent == cache_dir              # copied into cache
-    assert out_path.read_bytes() == b"pkgdata"       # content preserved
+    assert out_path.parent == cache_dir  # copied into cache
+    assert out_path.read_bytes() == b"pkgdata"  # content preserved
 
 
 def test_download_uses_cache_if_already_present(tmp_path, monkeypatch):
@@ -235,6 +243,7 @@ def test_download_if_missing_disabled_returns_none(tmp_path, monkeypatch):
 
 # ---------- error handling & metadata validation ----------
 
+
 def test_invalid_error_value_raises(tmp_path):
     with pytest.raises(ValueError):
         prop.download_file_if("x.txt", error="nope", verbose=False)
@@ -297,8 +306,8 @@ def test_download_returns_none_when_downloader_silent_failure(
 
 
 def test_package_copy_failure_falls_back_to_package_path_or_cache(
-        tmp_path, monkeypatch
-    ):
+    tmp_path, monkeypatch
+):
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -310,11 +319,16 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
 
     # --- Fake Traversable (modern API) ---
     class _Candidate:
-        def __init__(self, path: Path): self._path = path
-        def is_file(self): return True
+        def __init__(self, path: Path):
+            self._path = path
+
+        def is_file(self):
+            return True
 
     class _Root:
-        def __init__(self, base: Path): self._base = base
+        def __init__(self, base: Path):
+            self._base = base
+
         def joinpath(self, name: str):
             assert name == filename
             return _Candidate(self._base / name)
@@ -324,11 +338,13 @@ def test_package_copy_failure_falls_back_to_package_path_or_cache(
     @contextmanager
     def _as_file(traversable):
         yield pkg_file
+
     monkeypatch.setattr(prop.resources, "as_file", _as_file)
 
     # Force copyfile to fail -> should warn, then fall back
     def bad_copy(src, dst):
         raise OSError("nope")
+
     monkeypatch.setattr(shutil, "copyfile", bad_copy)
 
     with pytest.warns(UserWarning, match=r"Could not copy dataset"):

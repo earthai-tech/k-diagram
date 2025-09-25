@@ -30,7 +30,7 @@ import os
 import shutil
 import warnings
 from collections import namedtuple
-from importlib import resources  
+from importlib import resources
 from urllib.parse import urljoin
 
 try:
@@ -40,11 +40,9 @@ except ImportError:
         "Could not import IO utilities from kdiagram.utils.io", stacklevel=2
     )
 
-KD_DMODULE = "kdiagram.datasets.data"  
-KD_DESCR = (
-    "kdiagram.datasets.descr"  
-)
-KD_REMOTE_DATA_URL = (  
+KD_DMODULE = "kdiagram.datasets.data"
+KD_DESCR = "kdiagram.datasets.descr"
+KD_REMOTE_DATA_URL = (
     "https://raw.githubusercontent.com/earthai-tech/k-diagram/main/"
     "kdiagram/datasets/data/"
 )
@@ -373,7 +371,6 @@ def download_file_if(
                 f"'{meta.data_module}/{filename}': {e}",
                 stacklevel=2,
             )
-
 
     # If found in package, copy to cache if not already there (or if download failed)
     if package_filepath and not os.path.exists(cache_filepath):

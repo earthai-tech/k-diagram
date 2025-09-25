@@ -7,13 +7,13 @@ in kdiagram.datasets.
 """
 
 import os
+from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import MagicMock, patch  # noqa
 
 import numpy as np
 import pandas as pd
 import pytest
-from contextlib import contextmanager
-from pathlib import Path
 
 import kdiagram.datasets as kdd
 from kdiagram.api.bunch import Bunch
@@ -289,7 +289,9 @@ def test_load_zhongshan_from_package(mock_read_csv, tmp_path):
     cache_dir = str(tmp_path / "kdiagram_data")
     # Empty cache -> package branch
     with patch("kdiagram.datasets.load.get_data", return_value=cache_dir):
-        data = kdd.load_zhongshan_subsidence(as_frame=False, download_if_missing=True)
+        data = kdd.load_zhongshan_subsidence(
+            as_frame=False, download_if_missing=True
+        )
 
     # read_csv was called with the resolved package path (not the cache path)
     called_path = mock_read_csv.call_args[0][0]
@@ -298,12 +300,17 @@ def test_load_zhongshan_from_package(mock_read_csv, tmp_path):
 
 
 class _DummyRoot:
-    def __init__(self, base): self.base = Path(base)
+    def __init__(self, base):
+        self.base = Path(base)
+
     def joinpath(self, name):
         class _DummyCand:
-            def is_file(self_inner): return False
+            def is_file(self_inner):
+                return False
+
         return _DummyCand()
-    
+
+
 @pytest.mark.network
 @patch("kdiagram.datasets.load.pd.read_csv", return_value=dummy_df.copy())
 def test_load_zhongshan_from_download(mock_read_csv, mocker, tmp_path):
@@ -311,19 +318,24 @@ def test_load_zhongshan_from_download(mock_read_csv, mocker, tmp_path):
     expected_path = os.path.join(cache_dir, "min_zhongshan.csv")
 
     mocker.patch("kdiagram.datasets.load.get_data", return_value=cache_dir)
-    mocker.patch("kdiagram.datasets.load.resources.files",
-                 return_value=_DummyRoot(cache_dir))
+    mocker.patch(
+        "kdiagram.datasets.load.resources.files",
+        return_value=_DummyRoot(cache_dir),
+    )
 
     # Simulate download creating the file
     _downloaded = {"done": False}
+
     def download_side_effect(*args, **kwargs):
         os.makedirs(cache_dir, exist_ok=True)
         Path(expected_path).touch()
         _downloaded["done"] = True
         return expected_path
 
-    mocker.patch("kdiagram.datasets.load.download_file_if",
-                 side_effect=download_side_effect)
+    mocker.patch(
+        "kdiagram.datasets.load.download_file_if",
+        side_effect=download_side_effect,
+    )
 
     data = kdd.load_zhongshan_subsidence(as_frame=True)
 

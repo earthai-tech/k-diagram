@@ -1029,9 +1029,9 @@ def plot_taylor_diagram(
     reference = np.asarray(reference).flatten()
 
     # Check consistency of lengths
-    assert all(
-        pred.size == reference.size for pred in y_preds
-    ), "All predictions and the reference must be of the same length."
+    assert all(pred.size == reference.size for pred in y_preds), (
+        "All predictions and the reference must be of the same length."
+    )
 
     # Compute correlation and std dev for each prediction
     correlations = [np.corrcoef(pred, reference)[0, 1] for pred in y_preds]

@@ -17,7 +17,7 @@ def make_df(n=60, seed=0, with_nans=False):
         unit="h",
         origin=pd.Timestamp("2024-01-01"),
     )
-    
+
     y = 50 + np.linspace(0, 10, n) + 5 * np.sin(np.arange(n) * 2 * np.pi / 15)
     pred1 = y + rng.normal(0, 1.5, n)
     pred2 = 0.9 * y + 5 + rng.normal(0, 2.0, n)

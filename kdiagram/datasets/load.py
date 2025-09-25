@@ -119,9 +119,11 @@ def load_zhongshan_subsidence(
     if filepath_to_load is None:
         try:
             # New Traversable API
-            pkg_root = resources.files(package_module_path)   # Traversable root
-            candidate = pkg_root.joinpath(filename)           # Traversable file
-    
+            pkg_root = resources.files(
+                package_module_path
+            )  # Traversable root
+            candidate = pkg_root.joinpath(filename)  # Traversable file
+
             if candidate.is_file():
                 print(
                     "Loading dataset from installed"
@@ -130,16 +132,17 @@ def load_zhongshan_subsidence(
                 # Get a real filesystem path even if inside a wheel/zip
                 with resources.as_file(candidate) as rpath:
                     filepath_to_load = str(rpath)
-    
+
                     # Copy to cache for future use if not already there
                     if not os.path.exists(local_filepath):
                         try:
                             os.makedirs(
-                                os.path.dirname(local_filepath), 
-                                exist_ok=True
+                                os.path.dirname(local_filepath), exist_ok=True
                             )
                             shutil.copyfile(filepath_to_load, local_filepath)
-                            print(f"Copied dataset to cache: {local_filepath}")
+                            print(
+                                f"Copied dataset to cache: {local_filepath}"
+                            )
                         except Exception as copy_err:
                             warnings.warn(
                                 f"Could not copy dataset to cache: {copy_err}",
@@ -157,7 +160,6 @@ def load_zhongshan_subsidence(
                 f"Error accessing package resources: {res_err}",
                 stacklevel=2,
             )
-
 
     # Attempt download if still not found and allowed
     if filepath_to_load is None and download_if_missing:

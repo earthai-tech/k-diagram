@@ -1,16 +1,14 @@
-
+from importlib import resources
 
 import numpy as np
 import pandas as pd
 import pytest
-from importlib import resources
 
 from kdiagram.api.bunch import Bunch
 from kdiagram.datasets.load import (
     load_uncertainty_data,
     load_zhongshan_subsidence,
 )
-
 
 # @pytest.fixture
 # def mock_load_zhongshan_subsidence(mocker):
@@ -41,6 +39,7 @@ from kdiagram.datasets.load import (
 #             os.path.dirname(__file__), "kdiagram", "datasets", "data"
 #         ),
 #     )
+
 
 @pytest.fixture
 def mock_load_zhongshan_subsidence(mocker):
@@ -156,10 +155,11 @@ def test_load_uncertainty_data_invalid_parameters():
         # Invalid anomaly fraction (> 1)
         load_uncertainty_data(anomaly_frac=1.5, as_frame=True)
 
+
 @pytest.mark.network
 def test_load_zhongshan_subsidence_force_download(
-        mocker, mock_load_zhongshan_subsidence
-    ):
+    mocker, mock_load_zhongshan_subsidence
+):
     # Simulate a failed download attempt
     mocker.patch(
         "kdiagram.datasets.load.download_file_if",
@@ -172,7 +172,7 @@ def test_load_zhongshan_subsidence_force_download(
         side_effect=OSError("copy failed (simulated)"),
     )
 
-    # Now the loader should warn at least twice 
+    # Now the loader should warn at least twice
     # but still succeed by reading from package
     with pytest.warns(UserWarning) as record:
         result = load_zhongshan_subsidence(force_download=True, as_frame=True)
