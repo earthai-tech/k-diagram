@@ -114,7 +114,7 @@ omit = [
     "kdiagram/compat/*",                # Handles external library version differences
     "kdiagram/utils/deps.py",           # Handles optional dependencies
     "kdiagram/utils/_deps.py",          # Handles optional dependencies
-    "examples/cas/scripts/*.py"         # skip CAS examples for now: will add it in future release
+    "examples/cas/scripts/*.py"         # skip CAS examples only for paper reproducibility
 ]
 
 [tool.coverage.report]
