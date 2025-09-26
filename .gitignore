@@ -191,6 +191,6 @@ joss_reviews.md
 .ipynb_checkpoints/
 
 # remove the data and examples for now 
-data/ 
-examples/
+# data/ 
+# examples/
 docs/source/_autosummary/
