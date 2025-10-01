@@ -231,9 +231,28 @@ density_source : {'indicator', 'magnitude'}, default='indicator'
       (more sensitive to large single misses).
 
 kernel : {'box', 'triangular', 'epan', 'gaussian'}, default='box'
-    Smoothing kernel for :math:`d_t`. 'box' emphasizes run
-    length; smooth kernels emphasize local prevalence.
+    Smoothing kernel used to compute the local density :math:`d_t`.
+    The kernel's shape determines how neighboring points are weighted
+    when calculating the concentration of anomalies.
 
+    - 'box': A rectangular (or uniform) kernel that gives equal
+      weight to all points inside the window. This kernel is best
+      for emphasizing the raw **run length** of anomalies, as it
+      effectively counts misses within a fixed-size region.
+    - 'triangular': A simple linear kernel where the central point
+      receives the maximum weight, which then decreases linearly
+      to zero at the window's edges. It provides a smoother
+      density estimate than the 'box' kernel.
+    - 'epan': The Epanechnikov kernel, which assigns weights using
+      an inverted parabola. It is statistically efficient and gives
+      more weight to central points while smoothly tapering to zero.
+      It's a good choice for emphasizing the **local prevalence**
+      of anomalies near the center of a cluster.
+    - 'gaussian': A smooth kernel that assigns weights using a
+      Gaussian (bell curve) function. It provides the smoothest
+      density estimate, implying that an anomaly's influence
+      decays exponentially with distance from the center point.
+      
 lambda_ : float, default=1.0
     Cluster penalty weight :math:`\lambda`. Larger values
     increase the contribution of :math:`d_t`.
@@ -611,18 +630,21 @@ CAS Score (from DataFrame): 0.2222
 """
 
 
-def _rolling_kernel(a: np.ndarray, w: int, kernel: str) -> np.ndarray:
+def _rolling_kernel(
+    a: np.ndarray, w: int, kernel: str, 
+    eps: float=1e-12
+) -> np.ndarray:
     w = int(max(1, w))
     if kernel == "box":
         k = np.ones(w) / w
     elif kernel == "triangular":
         mid = (w - 1) / 2
         x = np.arange(w) - mid
-        k = (1 - np.abs(x) / (mid + 1e-12)).clip(0)
+        k = (1 - np.abs(x) / (mid + eps)).clip(0)
         k = k / k.sum()
     elif kernel == "epan":
         mid = (w - 1) / 2
-        x = (np.arange(w) - mid) / (mid + 1e-12)
+        x = (np.arange(w) - mid) / (mid + eps)
         k = (0.75 * (1 - x**2)).clip(0)
         k = k / k.sum()
     elif kernel == "gaussian":
@@ -706,7 +728,7 @@ def _cas_core(
 
     src = A if density_source == "indicator" else m
 
-    d = _rolling_kernel(src, window_size, kernel)
+    d = _rolling_kernel(src, window_size, kernel, eps=eps)
     d = np.clip(d, 0.0, 1.0)
 
     S = m * (1.0 + lambda_ * (d**gamma))
