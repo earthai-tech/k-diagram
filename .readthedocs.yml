@@ -1,7 +1,4 @@
-# .readthedocs.yml
-
 version: 2
-
 build:
   os: ubuntu-22.04
   tools:
@@ -11,9 +8,8 @@ python:
   install:
     - method: pip
       path: .
-      # Optionally install with extras if needed for docs, e.g.:
       # extra_requirements:
-      #   - docs   # installs k-diagram[docs]
+      #  - docs
     - requirements: docs/requirements.txt
 
 sphinx:

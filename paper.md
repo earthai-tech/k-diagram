@@ -65,7 +65,7 @@ but lack dedicated functions for the specialized diagnostics needed for
 high-dimensional uncertainty. Even established visualizations like fan charts, 
 which have seen recent innovations [@Sokol2025], are primarily designed for 
 single time series and do not scale well to problems involving thousands of 
-simultaneous forecasts[@Hong2025]. This creates a critical gap between the 
+simultaneous forecasts [@Hong2025]. This creates a critical gap between the 
 generation of complex probabilistic forecasts and the ability to interpret 
 them effectively.
 
@@ -109,21 +109,21 @@ such as polar error bands to separate systemic bias from random
 error, and polar violins—a novel adaptation of the traditional violin
 plot [@Hintze1998] to compare the full error profiles of multiple
 models. For a complete assessment of the predictive distribution, a
-dedicated suite of **probabilistic diagnostics** offers Polar PIT
-Histograms for calibration, Sharpness Diagrams for precision, and
-Continuous Ranked Probability Score (CRPS) plots for overall skill,
-based on the foundational concepts of probabilistic forecasting
-[@Gneiting2007b].
+dedicated suite of **probabilistic diagnostics** offers Polar 
+Probability Integral Transform Histograms for calibration, 
+Sharpness Diagrams for precision, and Continuous Ranked Probability 
+Score plots for overall skill, based on the foundational concepts 
+of probabilistic forecasting [@Gneiting2007b].
 
 Building on this, the second pillar focuses on established methods for
 **Model Evaluation and Comparison**. The package implements well-regarded
 evaluation techniques, adapting them for enhanced clarity. Functions in
 `kdiagram.plot.evaluation` generate **Taylor Diagrams**, based on the
 original formulation by [@Taylor2001], to holistically compare models
-on correlation, standard deviation, and RMSD. Complementing this,
-the `kdiagram.plot.comparison` module provides standard **Reliability
-Diagrams** for assessing probability calibration, a cornerstone of
-forecast verification [@Jolliffe2012].
+on correlation, standard deviation, and Root-Mean-Square Deviation. 
+Complementing this, the `kdiagram.plot.comparison` module provides standard 
+**Reliability Diagrams** for assessing probability calibration, 
+a cornerstone of forecast verification [@Jolliffe2012].
 
 The third pillar of functionality addresses **Distribution and Feature
 Visualization**. `k-diagram` provides utilities for plotting 1D
@@ -137,7 +137,7 @@ Finally, the package provides tools for **Relationship Visualization**,
 where polar plots in `kdiagram.plot.relationship` offer a novel
 perspective on the correlation between true and predicted values by
 mapping them to angle and radius. All functionalities are supported by
-a set of helper utilities and a command-line interface (CLI) for
+a set of helper utilities and a command-line interface for
 generating key plots directly from data files. The entire package is
 designed for ease of use, allowing users to control plot aesthetics,
 angular coverage (`acov`), and color mapping to tailor the
@@ -167,10 +167,9 @@ at 81.1% is close to the nominal 80% for the Q10-Q90 interval shown.
 The **Model Error Distributions** diagram (\autoref{fig2:performance}b) 
 offers a comparative view by visualizing the full error distribution for 
 multiple models. It uses polar violins, where the shape of each violin is 
-determined by the Kernel Density Estimate (KDE) of the model's 
-errors [@Silverman1986]. The resulting diagram clearly distinguishes a 
-"Good Model" (unbiased and narrow) from a "Biased Model" 
-(shifted from the zero-error line) and an "Inconsistent Model" 
+determined by the KDE of the model's errors [@Silverman1986]. 
+The resulting diagram clearly distinguishes a "Good Model" (unbiased and narrow) 
+from a "Biased Model" (shifted from the zero-error line) and an "Inconsistent Model" 
 (wide and dispersed), revealing performance trade-offs that a single 
 error score would miss.
 
@@ -204,14 +203,14 @@ The complete mathematical foundations and derivations for all visualizations are
 Technical Report [@kouadiob2025].
 
 [^1]: For an overview of the concepts behind Physics-Informed Neural
-      Networks (PINNs), see:
+      Networks, see:
       <https://fusion-lab.readthedocs.io/en/latest/user_guide/models/pinn/index.html>
  
 
 # Availability and Community
 
 The latest stable release of `k-diagram` is available on the Python Package 
-Index (PyPI) and can be installed via `pip install k-diagram`. The package 
+Index and can be installed via `pip install k-diagram`. The package 
 is distributed under the OSI-approved [Apache License 2.0](https://github.com/earthai-tech/k-diagram/blob/main/LICENSE). 
 Comprehensive documentation, including a user guide, an example gallery, and a detailed 
 API reference, is hosted at [https://k-diagram.readthedocs.io/](https://k-diagram.readthedocs.io/). 
