@@ -103,7 +103,7 @@ polar visualizations for **Uncertainty and Error Diagnostics**
 provide a comprehensive toolkit for dissecting forecast performance.
 This includes functions to evaluate prediction **interval performance** by
 visualizing coverage, the magnitude of anomalous failures, and the
-temporal consistency of interval widths. Furthermore, the library
+temporal consistency of interval widths. Furthermore, the package
 introduces innovative methods for visualizing **error distributions**,
 such as polar error bands to separate systemic bias from random
 error, and polar violins—a novel adaptation of the traditional violin
@@ -141,8 +141,64 @@ a set of helper utilities and a command-line interface for
 generating key plots directly from data files. The entire package is
 designed for ease of use, allowing users to control plot aesthetics,
 angular coverage (`acov`), and color mapping to tailor the
-visualizations for their specific domain.
+visualizations for their specific domain. We next summarize the design 
+choices that make these plots composable and testable.
 
+# Software Engineering
+
+`k-diagram` is built as a small stack of composable layers rather than a 
+monolithic script. User-facing families—uncertainty and error diagnostics, 
+evaluation and comparison, distribution/feature views, relationships, and 
+Taylor diagrams—live in focused modules that expose thin entry points 
+(`plot_*`, `taylor_diagram`). These functions validate inputs, assemble 
+plotting primitives, and return a Matplotlib `Axes` for downstream editing, 
+while the heavy lifting is handled by a utility layer that performs column 
+detection and normalization, quantile pairing and checks, angular coverage 
+mapping, and color handling. This separation keeps "what to draw" independent 
+from "how to draw", and concentrates cross-cutting concerns in one place: 
+compatibility shims in `kdiagram.compat` stabilize public behavior across 
+Matplotlib and Pandas versions; lightweight validators and decorators catch 
+ambiguous inputs early; and shared helpers (`setup_polar_axes`, `set_axis_grid`,
+ `_sample_colors`, `map_theta_to_span`) give every polar figure a consistent 
+orientation and grid.
+
+From a performance and testing standpoint, data transforms are vectorized with 
+NumPy/Pandas and only compact arrays reach Matplotlib. There is no hidden global
+state; each function depends solely on its arguments and returns an `Axes` 
+object. That purity makes the code easy to test: transforms and validators 
+are unit-tested directly, while rendering is exercised with headless smoke 
+tests that assert on ticks, labels, and returned objects rather than pixel 
+hashes. The CLI wraps the same public API, so command-line workflows and 
+Python sessions produce identical figures.  In the following, we outline the 
+API conventions and extension points that guide usage and contributions.
+
+# API Conventions and Extensibility
+
+The API is data-first and predictable. Plots accept either tidy DataFrames 
+with explicit column selectors (for example, `q_cols=('q10','q50','q90')`, 
+`y_true='actual'`, `y_pred='pred')` or plain arrays when that is more 
+convenient; the function chooses the least surprising path and validates 
+shapes early. Polar grammar is explicit: angular coverage is controlled by 
+`acov`, orientation by `zero_at` and `clockwise`, and periodic contexts can 
+label angles meaningfully via `theta_ticks` and `theta_ticklabels` 
+(e.g., weekdays instead of degrees). Every call returns a Matplotlib `Axes`, 
+enabling the usual compositional workflow—annotate, combine subplots, or 
+`savefig`—with no special wrappers.
+
+Where the community convention is Cartesian 
+(ROC/PR curves, classification summaries), the same functions offer 
+`kind="cartesian"|"polar"`; the default is Cartesian and the polar 
+view is an optional alternative when cyclic or directional comparisons help. 
+Adding a new diagnostic follows a consistent pattern: transform the input 
+into validated arrays or grouped summaries; lay out the coordinate system 
+(polar or Cartesian) using the shared helpers; and render with standard 
+Matplotlib primitives. Because mapping, grid styling, and color handling 
+are centralized, new plots remain small and readable, and a single transform 
+can back both a Cartesian and a polar renderer. The  
+[development page](https://k-diagram.readthedocs.io/en/latest/development.html) 
+describes these conventions in one place, so external contributors can extend the  
+package without guessing at internal idioms. The following 
+examples illustrate these ideas on real data.
 
 # Illustrative Diagnostics and Application
 

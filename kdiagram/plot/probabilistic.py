@@ -8,7 +8,8 @@ Probabilistic Forecast Evaluation Plots
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Mapping, Literal 
+from collections.abc import Mapping, Sequence
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -772,7 +773,7 @@ def plot_credibility_bands(
     dpi: int = 300,
     theta_ticks: Sequence[float] | None = None,
     theta_ticklabels: Sequence[str] | Mapping[int, str] | None = None,
-    zero_at: Literal["N","E","S","W"] = "N",
+    zero_at: Literal["N", "E", "S", "W"] = "N",
     clockwise: bool = True,
     ax: Axes | None = None,
     **fill_kws,
@@ -826,24 +827,16 @@ def plot_credibility_bands(
             data["theta_map"] = 0.0
 
     # --- binning along theta and mean stats per bin
-    # theta_edges = np.linspace(0.0, float(span), int(theta_bins) + 1)
-    # theta_labels = (theta_edges[:-1] + theta_edges[1:]) / 2.0
 
-    # data["theta_bin"] = pd.cut(
-    #     data["theta_map"],
-    #     bins=theta_edges,
-    #     labels=theta_labels,
-    #     include_lowest=True,
-    # )
     theta_edges = np.linspace(0.0, float(span), int(theta_bins) + 1)
     theta_centers = (theta_edges[:-1] + theta_edges[1:]) / 2.0
     data["theta_bin"] = pd.cut(
-        data["theta_map"], 
-        bins=theta_edges, 
+        data["theta_map"],
+        bins=theta_edges,
         labels=theta_centers,
-        include_lowest=True
+        include_lowest=True,
     )
-    
+
     stats = (
         data.groupby("theta_bin", observed=False)
         .agg(
@@ -903,10 +896,10 @@ def plot_credibility_bands(
         tick_pos = theta_centers
 
     ax.set_xticks(tick_pos)
-    
+
     if tick_lbls is not None:
         ax.set_xticklabels(tick_lbls)
-        
+
     # --- formatting
     ax.set_title(title, fontsize=16, y=1.1)
     ax.set_xlabel(f"Binned by {theta_col}")

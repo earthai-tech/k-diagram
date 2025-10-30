@@ -18,6 +18,37 @@ provide an intuitive and aesthetically engaging way to compare
 the performance of multiple models and diagnose their strengths
 and weaknesses.
 
+.. note::
+   **Polar vs. Cartesian rendering (``kind``)**
+
+   Many evaluation plots accept ``kind={'polar','cartesian'}``
+   (default is ``'polar'`` unless stated otherwise). When
+   ``kind='cartesian'``, the function **delegates** to a Cartesian
+   renderer while preserving common styling (``figsize``, ``colors``,
+   ``show_grid``). Polar-only options (e.g., ``acov``, ``zero_at``,
+   ``clockwise``) are ignored in Cartesian mode. The return value is
+   always the actual ``Axes`` used.
+
+   *Use Cartesian* when you want the conventional reading for ROC/PR and
+   classification plots (FPR/TPR on x/y, Precision/Recall on y/x,
+   grouped bars). *Use Polar* when you want compact overviews, periodic
+   angles, or comparative radial layouts. For ROC/PR in polar, a
+   quarter-circle is used for readability.
+
+   **Examples**
+
+   .. code-block:: python
+
+      # Delegates to Cartesian
+      ax = kd.plot_polar_pr_curve(y_true, y_pred1, y_pred2,
+                                  names=['A', 'B'],
+                                  kind='cartesian')
+
+      # Polar with angular coverage controls
+      ax = kd.plot_polar_confusion_matrix(y_true, y_pred,
+                                          kind='polar', acov='default')
+
+
 Summary of Evaluation Functions
 -------------------------------
 
@@ -49,6 +80,7 @@ Summary of Evaluation Functions
      - Visualizes the performance of multiple regression models through 
        grouped polar bar chart. 
        
+      
 .. _ug_plot_polar_roc:
 
 Polar ROC Curve (:func:`~kdiagram.plot.evaluation.plot_polar_roc`)

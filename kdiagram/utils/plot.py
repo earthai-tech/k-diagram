@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 import warnings
 from collections.abc import Sequence
-from typing import Literal
+from typing import Callable, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,6 +49,34 @@ def set_axis_grid(
             # And force-hide any already-created grid line artists.
             for gl in a.get_xgridlines() + a.get_ygridlines():
                 gl.set_visible(False)
+
+
+def validate_kind(kind: str | None, *, default: str = "polar") -> str:
+    """
+    Normalize and validate the 'kind' switch used by plotting functions.
+
+    Returns a lower-cased string. Raises ValueError with a stable message
+    if invalid (used by tests across plots).
+    """
+    k = kind or default
+    if not isinstance(k, str):
+        raise ValueError("kind must be 'polar' or 'cartesian'.")
+    k = k.lower()
+    if k not in {"polar", "cartesian"}:
+        raise ValueError("kind must be 'polar' or 'cartesian'.")
+    return k
+
+
+def maybe_delegate_cartesian(
+    kind: str, cartesian_fn: Callable[..., Axes], /, *args, **kwargs
+) -> Axes | None:
+    """
+    If kind == 'cartesian', call the provided cartesian renderer and return
+    its Axes; otherwise return None so the caller can proceed with polar.
+    """
+    if validate_kind(kind) == "cartesian":
+        return cartesian_fn(*args, **kwargs)
+    return None
 
 
 def is_valid_kind(

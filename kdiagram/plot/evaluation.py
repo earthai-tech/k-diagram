@@ -27,8 +27,10 @@ from ..utils.handlers import columns_manager
 from ..utils.mathext import compute_pinball_loss
 from ..utils.plot import (
     canonical_acov,
+    maybe_delegate_cartesian,
     set_axis_grid,
     setup_polar_axes,
+    validate_kind,
     warn_acov_preference,
 )
 from ..utils.validator import validate_yy
@@ -62,6 +64,7 @@ def plot_polar_roc(
     show_auc: bool = True,
     savefig: str | None = None,
     dpi: int = 300,
+    kind: str = "polar",
     ax: Axes | None = None,
 ):
     if not y_preds:
@@ -80,28 +83,35 @@ def plot_polar_roc(
 
     y_true, _ = validate_yy(y_true, y_preds[0])  # Validate first pred
 
-    # Respect parameter but force quarter-circle
-    canon = canonical_acov(acov, raise_on_invalid=False)
-    if canon != "quarter_circle":
-        warnings.warn(
-            "plot_polar_roc currently renders best as a quarter circle. "
-            f"Received acov='{acov}'. For ROC, θ=0 at the right (East) and a "
-            "90° span give the clearest reading of FPR (angle) vs TPR (radius). "
-            "Proceeding with acov='quarter_circle'.",
-            UserWarning,
-            stacklevel=2,
-        )
-
+    # Branch on rendering kind; keep existing warnings/messages for polar path.
+    kind = validate_kind(kind)
     # --- Plotting Setup ---
-    if ax is None:
-        fig, ax = plt.subplots(
-            figsize=figsize, subplot_kw={"projection": "polar"}
-        )
-    else:
-        fig = ax.figure
+    if kind == "polar":
+        # Respect parameter but force quarter-circle (keep original warning text)
+        canon = canonical_acov(acov, raise_on_invalid=False)
+        if canon != "quarter_circle":
+            warnings.warn(
+                "plot_polar_roc currently renders best as a quarter circle. "
+                f"Received acov='{acov}'. For ROC, θ=0 at the right (East) and a "
+                "90° span give the clearest reading of FPR (angle) vs TPR (radius). "
+                "Proceeding with acov='quarter_circle'.",
+                UserWarning,
+                stacklevel=2,
+            )
 
-    # cmap_obj = get_cmap(cmap, default="viridis")
-    # colors = cmap_obj(np.linspace(0, 1, len(y_preds)))
+        if ax is None:
+            fig, ax = plt.subplots(
+                figsize=figsize, subplot_kw={"projection": "polar"}
+            )
+        else:
+            fig = ax.figure
+    else:  # cartesian
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = ax.figure
+
+    # Colors (unchanged behavior / messages)
     colors = get_colors(
         len(y_preds),
         colors=colors,
@@ -110,55 +120,98 @@ def plot_polar_roc(
         failsafe="discrete",
     )
 
-    # --- Plot No-Skill Reference Spiral ---
-    # In polar, the y=x line becomes an Archimedean spiral
+    # --- No-skill reference ---
     if show_no_skill:
-        no_skill_theta = np.linspace(0, np.pi / 2, 100)
-        no_skill_radius = np.linspace(0, 1, 100)
-        ax.plot(
-            no_skill_theta,
-            no_skill_radius,
-            color="gray",
-            linestyle="--",
-            lw=1.5,
-            label="No-Skill (AUC = 0.5)",
-        )
+        if kind == "polar":
+            # In polar, the y=x line becomes an Archimedean spiral
+            no_skill_theta = np.linspace(0, np.pi / 2, 100)
+            no_skill_radius = np.linspace(0, 1, 100)
+            ax.plot(
+                no_skill_theta,
+                no_skill_radius,
+                color="gray",
+                linestyle="--",
+                lw=1.5,
+                label="No-Skill (AUC = 0.5)",
+            )
+        else:
+            # Cartesian: y = x diagonal
+            ax.plot(
+                [0.0, 1.0],
+                [0.0, 1.0],
+                color="gray",
+                linestyle="--",
+                lw=1.5,
+                label="No-Skill (AUC = 0.5)",
+            )
 
-    # --- Calculate and Plot ROC for Each Model ---
+    # --- ROC curves ---
     for i, (name, pred) in enumerate(zip(names, y_preds)):
         fpr, tpr, _ = roc_curve(y_true, pred)
         roc_auc = auc(fpr, tpr)
-
-        # Map FPR to angle and TPR to radius
-        model_theta = fpr * (np.pi / 2)
-        model_radius = tpr
-
-        # Plot the model's ROC spiral
         label = f"{name} (AUC = {roc_auc:.2f})" if show_auc else name
-        ax.plot(
-            model_theta,
-            model_radius,
-            color=colors[i],
-            lw=2.5,
-            label=label,
-        )
-        # Fill the area under the curve (AUC)
-        ax.fill(model_theta, model_radius, 0.0, color=colors[i], alpha=0.15)
+
+        if kind == "polar":
+            # Map FPR to angle and TPR to radius
+            model_theta = fpr * (np.pi / 2)
+            model_radius = tpr
+
+            ax.plot(
+                model_theta,
+                model_radius,
+                color=colors[i],
+                lw=2.5,
+                label=label,
+            )
+            ax.fill(
+                model_theta,
+                model_radius,
+                0.0,
+                color=colors[i],
+                alpha=fill_alpha,
+            )
+        else:
+            # Standard ROC in Cartesian coordinates
+            ax.plot(
+                fpr,
+                tpr,
+                color=colors[i],
+                lw=2.5,
+                label=label,
+            )
+            ax.fill_between(
+                fpr, tpr, 0.0, color=colors[i], alpha=fill_alpha, step=None
+            )
 
     # --- Formatting ---
     ax.set_title(title, fontsize=16, y=1.1)
-    ax.set_thetamin(0)
-    ax.set_thetamax(90)
-    ax.set_ylim(0, 1.0)
 
-    # Set angular tick labels to represent False Positive Rate
-    ax.set_xticks(np.linspace(0, np.pi / 2, 6))
-    ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
+    if kind == "polar":
+        ax.set_thetamin(0)
+        ax.set_thetamax(90)
+        ax.set_ylim(0, 1.0)
 
-    ax.set_xlabel("False Positive Rate", labelpad=25)
-    ax.set_ylabel("True Positive Rate", labelpad=25)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1))
-    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+        # Angular tick labels represent False Positive Rate
+        ax.set_xticks(np.linspace(0, np.pi / 2, 6))
+        ax.set_xticklabels([f"{val:.1f}" for val in np.linspace(0, 1, 6)])
+
+        ax.set_xlabel("False Positive Rate", labelpad=25)
+        ax.set_ylabel("True Positive Rate", labelpad=25)
+        ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1))
+        set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    else:
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(0.0, 1.0)
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.legend(loc="lower right")
+        if show_grid:
+            if grid_props:
+                ax.grid(True, **grid_props)
+            else:
+                ax.grid(True)
+        else:
+            ax.grid(False)
 
     fig.tight_layout()
     if savefig:
@@ -227,6 +280,10 @@ savefig : str or None, default=None
     (directory must exist).  If ``None``, the figure is shown.
 dpi : int, default=300
     Resolution used when saving the figure.
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``)
 ax : matplotlib.axes.Axes or None, default=None
     Existing polar axes to draw on.  When ``None``, a new figure
     and polar axes are created.
@@ -316,11 +373,12 @@ def plot_polar_confusion_matrix(
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
-    ax: Axes | None = None,
     acov: str = "default",
     zero_at: Literal["N", "E", "S", "W"] = "N",
     clockwise: bool = True,
     categories: list[str] = None,
+    kind: str = "polar",
+    ax: Axes | None = None,
 ) -> Axes:
     # --- Input Validation and Preparation ---
     if not y_preds:
@@ -338,6 +396,30 @@ def plot_polar_confusion_matrix(
         names = [f"Model {i + 1}" for i in range(len(y_preds))]
 
     y_true, _ = validate_yy(y_true, y_preds[0])
+
+    # ---- Early delegation ----
+
+    kind = validate_kind(kind)
+    cart_ax = maybe_delegate_cartesian(
+        kind,
+        _plot_confusion_matrix_cartesian,
+        y_true,
+        *y_preds,
+        names=names,
+        normalize=normalize,
+        title=title,
+        figsize=figsize,
+        cmap=cmap,
+        colors=colors,
+        show_grid=show_grid,
+        grid_props=grid_props,
+        savefig=savefig,
+        dpi=dpi,
+        ax=ax,
+        categories=categories,
+    )
+    if cart_ax is not None:
+        return cart_ax
 
     target_type = type_of_target(y_true)
     if target_type != "binary":
@@ -453,6 +535,107 @@ def plot_polar_confusion_matrix(
     return ax
 
 
+def _plot_confusion_matrix_cartesian(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: list[str] | None = None,
+    normalize: bool = True,
+    title: str = "Polar Confusion Matrix",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    colors: list[str] | None = None,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+    categories: list[str] | None = None,
+) -> Axes:
+    # Mirror the same binary restriction and message for consistency
+    target_type = type_of_target(y_true)
+    if target_type != "binary":
+        raise ValueError(
+            "Polar confusion matrix currently supports only binary "
+            f"classification. Got target type '{target_type}'."
+            "For multiclass classification, use "
+            "`plot_polar_confusion_multiclass` instead."
+        )
+
+    # Compute matrices like the polar path
+    matrices = []
+    for y_pred in y_preds:
+        y_pred_class = (np.asarray(y_pred) > 0.5).astype(int)
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred_class).ravel()
+        matrices.append([tp, fp, tn, fn])  # TP, FP, TN, FN
+    matrices = np.asarray(matrices, dtype=float)
+    if normalize:
+        totals = matrices.sum(axis=1, keepdims=True)
+        totals[totals == 0] = 1.0
+        matrices = matrices / totals
+
+    # Axes
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    colors = get_colors(
+        len(y_preds),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
+
+    cats = columns_manager(categories, empty_as_none=False)
+    _CATEGORIES = [
+        "True Positive",
+        "False Positive",
+        "True Negative",
+        "False Negative",
+    ]
+    cats += _CATEGORIES
+    cats = cats[:4]
+
+    x = np.arange(len(cats))
+    width = 0.8 / max(1, len(y_preds))  # use 80% of the band, split by models
+
+    for i, (name, row) in enumerate(zip(names or [], matrices)):
+        offset = (i - (len(y_preds) - 1) / 2.0) * width
+        ax.bar(
+            x + offset,
+            row,
+            width=width,
+            label=name,
+            color=colors[i],
+            alpha=0.8,
+            edgecolor="black",
+            linewidth=0.5,
+        )
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xticks(x)
+    ax.set_xticklabels(cats)
+    ax.set_ylabel("Proportion" if normalize else "Count")
+
+    if show_grid:
+        ax.grid(True, **(grid_props or {}))
+    else:
+        ax.grid(False)
+
+    ax.set_xlim(x[0] - 0.5, x[-1] + 0.5)
+    ax.set_ylim(0.0, 1.0 if normalize else max(1.0, matrices.max() * 1.1))
+    ax.legend(loc="upper right")
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
 plot_polar_confusion_matrix.__doc__ = r"""
 Plots a Polar Confusion Matrix for binary classification.
 
@@ -498,9 +681,7 @@ savefig : str, optional
     plot is shown interactively.
 dpi : int, default=300
     Resolution in dots per inch used when saving.
-ax : matplotlib.axes.Axes, optional
-    Existing polar axes to draw on. If ``None``, a new
-    figure and polar axes are created.
+
 acov : {'default', 'half_circle', 'quarter_circle',
     'eighth_circle'}, default='default'
     Angular coverage (span) of the polar plot. ``'default'``
@@ -522,7 +703,21 @@ categories : list of str, optional
         
     The sectors are laid out starting at ``θ = 0`` and follow
     the chosen direction.
-
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``) via internal helpers.
+    When set to ``'cartesian'``, the function *delegates* to a
+    Cartesian renderer (through ``maybe_delegate_cartesian``), keeping
+    names/colors/figsize/grid behavior consistent while ignoring polar-
+    only arguments (e.g., ``acov``, ``zero_at``, ``clockwise``). The
+    return value is always the ``Axes`` actually used. The value is
+    validated with ``validate_kind`` (case-insensitive); invalid values
+    raise ``ValueError("kind must be 'polar' or 'cartesian'.")``.
+ax : matplotlib.axes.Axes, optional
+    Existing polar axes to draw on. If ``None``, a new
+    figure and polar axes are created.
+    
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -604,6 +799,7 @@ def plot_polar_confusion_matrix_in(
     categories: list[str] = None,
     savefig: str | None = None,
     dpi: int = 300,
+    kind: str = "polar",
     ax: Axes | None = None,
 ) -> Axes:
     if categories is not None:
@@ -627,6 +823,29 @@ def plot_polar_confusion_matrix_in(
 
     if not class_labels:
         class_labels = [f"Class {lo}" for lo in labels]
+
+    # ----- early delegation if 'cartesian' -----
+    kind = validate_kind(kind)
+    cart_ax = maybe_delegate_cartesian(
+        kind,
+        _plot_confusion_matrix_in_cartesian,  # cartesian renderer
+        y_true,
+        y_pred,
+        class_labels=class_labels,
+        normalize=normalize,
+        title=title,
+        figsize=figsize,
+        cmap=cmap,
+        colors=colors,
+        show_grid=show_grid,
+        grid_props=grid_props,
+        categories=categories,  # will warn (kept for symmetry; unused)
+        savefig=savefig,
+        dpi=dpi,
+        ax=ax,
+    )
+    if cart_ax is not None:
+        return cart_ax
 
     # ----- compute confusion matrix (row-normalize if asked) -----
     cm = confusion_matrix(y_true, y_pred, labels=labels)
@@ -712,6 +931,106 @@ def plot_polar_confusion_matrix_in(
     return ax
 
 
+def _plot_confusion_matrix_in_cartesian(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    class_labels: list[str] | None = None,
+    normalize: bool = True,
+    title: str = "Cartesian Confusion Matrix",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "tab10",
+    colors: list[str] | None = None,
+    show_grid: bool = True,
+    grid_props: dict | None = None,
+    categories: list[str] | None = None,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+) -> Axes:
+    if categories is not None:
+        warnings.warn(
+            "Categories is kept for API symmetry; unused", stacklevel=2
+        )
+
+    # Same validation / label logic as polar path
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    labels = np.unique(np.concatenate((y_true, y_pred)))
+    n_classes = len(labels)
+
+    if class_labels and len(class_labels) != n_classes:
+        warnings.warn(
+            "Length of class_labels does not match number of classes. "
+            "Falling back to generic labels.",
+            stacklevel=2,
+        )
+        class_labels = None
+    if not class_labels:
+        class_labels = [f"Class {lo}" for lo in labels]
+
+    # Confusion matrix (row-normalize if requested)
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    if normalize:
+        row_sums = cm.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1
+        cm = cm.astype(float) / row_sums
+
+    # Axes creation
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    # Colors consistent with polar path
+    colors = get_colors(
+        n_classes,
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
+
+    # Grouped bars: x = true class, one bar per predicted class
+    x = np.arange(n_classes)
+    width = 0.8 / max(1, n_classes)
+
+    for i in range(n_classes):
+        offset = (i - (n_classes - 1) / 2.0) * width
+        ax.bar(
+            x + offset,
+            cm[:, i],
+            width=width,
+            color=colors[i],
+            alpha=0.8,
+            edgecolor="black",
+            linewidth=0.5,
+            label=f"Predicted {class_labels[i]}",
+        )
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"True\n{lo}" for lo in class_labels], fontsize=10)
+    ax.set_ylabel("Proportion" if normalize else "Count")
+
+    if show_grid:
+        ax.grid(True, **(grid_props or {}))
+    else:
+        ax.grid(False)
+
+    ax.set_xlim(x[0] - 0.5, x[-1] + 0.5)
+    ymax = 1.0 if normalize else max(1.0, cm.max() * 1.1)
+    ax.set_ylim(0.0, ymax)
+    ax.legend(loc="upper right")
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
 # Convenient alias
 plot_polar_confusion_multiclass = plot_polar_confusion_matrix_in
 
@@ -756,7 +1075,18 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
-
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``) via internal helpers.
+    When set to ``'cartesian'``, the function *delegates* to a
+    Cartesian renderer (through ``maybe_delegate_cartesian``), keeping
+    names/colors/figsize/grid behavior consistent while ignoring polar-
+    only arguments (e.g., ``acov``, ``zero_at``, ``clockwise``). The
+    return value is always the ``Axes`` actually used.
+ax : Axes, optional
+    The Matplotlib Axes object to use for plotting. If ``None``,
+    a new figure and axes will be created.
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -835,6 +1165,7 @@ def plot_polar_pr_curve(
     show_ap: bool = True,
     savefig: str | None = None,
     dpi: int = 300,
+    kind: str = "polar",
     ax: Axes | None = None,
 ) -> Axes:
     # ---------- validation ----------
@@ -849,6 +1180,30 @@ def plot_polar_pr_curve(
         names = None
     if not names:
         names = [f"Model {i + 1}" for i in range(len(y_preds))]
+
+    # ---- early delegation if 'cartesian' (keep polar code unchanged below) ----
+    kind = validate_kind(kind)
+    cart_ax = maybe_delegate_cartesian(
+        kind,
+        _plot_pr_curve_cartesian,
+        y_true,
+        *y_preds,
+        names=names,
+        title=title,
+        figsize=figsize,
+        cmap=cmap,
+        colors=colors,
+        show_grid=show_grid,
+        grid_props=grid_props,
+        fill_alpha=fill_alpha,
+        show_no_skill=show_no_skill,
+        show_ap=show_ap,
+        savefig=savefig,
+        dpi=dpi,
+        ax=ax,
+    )
+    if cart_ax is not None:
+        return cart_ax
 
     # Canonicalize and enforce quarter-circle coverage
     canon = canonical_acov(acov, raise_on_invalid=False)
@@ -945,6 +1300,76 @@ def plot_polar_pr_curve(
     return ax
 
 
+def _plot_pr_curve_cartesian(
+    y_true: np.ndarray,
+    *y_preds: np.ndarray,
+    names: list[str] | None = None,
+    title: str = "Polar Precision-Recall Curve",  # keep same default title for parity
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    colors: list[str] | None = None,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    fill_alpha: float = 0.15,
+    show_no_skill: bool = True,
+    show_ap: bool = True,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+) -> Axes:
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    # Colors per model (consistent with polar path)
+    colors = get_colors(
+        len(y_preds),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
+
+    # No-skill baseline: positive prevalence
+    if show_no_skill:
+        base = float(np.mean(y_true))
+        ax.plot(
+            [0.0, 1.0],
+            [base, base],
+            color="gray",
+            linestyle="--",
+            lw=1.5,
+            label=f"No-Skill (AP = {base:.2f})",
+        )
+
+    for i, y_pred in enumerate(y_preds):
+        prec, rec, _ = precision_recall_curve(y_true, y_pred)
+        ap = average_precision_score(y_true, y_pred)
+        lbl = f"{names[i]} (AP = {ap:.2f})" if show_ap else names[i]
+        ax.plot(rec, prec, color=colors[i], lw=2.5, label=lbl)
+        ax.fill_between(rec, prec, 0.0, color=colors[i], alpha=fill_alpha)
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.0, 1.0)
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    if show_grid:
+        ax.grid(True, **(grid_props or {}))
+    else:
+        ax.grid(False)
+    ax.legend(loc="lower left")
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
 plot_polar_pr_curve.__doc__ = r"""
 Plots a Polar Precision-Recall (PR) Curve.
 
@@ -1015,7 +1440,15 @@ savefig : str or path-like, optional
 
 dpi : int, default=300
     Resolution (dots per inch) used when saving the figure.
-
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``) via internal helpers.
+    When set to ``'cartesian'``, the function *delegates* to a
+    Cartesian renderer (through ``maybe_delegate_cartesian``), keeping
+    names/colors/figsize/grid behavior consistent while ignoring polar-
+    only arguments (e.g., ``acov``, ``zero_at``, ``clockwise``). The
+    return value is always the ``Axes`` actually used. 
 ax : matplotlib.axes.Axes, optional
     Existing polar Axes to draw into. If None, a new figure
     and polar Axes are created.
@@ -1107,6 +1540,7 @@ def plot_polar_classification_report(
     clockwise: bool = True,
     savefig: str | None = None,
     dpi: int = 300,
+    kind: str = "polar",
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -1133,7 +1567,26 @@ def plot_polar_classification_report(
         metrics["Recall"].append(report[str(label)]["recall"])
         metrics["F1-Score"].append(report[str(label)]["f1-score"])
 
-    # --- Plotting Setup ---
+    kind = validate_kind(kind)
+    cart_ax = maybe_delegate_cartesian(
+        kind,
+        _plot_classification_report_cartesian,
+        y_true,
+        y_pred,
+        class_labels=class_labels,
+        title=title,
+        figsize=figsize,
+        cmap=cmap,
+        colors=colors,
+        show_grid=show_grid,
+        grid_props=grid_props,
+        savefig=savefig,
+        dpi=dpi,
+        ax=ax,
+    )
+    if cart_ax is not None:
+        return cart_ax
+
     # ----- Configure polar axes with acov helpers -----
     canon = canonical_acov(acov, raise_on_invalid=False, fallback="defaut")
     warn_acov_preference(canon, preferred="default")
@@ -1192,6 +1645,86 @@ def plot_polar_classification_report(
     return ax
 
 
+def _plot_classification_report_cartesian(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    class_labels: list[str] | None = None,
+    title: str = "Polar Classification Report",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "tab10",
+    colors: list[str] | None = None,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+) -> Axes:
+    # Match polar path’s labeling behavior/messages
+    labels = np.unique(np.concatenate((y_true, y_pred)))
+    n_classes = len(labels)
+
+    if class_labels and len(class_labels) != n_classes:
+        warnings.warn(
+            "Length of class_labels does not match number of classes.",
+            stacklevel=2,
+        )
+        class_labels = None
+    if not class_labels:
+        class_labels = [f"Class {lo}" for lo in labels]
+
+    report = classification_report(
+        y_true, y_pred, labels=labels, output_dict=True
+    )
+    metrics = {"Precision": [], "Recall": [], "F1-Score": []}
+    for label in labels:
+        metrics["Precision"].append(report[str(label)]["precision"])
+        metrics["Recall"].append(report[str(label)]["recall"])
+        metrics["F1-Score"].append(report[str(label)]["f1-score"])
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    metric_colors = get_colors(
+        3, colors=colors, cmap=cmap, default="tab10", failsafe="discrete"
+    )
+
+    x = np.arange(n_classes)
+    n_metrics = 3
+    width = 0.8 / n_metrics
+
+    for i, (metric_name, values) in enumerate(metrics.items()):
+        offset = (i - n_metrics / 2 + 0.5) * width
+        ax.bar(
+            x + offset,
+            values,
+            width=width,
+            color=metric_colors[i],
+            alpha=0.7,
+            label=metric_name,
+        )
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xticks(x)
+    ax.set_xticklabels(class_labels, fontsize=10)
+    ax.set_ylabel("Score")
+    ax.set_ylim(0.0, 1.05)
+    if show_grid:
+        ax.grid(True, **(grid_props or {}))
+    else:
+        ax.grid(False)
+    ax.legend(loc="upper right")
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
 plot_polar_classification_report.__doc__ = r"""
 Plots a Polar Classification Report.
 
@@ -1229,7 +1762,21 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
-
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``) via internal helpers.
+    When set to ``'cartesian'``, the function *delegates* to a
+    Cartesian renderer (through ``maybe_delegate_cartesian``), keeping
+    names/colors/figsize/grid behavior consistent while ignoring polar-
+    only arguments (e.g., ``acov``, ``zero_at``, ``clockwise``). The
+    return value is always the ``Axes`` actually used. The value is
+    validated with ``validate_kind`` (case-insensitive); invalid values
+    raise ``ValueError("kind must be 'polar' or 'cartesian'.")``.
+ax : Axes, optional
+    The Matplotlib Axes object to use for plotting. If ``None``,
+    a new figure and axes will be created.
+    
 Returns
 -------
 ax : matplotlib.axes.Axes
@@ -1325,17 +1872,38 @@ def plot_pinball_loss(
     clockwise: bool = True,
     savefig: str | None = None,
     dpi: int = 300,
+    kind: str = "polar",
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
     y_true, y_preds_quantiles = validate_yy(
         y_true, y_preds_quantiles, allow_2d_pred=True
     )
-
     # Ensure quantiles are sorted for plotting
     sort_idx = np.argsort(quantiles)
     quantiles = np.asarray(quantiles)[sort_idx]
     y_preds_quantiles = y_preds_quantiles[:, sort_idx]
+
+    kind = validate_kind(kind)
+    cart_ax = maybe_delegate_cartesian(
+        kind,
+        _plot_pinball_loss_cartesian,
+        y_true,
+        y_preds_quantiles,
+        quantiles,
+        names=names,
+        title=title,
+        figsize=figsize,
+        cmap=cmap,
+        colors=colors,
+        show_grid=show_grid,
+        grid_props=grid_props,
+        savefig=savefig,
+        dpi=dpi,
+        ax=ax,
+    )
+    if cart_ax is not None:
+        return cart_ax
 
     # --- Calculate Pinball Loss for each quantile ---
     losses = []
@@ -1399,6 +1967,78 @@ def plot_pinball_loss(
     return ax
 
 
+def _plot_pinball_loss_cartesian(
+    y_true: np.ndarray,
+    y_preds_quantiles: np.ndarray,
+    quantiles: np.ndarray,
+    names: list[str] | None = None,
+    title: str = "Pinball Loss per Quantile",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "tab10",
+    colors: list[str] | None = None,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+) -> Axes:
+    # Match polar path’s validation and sorting
+    y_true, y_preds_quantiles = validate_yy(
+        y_true, y_preds_quantiles, allow_2d_pred=True
+    )
+
+    sort_idx = np.argsort(quantiles)
+    quantiles = np.asarray(quantiles)[sort_idx]
+    y_preds_quantiles = y_preds_quantiles[:, sort_idx]
+
+    # Compute pinball loss per quantile (same as polar path)
+    losses = []
+    for i in range(len(quantiles)):
+        loss = compute_pinball_loss(
+            y_true, y_preds_quantiles[:, i], quantiles[i]
+        )
+        losses.append(loss)
+
+    # Axes
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    # Colors (first color mirrors polar behavior)
+    colors_list = get_colors(
+        len(quantiles),
+        colors=colors,
+        cmap=cmap,
+        default="tab10",
+        failsafe="discrete",
+    )
+
+    # Plot: x = quantile in [0,1], y = average pinball loss
+    ax.plot(
+        quantiles, losses, "o-", label="Pinball Loss", color=colors_list[0]
+    )
+    ax.fill_between(quantiles, losses, 0.0, alpha=0.25, color=colors_list[0])
+
+    # Formatting
+    ax.set_title(title, fontsize=16)
+    ax.set_xlim(0.0, 1.0)
+    ax.set_xlabel("Quantile Level")
+    ax.set_ylabel("Average Pinball Loss (Lower is Better)")
+    if show_grid:
+        ax.grid(True, **(grid_props or {}))
+    else:
+        ax.grid(False)
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
+    return ax
+
+
 plot_pinball_loss.__doc__ = r"""
 Plots the Pinball Loss for each quantile of a forecast.
 
@@ -1438,6 +2078,20 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
+ax : Axes, optional
+    The Matplotlib Axes object to use for plotting. If ``None``,
+    a new figure and axes will be created.
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``) via internal helpers.
+    When set to ``'cartesian'``, the function *delegates* to a
+    Cartesian renderer (through ``maybe_delegate_cartesian``), keeping
+    names/colors/figsize/grid behavior consistent while ignoring polar-
+    only arguments (e.g., ``acov``, ``zero_at``, ``clockwise``). The
+    return value is always the ``Axes`` actually used. The value is
+    validated with ``validate_kind`` (case-insensitive); invalid values
+    raise ``ValueError("kind must be 'polar' or 'cartesian'.")``.
 
 Returns
 -------
@@ -1605,6 +2259,7 @@ def plot_regression_performance(
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
+    kind: str = "polar",
     ax: Axes | None = None,
 ):
     # --- Input Validation and Warnings ---
@@ -1749,6 +2404,30 @@ def plot_regression_performance(
         tick_vals = np.linspace(radial_min, radial_max, 5).tolist()
         tick_lbls = [f"{t:.2g}" for t in tick_vals]
 
+    # --- EARLY DELEGATION TO CARTESIAN ---
+    kind = validate_kind(kind)
+    cart_ax = maybe_delegate_cartesian(
+        kind,
+        _plot_regression_performance_cartesian,
+        names,
+        metric_names,
+        normalized,
+        tick_vals,
+        tick_lbls,
+        title=title,
+        figsize=figsize,
+        cmap=cmap,
+        colors=colors,
+        metric_labels=metric_labels,
+        show_grid=show_grid,
+        grid_props=grid_props,
+        savefig=savefig,
+        dpi=dpi,
+        ax=ax,
+    )
+    if cart_ax is not None:
+        return cart_ax
+
     # --- 3. Create the Polar Plot ---
 
     # Create/configure a polar Axes and get the span in radians
@@ -1866,6 +2545,90 @@ def plot_regression_performance(
     else:
         plt.show()
 
+    return ax
+
+
+def _plot_regression_performance_cartesian(
+    names: list[str],
+    metric_names: list[str],
+    normalized: dict[str, np.ndarray],
+    tick_vals: list[float],
+    tick_lbls: list[str],
+    *,
+    title: str = "Regression Model Performance",
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    colors: list[str] | None = None,
+    metric_labels: dict[str, str] | bool | list | None = None,
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+) -> Axes:
+    n_metrics = len(metric_names)
+    n_models = len(names)
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    # one color per model (consistent with polar path)
+    model_colors = get_colors(
+        n_models, colors=colors, cmap=cmap, default="viridis"
+    )
+
+    x = np.arange(n_metrics)
+    width = 0.8 / max(1, n_models)
+
+    for i, name in enumerate(names):
+        vals = np.array([normalized[m][i] for m in metric_names], dtype=float)
+        offset = (i - (n_models - 1) / 2.0) * width
+        ax.bar(
+            x + offset,
+            vals,
+            width=width,
+            color=model_colors[i],
+            alpha=0.7,
+            label=name,
+        )
+
+    # X tick labels (mirror polar’s metric_labels behavior)
+    if metric_labels is False or (
+        isinstance(metric_labels, list) and not metric_labels
+    ):
+        ax.set_xticklabels([])
+        ax.set_xticks(x)
+    elif isinstance(metric_labels, dict):
+        ax.set_xticks(x)
+        ax.set_xticklabels(
+            [metric_labels.get(m, m) for m in metric_names], fontsize=10
+        )
+    else:
+        ax.set_xticks(x)
+        ax.set_xticklabels(metric_names, fontsize=10)
+
+    # Y ticks/labels
+    ax.set_yticks(tick_vals)
+    ax.set_yticklabels(tick_lbls)
+
+    ax.set_title(title, fontsize=16)
+    ax.set_ylabel("Score")
+    ax.set_xlim(x[0] - 0.5, x[-1] + 0.5)
+    ax.legend(loc="upper right")
+
+    if show_grid:
+        ax.grid(True, **(grid_props or {}))
+    else:
+        ax.grid(False)
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
+    else:
+        plt.show()
     return ax
 
 
@@ -1989,6 +2752,17 @@ savefig : str, optional
     displayed interactively.
 dpi : int, default=300
     The resolution (dots per inch) for the saved figure.
+kind : {'polar', 'cartesian'}, default='polar'
+    Rendering mode selector. When set to ``'polar'`` (default), the
+    plot uses a Matplotlib polar projection and applies polar-specific
+    options (``acov``, ``zero_at``, ``clockwise``) via internal helpers.
+    When set to ``'cartesian'``, the function *delegates* to a
+    Cartesian renderer (through ``maybe_delegate_cartesian``), keeping
+    names/colors/figsize/grid behavior consistent while ignoring polar-
+    only arguments (e.g., ``acov``, ``zero_at``, ``clockwise``). The
+    return value is always the ``Axes`` actually used. The value is
+    validated with ``validate_kind`` (case-insensitive); invalid values
+    raise ``ValueError("kind must be 'polar' or 'cartesian'.")``.
 ax : Axes, optional
     The Matplotlib Axes object to use for plotting. If ``None``,
     a new figure and axes will be created.
