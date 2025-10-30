@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import io
@@ -8,8 +7,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from kdiagram.core.io import read_data, write_data
 import kdiagram.core.io as core_io
+from kdiagram.core.io import read_data, write_data
 
 
 def test_read_errors_policy_validation():
@@ -24,7 +23,7 @@ def test_read_filelike_without_format_warns_and_returns_empty():
     assert isinstance(out, pd.DataFrame) and out.empty
 
     with pytest.raises(ValueError):
-        read_data(buf, errors="raise")       # no format → raise
+        read_data(buf, errors="raise")  # no format → raise
 
 
 def test_read_csv_with_postprocess(tmp_path: Path):
@@ -34,7 +33,7 @@ def test_read_csv_with_postprocess(tmp_path: Path):
     df = read_data(
         p,
         index_col="g",
-        drop_na=["x", "y"],   # drop rows where x and y are both NA
+        drop_na=["x", "y"],  # drop rows where x and y are both NA
         fillna={"y": 0},
         sort_index=True,
     )
@@ -44,7 +43,9 @@ def test_read_csv_with_postprocess(tmp_path: Path):
     assert df.loc["b", "x"] == 1
 
 
-def test_read_html_first_concat_list_monkeypatched(monkeypatch, tmp_path: Path):
+def test_read_html_first_concat_list_monkeypatched(
+    monkeypatch, tmp_path: Path
+):
     # Stub pd.read_html to avoid lxml/bs4 install; return two tables
     def fake_read_html(source, **kwargs):
         t1 = pd.DataFrame({"a": [1]})
@@ -54,8 +55,10 @@ def test_read_html_first_concat_list_monkeypatched(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(pd, "read_html", fake_read_html, raising=True)
 
     p = tmp_path / "t.html"
-    p.write_text("<table><tr><th>a</th></tr><tr><td>1</td></tr></table>",
-                 encoding="utf-8")
+    p.write_text(
+        "<table><tr><th>a</th></tr><tr><td>1</td></tr></table>",
+        encoding="utf-8",
+    )
 
     df_first = read_data(p, html="first")
     assert isinstance(df_first, pd.DataFrame)
@@ -175,18 +178,24 @@ def test_storage_options_pass_through_writer(monkeypatch, tmp_path: Path):
     class FakeHandlers:
         def __init__(self):
             self._written = {}
+
         def writers(self, df):
             def _writer(dest: Path, **kwargs):
                 # ensure storage_options forwarded
                 assert kwargs.get("storage_options") == {"token": "X"}
                 # simulate writing
                 dest.write_text("ok", encoding="utf-8")
+
             return {".csv": _writer}
 
     fake = FakeHandlers()
-    monkeypatch.setattr(core_io, "PandasHeaders", None, raising=False)  # guard
+    monkeypatch.setattr(
+        core_io, "PandasHeaders", None, raising=False
+    )  # guard
     monkeypatch.setattr(core_io, "PandasDataHandlers", lambda: fake)
 
     p = tmp_path / "w.csv"
-    out = write_data(pd.DataFrame({"a": [1]}), p, storage_options={"token": "X"})
+    out = write_data(
+        pd.DataFrame({"a": [1]}), p, storage_options={"token": "X"}
+    )
     assert out == p and p.exists()

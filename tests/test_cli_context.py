@@ -1,11 +1,11 @@
-
 from __future__ import annotations
 
 from pathlib import Path
+
+import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
-import matplotlib
 
 # Headless backend for CI
 matplotlib.use("Agg")
@@ -38,11 +38,13 @@ def _expect_file(path: Path) -> None:
     assert path.exists() and path.stat().st_size > 0
 
 
-def test_plot_scatter_corr_cli(monkeypatch: pytest.MonkeyPatch,
-                               demo_csv_ctx: Path, tmp_path: Path) -> None:
+def test_plot_scatter_corr_cli(
+    monkeypatch: pytest.MonkeyPatch, demo_csv_ctx: Path, tmp_path: Path
+) -> None:
     # Mock the heavy plotting function at the CLI module level
     def fake_scatter_correlation(**kwargs):
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         if kwargs.get("show_identity_line", True):
             ax.plot([0, 1], [0, 1])
@@ -62,21 +64,29 @@ def test_plot_scatter_corr_cli(monkeypatch: pytest.MonkeyPatch,
         [
             "plot-scatter-corr",
             str(demo_csv_ctx),
-            "--actual-col", "actual",
-            "--pred-cols", "m1", "m2",
-            "--names", "M1", "M2",
+            "--actual-col",
+            "actual",
+            "--pred-cols",
+            "m1",
+            "m2",
+            "--names",
+            "M1",
+            "M2",
             "--show-identity-line",
-            "--savefig", str(out),
+            "--savefig",
+            str(out),
         ]
     )
     _expect_file(out)
 
 
-def test_plot_error_autocorr_cli_and_guard(monkeypatch: pytest.MonkeyPatch,
-                                           demo_csv_ctx: Path, tmp_path: Path):
+def test_plot_error_autocorr_cli_and_guard(
+    monkeypatch: pytest.MonkeyPatch, demo_csv_ctx: Path, tmp_path: Path
+):
     # Fake ACF plotter; just produce an image when savefig is passed
     def fake_error_acf(**kwargs):
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         sf = kwargs.get("savefig")
         if sf:
@@ -95,9 +105,12 @@ def test_plot_error_autocorr_cli_and_guard(monkeypatch: pytest.MonkeyPatch,
         [
             "plot-error-autocorr",
             str(demo_csv_ctx),
-            "--actual-col", "actual",
-            "--pred", "m1",           # exactly one
-            "--savefig", str(out),
+            "--actual-col",
+            "actual",
+            "--pred",
+            "m1",  # exactly one
+            "--savefig",
+            str(out),
         ]
     )
     _expect_file(out)
@@ -105,18 +118,27 @@ def test_plot_error_autocorr_cli_and_guard(monkeypatch: pytest.MonkeyPatch,
     # Guard path: two preds → SystemExit from CLI (pre-plot) check
     parser = build_parser()
     ns = parser.parse_args(
-        ["plot-error-autocorr", str(demo_csv_ctx),
-         "--actual-col", "actual", "--pred", "m1", "m2"]
+        [
+            "plot-error-autocorr",
+            str(demo_csv_ctx),
+            "--actual-col",
+            "actual",
+            "--pred",
+            "m1",
+            "m2",
+        ]
     )
     with pytest.raises(SystemExit):  # enforced in CLI layer
         ns.func(ns)
 
 
-def test_plot_error_dist_cli(monkeypatch: pytest.MonkeyPatch,
-                             demo_csv_ctx: Path, tmp_path: Path):
+def test_plot_error_dist_cli(
+    monkeypatch: pytest.MonkeyPatch, demo_csv_ctx: Path, tmp_path: Path
+):
     # plot_error_distribution returns an Axes; CLI handles saving the figure
     def fake_error_dist(**kwargs):
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         ax.hist([0, 1, 2])
         return ax
@@ -132,20 +154,26 @@ def test_plot_error_dist_cli(monkeypatch: pytest.MonkeyPatch,
         [
             "plot-error-dist",
             str(demo_csv_ctx),
-            "--actual-col", "actual",
-            "--pred-col", "m1",
-            "--bins", "20",
-            "--savefig", str(out),
+            "--actual-col",
+            "actual",
+            "--pred-col",
+            "m1",
+            "--bins",
+            "20",
+            "--savefig",
+            str(out),
         ]
     )
     _expect_file(out)
 
 
-def test_plot_error_pacf_cli(monkeypatch: pytest.MonkeyPatch,
-                             demo_csv_ctx: Path, tmp_path: Path):
+def test_plot_error_pacf_cli(
+    monkeypatch: pytest.MonkeyPatch, demo_csv_ctx: Path, tmp_path: Path
+):
     # Avoid statsmodels dependency by mocking the PACF plotter
     def fake_pacf(**kwargs):
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         sf = kwargs.get("savefig")
         if sf:
@@ -163,11 +191,14 @@ def test_plot_error_pacf_cli(monkeypatch: pytest.MonkeyPatch,
         [
             "plot-error-pacf",
             str(demo_csv_ctx),
-            "--actual-col", "actual",
-            "--pred-col", "m1",
-            "--lags", "24",
-            "--savefig", str(out),
+            "--actual-col",
+            "actual",
+            "--pred-col",
+            "m1",
+            "--lags",
+            "24",
+            "--savefig",
+            str(out),
         ]
     )
     _expect_file(out)
-

@@ -84,9 +84,9 @@ def test_anomaly_plots_smoke_and_return_type(plot_func, mixed_anomaly_data):
         savefig="temp_test_plot.png",
     )
 
-    assert isinstance(
-        ax, Axes
-    ), f"{plot_func.__name__} did not return a matplotlib Axes object."
+    assert isinstance(ax, Axes), (
+        f"{plot_func.__name__} did not return a matplotlib Axes object."
+    )
     assert ax.get_title() != "", f"{plot_func.__name__} did not set a title."
 
 
@@ -136,6 +136,6 @@ def test_anomaly_plots_empty_input(plot_func):
             q_up_col="q_up",
         )
 
-    assert (
-        ax is None
-    ), f"{plot_func.__name__} should return None for empty data."
+    assert ax is None, (
+        f"{plot_func.__name__} should return None for empty data."
+    )

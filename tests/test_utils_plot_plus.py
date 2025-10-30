@@ -1,18 +1,19 @@
-
 from __future__ import annotations
 
-from pathlib import Path
 import math
 import warnings
-import numpy as np
+from pathlib import Path
+
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.colors import Colormap
+import numpy as np
 import pytest
+from matplotlib.colors import Colormap
 
 import kdiagram.utils.plot as kplot
 
 matplotlib.use("Agg")  # headless for CI
+
 
 @pytest.fixture(autouse=True)
 def patch_get_cmap(monkeypatch):
@@ -22,6 +23,7 @@ def patch_get_cmap(monkeypatch):
     allow_none=False, error=None, failsafe='continuous', **kw) and uses
     modern Matplotlib APIs to avoid deprecation warnings.
     """
+
     def _resolve(name):
         # Allow passing an actual Colormap instance
         if isinstance(name, Colormap):
@@ -34,7 +36,14 @@ def patch_get_cmap(monkeypatch):
         except Exception:
             return None
 
-    def shim(name, default="viridis", allow_none=False, error=None, failsafe="continuous", **kw):
+    def shim(
+        name,
+        default="viridis",
+        allow_none=False,
+        error=None,
+        failsafe="continuous",
+        **kw,
+    ):
         if name is None and allow_none:
             return None
         cmap = _resolve(name)
@@ -46,35 +55,59 @@ def patch_get_cmap(monkeypatch):
     # Patch the symbol that utils.plot imported at import-time
     monkeypatch.setattr(kplot, "get_cmap", shim, raising=True)
 
+
 # --- grid & kind utilities -------------------------------------------------
+
 
 def test_set_axis_grid_toggles():
     fig, ax = plt.subplots()
     # on → gridlines exist and are visible
     kplot.set_axis_grid(ax, True, {"linestyle": "--", "alpha": 0.3})
-    assert any(gl.get_visible() for gl in ax.get_xgridlines() + ax.get_ygridlines())
+    assert any(
+        gl.get_visible() for gl in ax.get_xgridlines() + ax.get_ygridlines()
+    )
     # off → all gridlines hidden
     kplot.set_axis_grid(ax, False)
-    assert all(not gl.get_visible() for gl in ax.get_xgridlines() + ax.get_ygridlines())
+    assert all(
+        not gl.get_visible()
+        for gl in ax.get_xgridlines() + ax.get_ygridlines()
+    )
     plt.close(fig)
+
 
 def test_set_axis_grid_multi_axes():
     fig, axs = plt.subplots(1, 2)
     kplot.set_axis_grid(list(axs), True)
-    assert all(any(gl.get_visible() for gl in a.get_xgridlines() + a.get_ygridlines()) for a in axs)
+    assert all(
+        any(
+            gl.get_visible() for gl in a.get_xgridlines() + a.get_ygridlines()
+        )
+        for a in axs
+    )
     kplot.set_axis_grid(list(axs), False)
-    assert all(all(not gl.get_visible() for gl in a.get_xgridlines() + a.get_ygridlines()) for a in axs)
+    assert all(
+        all(
+            not gl.get_visible()
+            for gl in a.get_xgridlines() + a.get_ygridlines()
+        )
+        for a in axs
+    )
     plt.close(fig)
+
 
 def test_is_valid_kind_normalization_and_validation():
     assert kplot.is_valid_kind("LineChart") == "line"
     assert kplot.is_valid_kind("heat_map") == "heatmap"
-    assert kplot.is_valid_kind("box_plot", valid_kinds=["scatter", "box"]) == "box"
+    assert (
+        kplot.is_valid_kind("box_plot", valid_kinds=["scatter", "box"])
+        == "box"
+    )
     with pytest.raises(ValueError):
         kplot.is_valid_kind("spiderweb", valid_kinds=["line", "scatter"])
 
 
 # --- KDE prep / normalization (gaussian_kde mocked) ------------------------
+
 
 def test_prepare_data_for_kde_and_normalize(monkeypatch):
     # Fake gaussian_kde so SciPy isn't required
@@ -82,6 +115,7 @@ def test_prepare_data_for_kde_and_normalize(monkeypatch):
         def __init__(self, x, bw_method=None):
             self.x = np.asarray(x)
             self.bw = bw_method
+
         def __call__(self, grid):
             g = np.asarray(grid)
             # simple bell-ish curve for testing
@@ -106,6 +140,7 @@ def test_prepare_data_for_kde_and_normalize(monkeypatch):
 
 # --- histogram / simple axes helpers --------------------------------------
 
+
 def test_setup_axes_and_drawers(tmp_path: Path):
     ax = kplot.setup_plot_axes(title="Demo", x_label="X", y_label="Y")
     # add KDE line
@@ -113,7 +148,9 @@ def test_setup_axes_and_drawers(tmp_path: Path):
     y = np.sin(np.pi * x) ** 2
     kplot.add_kde_to_plot(x, y, ax, color="k", line_width=1.5)
     # add histogram
-    kplot.add_histogram_to_plot(np.random.randn(200), ax, bins=20, hist_color="gray")
+    kplot.add_histogram_to_plot(
+        np.random.randn(200), ax, bins=20, hist_color="gray"
+    )
     out = tmp_path / "axes_demo.png"
     ax.figure.savefig(out)
     assert out.exists() and out.stat().st_size > 0
@@ -121,6 +158,7 @@ def test_setup_axes_and_drawers(tmp_path: Path):
 
 
 # --- color sampling --------------------------------------------------------
+
 
 def test_sample_colors_listed_and_continuous():
     # listed palette (tab10) should cycle/spread when n > m
@@ -136,6 +174,7 @@ def test_sample_colors_listed_and_continuous():
 
 # --- polar axis tools ------------------------------------------------------
 
+
 def test_canonical_acov_and_resolve_span():
     assert kplot.canonical_acov("full") == "default"
     assert kplot.canonical_acov("Half-Circle") == "half_circle"
@@ -144,19 +183,26 @@ def test_canonical_acov_and_resolve_span():
     with pytest.raises(ValueError):
         kplot.canonical_acov("weird", raise_on_invalid=True)
 
+
 def test_setup_polar_axes_and_set_span_warnings():
-    fig, ax, span = kplot.setup_polar_axes(None, acov="half", zero_at="E", clockwise=False)
+    fig, ax, span = kplot.setup_polar_axes(
+        None, acov="half", zero_at="E", clockwise=False
+    )
     assert math.isclose(span, math.pi)
     # invalid zero_at → warns and falls back to 'N'
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
-        _, ax2, span2 = kplot.setup_polar_axes(None, acov="quarter", zero_at="X")
+        _, ax2, span2 = kplot.setup_polar_axes(
+            None, acov="quarter", zero_at="X"
+        )
         assert any("Fallback to 'N'" in str(w.message) for w in rec)
         assert math.isclose(span2, 0.5 * math.pi)
     # set span on existing polar axes
     s = kplot.set_polar_angular_span(ax, acov="eighth")
     assert math.isclose(s, 0.25 * math.pi)
-    plt.close(fig); plt.close(ax2.figure)
+    plt.close(fig)
+    plt.close(ax2.figure)
+
 
 def test_resolve_polar_axes_and_map_theta(tmp_path: Path):
     ax = kplot.resolve_polar_axes(acov="default", zero_at="N", clockwise=True)
@@ -169,10 +215,12 @@ def test_resolve_polar_axes_and_map_theta(tmp_path: Path):
     ax.figure.savefig(tmp_path / "polar.png")
     plt.close(ax.figure)
 
+
 def test_default_theta_ticks_and_acov_aliases():
     ticks, labels = kplot._default_theta_ticks(2 * math.pi)
     assert len(ticks) == 12 and labels[0] == "0°" and labels[-1] == "330°"
     assert math.isclose(kplot.acov_to_span("full"), 2 * math.pi)
+
 
 def test_fmt_pref_list_and_warn_preference(monkeypatch):
     # stable degrees for message
@@ -180,7 +228,12 @@ def test_fmt_pref_list_and_warn_preference(monkeypatch):
     assert "360°" in msg and "180°" in msg
 
     # columns_manager may coerce inputs; ensure it behaves in test
-    monkeypatch.setattr(kplot, "columns_manager", lambda x, **k: list(x) if isinstance(x, (list, tuple)) else [x], raising=True)
+    monkeypatch.setattr(
+        kplot,
+        "columns_manager",
+        lambda x, **k: list(x) if isinstance(x, (list, tuple)) else [x],
+        raising=True,
+    )
 
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
@@ -192,7 +245,10 @@ def test_fmt_pref_list_and_warn_preference(monkeypatch):
             advice="still OK.",
         )
         assert issued is True
-        assert any("Using acov='half_circle' (180°) for demo."[:18] in str(w.message) for w in rec)
+        assert any(
+            "Using acov='half_circle' (180°) for demo."[:18] in str(w.message)
+            for w in rec
+        )
 
     # No warning if matches preference
     with warnings.catch_warnings():
@@ -202,6 +258,7 @@ def test_fmt_pref_list_and_warn_preference(monkeypatch):
 
 
 # --- reliability axes helper ----------------------------------------------
+
 
 def test_setup_axes_for_reliability_variants():
     # ax is None + bottom panel
@@ -213,4 +270,5 @@ def test_setup_axes_for_reliability_variants():
     fig2, ax2 = plt.subplots()
     fig3, ax3, axb3 = kplot._setup_axes_for_reliability(ax2, "bottom", None)
     assert ax3 is ax2 and axb3 is not None
-    plt.close(fig2); plt.close(fig3)
+    plt.close(fig2)
+    plt.close(fig3)

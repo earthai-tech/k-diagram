@@ -34,7 +34,7 @@ def context_data():
     np.random.seed(0)
     n_samples = 100
 
-    #Construct the DatetimeIndex manually to avoid the internal
+    # Construct the DatetimeIndex manually to avoid the internal
     # pandas function that is being affected by test pollution.
     start_date = pd.Timestamp("2023-01-01")
     time_index = pd.to_datetime(
