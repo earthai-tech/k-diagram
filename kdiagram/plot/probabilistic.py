@@ -8,7 +8,8 @@ Probabilistic Forecast Evaluation Plots
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from collections.abc import Mapping, Sequence
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -770,6 +771,10 @@ def plot_credibility_bands(
     mask_radius: bool = False,
     savefig: str | None = None,
     dpi: int = 300,
+    theta_ticks: Sequence[float] | None = None,
+    theta_ticklabels: Sequence[str] | Mapping[int, str] | None = None,
+    zero_at: Literal["N", "E", "S", "W"] = "N",
+    clockwise: bool = True,
     ax: Axes | None = None,
     **fill_kws,
 ) -> Axes | None:
@@ -796,6 +801,8 @@ def plot_credibility_bands(
         ax,
         acov=acov,
         figsize=figsize,
+        zero_at=zero_at,
+        clockwise=clockwise,
     )
 
     # --- map theta to [0, span]
@@ -820,13 +827,13 @@ def plot_credibility_bands(
             data["theta_map"] = 0.0
 
     # --- binning along theta and mean stats per bin
-    theta_edges = np.linspace(0.0, float(span), int(theta_bins) + 1)
-    theta_labels = (theta_edges[:-1] + theta_edges[1:]) / 2.0
 
+    theta_edges = np.linspace(0.0, float(span), int(theta_bins) + 1)
+    theta_centers = (theta_edges[:-1] + theta_edges[1:]) / 2.0
     data["theta_bin"] = pd.cut(
         data["theta_map"],
         bins=theta_edges,
-        labels=theta_labels,
+        labels=theta_centers,
         include_lowest=True,
     )
 
@@ -868,6 +875,30 @@ def plot_credibility_bands(
         label="Credibility Band",
         **fill_kws,
     )
+
+    tick_pos = None
+    tick_lbls = None
+
+    if theta_ticks is not None:
+        tick_pos = np.asarray(theta_ticks, dtype=float)
+
+    if theta_ticklabels is not None:
+        if isinstance(theta_ticklabels, dict):
+            # map by bin index (0..theta_bins-1)
+            tick_pos = theta_centers if tick_pos is None else tick_pos
+            # build labels from mapping; fallback to str(index)
+            idx = np.arange(len(theta_centers))
+            tick_lbls = [theta_ticklabels.get(i, str(i)) for i in idx]
+        else:
+            tick_lbls = list(theta_ticklabels)
+
+    if tick_pos is None:
+        tick_pos = theta_centers
+
+    ax.set_xticks(tick_pos)
+
+    if tick_lbls is not None:
+        ax.set_xticklabels(tick_lbls)
 
     # --- formatting
     ax.set_title(title, fontsize=16, y=1.1)

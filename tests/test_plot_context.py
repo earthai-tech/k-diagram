@@ -30,12 +30,11 @@ plt.switch_backend("Agg")
 # state from leaking between them (test pollution).
 @pytest.fixture(scope="function")
 def context_data():
-    # ... rest of your fixture code
     """Provides a consistent DataFrame for all context plot tests."""
     np.random.seed(0)
     n_samples = 100
 
-    # FIX: Construct the DatetimeIndex manually to avoid the internal
+    # Construct the DatetimeIndex manually to avoid the internal
     # pandas function that is being affected by test pollution.
     start_date = pd.Timestamp("2023-01-01")
     time_index = pd.to_datetime(

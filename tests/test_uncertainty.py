@@ -134,9 +134,9 @@ def test_plot_coverage_single_model_quantile(sample_data_coverage, kind):
             figsize=(6, 6),
         )
 
-        assert (
-            len(plt.get_fignums()) > 0
-        ), f"Plot should be created for kind='{kind}'"
+        assert len(plt.get_fignums()) > 0, (
+            f"Plot should be created for kind='{kind}'"
+        )
 
     except Exception as e:
         pytest.fail(

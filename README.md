@@ -1,25 +1,32 @@
 <div align="center">
 
-  <!-- Centered Logo -->
-  <img src="docs/source/_static/k_diagram.svg" alt="k-diagram logo" width="300"><br>
-
-  <!-- Centered Title -->
+  <img src="https://raw.githubusercontent.com/earthai-tech/k-diagram/main/docs/source/_static/k_diagram.svg" alt="k-diagram logo" width="300"><br>
   <h1>Polar Diagnostics for Forecast Uncertainty</h1>
 
-  <!-- Centered Badges -->
-<p>
-    <a href="https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square"></a>
-    <a href="https://k-diagram.readthedocs.io/en/latest/?badge=latest"><img alt="Docs Status" src="https://readthedocs.org/projects/k-diagram/badge/?version=latest&style=flat-square"></a>
-    <a href="https://github.com/earthai-tech/k-diagram/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&color=purple"></a>
-    <a href="https://github.com/psf/ruff"><img alt="ruff" src="https://img.shields.io/badge/code%20style-ruff-000000.svg?style=flat-square"></a>
-    <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md"><img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square"></a>
-    <a href="https://codecov.io/gh/earthai-tech/k-diagram" ><img src="https://codecov.io/gh/earthai-tech/k-diagram/branch/main/graph/badge.svg?token=4I4C9P46RQ"/></a>
-  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/earthai-tech/k-diagram">
-  <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/k-diagram">
-
-  </p>
+<p align="center">
+    <a href="https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml">
+        <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square">
+    </a>
+    <a href="https://k-diagram.readthedocs.io/en/latest/">
+        <img alt="Docs Status" src="https://img.shields.io/readthedocs/k-diagram?style=flat-square">
+    </a>
+    <a href="https://github.com/earthai-tech/k-diagram/blob/main/LICENSE">
+        <img alt="License" src="https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&color=purple">
+    </a>
+    <a href="https://github.com/psf/black">
+        <img alt="Black" src="https://img.shields.io/badge/code%20style-Black-000000.svg?style=flat-square">
+    </a>
+    <a href="https://github.com/earthai-tech/k-diagram/blob/main/CONTRIBUTING.md">
+        <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square">
+    </a>
+    <a href="https://codecov.io/gh/earthai-tech/k-diagram">
+        <img alt="Codecov" src="https://codecov.io/gh/earthai-tech/k-diagram/branch/main/graph/badge.svg">
+    </a>
+    <a href="https://github.com/earthai-tech/k-diagram/releases/latest">
+        <img alt="GitHub Release" src="https://img.shields.io/github/v/release/earthai-tech/k-diagram">
+    </a>
+</p>
   
-  <!-- Centered Introduction -->
   <p>
     <em>k-diagram</em> provides polar diagnostic plots to evaluate
     forecast models with an emphasis on uncertainty. It helps you look
@@ -128,11 +135,11 @@ kd.plot_uncertainty_drift(
 ```
 
 <p align="center">
-    <img
-    src="docs/source/_static/readme_uncertainty_drift_plot.png"
+  <img
+    src="https://raw.githubusercontent.com/earthai-tech/k-diagram/main/docs/source/_static/readme_uncertainty_drift_plot.png"
     alt="Uncertainty Drift Plot"
     width="500"
-    />
+  />
 </p>
 
 -----

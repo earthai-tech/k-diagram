@@ -169,18 +169,27 @@ def _get_valid_kwargs(
     Filter kwargs to what the callable accepts. If the callable
     accepts **kwargs (VAR_KEYWORD), return kwargs unchanged.
     """
-    # If the callable_obj is an instance, use its class for sig
-    if not inspect.isclass(callable_obj) and not callable(callable_obj):
-        callable_obj = callable_obj.__class__
+    # In python 3.9 --> 3.12 :
+    #     # If the callable_obj is an instance, use its class for sig
+    #     if not inspect.isclass(callable_obj) and not callable(callable_obj):
+    #         callable_obj = callable_obj.__class__
 
-    try:
-        sig = inspect.signature(callable_obj)
-    except ValueError:
+    # 1) Non-callable instance: do NOT reinterpret as its class.
+    #    Return {} to keep behavior stable across Python versions.
+    if not inspect.isclass(callable_obj) and not callable(callable_obj):
         msg = "Unable to inspect callable signature; passing no kwargs."
         _handle_error(msg, error, stacklevel=2)
         return {}
 
-    # If function accepts **kwargs, don't filter
+    # 2) Inspect signature; handle cross-version exceptions.
+    try:
+        sig = inspect.signature(callable_obj)
+    except (ValueError, TypeError):
+        msg = "Unable to inspect callable signature; passing no kwargs."
+        _handle_error(msg, error, stacklevel=2)
+        return {}
+
+    # 3) If function accepts **kwargs, don't filter.
     if any(
         p.kind == inspect.Parameter.VAR_KEYWORD
         for p in sig.parameters.values()

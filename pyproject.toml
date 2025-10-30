@@ -100,21 +100,23 @@ markers = [
 source = ["kdiagram"]
 branch = true
 parallel = true
+
 omit = [
-    "kdiagram/__init__.py",             # Only re-exports the public API
-    "kdiagram/__main__.py", 
-    "kdiagram/datasets/_property.py",   # Internal dataset helpers
-                                        # Difficult to unit test reliably 
-    "kdiagram/cli/_utils.py",           # Tested via integration, not unit coverage
-    "kdiagram/cli/plot_context_corr.py",
-    "kdiagram/cli/plot_context_err.py", 
-    "kdiagram/core/_io_utils.py",
-    "kdiagram/core/io.py",
-    "kdiagram/utils/plot.py",           # Skip plot helpers
-    "kdiagram/compat/*",                # Handles external library version differences
-    "kdiagram/utils/deps.py",           # Handles optional dependencies
-    "kdiagram/utils/_deps.py",          # Handles optional dependencies
-    "examples/cas/scripts/*.py"         # skip CAS examples only for paper reproducibility
+  # Pure package/entry glue — no executable logic to unit test:
+  "kdiagram/__init__.py",              # re-exports only
+  "kdiagram/__main__.py",              # thin CLI bootstrap
+
+  # Environment/compat shims (behavior is exercised indirectly through tests,
+  # but lines vary by Matplotlib/pandas versions and platform):
+  "kdiagram/compat/**",
+
+  # Optional dependency probing; exercised via import paths and
+  # intentionally environment-dependent:
+  "kdiagram/utils/deps.py",
+  "kdiagram/utils/_deps.py",
+
+  # Non-library material:
+  "examples/**",
 ]
 
 [tool.coverage.report]
@@ -122,18 +124,6 @@ show_missing = true
 skip_covered = false
 precision = 1
 
-omit = [
-  "kdiagram/cli/_utils.py",
-  "kdiagram/cli/plot_context_corr.py",
-  "kdiagram/cli/plot_context_err.py", 
-  "kdiagram/core/_io_utils.py",
-  "kdiagram/core/io.py",
-  "kdiagram/utils/plot.py",
-  "kdiagram/compat/**",
-  "kdiagram/utils/deps.py",
-  "kdiagram/utils/_deps.py",
-  "examples/cas/scripts/*.py"
-]
 exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",

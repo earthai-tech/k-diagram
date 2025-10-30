@@ -3,6 +3,7 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10" 
+
 python:
   install:
     - method: pip
@@ -10,6 +11,7 @@ python:
       # extra_requirements:
       #  - docs
     - requirements: docs/requirements.txt
+
 sphinx:
   configuration: docs/source/conf.py
   fail_on_warning: false

@@ -15,7 +15,34 @@ discriminative power, and understand their behavior, especially on
 imbalanced datasets.
 
 .. note::
-   You need to run the code snippets locally to generate the plot
+   **Polar vs. Cartesian rendering (``kind``)**
+   
+   Many evaluation plots accept ``kind={'polar','cartesian'}``
+   (default is ``'polar'`` unless stated otherwise). When
+   ``kind='cartesian'``, the function **delegates** to a Cartesian
+   renderer while preserving common styling (``figsize``, ``colors``,
+   ``show_grid``). Polar-only options (e.g., ``acov``, ``zero_at``,
+   ``clockwise``) are ignored in Cartesian mode. The return value is
+   always the actual ``Axes`` used.
+
+   *Use Cartesian* when you want the conventional reading for ROC/PR and
+   classification plots (FPR/TPR on x/y, Precision/Recall on y/x,
+   grouped bars). *Use Polar* when you want compact overviews, periodic
+   angles, or comparative radial layouts. For ROC/PR in polar, a
+   quarter-circle is used for readability. See the example below.
+   
+   .. code-block:: python
+
+      # Delegates to Cartesian
+      ax = kd.plot_polar_pr_curve(y_true, y_pred1, y_pred2,
+                                  names=['A', 'B'],
+                                  kind='cartesian')
+
+      # Polar with angular coverage controls
+      ax = kd.plot_polar_confusion_matrix(y_true, y_pred,
+                                          kind='polar', acov='default')
+                           
+   Furthermore, you need to run the code snippets locally to generate the plot
    images referenced below. Ensure the image paths in the
    ``.. image::`` directives match where you save the plots.
 

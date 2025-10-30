@@ -1,9 +1,6 @@
-# File: kdiagram/datasets/load.py
 # Author: LKouadio <etanoyau@gmail.com>
-# License: Apache License 2.0 (see LICENSE file)
-# -------------------------------------------------------------------
-# Provides API functions for loading datasets formatted for k-diagram.
-# -------------------------------------------------------------------
+# License: Apache License 2.0
+
 """
 Dataset Loading and Generation Utilities (:mod:`kdiagram.datasets.load`)
 ==========================================================================
