@@ -109,8 +109,8 @@ visualizing coverage, the magnitude of anomalous failures, and the
 temporal consistency of interval widths. Furthermore, the package
 introduces innovative methods for visualizing **error distributions**,
 such as polar error bands to separate systemic bias from random
-error, and polar violins—a novel adaptation of the traditional violin
-plot [@Hintze1998] to compare the full error profiles of multiple
+error, and polar violins, a novel adaptation of the traditional violin
+plot [@Hintze1998], to compare the full error profiles of multiple
 models. For a complete assessment of the predictive distribution, a
 dedicated suite of **probabilistic diagnostics** offers Polar 
 Probability Integral Transform Histograms for calibration, 
@@ -247,7 +247,7 @@ The increasing height of the bars from 2023 to 2026 provides an immediate
 and intuitive confirmation that the model's uncertainty grows as it forecasts 
 further into the future.
 
-![Figure 2: Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Model Error Distributions: The radial axis represents the error value, with the dashed circle indicating zero error. The width of each violin shows the density of errors, revealing that the "Good Model" is unbiased and consistent, the "Biased Model" consistently under-predicts, and the "Inconsistent Model" has high variance. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
+![Model performance evaluation. (a) Coverage Evaluation: radial plot comparing empirical coverage against nominal quantile levels (average coverage = 0.811). (b) Model Error Distributions: The radial axis represents the error value, with the dashed circle indicating zero error. The width of each violin shows the density of errors, revealing that the "Good Model" is unbiased and consistent, the "Biased Model" consistently under-predicts, and the "Inconsistent Model" has high variance. (c) Forecast Horizon Drift: radial bar chart of uncertainty width (Q90–Q10) for forecast years 2023–2026, illustrating increasing prediction uncertainty.\label{fig2:performance}](docs/source/_static/paper_fig2.png)
 
 These visualization methods were developed alongside research applying 
 advanced deep learning models, such as physics-informed deep learning[^1], 
