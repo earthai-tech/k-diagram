@@ -29,10 +29,8 @@ imbalanced datasets.
    classification plots (FPR/TPR on x/y, Precision/Recall on y/x,
    grouped bars). *Use Polar* when you want compact overviews, periodic
    angles, or comparative radial layouts. For ROC/PR in polar, a
-   quarter-circle is used for readability.
-
-   **Examples**
-
+   quarter-circle is used for readability. See the example below.
+   
    .. code-block:: python
 
       # Delegates to Cartesian
@@ -43,9 +41,7 @@ imbalanced datasets.
       # Polar with angular coverage controls
       ax = kd.plot_polar_confusion_matrix(y_true, y_pred,
                                           kind='polar', acov='default')
-   Invalid values are rejected with:
-   ``ValueError("kind must be 'polar' or 'cartesian'.")``
-                                          
+                           
    Furthermore, you need to run the code snippets locally to generate the plot
    images referenced below. Ensure the image paths in the
    ``.. image::`` directives match where you save the plots.
