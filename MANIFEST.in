@@ -3,26 +3,26 @@
 # Include essential root files
 include LICENSE
 include README.md
-# include CITATION.cff  # Uncomment if you add this file
-# include pyproject.toml # Uncomment if you use it
+# include CITATION.cff  
+include pyproject.toml 
 include MANIFEST.in
 include setup.py
-# include setup.cfg     # Uncomment if you use this file
+# include setup.cfg     
 
 # --- Include files needed for PyPI description (README rendering) ---
 # Include everything in the _static directory (contains logo)
 recursive-include docs/source/_static *
-# Include specific images referenced in README.md (assuming naming convention)
+# Include specific images referenced in README.md 
 # This looks for files like 'readme_*.png' directly inside 'docs/source/images/'
-include docs/source/images/readme_*.png
+# include docs/source/images/readme_*.png
 
-# --- Include documentation source files (for building docs from sdist) ---
+# --- Include documentation source files  ---
 recursive-include docs/source *.rst
 recursive-include docs/source *.py
 # Note: _static is already included above
 recursive-include docs/source/_templates *
-# Optional: Include ALL gallery source images? (Uncomment if needed)
-# recursive-include docs/source/gallery/images *
+recursive-exclude docs/source/images *
+
 include docs/Makefile
 include docs/make.bat
 include docs/requirements.txt # Include requirements needed to build docs
@@ -48,8 +48,8 @@ exclude .pytest_cache
 # Exclude development / CI / environment files
 exclude .gitignore
 exclude .gitattributes
-# exclude .readthedocs.yml # Usually okay to include for context
-# exclude environment.yml  # Usually okay to include for context
+# exclude .readthedocs.yml
+# exclude environment.yml  
 recursive-exclude .github *
 
 # Exclude common virtual environment directories
@@ -72,3 +72,7 @@ recursive-exclude docs/_build *
 # Prune empty directories resulting from exclusions
 prune docs/_build
 # prune tests/__pycache__ # Example
+
+# remove the JOSS paper artefact 
+# exclude paper.md
+# exclude paper.bib
