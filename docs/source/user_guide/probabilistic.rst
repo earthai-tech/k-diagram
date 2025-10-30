@@ -761,13 +761,16 @@ designed to diagnose this exact behavior.
       ... })
       >>>
       >>> # --- 2. Generate the plot ---
-      >>> ax = kd.plot_credibility_bands(
-      ...     df,
-      ...     q_cols=('q10_sales', 'q50_sales', 'q90_sales'),
-      ...     theta_col='day_of_week',
-      ...     theta_period=7,
-      ...     theta_bins=7,
-      ...     title='Daily Sales Forecast Uncertainty by Day of Week'
+      >>> ax = plot_credibility_bands(
+      ...    df,
+      ...    q_cols=('q10_sales','q50_sales','q90_sales'),
+      ...    theta_col='day_of_week',
+      ...    theta_period=7,
+      ...    theta_bins=7,
+      ...    theta_ticklabels=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      ...    zero_at='E',        # put Monday at 0° on the right (optional)
+      ...    clockwise=True,     # or False, depending on preference
+      ...    title='Daily Sales Forecast Uncertainty by Day of Week',
       ... )
 
    .. figure:: ../images/userguide_plot_credibility_bands.png
