@@ -1,5 +1,5 @@
 # Author: LKouadio <etanoyau@gmail.com>
-# License: Apache License 2.0 
+# License: Apache License 2.0
 
 """
 Dataset Loading and Generation Utilities (:mod:`kdiagram.datasets.load`)

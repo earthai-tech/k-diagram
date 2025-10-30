@@ -169,11 +169,11 @@ def _get_valid_kwargs(
     Filter kwargs to what the callable accepts. If the callable
     accepts **kwargs (VAR_KEYWORD), return kwargs unchanged.
     """
-    # In python 3.9 --> 3.12 : 
+    # In python 3.9 --> 3.12 :
     #     # If the callable_obj is an instance, use its class for sig
     #     if not inspect.isclass(callable_obj) and not callable(callable_obj):
     #         callable_obj = callable_obj.__class__
-    
+
     # 1) Non-callable instance: do NOT reinterpret as its class.
     #    Return {} to keep behavior stable across Python versions.
     if not inspect.isclass(callable_obj) and not callable(callable_obj):

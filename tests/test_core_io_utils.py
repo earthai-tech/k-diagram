@@ -5,6 +5,7 @@ import types
 import warnings
 from pathlib import Path
 from types import SimpleNamespace
+
 import pandas as pd
 import pytest
 
@@ -60,10 +61,12 @@ def test_get_valid_kwargs_filters_and_kwargs_passthrough():
             for w in rec
         )
 
+
 def test_non_callable_instance_drops_kwargs_warns():
     ns = SimpleNamespace()  # not callable
     out = _get_valid_kwargs(ns, {"x": 1}, error="ignore")
     assert out == {}
+
 
 def test_post_process_fill_drop_index_sort():
     df = pd.DataFrame(

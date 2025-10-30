@@ -631,8 +631,7 @@ CAS Score (from DataFrame): 0.2222
 
 
 def _rolling_kernel(
-    a: np.ndarray, w: int, kernel: str, 
-    eps: float=1e-12
+    a: np.ndarray, w: int, kernel: str, eps: float = 1e-12
 ) -> np.ndarray:
     w = int(max(1, w))
     if kernel == "box":
