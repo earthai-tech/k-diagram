@@ -138,11 +138,7 @@ where polar plots in `kdiagram.plot.relationship` offer a novel
 perspective on the correlation between true and predicted values by
 mapping them to angle and radius. All functionalities are supported by
 a set of helper utilities and a command-line interface for
-generating key plots directly from data files. The entire package is
-designed for ease of use, allowing users to control plot aesthetics,
-angular coverage (`acov`), and color mapping to tailor the
-visualizations for their specific domain. We next summarize the design 
-choices that make these plots composable and testable.
+generating key plots directly from data files. 
 
 # Software Engineering
 
@@ -169,7 +165,7 @@ object. That purity makes the code easy to test: transforms and validators
 are unit-tested directly, while rendering is exercised with headless smoke 
 tests that assert on ticks, labels, and returned objects rather than pixel 
 hashes. The CLI wraps the same public API, so command-line workflows and 
-Python sessions produce identical figures.  In the following, we outline the 
+Python sessions produce identical figures. The next section outlines the 
 API conventions and extension points that guide usage and contributions.
 
 # API Conventions and Extensibility
@@ -180,15 +176,19 @@ with explicit column selectors (for example, `q_cols=('q10','q50','q90')`,
 convenient; the function chooses the least surprising path and validates 
 shapes early. Polar grammar is explicit: angular coverage is controlled by 
 `acov`, orientation by `zero_at` and `clockwise`, and periodic contexts can 
-label angles meaningfully via `theta_ticks` and `theta_ticklabels` 
-(e.g., weekdays instead of degrees). Every call returns a Matplotlib `Axes`, 
-enabling the usual compositional workflow—annotate, combine subplots, or 
-`savefig`—with no special wrappers.
+label angles meaningfully via `theta_ticks`, `theta_ticklabels` 
+(e.g., weekdays instead of degrees), and color mapping to tailor the
+visualizations for their specific domain. The entire package is
+designed for ease of use, allowing users to control plot aesthetics. 
+Every call returns a Matplotlib `Axes`, enabling the usual compositional 
+workflow—annotate, combine subplots, or `savefig`—with no special wrappers.
 
-Where the community convention is Cartesian 
-(ROC/PR curves, classification summaries), the same functions offer 
-`kind="cartesian"|"polar"`; the default is Cartesian and the polar 
-view is an optional alternative when cyclic or directional comparisons help. 
+Where the community convention is Cartesian (ROC/PR curves, classification 
+summaries), the same functions accept `kind="polar"|"cartesian"`; the 
+default is polar for compact overviews and provides an optional alternative 
+when cyclic or directional comparisons are useful. A Cartesian variant is 
+available for standard axes and conventional readings.
+
 Adding a new diagnostic follows a consistent pattern: transform the input 
 into validated arrays or grouped summaries; lay out the coordinate system 
 (polar or Cartesian) using the shared helpers; and render with standard 
