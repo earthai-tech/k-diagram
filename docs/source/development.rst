@@ -74,7 +74,7 @@ The package is a small stack of composable layers:
   links a CLI command (e.g., ``k-diagram plot-anomalies``) directly to the 
   corresponding Python plotting function.
 
-``kdiagram.datasets``
+- ``kdiagram.datasets``
 
   This provides utilities for documentation and testing.
   ``load.py`` contains functions to load real-world sample data, such as
