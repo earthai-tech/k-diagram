@@ -311,7 +311,8 @@ profile for their trading strategy.
    **inconsistent**. Its wide shape indicates a high variance, meaning it
    is prone to making very large errors in both directions. For most
    applications, Model A would be the superior choice.
-
+   
+   
 .. raw:: html
 
    <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
@@ -382,11 +383,11 @@ Let's simulate two new models for our stock prediction task:
 
 .. raw:: html
 
-   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
-
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+   
 **Use Case 3: Reviewer-Inspired Overlay — a Two-Model Face-Off**
 
-.. topic:: The Story Behind ``mode="cbueth"``
+.. topic:: The Story Behind mode="cbueth"
    :class: hint
 
    This plot's default mode has a special origin. During the
@@ -473,7 +474,7 @@ reference is a dot at the center.
 
 .. raw:: html
 
-   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">margin: 30px 0;">
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
 
 **Use Case 4: Three-Model Split-Spokes — Outside Labels, Clean Plot**
 
@@ -533,12 +534,11 @@ continues to carry compact statistics.
 .. admonition:: Try it
    :class: tip
 
-   * Toggle outside labels by switching ``overlay`` between ``False`` and
-     ``"auto"``.
+   * Toggle outside labels by switching ``overlay`` between ``False`` and ``"auto"``.
    * Compare palettes with ``cmap="plasma"`` or pass custom ``colors=...``.
-   * Stress-test variance: increase ``scale`` for one model and observe
-     the radial extent and lobe widths grow.
-  
+   * Stress-test variance: increase ``scale`` for one model and observe the radial extent and lobe widths grow.
+
+
 .. raw:: html
 
    <hr style="border-top: 2px solid #ccc; margin: 40px 0;">

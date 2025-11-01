@@ -672,6 +672,97 @@ def calculate_calibration_error(
     return ks_statistic
 
 
+calculate_calibration_error.__doc__ = r"""
+Calculates the calibration error using the PIT and KS test.
+
+This function quantifies the **calibration** (or reliability) of a
+probabilistic forecast. It first computes the Probability Integral
+Transform (PIT) values for all observations and then uses the
+Kolmogorov-Smirnov (KS) test to measure how much the distribution
+of these PIT values deviates from a perfect uniform distribution.
+
+Parameters
+----------
+y_true : np.ndarray
+    1D array of observed (true) values.
+y_preds_quantiles : np.ndarray
+    2D array of quantile forecasts, with shape
+    ``(n_samples, n_quantiles)``.
+quantiles : np.ndarray
+    1D array of the quantile levels corresponding to the columns
+    of ``y_preds_quantiles``.
+
+Returns
+-------
+float
+    The Kolmogorov-Smirnov (KS) statistic, a value in [0, 1].
+    A score of 0 indicates perfect calibration (PIT values are
+    perfectly uniform), while a score of 1 indicates the
+    worst possible calibration.
+
+See Also
+--------
+compute_pit : The utility for calculating PIT values.
+plot_pit_histogram : The visual equivalent of this test.
+plot_calibration_sharpness : A plot that uses this metric as an axis.
+scipy.stats.kstest : The underlying statistical test used.
+
+Notes
+-----
+This function follows a two-step process:
+
+1.  **Calculate PIT Values**: It first computes the Probability
+    Integral Transform (PIT) values.
+    For a forecast given by :math:`M` quantiles, the PIT for a
+    single observation :math:`y_i` is the fraction of predicted
+    quantiles that are less than or equal to :math:`y_i`.
+
+    .. math::
+       \text{PIT}_i = \frac{1}{M} \sum_{j=1}^{M}
+       \mathbf{1}\{q_{i,j} \le y_i\}
+
+2.  **Kolmogorov-Smirnov Test**: For a perfectly calibrated
+    forecast, the resulting PIT values should be uniformly
+    distributed on [0, 1]. This
+    function uses the KS test (`scipy.stats.kstest`)
+    to measure the maximum distance between the empirical CDF
+    of the calculated PIT values and the CDF of a perfect uniform
+    distribution. This KS statistic is
+    returned as the calibration error score.
+
+If fewer than 2 data points are available after validation, the
+function returns a maximum error of 1.0.
+
+Examples
+--------
+>>> import numpy as np
+>>> from scipy.stats import norm
+>>> from kdiagram.utils.mathext import calculate_calibration_error
+>>>
+>>> np.random.seed(42)
+>>> n_samples = 500
+>>> y_true = np.random.normal(loc=10, scale=3, size=n_samples)
+>>> quantiles = np.linspace(0.05, 0.95, 19)
+>>>
+>>> # Well-calibrated forecast
+>>> preds_good = norm.ppf(quantiles, loc=y_true[:, np.newaxis], scale=3)
+>>> # Biased (miscalibrated) forecast
+>>> preds_bad = norm.ppf(quantiles, loc=y_true[:, np.newaxis] + 2, scale=3)
+>>>
+>>> err_good = calculate_calibration_error(y_true, preds_good, quantiles)
+>>> err_bad = calculate_calibration_error(y_true, preds_bad, quantiles)
+>>>
+>>> print(f"Good Model Calibration Error (KS): {err_good:.3f}")
+Good Model Calibration Error (KS): 0.034
+>>> print(f"Bad Model Calibration Error (KS): {err_bad:.3f}")
+Bad Model Calibration Error (KS): 0.284
+
+References
+----------
+.. footbibliography::
+"""
+
+
 def build_cdf_interpolator(
     y_preds_quantiles: np.ndarray,
     quantiles: np.ndarray,

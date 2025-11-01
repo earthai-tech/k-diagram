@@ -580,13 +580,17 @@ design changes:
     reference is a single point at the origin.
 2.  **Two-Lobe Design:** Each violin is split into two lobes around
     its central spoke:
+        
     * **Right Lobe:** Distribution of positive errors (:math:`E > 0`).
     * **Left Lobe:** Distribution of negative errors (:math:`E < 0`).
+    
 3.  **Interpretation:** This design makes key metrics instantly visible:
+    
     * **Bias:** An imbalance in the *size* of the two lobes
         (e.g., a larger right lobe means a positive bias).
     * **Skew:** Asymmetry *within* a single lobe.
     * **Variance:** The overall radial extent of the lobes.
+    
 4.  **Auto-Overlay:** As suggested, when only two models are
     plotted (``overlay='auto'``), they are drawn on top of
     each other with transparency for a direct, "face-off"

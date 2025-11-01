@@ -1494,3 +1494,225 @@ def _draw_angular_labels(
             va="center",
             fontsize=fs,
         )
+
+
+plot_fingerprint.__doc__ = r"""
+Create a flexible polar 'fingerprint' (radar) chart.
+
+This function is a versatile wrapper for creating feature importance
+fingerprints. It operates in two modes:
+
+1.  **Precomputed Mode** (``precomputed=True``):
+    It plots an existing importance matrix (as a ``pd.DataFrame``
+    or ``np.ndarray``), similar to
+    :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`.
+
+2.  **Computation Mode** (``precomputed=False``):
+    It computes the importance scores "on-the-fly" from a raw
+    ``pd.DataFrame``. This mode can calculate feature correlations
+    against a target (``method='abs_corr'``) or compute feature
+    variability (``method='std'``, ``'var'``, ``'mad'``). It can
+    also generate separate fingerprints for different groups using
+    the ``group_col`` parameter.
+
+Parameters
+----------
+importances : pd.DataFrame or np.ndarray
+    The input data.
+    
+    - If ``precomputed=True``, this is the (n_layers, n_features)
+      matrix of importance scores.
+    - If ``precomputed=False``, this is the raw ``pd.DataFrame``
+      containing features, target, and (optionally) group columns.
+
+precomputed : bool, default=True
+    Controls the function's behavior.
+    
+    - If ``True``, plots ``importances`` as a precomputed score matrix.
+    - If ``False``, computes scores from the ``importances`` DataFrame
+      using the specified ``method``.
+
+y_col : str, optional
+    The name of the target column (e.g., 'y_true') within the
+    ``importances`` DataFrame. Required when ``precomputed=False``
+    and ``method='abs_corr'``.
+
+group_col : str, optional
+    The name of a categorical column in the ``importances`` DataFrame
+    (e.g., 'model_name', 'year'). If provided (and
+    ``precomputed=False``), one 'fingerprint' polygon will be
+    generated for each unique group.
+
+method : {'abs_corr', 'std', 'var', 'mad'}, default='abs_corr'
+    The method used to compute importance scores when
+    ``precomputed=False``.
+    
+    - ``'abs_corr'``: Absolute Pearson correlation of each feature
+      with ``y_col``.
+    - ``'std'``: Standard deviation of each feature.
+    - ``'var'``: Variance of each feature.
+    - ``'mad'``: Median Absolute Deviation of each feature.
+
+features : list of str, optional
+    Names of the features.
+    
+    - If ``precomputed=False``, this is the list of columns to
+      compute importance for. If ``None``, all numeric columns
+      (excluding ``y_col`` and ``group_col``) are used.
+    - If ``precomputed=True`` and ``importances`` is an array,
+      these are used as the angular (feature) labels.
+
+labels : list of str, optional
+    Display names for the layers (polygons), used in the legend.
+    
+    - If ``precomputed=True``, this labels the rows of the matrix.
+    - If ``precomputed=False`` and ``group_col`` is provided, this
+      is ignored, and the unique group names are used as labels.
+
+normalize : bool, default=True
+    If ``True``, normalizes each layer (row) of the importance
+    matrix so that its maximum value is 1.0. This is useful for
+    comparing the *shape* of fingerprints, regardless of their
+    absolute scales.
+
+fill : bool, default=True
+    If ``True``, fills each polygon with a translucent color.
+
+cmap : str or list[Any], default='tab10'
+    Matplotlib colormap or a list of colors used to assign a
+    unique color to each layer (polygon).
+
+title : str, default='Feature Impact Fingerprint'
+    The title for the plot.
+
+figsize : tuple of (float, float), optional
+    The figure size in inches. If ``None``, defaults to ``(9, 6)``.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization (e.g., ``{'alpha': 0.45}``).
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+acov : str, default='full'
+    Angular coverage (span) of the plot. Note that this differs
+    from ``plot_feature_fingerprint``.
+    
+    - ``'full'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+
+ax : matplotlib.axes.Axes, optional
+    An existing polar axes to draw the plot on. If ``None``,
+    a new figure and axes are created.
+
+dpi : int, default=300
+    Resolution for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar fingerprint plot.
+
+See Also
+--------
+plot_feature_fingerprint : A simpler version of this plot that
+    only accepts precomputed importances.
+kdiagram.datasets.make_fingerprint_data : A function to
+    generate synthetic data for this plot.
+
+Notes
+-----
+
+This function provides a powerful, all-in-one interface for
+creating feature importance radar charts.
+
+**On-the-fly Computation (``precomputed=False``):**
+When ``precomputed=False``, the function automatically identifies
+feature columns from the ``importances`` DataFrame by selecting all
+numeric columns and excluding ``y_col`` and ``group_col``.
+It then calculates importance scores based on the ``method``:
+    
+- If ``method='abs_corr'``, it computes the absolute Pearson
+  correlation between each feature and the ``y_col``.
+- If ``method='std'``, ``'var'``, or ``'mad'``, it computes the
+  feature-wise statistic (target-independent).
+
+If ``group_col`` is provided, these statistics are computed
+separately for each subgroup, and each group is plotted as its
+own polygon.
+
+**Normalization (``normalize=True``):**
+Normalization is applied **row-wise** (per layer/group). Each
+row of the importance matrix :math:`M` is divided by its own
+maximum value as :math:`M_{norm}[i, :] = M[i, :] / \max(M[i, :])`.
+This scales all fingerprints to have a peak of 1.0, making it
+easier to compare their relative shapes.
+
+**Angular Labels:**
+
+This plot uses a helper function (``_draw_angular_labels``)
+to render feature names. Default
+angular ticks (``ax.set_xticks``) are hidden, and instead,
+text labels are drawn just outside the plot's radial limit
+(``r_out``). Labels are automatically
+rotated to remain upright and readable, with horizontal
+alignment (``ha``) adjusted to prevent overlap.
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot.feature_based import plot_fingerprint
+>>>
+>>> # Example 1: Plotting a precomputed DataFrame
+>>> importances_df = pd.DataFrame(
+...     {'feature_1': [1, 5], 'feature_2': [8, 2], 'feature_3': [4, 4]},
+...     index=['Model_A', 'Model_B']
+... )
+>>> ax1 = plot_fingerprint(
+...     importances_df,
+...     precomputed=True,
+...     title="Precomputed Feature Fingerprint",
+...     normalize=True
+... )
+>>>
+>>> # Example 2: Computing importance 'on-the-fly' with groups
+>>> np.random.seed(0)
+>>> N = 300
+>>> raw_df = pd.DataFrame({
+...     'temp': np.random.normal(20, 5, N),
+...     'humidity': np.random.normal(60, 10, N),
+...     'wind': np.random.normal(15, 5, N),
+...     'group': ['A'] * 100 + ['B'] * 100 + ['C'] * 100,
+... })
+>>> # Create a target that correlates differently for each group
+>>> raw_df['target'] = 0.0
+>>> raw_df.loc[raw_df['group'] == 'A', 'target'] = (
+...     raw_df['temp'] * 2 + np.random.randn(100)
+... )
+>>> raw_df.loc[raw_df['group'] == 'B', 'target'] = (
+...     raw_df['humidity'] * 5 + np.random.randn(100)
+... )
+>>> raw_df.loc[raw_df['group'] == 'C', 'target'] = (
+...     raw_df['wind'] * 3 + np.random.randn(100)
+... )
+>>>
+>>> ax2 = plot_fingerprint(
+...     raw_df,
+...     precomputed=False,
+...     y_col='target',
+...     group_col='group',
+...     method='abs_corr',
+...     features=['temp', 'humidity', 'wind'],
+...     title="Feature Correlation by Group"
+... )
+
+    
+"""

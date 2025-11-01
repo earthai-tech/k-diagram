@@ -109,14 +109,14 @@ Enhancements
   are placed. Your custom settings are now applied more reliably, and text 
   rotation works consistently.
 
-* |Enhancement| More Robust Feature Plots:
+* |Enhancement| More Feature Plots:
 
   - plot_feature_fingerprint is now better at handling its color palette 
     and arranging legends, especially when plots get crowded.
   - plot_feature_interaction handles missing data more gracefully and 
     features a more intuitive colorbar.
 
-* |Enhancement| Utility Polish: We tidied up some internal helper 
+* |Enhancement| Utility Polish. We tidied up some internal helper 
   functions to use the latest methods, getting rid of pesky deprecation 
   warnings and making our data scaler more stable.
   

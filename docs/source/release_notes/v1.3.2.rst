@@ -1,0 +1,173 @@
+.. _release_v1_3_2:
+
+----------------
+Version 1.3.2
+----------------
+
+*(Released: 2025-10-31)*
+
+This is a polish and feature-enhancement release focused on **flexible axis labeling**, 
+**new rendering modes**, and **standardized figure saving**. It introduces an 
+"annular" (curved) mode for feature interactions, a  new "cbueth" 
+(reviewer-inspired) mode for error violins, and a unified `kdiagram.savefig` 
+helper to streamline saving plots.
+
+This release addresses several sources of label overlap in circular plots and 
+strengthens the API for both polar and Cartesian plotting.
+
+New Features
+~~~~~~~~~~~~~
+
+* |Feature| **Figure Saving** (``kdiagram.savefig``):
+  A new, unified helper to save figures safely from either a ``Figure``,
+  an ``Axes``, or the *current* active Matplotlib figure.
+
+  - Creates parent folders as needed, expands ``~`` and env-vars, and
+    generates unique filenames (e.g., ``plot (1).png``) when ``overwrite=False``.
+  - Smart close control via ``close={"auto", True, False}``:
+    ``"auto"`` closes only when the helper auto-fetched the
+    current figure; explicit figures/axes are never closed unless
+    requested.
+  - Warns and returns ``None`` when no active figure exists and no
+    ``fig_or_ax`` is provided.
+
+* |Feature| **Curved Annular Mode for Feature Interaction**
+  (``mode="annular"`` in :func:`~kdiagram.plot.feature_based.plot_feature_interaction`):
+      
+  Bins are rendered as **curved annular sectors** (wedge bars) for an
+  elegant, non-rectangular polar heatmap. Ideal for presentations and
+  publications.
+
+  - New parameters: ``edgecolor``, ``linewidth`` to style annuli.
+  - New **generic tick controls** for *both* θ and r:
+    ``theta_ticks``, ``theta_ticklabels``, ``theta_tick_step``,
+    ``r_ticks``, ``r_ticklabels``, ``r_tick_step`` (accept sequences,
+    mappings, or callables for labels).
+
+* |Feature| **Reviewer-Inspired Polar Error Violins**
+  (``mode="cbueth"`` in :func:`~kdiagram.plot.errors.plot_error_violins`): A new
+  mode, named in honor of a JOSS reviewer, that provides superior
+  visual comparison.
+
+  - For 1-2 models (``overlay="auto"``), it creates a compact overlay
+    on a **single spoke** with transparency.
+  - For 3+ models, it uses split-spokes with model names placed
+    **outside the rim** to keep the plot interior clean.
+  - New parameters: ``bw_method`` (KDE smoothing), ``overlay``
+    (``True``/``False``/``"auto"``), ``overlay_angle``.
+  - When ``show_stats=True``, median & skew are cleanly added to the
+    **legend entry**, not on the plot itself.
+
+Enhancements
+~~~~~~~~~~~~
+
+* |Enhancement| **Smarter Outside-Rim Labeling:** Polar plots that
+  use split spokes, like ``plot_error_violins(mode="cbueth")``
+  and ``plot_model_drift``, now
+  place labels just **outside the rim** with adaptive headroom and
+  upright text, preventing label-data collisions.
+
+* |Enhancement| **Axes-first API for Coverage Plots**:
+  :func:`~kdiagram.plot.uncertainty.plot_coverage` now fully
+  honors an ``ax`` parameter (for all kinds, including ``"radar"``)
+  and provides a ``dpi`` argument for consistent saving.
+
+* |Enhancement| **Improved Error Violin Visuals:** The new
+  ``mode="cbueth"`` uses a central dot for the zero-error reference
+  (instead of a full circle) and has adaptive radial headroom to
+  ensure outside labels don’t clip.
+
+* |Enhancement| **Graceful Missing-Bin Handling:** Both ``basic`` and
+  ``annular`` modes of :func:`~kdiagram.plot.feature_based.plot_feature_interaction`
+  now reindex the aggregated data to the full (r × θ) grid,
+  preventing visual errors or jitter when some bins are empty.
+
+* |Enhancement| **Consistent Tick Mapping:** Polar tick placement now
+  correctly respects the selected angular span (``acov``) and the
+  ``theta_period`` or data min/max mapping, ensuring custom labels
+  line up with the correct data points after scaling.
+
+* |Enhancement| **Standardized Saving:** All plotting functions have
+  been updated to call the new ``kdiagram.savefig`` helper
+  internally, ensuring consistent save behavior, path handling, and
+  figure closing logic across the entire library.
+
+Bug Fixes
+~~~~~~~~~
+
+* |Fix| **Annular Edge Artifacts:** ``mode="annular"`` in ``plot_feature_interaction``
+  now defaults to ``edgecolor="none"`` and ``linewidth=0``,
+  eliminating black seams between wedges seen on some
+  Matplotlib backends.
+* |Fix| **Stray/Blank Figure Windows:** Centralized saving via
+  ``kdiagram.savefig`` resolves issues where calling a plot
+  function with a ``savefig`` path would sometimes show or save
+  an extra empty figure.
+* |Fix| **Polar Tick Label Order:** Fixed a bug where custom tick
+  labels could appear in the wrong order after the ``theta``-to-span
+  mapping was applied.
+* |Fix| **Overlapping Labels:** Resolved several cases where in-plot
+  statistics or tick labels (e.g., in `set_thetagrids`) would
+  overlap with data or the plot frame in polar layouts.
+* |Fix| **Windows Test Stability:** Time-index generation in tests
+  was updated to avoid platform-specific overflows.
+
+
+Documentation
+~~~~~~~~~~~~~
+
+* |Docs| **New How-to Guide:** Added a "How-to: Saving Figures Reliably"
+  guide covering ``kdiagram.savefig`` usage, the ``close="auto"``
+  behavior, and path handling.
+* |Docs| **Enriched Development Guide:** The ``development.rst`` guide
+  has been significantly expanded with narrative descriptions and
+  code-level citations for each architectural layer, API convention,
+  and testing strategy, making it a comprehensive guide for new
+  contributors.
+* |Docs| **Gallery Updates for Error Violins:** Added **Use Case 3
+  (Two-Model Overlay)** and **Use Case 4 (Three-Model Split-Spokes)**
+  to the error-violins gallery, demonstrating the new
+  ``mode="cbueth"`` with narrative, code, and interpretation.
+* |Docs| **Gallery Updates for Feature Interaction:** The feature
+  interaction guide now documents ``mode="annular"`` and the new
+  *generic tick API*, including examples with domain-aware ticks
+  (e.g., "Open 9:30").
+* |Docs| **Polar Labeling Tips:** Added guidance for readable outside-rim
+  labels and when to prefer ``fig.supylabel`` over axis-level labels
+  with tight bounding boxes.
+
+Testing & QA
+~~~~~~~~~~~~~~
+
+* |Tests| Added a new test suite for :func:`kdiagram.savefig`,
+  verifying its behavior with ``ax=None``, ``close="auto"``, and
+  directory-only paths.
+* |Tests| Added a new test suite for
+  ``plot_feature_interaction(mode="annular")``, validating
+  annular rendering and the new **generic tick controls**
+  (sequence, mapping, and callable).
+* |Tests| Added a new test suite for
+  ``plot_error_violins(mode="cbueth")``, checking overlay
+  behavior, outside label placement, and that stats correctly
+  appear in the legend.
+
+Backwards Compatibility Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **Default Error-Violin Mode:** The default for
+  :func:`~kdiagram.plot.errors.plot_error_violins` is now
+  **`mode="cbueth"`**. To reproduce legacy
+  visuals, you must explicitly set `mode="basic"`.
+* **Figure Saving**. If you were previously calling the internal
+  ``safe_savefig``, please switch to the public ``kdiagram.savefig``.
+* **Annular Rendering is Opt-in:** The `basic` (rectangular) polar
+  heatmap remains the default for
+  :func:`~kdiagram.plot.feature_based.plot_feature_interaction`.
+  You must set `mode="annular"` to use the new curved wedges.
+
+Acknowledgments
+~~~~~~~~~~~~~~~~ 
+
+Special thanks to the JOSS reviewers **C. Bueth** and **ChinniAbburi** for their 
+expertises, overlay and curved annular rendering suggestions that directly inspired
+``mode="cbueth"`` and ``mode="annular"``.

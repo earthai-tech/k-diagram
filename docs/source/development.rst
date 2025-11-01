@@ -162,9 +162,8 @@ Compatibility & Validation
 This layer is dedicated to making the package robust and easy to
 debug. We insulate the public API from upstream changes in Matplotlib,
 Pandas, or Scikit-learn by centralizing shims in the ``kdiagram.compat``
-module. This is
-where we provide safe, version-aware wrappers like ``get_cmap``
- or ``get_colors``,ensuring that our plots render consistently even as dependencies evolve.
+module. This is where we provide safe, version-aware wrappers like ``get_cmap``
+or ``get_colors``,ensuring that our plots render consistently even as dependencies evolve.
 
 Internally, we **prefer central validators and decorators** over ad-hoc
 checks scattered throughout the code. Plotting
@@ -192,11 +191,9 @@ Instead of creating an axis manually, a new plot function will almost
 always call ``setup_polar_axes``.
 This single helper is responsible for creating a new polar ``Axes`` (or
 using an existing one passed via the ``ax`` parameter) and correctly
-applying the ``acov``, ``zero_at``, and ``clockwise`` parameters
-. Immediately after,
+applying the ``acov``, ``zero_at``, and ``clockwise`` parameters. Immediately after,
 ``set_axis_grid`` is typically called to draw the grid lines and ticks
-in a standardized way.
-When a plot needs to map data (like time of day or a feature value) to
+in a standardized way. When a plot needs to map data (like time of day or a feature value) to
 an angular position, it uses ``map_theta_to_span``. This architecture cleanly
 **separates "what to draw" (the plot's specific logic) from "how to
 draw" (the boilerplate setup)**, making the code base much easier to
@@ -374,32 +371,25 @@ Documentation
 
 Documentation is built from two primary sources: the narrative guides
 (User Guide and Gallery) and the API reference, which is generated
-directly from **NumPy-style docstrings**
-.
+directly from **NumPy-style docstrings**.
 
 Every plot function's docstring is expected to be comprehensive,
 including a `Parameters` section, a `Returns` section (which is
 always an ``Axes``), a `Notes` section (often with LaTeX equations for
-the underlying math),
-a copy-pastable ``Examples`` block, and a ``References`` section
-using ``.. footbibliography::``.
+the underlying math), a copy-pastable ``Examples`` block, and a ``References`` 
+section using ``.. footbibliography::``.
 
 We strictly enforce **API consistency** to make the library
 predictable. All plot functions should use
 the following parameter names whenever possible:
 
 - **Data:** ``y_true``, ``y_pred``,
-  ``actual_col``, ``pred_col``,
-  ``q_cols``.
-- **Polar Grammar:** ``acov``, ``zero_at``, ``clockwise``
- .
+  ``actual_col``, ``pred_col``,``q_cols``.
+- **Polar Grammar:** ``acov``, ``zero_at``, ``clockwise``.
 - **Ticks:** ``theta_ticks``, ``theta_ticklabels``, ``theta_tick_step``,
-  ``r_ticks``, ``r_ticklabels``, ``r_tick_step``
- .
-- **Aesthetics:** ``cmap``, ``colors``, ``show_grid``, ``grid_props``
- .
-- **Integration:** ``figsize``, ``savefig``, ``dpi``, ``ax``
- .
+  ``r_ticks``, ``r_ticklabels``, ``r_tick_step``.
+- **Aesthetics:** ``cmap``, ``colors``, ``show_grid``, ``grid_props``.
+- **Integration:** ``figsize``, ``savefig``, ``dpi``, ``ax`` .
 - **Behavior:** ``kind`` (for polar/cartesian toggle)
   and ``mode`` (for different plot styles).
 
@@ -410,7 +400,7 @@ Performance Notes
 We prioritize performance by ensuring all data transformations are
 **vectorized with NumPy/Pandas** whenever possible, avoiding slow
 Python loops. For example, aggregation
-logic in plots like ``plot_feature_interaction`` relies on
+logic in plots like ``plot_feature_interaction`` relies on 
 ``pd.cut`` and ``groupby.agg``, and
 metric calculations in ``mathext.py`` use ``np.mean``,
 ``np.where``, and ``np.diff`` for efficient computation
@@ -419,8 +409,7 @@ handed to Matplotlib for rendering.
 
 Furthermore, the library is designed to be **stateless**.
 There is **no hidden global state**; each plotting function
-**depends only on its inputs and returns an ``Axes``**
-object.
+depends only on its inputs and returns an ``Axes`` **object**.
 This functional purity makes rendering fast and, just as
 importantly, makes our tests reliable and deterministic.
 
