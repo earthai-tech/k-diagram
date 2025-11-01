@@ -21,6 +21,8 @@ ACOV_DEG = {
     "eighth_circle": 45.0,
 }
 
+VIOLIN_MODE = "basic"
+
 
 def _is_polar(ax) -> bool:
     return getattr(ax, "name", None) == "polar"
@@ -146,6 +148,7 @@ def test_plot_error_violins_respects_acov_and_builds_violins(acov, deg):
         *["e1", "e2", "e3"],
         names=names,
         acov=acov,
+        mode=VIOLIN_MODE,
         show_grid=False,
     )
     assert ax is not None

@@ -491,13 +491,20 @@ can conspire to influence an outcome.
 
    <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
 
-**Use Case 1: Basic Interaction in Energy Production**
+
+**Use Case 1: Comparing Modes — Basic (Heatmap) vs. Annular (Wedges)**
 
 A classic application is modeling solar panel energy output. The output
-is not determined by the hour of the day or the cloud cover alone,
-but by the strong interaction between them. High output is only
-possible during daylight hours *and* when cloud cover is low. This plot
-makes that relationship immediately obvious.
+is not determined by the hour or cloud cover alone, but by their strong
+interaction. High output is only possible during daylight hours *and* when 
+cloud cover is low. These plots make that relationship immediately obvious.
+We can visualize this comparison using two different modes:
+the default heatmap (``mode='basic'``) and the discrete wedge view
+(``mode='annular'``).
+
+The :func:`~kdiagram.plot.feature_based.plot_feature_interaction`
+function integrates directly with Matplotlib, allowing us to pass an
+``ax`` object to place them side-by-side on a subplot.
 
 .. code-block:: python
    :linenos:
@@ -525,7 +532,16 @@ makes that relationship immediately obvious.
        'panel_output': output,
    })
 
-   # --- Plotting ---
+   # --- Create a 1x2 Subplot Figure ---
+   # Note: We must use subplot_kw to create polar axes
+   fig, (ax1, ax2) = plt.subplots(
+       1, 2,
+       figsize=(16, 8),
+       subplot_kw={'projection': 'polar'}
+   )
+   fig.suptitle('Solar Panel Output: Basic vs. Annular Mode', fontsize=18, y=1.05)
+
+   # --- Plot 1: Basic (default heatmap) ---
    kd.plot_feature_interaction(
        df=df_solar,
        theta_col='hour',
@@ -535,44 +551,95 @@ makes that relationship immediately obvious.
        theta_bins=24,
        r_bins=8,
        cmap='inferno',
-       title='Solar Panel Output by Hour and Cloud Cover',
-       savefig='gallery/images/plot_feature_interaction_solar.png',
+       title='(a) Basic Mode (Heatmap)',
+       ax=ax1  # Pass the first axis
    )
-   plt.close()
 
-.. figure:: ../images/feature_based/plot_feature_interaction_solar.png
+   # --- Plot 2: Annular (wedges) with Custom Ticks ---
+   kd.plot_feature_interaction(
+       df=df_solar,
+       theta_col='hour',
+       r_col='cloud_cover',
+       color_col='panel_output',
+       theta_period=24,
+       theta_bins=24,
+       r_bins=8,
+       cmap='inferno',
+       mode="annular",  # Use curved wedges
+       title='(b) Annular Mode (Wedges)',
+       # --- Custom, human-readable ticks ---
+       theta_ticks=[0, 6, 12, 18],
+       theta_ticklabels={0: "Midnight", 6: "6 AM", 12: "Noon", 18: "6 PM"},
+       r_ticks=[0, 0.5, 1.0],
+       r_ticklabels={0: "Clear Sky", 0.5: "Partial", 1.0: "Overcast"},
+       ax=ax2  # Pass the second axis
+   )
+
+   # --- Save the combined figure ---
+   #plt.tight_layout(pad=3.0)
+   kd.savefig('gallery/images/plot_feature_interaction_solar_comparison.png')
+   plt.close(fig)
+
+.. figure:: ../images/feature_based/plot_feature_interaction_solar_comparison.png
    :align: center
-   :width: 75%
-   :alt: Polar heatmap showing solar panel output.
+   :width: 95%
+   :alt: Side-by-side comparison of basic and annular polar heatmaps.
 
-   The interaction plot reveals a "hot spot" of high energy output
-   (yellow) during midday hours (top) and with low cloud cover (center).
+   A comparison of the (a) basic heatmap and (b) annular wedge plot
+   for the same solar panel data.
 
 .. topic:: 🧠 Analysis and Interpretation
    :class: hint
 
-   The plot presents a striking visual narrative of solar energy
-   generation. The most immediate feature is the stark day/night
-   divide, with the entire right hemisphere of the plot rendered in
-   black, confirming zero output between 6 PM and 6 AM regardless of
-   cloud conditions.
+   This side-by-side comparison highlights the strengths of each mode.
+   Both plots tell the same core story: a clear day/night divide (no
+   output from "6 PM" to "6 AM") and a "hot spot" of peak output
+   (bright yellow) centered at "Noon" and "Clear Sky" (the innermost
+   ring).
 
-   The "hot spot" of peak performance—a bright yellow core—is precisely
-   located at an angle of 180° (representing noon) and at the plot's
-   center (representing minimal cloud cover). From this peak, the
-   power output decays along two clear gradients:
+   * **Plot (a) Basic Mode:** This default mode uses a `pcolormesh`,
+     which creates a **smooth, interpolated heatmap**. The colors
+     blend between bins, which is excellent for visualizing gradual
+     transitions and the overall "shape" of the data gradient.
+     However, it relies on default angular ticks (0°, 90°, etc.),
+     which require mental translation (e.g., 90° is 6 AM).
+
+     The plot presents a striking visual narrative of solar energy
+     generation. The most immediate feature is the stark day/night
+     divide, with the entire right hemisphere of the plot rendered in
+     black, confirming zero output between 6 PM and 6 AM regardless of
+     cloud conditions.
+
+     The "hot spot" of peak performance—a bright yellow core—is precisely
+     located at an angle of 180° (representing noon) and at the plot's
+     center (representing minimal cloud cover). From this peak, the
+     power output decays along two clear gradients:
    
-   1. **Radially:** Moving outwards along the 180° line shows output
-      fading from yellow to purple, illustrating how increasing cloud
-      cover diminishes power, even at the sun's zenith.
-   2. **Angularly:** Following any concentric circle away from 180°
-      shows the color darkening, representing the natural decline in
-      solar intensity as the day progresses from noon towards dusk or
-      dawn.
+     1. **Radially:** Moving outwards along the 180° line shows output
+        fading from yellow to purple, illustrating how increasing cloud
+        cover diminishes power, even at the sun's zenith.
+     2. **Angularly:** Following any concentric circle away from 180°
+        shows the color darkening, representing the natural decline in
+        solar intensity as the day progresses from noon towards dusk or
+        dawn.
+      
+   * **Plot (b) Annular Mode:** This mode draws each bin as a
+     **discrete, hard-edged wedge**. This provides a clearer,
+     segmented view that emphasizes the binned nature of the
+     aggregation. Its true power is revealed when combined with
+     **custom tick labels**. The axes are no longer abstract angles
+     and radii but are labeled with intuitive, domain-specific
+     terms: "Noon", "6 PM", "Clear Sky", and "Overcast".
+
+   **Conclusion:** Use the **basic mode** for a smooth overview of
+   gradients. Use the **annular mode** when you want to emphasize the
+   discrete bins or when using custom tick labels to create a
+   highly readable, presentation-ready figure for a general audience.
 
 .. raw:: html
 
    <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+   
 
 **Use Case 2: Identifying Market Volatility**
 
@@ -648,7 +715,93 @@ lead to the most unpredictable pricing.
 
    <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
 
-**Use Case 3: Focused Analysis in Manufacturing**
+**Use Case 3: Annular Mode & Custom Domain Ticks**
+
+The "annular" mode renders each bin as a
+distinct curved wedge, which can be visually clearer than the default
+heatmap. More importantly, we use ``theta_ticks``,
+``theta_ticklabels``, ``r_ticks``, and ``r_ticklabels`` to map the raw
+data values (like ``hour=9.5`` or ``sentiment=-1.0``) to
+human-readable, domain-specific labels (like "Open 9:30" or
+"Bearish"). This makes the plot self-explanatory.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import pandas as pd
+   import numpy as np
+   import matplotlib.pyplot as plt
+
+   # --- Data Generation for Market Volatility ---
+   np.random.seed(42)
+   n_trades = 10000
+   trade_hour = np.random.uniform(9.5, 16, n_trades) # Trading hours
+   sentiment = np.random.uniform(-1, 1, n_trades)   # Sentiment score
+
+   # Volatility is highest at market open/close and during high sentiment
+   time_vol = 1 / ((trade_hour - 12.75)**2 + 0.5)
+   senti_vol = (sentiment + 1.1)**2
+   price_change = np.random.randn(n_trades) * time_vol * senti_vol
+
+   df_market = pd.DataFrame({
+       'hour': trade_hour,
+       'sentiment_score': sentiment,
+       'price_change_abs': np.abs(price_change)
+   })
+
+   # --- Plotting Volatility with Annular Mode & Custom Ticks ---
+   kd.plot_feature_interaction(
+       df=df_market,
+       theta_col='hour',
+       r_col='sentiment_score',
+       color_col='price_change_abs',
+       statistic='std', # Visualize standard deviation
+       theta_period=24, # Use 24 to scale hours correctly
+       theta_bins=16,
+       r_bins=10,
+       acov='half_circle', # Focus on the trading day
+       cmap='plasma',
+       title='Market Price Volatility by Hour and Sentiment',
+       mode="annular",  # Use curved wedges
+       theta_ticks=[9.5, 12.0, 16.0],
+       theta_ticklabels={9.5: "Open 9:30", 12.0: "Noon", 16.0: "Close 16:00"},
+       theta_tick_step=1.0, # 1 unit in your theta data space
+       r_ticks=[-1, -0.5, 0, 0.5, 1],
+       r_ticklabels={-1:"Bearish", 0:"Neutral", 1:"Bullish"},
+       savefig='gallery/images/plot_feature_interaction_volatility_mode_annular.png',
+   )
+   plt.close()
+
+.. figure:: ../images/feature_based/plot_feature_interaction_volatility_mode_annular.png
+   :align: center
+   :width: 75%
+   :alt: Annular polar plot with custom labels for market hours and sentiment.
+
+   The plot uses mode="annular" for clear bins and custom tick labels
+   like "Open 9:30", "Noon", "Bearish", and "Bullish" for readability.
+
+.. topic:: 🧠 Interpretation
+   :class: hint
+
+   This visualization is far more intuitive for a non-technical
+   audience. The ``mode="annular"`` renders bins as discrete sectors,
+   avoiding the interpolation of the default heatmap.
+
+   The key improvement comes from the custom tick labels. Instead of
+   interpreting ``theta=9.5``, the analyst immediately sees "Open 9:30".
+   Similarly, the radius is clearly marked "Bearish", "Neutral", and
+   "Bullish". The plot confirms the findings from Use Case 2: volatility
+   (yellow) peaks at the market "Open" and "Close". It adds a new,
+   clearer insight: this volatility is most pronounced when sentiment
+   is "Bullish" (the outermost ring).
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+   
+**Use Case 4: Focused Analysis in Manufacturing**
 
 Sometimes, a full 360° view is not necessary, especially when one
 feature is not cyclical. We can use the ``acov`` (angular coverage)

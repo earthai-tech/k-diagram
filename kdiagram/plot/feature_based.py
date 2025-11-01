@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any, Literal
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -14,6 +16,7 @@ from matplotlib.axes import Axes
 from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
+from ..utils.fs import savefig as safe_savefig
 from ..utils.handlers import columns_manager
 from ..utils.plot import (
     acov_to_span,
@@ -46,6 +49,104 @@ def plot_feature_interaction(
     theta_bins: int = 24,
     r_bins: int = 10,
     acov: Acov = "default",
+    mode: Literal["basic", "annular"] = "basic",
+    title: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
+    edgecolor: str = "none",
+    linewidth: float = 0.0,
+    theta_ticks: Sequence[float] | None = None,
+    theta_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
+    theta_tick_step: float | None = None,
+    r_ticks: Sequence[float] | None = None,
+    r_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
+    r_tick_step: float | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+):
+    mode = str(mode).lower()
+    if mode == "annular":
+        return _plot_feature_interaction_annular(
+            df=df,
+            theta_col=theta_col,
+            r_col=r_col,
+            color_col=color_col,
+            statistic=statistic,
+            theta_period=theta_period,
+            theta_bins=theta_bins,
+            r_bins=r_bins,
+            acov=acov,
+            title=title,
+            figsize=figsize,
+            cmap=cmap,
+            show_grid=show_grid,
+            grid_props=grid_props,
+            mask_radius=mask_radius,
+            savefig=savefig,
+            dpi=dpi,
+            ax=ax,
+            edgecolor=edgecolor,
+            linewidth=linewidth,
+            theta_ticks=theta_ticks,
+            theta_ticklabels=theta_ticklabels,
+            theta_tick_step=theta_tick_step,
+            r_ticks=r_ticks,
+            r_ticklabels=r_ticklabels,
+            r_tick_step=r_tick_step,
+        )
+
+    elif mode == "basic":
+        return _plot_feature_interaction_basic(
+            df=df,
+            theta_col=theta_col,
+            r_col=r_col,
+            color_col=color_col,
+            statistic=statistic,
+            theta_period=theta_period,
+            theta_bins=theta_bins,
+            r_bins=r_bins,
+            acov=acov,
+            title=title,
+            figsize=figsize,
+            cmap=cmap,
+            show_grid=show_grid,
+            grid_props=grid_props,
+            mask_radius=mask_radius,
+            savefig=savefig,
+            dpi=dpi,
+            ax=ax,
+            theta_ticks=theta_ticks,
+            theta_ticklabels=theta_ticklabels,
+            theta_tick_step=theta_tick_step,
+            r_ticks=r_ticks,
+            r_ticklabels=r_ticklabels,
+            r_tick_step=r_tick_step,
+        )
+    else:
+        raise ValueError(f"Unknown mode: {mode!r}")
+
+
+def _plot_feature_interaction_basic(
+    df: pd.DataFrame,
+    theta_col: str,
+    r_col: str,
+    color_col: str,
+    *,
+    statistic: str = "mean",
+    theta_period: float | None = None,
+    theta_bins: int = 24,
+    r_bins: int = 10,
+    acov: Acov = "default",
     title: str | None = None,
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
@@ -55,6 +156,18 @@ def plot_feature_interaction(
     savefig: str | None = None,
     dpi: int = 300,
     ax: Axes | None = None,
+    theta_ticks: Sequence[float] | None = None,
+    theta_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
+    theta_tick_step: float | None = None,
+    r_ticks: Sequence[float] | None = None,
+    r_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
+    r_tick_step: float | None = None,
 ):
     warn_acov_preference(
         acov,
@@ -156,6 +269,25 @@ def plot_feature_interaction(
     cmap_obj = get_cmap(cmap, default="viridis")
     ax.grid(False)  # background grid off; we'll add styled grid next
 
+    th_raw = data[theta_col].to_numpy()
+    tmin = float(data[theta_col].min())
+    tmax = float(data[theta_col].max())
+
+    if theta_period is not None:
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, theta_period=theta_period
+        )
+        data_min = None
+        data_max = None
+    else:
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, data_min=tmin, data_max=tmax
+        )
+        data_min = tmin
+        data_max = tmax
+
+    data["theta_mapped"] = th_scaled
+
     pcm = ax.pcolormesh(
         T,
         R,
@@ -180,21 +312,329 @@ def plot_feature_interaction(
     ax.set_xlabel(theta_col)
     ax.set_ylabel(r_col, labelpad=22)
 
+    # θ ticks: generate if step is given and no explicit ticks
+    if theta_ticks is None and theta_tick_step is not None:
+        if theta_period is not None:
+            start, stop = 0.0, float(theta_period)
+        else:
+            start, stop = data_min, data_max
+        theta_ticks = np.arange(start, stop + 1e-12, float(theta_tick_step))
+
+    if theta_ticks is not None:
+        _apply_theta_ticks_generic(
+            ax,
+            span=span,
+            theta_ticks=theta_ticks,
+            theta_ticklabels=theta_ticklabels,
+            theta_period=theta_period,
+            data_min=data_min,
+            data_max=data_max,
+        )
+
+    # r ticks: generate if step is given and no explicit ticks
+    if r_ticks is None and r_tick_step is not None:
+        rmin = float(data[r_col].min())
+        rmax = float(data[r_col].max())
+        r_ticks = np.arange(rmin, rmax + 1e-12, float(r_tick_step))
+
+    if r_ticks is not None:
+        _apply_r_ticks_generic(ax, r_ticks=r_ticks, r_ticklabels=r_ticklabels)
+
     # styled grid from shared utility
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
     if mask_radius:
         ax.set_yticklabels([])
 
-    # output
-    plt.tight_layout()
-    if savefig:
-        plt.savefig(savefig, dpi=dpi, bbox_inches="tight")
+    # saving
+    final = safe_savefig(
+        savefig,
+        fig,
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None:
         plt.close(fig)
     else:
+        fig.tight_layout()
         plt.show()
 
     return ax
+
+
+def _plot_feature_interaction_annular(
+    df: pd.DataFrame,
+    theta_col: str,
+    r_col: str,
+    color_col: str,
+    *,
+    statistic: str = "mean",
+    theta_period: float | None = None,
+    theta_bins: int = 24,
+    r_bins: int = 10,
+    acov: Acov = "default",
+    title: str | None = None,
+    figsize: tuple[float, float] = (8, 8),
+    cmap: str = "viridis",
+    show_grid: bool = True,
+    grid_props: dict[str, Any] | None = None,
+    mask_radius: bool = False,
+    savefig: str | None = None,
+    dpi: int = 300,
+    ax: Axes | None = None,
+    edgecolor: str = "none",
+    linewidth: float = 0.0,
+    theta_ticks: Sequence[float] | None = None,
+    theta_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
+    theta_tick_step: float | None = None,
+    r_ticks: Sequence[float] | None = None,
+    r_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
+    r_tick_step: float | None = None,
+) -> Axes | None:
+    """Curved annular rendering (reviewer mode).
+
+    Renders each (theta, r) bin as a curved annular sector (wedge) using
+    `ax.bar` on polar axes. Colors come from the aggregated statistic.
+    """
+    warn_acov_preference(
+        acov,
+        preferred="default",
+        plot_name="feature_interaction",
+        advice=(
+            "A full 360° span usually produces the most readable comparison; "
+            "proceeding with the requested span."
+        ),
+    )
+
+    # ---- validate & subset
+    required = [theta_col, r_col, color_col]
+    exist_features(df, features=required)
+    data = df[required].dropna().copy()
+    if data.empty:
+        warnings.warn(
+            "DataFrame is empty after dropping NaNs.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None
+
+    # ---- polar axes
+    fig, ax, span = setup_polar_axes(
+        ax,
+        acov=acov,
+        figsize=figsize,
+        zero_at="N",
+        clockwise=True,
+    )
+
+    # ---- map theta to [0, span]
+    th_raw = data[theta_col].to_numpy()
+    if theta_period is not None:
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, theta_period=theta_period
+        )
+    else:
+        tmin, tmax = (
+            float(data[theta_col].min()),
+            float(data[theta_col].max()),
+        )
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, data_min=tmin, data_max=tmax
+        )
+    data["theta_mapped"] = th_scaled
+
+    # ---- bin edges
+    theta_edges = np.linspace(0.0, span, theta_bins + 1)
+    r_min, r_max = float(data[r_col].min()), float(data[r_col].max())
+    r_edges = np.linspace(r_min, r_max, r_bins + 1)
+
+    # ---- assign bins
+    data["theta_bin"] = pd.cut(
+        data["theta_mapped"], bins=theta_edges, include_lowest=True
+    )
+    data["r_bin"] = pd.cut(data[r_col], bins=r_edges, include_lowest=True)
+
+    # ---- aggregate grid (r x theta)
+    agg = (
+        data.groupby(["r_bin", "theta_bin"], observed=False)[color_col]
+        .agg(statistic)
+        .reset_index()
+    )
+    grid = agg.pivot(index="r_bin", columns="theta_bin", values=color_col)
+
+    # Complete missing bins to fixed shape
+    if grid.shape != (r_bins, theta_bins):
+        grid = grid.reindex(
+            index=pd.IntervalIndex.from_breaks(r_edges, closed="right"),
+            columns=pd.IntervalIndex.from_breaks(theta_edges, closed="right"),
+        )
+
+    Z = grid.to_numpy()  # may contain NaNs
+
+    # ---- colors (shared norm for colorbar)
+    cmap_obj = get_cmap(cmap, default="viridis")
+    vmin = np.nanmin(Z) if np.isfinite(Z).any() else 0.0
+    vmax = np.nanmax(Z) if np.isfinite(Z).any() else 1.0
+    norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+    sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap_obj)
+
+    # ---- draw curved wedges via polar bars
+    ax.grid(False)  # custom grid later
+    theta_centers = 0.5 * (theta_edges[:-1] + theta_edges[1:])
+    theta_widths = np.diff(theta_edges)
+    r_bottoms = r_edges[:-1]
+    r_heights = np.diff(r_edges)
+
+    th_raw = data[theta_col].to_numpy()
+    tmin = float(data[theta_col].min())
+    tmax = float(data[theta_col].max())
+
+    if theta_period is not None:
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, theta_period=theta_period
+        )
+        data_min = None
+        data_max = None
+    else:
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, data_min=tmin, data_max=tmax
+        )
+        data_min = tmin
+        data_max = tmax
+
+    data["theta_mapped"] = th_scaled
+
+    # iterate bins; draw only finite cells
+    for i_r, r0 in enumerate(r_bottoms):
+        h = r_heights[i_r]
+        row = Z[i_r]
+        for j_t, th0 in enumerate(theta_centers):
+            val = row[j_t]
+            if not np.isfinite(val):
+                continue
+            ax.bar(
+                th0,
+                h,
+                width=theta_widths[j_t],
+                bottom=r0,
+                align="edge",  # draws true annular sector
+                color=sm.to_rgba(val),
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+            )
+
+    # ---- colorbar
+    cb = fig.colorbar(sm, ax=ax, pad=0.1, shrink=0.75)
+    cb.set_label(f"{statistic.capitalize()} of {color_col}", fontsize=10)
+
+    # ---- cosmetics
+    ax.set_title(
+        title or f"Interaction between {theta_col} and {r_col}",
+        fontsize=14,
+        y=1.08,
+    )
+    ax.set_xlabel(theta_col)
+    ax.set_ylabel(r_col, labelpad=32)
+
+    set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
+    if mask_radius:
+        ax.set_yticklabels([])
+
+    # θ ticks: generate if step is given and no explicit ticks
+    if theta_ticks is None and theta_tick_step is not None:
+        if theta_period is not None:
+            start, stop = 0.0, float(theta_period)
+        else:
+            start, stop = data_min, data_max
+        theta_ticks = np.arange(start, stop + 1e-12, float(theta_tick_step))
+
+    if theta_ticks is not None:
+        _apply_theta_ticks_generic(
+            ax,
+            span=span,
+            theta_ticks=theta_ticks,
+            theta_ticklabels=theta_ticklabels,
+            theta_period=theta_period,
+            data_min=data_min,
+            data_max=data_max,
+        )
+
+    # r ticks: generate if step is given and no explicit ticks
+    if r_ticks is None and r_tick_step is not None:
+        rmin = float(data[r_col].min())
+        rmax = float(data[r_col].max())
+        r_ticks = np.arange(rmin, rmax + 1e-12, float(r_tick_step))
+
+    if r_ticks is not None:
+        _apply_r_ticks_generic(ax, r_ticks=r_ticks, r_ticklabels=r_ticklabels)
+
+    final = safe_savefig(
+        savefig,
+        fig,
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None:
+        plt.close(fig)
+    else:
+        fig.tight_layout()
+        plt.show()
+
+    return ax
+
+
+def _labels_from_spec(values, spec):
+    """Return list of labels from a spec:
+    - None  -> default str(value)
+    - callable -> spec(v)
+    - Mapping -> spec.get(v, str(v))
+    - Sequence[str] -> must match length of values
+    """
+    vals = list(values)
+    if spec is None:
+        return [f"{v:g}" for v in vals]
+    if callable(spec):
+        return [spec(v) for v in vals]
+    if isinstance(spec, Mapping):
+        return [spec.get(v, f"{v:g}") for v in vals]
+    lab = list(spec)
+    if len(lab) != len(vals):
+        raise ValueError("ticklabels length must match ticks.")
+    return lab
+
+
+def _apply_theta_ticks_generic(
+    ax,
+    *,
+    span,
+    theta_ticks,
+    theta_ticklabels,
+    theta_period=None,
+    data_min=None,
+    data_max=None,
+):
+    vals = np.asarray(theta_ticks, dtype=float)
+    thetas = map_theta_to_span(
+        vals,
+        span=span,
+        theta_period=theta_period,
+        data_min=data_min,
+        data_max=data_max,
+    )
+    ax.set_xticks(thetas)
+    ax.set_xticklabels(_labels_from_spec(vals, theta_ticklabels))
+
+
+def _apply_r_ticks_generic(ax, *, r_ticks, r_ticklabels):
+    vals = np.asarray(r_ticks, dtype=float)
+    ax.set_yticks(vals)
+    ax.set_yticklabels(_labels_from_spec(vals, r_ticklabels))
 
 
 plot_feature_interaction.__doc__ = r"""
@@ -250,7 +690,15 @@ acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
     - ``'half_circle'``: :math:`\pi`
     - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
     - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
-    
+
+mode : {'basic', 'annular'}, default='basic'
+    The rendering mode for the plot:
+
+    - ``'basic'``: (Default) Renders a smooth heatmap using
+      ``pcolormesh``.
+    - ``'annular'``: Renders discrete, curved wedges (annular sectors)
+      using polar bars. This is often clearer for binned data.
+      
 title : str, optional
     The title for the plot. If ``None``, a default is generated.
 figsize : tuple of (float, float), default=(8, 8)
@@ -263,6 +711,34 @@ grid_props : dict, optional
     Custom keyword arguments passed to the grid for styling.
 mask_radius : bool, default=False
     If ``True``, hide the radial tick labels.
+edgecolor : str, default='none'
+    Edge color for the wedges when ``mode='annular'``.
+linewidth : float, default=0.0
+    Edge line width for the wedges when ``mode='annular'``.
+theta_ticks : sequence of float, optional
+    Specific locations for angular ticks, specified in the
+    *original data units* of ``theta_col`` (e.g., ``[0, 6, 12, 18]``
+    for hours). If ``None``, ticks are set automatically.
+theta_ticklabels : sequence, mapping, or callable, optional
+    Custom labels for the ``theta_ticks``.
+
+    - *sequence[str]*: Must match the length of ``theta_ticks``.
+    - *mapping[float, str]*: Maps data values to labels (e.g.,
+      ``{12: "Noon", 16: "Close"}``).
+    - *callable*: A function `f(value) -> str`.
+    
+theta_tick_step : float, optional
+    If ``theta_ticks`` is not set, this generates ticks spaced
+    by this step in the *original data units* (e.g., `1.0` for 1 hour).
+r_ticks : sequence of float, optional
+    Specific locations for radial ticks, specified in the
+    *original data units* of ``r_col``.
+r_ticklabels : sequence, mapping, or callable, optional
+    Custom labels for the ``r_ticks``. See ``theta_ticklabels``
+    for format options (e.g., ``{-1: "Bearish", 1: "Bullish"}``).
+r_tick_step : float, optional
+    If ``r_ticks`` is not set, this generates ticks spaced
+    by this step in the *original data units*.    
 savefig : str, optional
     The file path to save the plot. If ``None``, the plot is
     displayed interactively.
@@ -1018,3 +1494,225 @@ def _draw_angular_labels(
             va="center",
             fontsize=fs,
         )
+
+
+plot_fingerprint.__doc__ = r"""
+Create a flexible polar 'fingerprint' (radar) chart.
+
+This function is a versatile wrapper for creating feature importance
+fingerprints. It operates in two modes:
+
+1.  **Precomputed Mode** (``precomputed=True``):
+    It plots an existing importance matrix (as a ``pd.DataFrame``
+    or ``np.ndarray``), similar to
+    :func:`~kdiagram.plot.feature_based.plot_feature_fingerprint`.
+
+2.  **Computation Mode** (``precomputed=False``):
+    It computes the importance scores "on-the-fly" from a raw
+    ``pd.DataFrame``. This mode can calculate feature correlations
+    against a target (``method='abs_corr'``) or compute feature
+    variability (``method='std'``, ``'var'``, ``'mad'``). It can
+    also generate separate fingerprints for different groups using
+    the ``group_col`` parameter.
+
+Parameters
+----------
+importances : pd.DataFrame or np.ndarray
+    The input data.
+    
+    - If ``precomputed=True``, this is the (n_layers, n_features)
+      matrix of importance scores.
+    - If ``precomputed=False``, this is the raw ``pd.DataFrame``
+      containing features, target, and (optionally) group columns.
+
+precomputed : bool, default=True
+    Controls the function's behavior.
+    
+    - If ``True``, plots ``importances`` as a precomputed score matrix.
+    - If ``False``, computes scores from the ``importances`` DataFrame
+      using the specified ``method``.
+
+y_col : str, optional
+    The name of the target column (e.g., 'y_true') within the
+    ``importances`` DataFrame. Required when ``precomputed=False``
+    and ``method='abs_corr'``.
+
+group_col : str, optional
+    The name of a categorical column in the ``importances`` DataFrame
+    (e.g., 'model_name', 'year'). If provided (and
+    ``precomputed=False``), one 'fingerprint' polygon will be
+    generated for each unique group.
+
+method : {'abs_corr', 'std', 'var', 'mad'}, default='abs_corr'
+    The method used to compute importance scores when
+    ``precomputed=False``.
+    
+    - ``'abs_corr'``: Absolute Pearson correlation of each feature
+      with ``y_col``.
+    - ``'std'``: Standard deviation of each feature.
+    - ``'var'``: Variance of each feature.
+    - ``'mad'``: Median Absolute Deviation of each feature.
+
+features : list of str, optional
+    Names of the features.
+    
+    - If ``precomputed=False``, this is the list of columns to
+      compute importance for. If ``None``, all numeric columns
+      (excluding ``y_col`` and ``group_col``) are used.
+    - If ``precomputed=True`` and ``importances`` is an array,
+      these are used as the angular (feature) labels.
+
+labels : list of str, optional
+    Display names for the layers (polygons), used in the legend.
+    
+    - If ``precomputed=True``, this labels the rows of the matrix.
+    - If ``precomputed=False`` and ``group_col`` is provided, this
+      is ignored, and the unique group names are used as labels.
+
+normalize : bool, default=True
+    If ``True``, normalizes each layer (row) of the importance
+    matrix so that its maximum value is 1.0. This is useful for
+    comparing the *shape* of fingerprints, regardless of their
+    absolute scales.
+
+fill : bool, default=True
+    If ``True``, fills each polygon with a translucent color.
+
+cmap : str or list[Any], default='tab10'
+    Matplotlib colormap or a list of colors used to assign a
+    unique color to each layer (polygon).
+
+title : str, default='Feature Impact Fingerprint'
+    The title for the plot.
+
+figsize : tuple of (float, float), optional
+    The figure size in inches. If ``None``, defaults to ``(9, 6)``.
+
+show_grid : bool, default=True
+    Toggle gridlines via the package helper ``set_axis_grid``.
+
+grid_props : dict, optional
+    Keyword arguments passed to ``set_axis_grid`` for grid
+    customization (e.g., ``{'alpha': 0.45}``).
+
+savefig : str, optional
+    If provided, save the figure to this path; otherwise the
+    plot is shown interactively.
+
+acov : str, default='full'
+    Angular coverage (span) of the plot. Note that this differs
+    from ``plot_feature_fingerprint``.
+    
+    - ``'full'``: :math:`2\pi` (full circle)
+    - ``'half_circle'``: :math:`\pi`
+    - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
+    - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
+
+ax : matplotlib.axes.Axes, optional
+    An existing polar axes to draw the plot on. If ``None``,
+    a new figure and axes are created.
+
+dpi : int, default=300
+    Resolution for the saved figure.
+
+Returns
+-------
+ax : matplotlib.axes.Axes
+    The Matplotlib Axes object containing the polar fingerprint plot.
+
+See Also
+--------
+plot_feature_fingerprint : A simpler version of this plot that
+    only accepts precomputed importances.
+kdiagram.datasets.make_fingerprint_data : A function to
+    generate synthetic data for this plot.
+
+Notes
+-----
+
+This function provides a powerful, all-in-one interface for
+creating feature importance radar charts.
+
+**On-the-fly Computation (``precomputed=False``):**
+When ``precomputed=False``, the function automatically identifies
+feature columns from the ``importances`` DataFrame by selecting all
+numeric columns and excluding ``y_col`` and ``group_col``.
+It then calculates importance scores based on the ``method``:
+    
+- If ``method='abs_corr'``, it computes the absolute Pearson
+  correlation between each feature and the ``y_col``.
+- If ``method='std'``, ``'var'``, or ``'mad'``, it computes the
+  feature-wise statistic (target-independent).
+
+If ``group_col`` is provided, these statistics are computed
+separately for each subgroup, and each group is plotted as its
+own polygon.
+
+**Normalization (``normalize=True``):**
+Normalization is applied **row-wise** (per layer/group). Each
+row of the importance matrix :math:`M` is divided by its own
+maximum value as :math:`M_{norm}[i, :] = M[i, :] / \max(M[i, :])`.
+This scales all fingerprints to have a peak of 1.0, making it
+easier to compare their relative shapes.
+
+**Angular Labels:**
+
+This plot uses a helper function (``_draw_angular_labels``)
+to render feature names. Default
+angular ticks (``ax.set_xticks``) are hidden, and instead,
+text labels are drawn just outside the plot's radial limit
+(``r_out``). Labels are automatically
+rotated to remain upright and readable, with horizontal
+alignment (``ha``) adjusted to prevent overlap.
+
+Examples
+--------
+>>> import numpy as np
+>>> import pandas as pd
+>>> from kdiagram.plot.feature_based import plot_fingerprint
+>>>
+>>> # Example 1: Plotting a precomputed DataFrame
+>>> importances_df = pd.DataFrame(
+...     {'feature_1': [1, 5], 'feature_2': [8, 2], 'feature_3': [4, 4]},
+...     index=['Model_A', 'Model_B']
+... )
+>>> ax1 = plot_fingerprint(
+...     importances_df,
+...     precomputed=True,
+...     title="Precomputed Feature Fingerprint",
+...     normalize=True
+... )
+>>>
+>>> # Example 2: Computing importance 'on-the-fly' with groups
+>>> np.random.seed(0)
+>>> N = 300
+>>> raw_df = pd.DataFrame({
+...     'temp': np.random.normal(20, 5, N),
+...     'humidity': np.random.normal(60, 10, N),
+...     'wind': np.random.normal(15, 5, N),
+...     'group': ['A'] * 100 + ['B'] * 100 + ['C'] * 100,
+... })
+>>> # Create a target that correlates differently for each group
+>>> raw_df['target'] = 0.0
+>>> raw_df.loc[raw_df['group'] == 'A', 'target'] = (
+...     raw_df['temp'] * 2 + np.random.randn(100)
+... )
+>>> raw_df.loc[raw_df['group'] == 'B', 'target'] = (
+...     raw_df['humidity'] * 5 + np.random.randn(100)
+... )
+>>> raw_df.loc[raw_df['group'] == 'C', 'target'] = (
+...     raw_df['wind'] * 3 + np.random.randn(100)
+... )
+>>>
+>>> ax2 = plot_fingerprint(
+...     raw_df,
+...     precomputed=False,
+...     y_col='target',
+...     group_col='group',
+...     method='abs_corr',
+...     features=['temp', 'humidity', 'wind'],
+...     title="Feature Correlation by Group"
+... )
+
+    
+"""

@@ -9,6 +9,7 @@ from .forecast_utils import (
     compute_interval_width,
     pivot_forecasts_long,
 )
+from .fs import savefig
 from .hist import plot_hist_kde
 from .mathext import (
     build_cdf_interpolator,
@@ -48,4 +49,5 @@ __all__ = [
     "compute_crps",
     "get_forecast_arrays",
     "minmax_scaler",
+    "savefig",
 ]

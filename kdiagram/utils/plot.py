@@ -51,6 +51,106 @@ def set_axis_grid(
                 gl.set_visible(False)
 
 
+def _place_polar_ylabel(
+    ax: Axes,
+    text: str,
+    *,
+    angle: float = 225,
+    x_in: float | None = None,
+    y_in: float = 0.5,
+    min_inside: float = 0.028,
+    tight_safe: bool = True,
+    labelpad: int = 32,
+) -> tuple[float, float]:
+    """
+    Place the polar *radial* label inside the axes to avoid crowding/clipping.
+
+    This is especially useful in multi-panel layouts where the default
+    y-label (drawn outside the left edge) can overlap or be cropped,
+    particularly when saving with ``bbox_inches='tight'``.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        A polar axes. If a non-polar axes is passed, a warning is issued
+        and the function returns without re-positioning.
+    text : str
+        The label text to set.
+    angle : float, default=225
+        Quadrant for radial *tick labels* (not the y-label itself). Using
+        225° keeps tick labels away from the title/top.
+    x_in : float, optional
+        X position of the y-label in *axes coordinates* (0 = left edge,
+        1 = right). If omitted, a heuristic is used based on the subplot
+        width to keep the label comfortably inside.
+    y_in : float, default=0.5
+        Y position of the y-label in axes coordinates.
+    min_inside : float, default=0.028
+        Smallest x-offset to keep even very wide subplots from placing the
+        label too close to the edge.
+    tight_safe : bool, default=True
+        If True, the label is always placed inside the axes so that saving
+        with ``bbox_inches='tight'`` will not crop it.
+
+    Returns
+    -------
+    (x, y) : tuple of float
+        The axes-coordinate position actually used for the label.
+
+    Notes
+    -----
+    • This function does **not** add a figure-level label. If you want a
+      single shared label across subplots, use ``fig.supylabel(...)`` and
+      do **not** call this helper for per-axes labels.
+    """
+    # Basic safety checks
+    try:
+        is_polar = getattr(ax, "name", "") == "polar"
+    except Exception:  # very defensive
+        is_polar = False
+
+    if not is_polar:
+        warnings.warn(
+            "_place_polar_ylabel was given a non-polar Axes; "
+            "leaving the label at its default location.",
+            stacklevel=2,
+        )
+        ax.set_ylabel(text, labelpad=labelpad)
+        return (0.0, 0.5)
+
+    # Set the text and move radial tick labels away from the top/title.
+    ax.set_ylabel(text, labelpad=labelpad)
+    ax.set_rlabel_position(angle)
+
+    # Heuristic: narrower axes → push label further in.
+    bb = ax.get_position()  # figure-fraction bbox
+    if x_in is None:
+        w = float(bb.width)
+        if w < 0.33:
+            x_in = 0.085
+        elif w < 0.42:
+            x_in = 0.060
+        elif w < 0.50:
+            x_in = 0.042
+        else:
+            x_in = 0.033
+        x_in = max(x_in, min_inside)
+
+    # If user really wants the default outside placement, they can call
+    # ax.set_ylabel(...) themselves and skip this helper. When tight_safe=True,
+    # we *always* keep the label inside the axes to be safe with
+    # bbox_inches='tight'.
+    if tight_safe:
+        ax.yaxis.set_label_coords(x_in, y_in, transform=ax.transAxes)
+    else:
+        # Still place inside, but allow very small offsets if caller insists.
+        ax.yaxis.set_label_coords(
+            max(x_in, 0.0), y_in, transform=ax.transAxes
+        )
+
+    return (x_in, y_in)
+
+
 def validate_kind(kind: str | None, *, default: str = "polar") -> str:
     """
     Normalize and validate the 'kind' switch used by plotting functions.

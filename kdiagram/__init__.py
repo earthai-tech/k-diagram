@@ -36,7 +36,7 @@ try:
     __version__ = _pkg_version("k-diagram")
 except PackageNotFoundError:
     # fallback when running from source without install
-    __version__ = "1.3.1.dev0"
+    __version__ = "1.3.3.dev0"
 
 _required_dependencies = [
     ("numpy", None),
@@ -118,6 +118,7 @@ from .plot import (  # noqa: E402
     plot_velocity,
     taylor_diagram,
 )
+from .utils import savefig  # Noqa: E402
 
 __all__ = [
     "__version__",
@@ -173,4 +174,5 @@ __all__ = [
     "plot_cas_profile",
     "plot_glyphs",
     "plot_cas_layers",
+    "savefig",
 ]

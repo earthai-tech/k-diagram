@@ -253,7 +253,8 @@ validations.
    ~kdiagram.utils.pivot_q_data
    ~kdiagram.utils.plot_hist_kde
    ~kdiagram.utils.reshape_quantile_data
-
+   ~kdiagram.utils.savefig 
+   
 .. _api_datasets:
 
 Datasets (`kdiagram.datasets`)
