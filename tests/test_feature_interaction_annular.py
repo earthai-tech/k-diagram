@@ -2,7 +2,8 @@
 # Author: LKouadio <etanoyau@gmail.com>
 
 import matplotlib
-matplotlib.use("Agg")  # headless
+
+matplotlib.use("Agg")
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,8 +12,7 @@ import pandas as pd
 from kdiagram.plot.feature_based import plot_feature_interaction
 
 
-def _grid_df(theta_bins=6, r_bins=4,
-             tmin=0.0, tmax=24.0, rmin=0.0, rmax=1.0):
+def _grid_df(theta_bins=6, r_bins=4, tmin=0.0, tmax=24.0, rmin=0.0, rmax=1.0):
     """Make one sample exactly in the interior of each (theta, r) bin."""
     rows = []
     dt = (tmax - tmin) / theta_bins
@@ -21,7 +21,7 @@ def _grid_df(theta_bins=6, r_bins=4,
         t = tmin + (i + 0.5) * dt
         for j in range(r_bins):
             r = rmin + (j + 0.5) * dr
-            rows.append((t, r, i + j))   # any deterministic value
+            rows.append((t, r, i + j))  # any deterministic value
     return pd.DataFrame(rows, columns=["theta", "radius", "z"])
 
 
@@ -37,7 +37,7 @@ def test_annular_draws_one_wedge_per_bin():
         r_col="radius",
         color_col="z",
         statistic="mean",
-        theta_period=24,     # period mapping (independent of min/max)
+        theta_period=24,  # period mapping (independent of min/max)
         theta_bins=theta_bins,
         r_bins=r_bins,
         mode="annular",
@@ -53,19 +53,26 @@ def test_annular_draws_one_wedge_per_bin():
 
 def test_annular_respects_generic_tick_specifications():
     """Custom ticks/labels (callables, mappings, sequences) should be
-    applied to both theta (angular) and r (radial) axes."""
+    applied to both theta (angular) and r (radial) axes. Use distinct
+    angular positions to avoid 0≡2π wrap collisions on polar axes.
+    """
     rng = np.random.default_rng(0)
-    df = pd.DataFrame({
-        "hour": rng.uniform(0, 24, 2000),
-        "sent": rng.uniform(-1, 1, 2000),
-        "val":  rng.normal(size=2000)
-    })
+    df = pd.DataFrame(
+        {
+            "hour": rng.uniform(0, 24, 2000),
+            "sent": rng.uniform(-1, 1, 2000),
+            "val": rng.normal(size=2000),
+        }
+    )
 
-    theta_ticks = [0.0, 12.0, 24.0]
-    theta_labels_map = {0.0: "Start", 12.0: "Mid", 24.0: "End"}
+    # Use a near-endpoint tick to avoid 0 and 24 mapping to the same angle.
+    theta_ticks = [0.0, 12.0, 23.999]
+    theta_labels_map = {0.0: "Start", 12.0: "Mid", 23.999: "End"}
 
     r_ticks = [-1.0, 0.0, 1.0]
-    r_labels_fn = lambda x: { -1.0: "Bearish", 0.0: "Neutral", 1.0: "Bullish" }[x]
+
+    def r_labels_fn(x):
+        return {-1.0: "Bearish", 0.0: "Neutral", 1.0: "Bullish"}[x]
 
     ax = plot_feature_interaction(
         df=df,
@@ -78,9 +85,9 @@ def test_annular_respects_generic_tick_specifications():
         r_bins=8,
         mode="annular",
         theta_ticks=theta_ticks,
-        theta_ticklabels=theta_labels_map,   # Mapping
+        theta_ticklabels=theta_labels_map,  # Mapping for theta
         r_ticks=r_ticks,
-        r_ticklabels=r_labels_fn,            # Callable
+        r_ticklabels=r_labels_fn,  # Callable for r
         show_grid=False,
     )
 

@@ -1,13 +1,15 @@
-
-import pytest
 import matplotlib
+import pytest
+
 matplotlib.use("Agg")  # non-interactive backend for CI
 import matplotlib.pyplot as plt
 
 # Prefer the public import if you've re-exported it in __init__.py
 import kdiagram as kd
+
 # If not re-exported, fall back to the helper directly:
 # from kdiagram.utils.plot import savefig as kd_savefig
+
 
 def test_savefig_uses_current_figure_when_fig_or_ax_is_none(tmp_path):
     """When a figure exists and fig_or_ax is None, kd.savefig should
@@ -29,7 +31,9 @@ def test_savefig_warns_and_returns_none_when_no_active_figure(tmp_path):
     should warn and return None."""
     plt.close("all")  # ensure no figures exist
 
-    with pytest.warns(UserWarning, match="No active Matplotlib figure to save"):
+    with pytest.warns(
+        UserWarning, match="No active Matplotlib figure to save"
+    ):
         out = kd.savefig(tmp_path / "out.png")  # fig_or_ax omitted
 
     assert out is None
@@ -38,7 +42,6 @@ def test_savefig_warns_and_returns_none_when_no_active_figure(tmp_path):
 def _is_open(fig) -> bool:
     """Return True if the given Figure is still open."""
     return fig.number in plt.get_fignums()
-
 
 
 def test_savefig_auto_does_not_close_when_explicit_figure(tmp_path):

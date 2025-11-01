@@ -12,6 +12,8 @@ from kdiagram.plot.errors import (
 
 plt.switch_backend("Agg")
 
+VIOLIN_MODE = "basic"
+
 
 @pytest.fixture
 def seasonal_error_data():
@@ -122,6 +124,7 @@ def test_plot_error_violins_runs_successfully(multi_model_error_data):
         "Model_B_Error",
         "Model_C_Error",
         names=["Model A", "Model B", "Model C"],
+        mode=VIOLIN_MODE,
     )
     assert isinstance(ax, Axes)
     # Check if labels are correctly set

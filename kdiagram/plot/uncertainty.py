@@ -12,12 +12,12 @@ related diagnostics using polar coordinates.
 
 from __future__ import annotations
 
+import textwrap
 import warnings
 from typing import Any, Literal
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-import textwrap
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
@@ -34,6 +34,7 @@ from ..utils.diagnose_q import (
     detect_quantiles_in,
     validate_qcols,
 )
+from ..utils.fs import savefig as safe_savefig
 from ..utils.handlers import columns_manager
 from ..utils.plot import (
     _sample_colors,
@@ -45,7 +46,6 @@ from ..utils.validator import (
     _assert_all_types,
     exist_features,
 )
-from ..utils.fs import savefig as safe_savefig 
 
 __all__ = [
     "plot_actual_vs_predicted",
@@ -63,6 +63,7 @@ __all__ = [
     "plot_polar_quiver",
 ]
 
+
 @validate_params({"y_true": ["array-like"]})
 def plot_coverage(
     y_true,
@@ -79,7 +80,7 @@ def plot_coverage(
     cov_fill: bool = False,
     figsize: tuple[str, str] = None,
     title: str | None = None,
-    dpi: int =300, 
+    dpi: int = 300,
     savefig: str | None = None,
     verbose: int = 1,
     ax: Axes | None = None,
@@ -185,8 +186,11 @@ def plot_coverage(
         for idx, val in enumerate(coverage_scores):
             if val is not None:
                 ax.text(
-                    x=idx, y=val + 0.01, s=f"{val:.2f}",
-                    ha="center", va="bottom",
+                    x=idx,
+                    y=val + 0.01,
+                    s=f"{val:.2f}",
+                    ha="center",
+                    va="bottom",
                 )
         ax.set_xticks(x_idx)
         ax.set_xticklabels(names)
@@ -199,8 +203,11 @@ def plot_coverage(
         for idx, val in enumerate(coverage_scores):
             if val is not None:
                 ax.text(
-                    x=idx, y=val + 0.01, s=f"{val:.2f}",
-                    ha="center", va="bottom",
+                    x=idx,
+                    y=val + 0.01,
+                    s=f"{val:.2f}",
+                    ha="center",
+                    va="bottom",
                 )
         ax.set_xticks(x_idx)
         ax.set_xticklabels(names)
@@ -246,40 +253,60 @@ def plot_coverage(
 
                 ax.grid(False)
                 ax.pcolormesh(
-                    Theta, R, R, cmap=cmap, shading="auto",
-                    alpha=radar_fill_alpha, zorder=0,
+                    Theta,
+                    R,
+                    R,
+                    cmap=cmap,
+                    shading="auto",
+                    alpha=radar_fill_alpha,
+                    zorder=0,
                 )
                 ax.grid(True, which="both")
-                ax.plot(theta, [coverage_value] * len(theta),
-                        color="red", linewidth=2, linestyle="-")
+                ax.plot(
+                    theta,
+                    [coverage_value] * len(theta),
+                    color="red",
+                    linewidth=2,
+                    linestyle="-",
+                )
                 ax.set_ylim(0, 1)
                 ax.set_yticks([0.2, 0.4, 0.6, 0.8])
-                ax.yaxis.grid(True, color="gray", linestyle="--",
-                              linewidth=0.5, alpha=0.7)
+                ax.yaxis.grid(
+                    True,
+                    color="gray",
+                    linestyle="--",
+                    linewidth=0.5,
+                    alpha=0.7,
+                )
             else:
                 ax.fill(
-                    angles, coverage_radar,
-                    color=radar_color, alpha=radar_fill_alpha, zorder=0,
+                    angles,
+                    coverage_radar,
+                    color=radar_color,
+                    alpha=radar_fill_alpha,
+                    zorder=0,
                 )
         # Wrap each label to multiple lines (keeps parentheticals readable)
         wrapped_names = [
-            textwrap.fill(n, width=18, break_long_words=False, break_on_hyphens=False)
+            textwrap.fill(
+                n, width=18, break_long_words=False, break_on_hyphens=False
+            )
             for n in names
         ]
-        
+
         ax.set_thetagrids(
             angles[:-1] * 180 / np.pi,
             labels=wrapped_names,
         )
         # Push labels outward from the circle a bit (points)
         pad = 8 if len(names) <= 4 else (10 if len(names) <= 6 else 12)
-        ax.tick_params(axis="x", pad=pad)   # add radial padding for labels
+        ax.tick_params(axis="x", pad=pad)  # add radial padding for labels
         # ax.set_thetagrids(angles[:-1] * 180 / np.pi, labels=names)
         # Optional: if there are many models (crowded), gently reduce fontsize
         if len(names) >= 6:
             for lbl in ax.get_xticklabels():
                 lbl.set_fontsize(max(lbl.get_fontsize() - 1, 8))
-    
+
         ax.set_ylim(0, 1)
         ax.legend(loc="upper right")
 
@@ -290,27 +317,30 @@ def plot_coverage(
 
     # ---- Summary / titles / saving ----------------------------------------
     if verbose:
-        cov_dict = {names[idx]: cov for idx, cov in enumerate(coverage_scores)}
+        cov_dict = {
+            names[idx]: cov for idx, cov in enumerate(coverage_scores)
+        }
         summary = ResultSummary("CoverageScores").add_results(cov_dict)
         print(summary)
 
     if title is not None and fig is not None:
         # Title for this axes
         ax.set_title(title)
-    
-    final =safe_savefig(
+
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
-        fig.tight_layout()
-        plt.show() 
+    if final is not None:
+        plt.close(fig)
+    else:
+        plt.tight_layout()
+        plt.show()
 
     return ax if fig is not None else None
+
 
 plot_coverage.__doc__ = r"""
 Plot overall coverage scores for forecast intervals or points.
@@ -545,7 +575,7 @@ def plot_model_drift(
     annotate: bool = True,
     grid_props: dict | None = None,
     savefig: str | None = None,
-    dpi: int =300, 
+    dpi: int = 300,
     ax: Axes | None = None,
 ):
     #
@@ -594,8 +624,8 @@ def plot_model_drift(
             figsize=figsize,
             subplot_kw={"projection": "polar"},
         )
-    else : 
-        fig = ax.figure 
+    else:
+        fig = ax.figure
 
     # Orient polar chart: 0° at the top, clockwise direction
     ax.set_theta_offset(np.pi / 2)
@@ -638,19 +668,23 @@ def plot_model_drift(
     # Wrap long labels over 1–2 lines so they don’t collide with the rim
     wrap_width = 32 if n_horizons <= 5 else (28 if n_horizons <= 8 else 24)
     labels = [
-        textwrap.fill(str(h), width=wrap_width,
-                      break_long_words=False, break_on_hyphens=False)
+        textwrap.fill(
+            str(h),
+            width=wrap_width,
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
         for h in horizons
     ]
-    
+
     ax.set_xticks(theta)
     ax.set_xticklabels(labels)
-    
+
     # Push labels outward from the circle (points)
     # Use a bit more pad when there are many labels
     pad_pts = 10 if n_horizons <= 5 else (12 if n_horizons <= 8 else 14)
     ax.tick_params(axis="x", pad=pad_pts)
-    
+
     # Keep radial ticks hidden and place the radial ylabel inside the axes
     ax.set_yticklabels([])
     ax.set_ylabel(value_label, labelpad=52)  # adjust as you like
@@ -659,21 +693,22 @@ def plot_model_drift(
     set_axis_grid(ax, show_grid, grid_props=grid_props)
 
     # 6. Output handling
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
-plot_model_drift.__doc__=r"""
+
+plot_model_drift.__doc__ = r"""
 Visualize forecast drift across prediction horizons.
 
 Renders a polar bar chart depicting how average model
@@ -852,6 +887,7 @@ Examples
 ... )
 """
 
+
 @check_non_emptiness
 @isdf
 def plot_velocity(
@@ -870,7 +906,7 @@ def plot_velocity(
     savefig: str | None = None,
     cbar: bool = True,
     mask_angle: bool = False,
-    dpi: int=300, 
+    dpi: int = 300,
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -994,9 +1030,9 @@ def plot_velocity(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-    else: 
-        fig = ax.figure 
-        
+    else:
+        fig = ax.figure
+
     # Set the angular limits based on angular coverage
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angle_span))  # set_thetamax expects degrees
@@ -1048,18 +1084,17 @@ def plot_velocity(
         # Radial limits might need auto-scaling or manual setting
 
     # --- Save or Show ---
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
-
+        plt.show()
 
     return ax
 
@@ -1380,7 +1415,7 @@ def plot_interval_consistency(
     show_grid: bool = True,
     mask_angle: bool = False,
     savefig: str | None = None,
-    dpi: int =300, 
+    dpi: int = 300,
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -1531,9 +1566,8 @@ def plot_interval_consistency(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-    else: 
-        fig = ax.figure 
-        
+    else:
+        fig = ax.figure
 
     # Set angular limits
     ax.set_thetamin(0)
@@ -1577,17 +1611,17 @@ def plot_interval_consistency(
     ax.set_ylim(bottom=0)
 
     # --- Save or Show ---
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
@@ -1900,7 +1934,7 @@ def plot_anomaly_magnitude(
     show_grid: bool = True,
     verbose: int = 1,
     cbar: bool = False,
-    dpi: int =300, 
+    dpi: int = 300,
     savefig: str | None = None,
     mask_angle: bool = False,
     ax: Axes | None = None,
@@ -2157,12 +2191,11 @@ def plot_anomaly_magnitude(
     # Set radial axis label
     ax.set_title(title, fontsize=14, y=1.12)
     ax.set_ylabel("Anomaly Magnitude", labelpad=24, fontsize=10)
-    
+
     # Move the radial tick labels away from the y-label side
     ax.set_rlabel_position(315)  # places radial tick labels near SE quadrant
 
     ax.set_ylim(bottom=0)  # Ensure radius starts at 0
-    
 
     # --- Logging ---
     if verbose > 0:
@@ -2186,17 +2219,16 @@ def plot_anomaly_magnitude(
         )
         print("-" * 50)
 
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
-        plt.show() 
-
+    if final is not None:
+        plt.close(fig)
+    else:
+        plt.show()
 
     return ax
 
@@ -2528,7 +2560,7 @@ def plot_uncertainty_drift(
     show_legend: bool = True,
     mask_angle: bool = True,
     savefig: str | None = None,
-    dpi: int =300,
+    dpi: int = 300,
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -2662,9 +2694,9 @@ def plot_uncertainty_drift(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-    else: 
-        fig = ax.figure 
-        
+    else:
+        fig = ax.figure
+
     ax.set_thetamin(np.degrees(theta_min_rad))  # Expects degrees
     ax.set_thetamax(np.degrees(theta_max_rad))  # Expects degrees
 
@@ -2745,10 +2777,10 @@ def plot_uncertainty_drift(
 
     # --- Save or Show ---
     if savefig is not None:
-        safe_savefig(savefig, fig,  bbox_inches="tight", dpi=dpi)
+        safe_savefig(savefig, fig, bbox_inches="tight", dpi=dpi)
         plt.close(fig)
     else:
-        fig.tight_layout()  
+        fig.tight_layout()
         plt.show()
 
     return ax
@@ -3048,7 +3080,7 @@ def plot_actual_vs_predicted(
     title: str | None = None,
     line: bool = True,
     r_label: str | None = None,
-    cmap: str | None = None,  
+    cmap: str | None = None,
     alpha: float = 0.3,
     actual_props: dict[str, Any] | None = None,
     pred_props: dict[str, Any] | None = None,
@@ -3056,11 +3088,10 @@ def plot_actual_vs_predicted(
     grid_props: dict | None = None,
     show_legend: bool = True,
     mask_angle: bool = False,
-    dpi: int =300, 
+    dpi: int = 300,
     savefig: str | None = None,
     ax: Axes | None = None,
 ):
-
     # If theta_col is provided but currently unused, warn:
     if theta_col is not None:
         warnings.warn(
@@ -3158,11 +3189,13 @@ def plot_actual_vs_predicted(
         ax = fig.add_subplot(111, projection="polar")
     else:
         fig = ax.figure
-        
+
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
     # NEW: move radial tick labels away from the title/left edge
-    ax.set_rlabel_position(225) # SW quadrant works well for default orientation
+    ax.set_rlabel_position(
+        225
+    )  # SW quadrant works well for default orientation
 
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
@@ -3281,21 +3314,21 @@ def plot_actual_vs_predicted(
     # --- Save or Show ---
     final = safe_savefig(
         savefig,
-        fig,                      # or 'ax' — both work
+        fig,  # or 'ax' — both work
         dpi=dpi,
         bbox_inches="tight",
         pad_inches=0.2,
     )
-    
-    if final is not None: 
-        plt.close(fig) 
-    else: 
-        plt.show() 
+
+    if final is not None:
+        plt.close(fig)
+    else:
+        plt.show()
 
     return ax
 
 
-plot_actual_vs_predicted.__doc__= r"""
+plot_actual_vs_predicted.__doc__ = r"""
 Polar plot comparing actual observed vs predicted values.
 
 This function generates a polar plot to visually compare actual
@@ -3545,6 +3578,8 @@ Examples
 >>> # plt.show() called internally
 
 """
+
+
 @check_non_emptiness
 @isdf
 def plot_interval_width(
@@ -3563,7 +3598,7 @@ def plot_interval_width(
     cbar: bool = True,
     mask_angle: bool = True,
     savefig: str | None = None,
-    dpi:int=300,
+    dpi: int = 300,
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -3716,9 +3751,9 @@ def plot_interval_width(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-    else: 
-        fig = ax.figure 
-        
+    else:
+        fig = ax.figure
+
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
 
@@ -3767,17 +3802,17 @@ def plot_interval_width(
     plt.tight_layout()  # Adjust layout
 
     # --- Save or Show ---
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
@@ -4057,7 +4092,7 @@ def plot_coverage_diagnostic(
     gradient_props: dict[str, Any] | None = None,
     mask_angle: bool = True,
     savefig: str | None = None,
-    dpi: int =300,
+    dpi: int = 300,
     verbose: int = 0,
     ax: Axes | None = None,
 ):
@@ -4159,8 +4194,8 @@ def plot_coverage_diagnostic(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
     else:
-        fig = ax.figure 
-        
+        fig = ax.figure
+
     ax.set_thetamin(np.degrees(theta_min_rad))
     ax.set_thetamax(np.degrees(theta_max_rad))
     # Set radial limits strictly to [0, 1] for coverage plot
@@ -4348,17 +4383,17 @@ def plot_coverage_diagnostic(
         print("-" * 50)
 
     # --- Output ---
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
@@ -4636,10 +4671,9 @@ def plot_temporal_uncertainty(
     mask_label: bool = False,
     mask_angle: bool = True,
     savefig: str | None = None,
-    dpi: int =300, 
+    dpi: int = 300,
     ax: Axes | None = None,
 ):
-
     # --- Input Validation and Column Setup ---
     # Handle 'auto' detection or process explicit list for q_cols
     if isinstance(q_cols, str) and q_cols.lower() == "auto":
@@ -4818,9 +4852,9 @@ def plot_temporal_uncertainty(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-    else: 
-        fig = ax.figure 
-        
+    else:
+        fig = ax.figure
+
     # Set angular limits
     ax.set_thetamin(np.degrees(theta_min_rad))
     ax.set_thetamax(np.degrees(theta_max_rad))
@@ -4873,25 +4907,23 @@ def plot_temporal_uncertainty(
     ):  # Only label if one series, unnormalized
         ax.set_ylabel(q_cols_list[0])
 
-    
-
     # --- Save or Show ---
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
 
-plot_temporal_uncertainty.__doc__= r"""
+plot_temporal_uncertainty.__doc__ = r"""
 Visualize multiple data series using polar scatter plots.
 
 This function creates a general-purpose polar scatter plot to
@@ -5142,6 +5174,8 @@ Examples
 >>> # plt.show() called internally
 
 """
+
+
 @check_non_emptiness
 @isdf
 def plot_radial_density_ring(
@@ -5296,17 +5330,17 @@ def plot_radial_density_ring(
         )
 
     # output handling
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
@@ -5604,17 +5638,17 @@ def plot_polar_quiver(
         ax.set_yticklabels([])
 
     # ---- output
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
@@ -5880,17 +5914,17 @@ def plot_polar_heatmap(
         ax.set_yticklabels([])
 
     # ---- Output
-    final =safe_savefig(
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 

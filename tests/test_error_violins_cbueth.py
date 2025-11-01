@@ -2,7 +2,8 @@
 # Author: LKouadio <etanoyau@gmail.com>
 
 import matplotlib
-matplotlib.use("Agg")  
+
+matplotlib.use("Agg")
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,11 +14,13 @@ from kdiagram.plot.errors import plot_error_violins
 
 def _df_errors(n=4000, seed=0):
     rng = np.random.default_rng(seed)
-    return pd.DataFrame({
-        "A": rng.normal(loc=0.5, scale=1.5, size=n),
-        "B": rng.normal(loc=-4.0, scale=1.5, size=n),
-        "C": rng.normal(loc=0.0, scale=4.0, size=n),
-    })
+    return pd.DataFrame(
+        {
+            "A": rng.normal(loc=0.5, scale=1.5, size=n),
+            "B": rng.normal(loc=-4.0, scale=1.5, size=n),
+            "C": rng.normal(loc=0.0, scale=4.0, size=n),
+        }
+    )
 
 
 def test_cbueth_overlay_two_models_has_two_polygons_and_stats_in_legend():
@@ -28,7 +31,8 @@ def test_cbueth_overlay_two_models_has_two_polygons_and_stats_in_legend():
 
     ax = plot_error_violins(
         df,
-        "A", "B",
+        "A",
+        "B",
         names=["A (Balanced)", "B (Biased)"],
         mode="cbueth",
         overlay="auto",
@@ -64,10 +68,12 @@ def test_cbueth_split_spokes_three_models_labels_outside_and_stats_in_legend():
     names = ["A (Balanced)", "B (Biased)", "C (Inconsistent)"]
     ax = plot_error_violins(
         df,
-        "A", "B", "C",
+        "A",
+        "B",
+        "C",
         names=names,
         mode="cbueth",
-        overlay=False,         # split spokes → outside labels
+        overlay=False,  # split spokes → outside labels
         show_stats=True,
         cmap="viridis",
         show_grid=False,

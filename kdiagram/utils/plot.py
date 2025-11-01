@@ -60,7 +60,7 @@ def _place_polar_ylabel(
     y_in: float = 0.5,
     min_inside: float = 0.028,
     tight_safe: bool = True,
-    labelpad: int =32, 
+    labelpad: int = 32,
 ) -> tuple[float, float]:
     """
     Place the polar *radial* label inside the axes to avoid crowding/clipping.
@@ -115,11 +115,11 @@ def _place_polar_ylabel(
             "leaving the label at its default location.",
             stacklevel=2,
         )
-        ax.set_ylabel(text, labelpad =labelpad)
+        ax.set_ylabel(text, labelpad=labelpad)
         return (0.0, 0.5)
 
     # Set the text and move radial tick labels away from the top/title.
-    ax.set_ylabel(text, labelpad =labelpad)
+    ax.set_ylabel(text, labelpad=labelpad)
     ax.set_rlabel_position(angle)
 
     # Heuristic: narrower axes → push label further in.
@@ -144,7 +144,9 @@ def _place_polar_ylabel(
         ax.yaxis.set_label_coords(x_in, y_in, transform=ax.transAxes)
     else:
         # Still place inside, but allow very small offsets if caller insists.
-        ax.yaxis.set_label_coords(max(x_in, 0.0), y_in, transform=ax.transAxes)
+        ax.yaxis.set_label_coords(
+            max(x_in, 0.0), y_in, transform=ax.transAxes
+        )
 
     return (x_in, y_in)
 

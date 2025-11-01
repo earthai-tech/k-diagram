@@ -205,7 +205,9 @@ def test_prepare_sort_values_dtype_paths():
     n = 12
     df = pd.DataFrame(
         {
-            "dt": pd.date_range("2024-01-01", periods=n, freq="D"),
+            # Replaced: pd.date_range("2024-01-01", periods=n, freq="D")
+            "dt": pd.to_datetime("2024-01-01")
+            + pd.to_timedelta(np.arange(n), unit="D"),
             "td": pd.to_timedelta(np.arange(n), unit="D"),
             "cat": pd.Categorical(list("aaabbbcccddd")),
             "b": np.tile([True, False], n // 2),
@@ -238,20 +240,24 @@ def test_prepare_sort_values_dtype_paths():
     # array-like provided
     v4 = ap._prepare_sort_values(df, df["z"].values)
     assert (v4 == df["z"].values.astype(float)).all()
-    # # factorize object (non-numeric)
 
+    # factorize object (non-numeric)
     with pytest.warns(UserWarning):
         v5 = ap._prepare_sort_values(df, "obj")
         assert v5.shape == (n,)
+
     # booleans
     v6 = ap._prepare_sort_values(df, "b")
     assert set(np.unique(v6)).issubset({0.0, 1.0})
+
     # timedelta path
     v7 = ap._prepare_sort_values(df, "td")
     assert v7.dtype == float
+
     # length mismatch error
     with pytest.raises(ValueError):
         ap._prepare_sort_values(df, np.arange(n - 1))
+
     # missing key error
     with pytest.raises(KeyError):
         ap._prepare_sort_values(df, "missing_col")
@@ -261,16 +267,28 @@ def test_order_index_variants_and_errors():
     df = pd.DataFrame(
         {
             "x": np.r_[5, 2, 9, 1, 7],
-            "t": pd.date_range("2024-01-01", periods=5, freq="D"),
+            # Use explicit timestamps; avoids internal range math that can overflow
+            "t": pd.to_datetime(
+                [
+                    "2024-01-01",
+                    "2024-01-02",
+                    "2024-01-03",
+                    "2024-01-04",
+                    "2024-01-05",
+                ]
+            ),
         }
     )
     idx = ap._order_index(df, None)
     assert isinstance(idx, np.ndarray) and idx.shape == (5,)
+
     idx2, vals = ap._order_index(df, "t")
     assert len(idx2) == 5 and len(vals) == 5
+
     arr = np.array([10, 1, 3, 2, 0])
     idx3, vals3 = ap._order_index(df, arr)
     assert len(idx3) == 5 and (vals3 == arr).all()
+
     with pytest.raises(ValueError):
         ap._order_index(df, np.array([1, 2]))
 
@@ -283,7 +301,11 @@ def test_order_index_variants_and_errors():
 def test_plot_glyphs_sort_by_time_and_save(tmp_path):
     df = _df_with_hotspot()
     n = len(df)
-    df["time"] = pd.date_range("2024-01-01", periods=n, freq="h")
+    # Replaced: pd.date_range("2024-01-01", periods=n, freq="h")
+    df["time"] = pd.to_datetime("2024-01-01") + pd.to_timedelta(
+        np.arange(n), unit="h"
+    )
+
     out = tmp_path / "glyphs_time.png"
     ax = ap.plot_glyphs(
         df,

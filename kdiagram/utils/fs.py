@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import warnings
+from pathlib import Path
 from typing import Any, Literal
+
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -21,7 +22,7 @@ def _unique_path(outdir: Path, stem: str, ext: str) -> Path:
 
 def savefig(
     savefig: str | os.PathLike | None,
-    fig_or_ax: Figure | Axes | None = None,   
+    fig_or_ax: Figure | Axes | None = None,
     *,
     dpi: int = 300,
     bbox_inches: str = "tight",
@@ -29,11 +30,10 @@ def savefig(
     facecolor: Any | None = None,
     edgecolor: Any | None = None,
     overwrite: bool = False,
-    error: str = "warn",  
+    error: str = "warn",
     close: Literal["auto", True, False] = "auto",
     **kwargs,
 ) -> Path | None:
-    
     if savefig is None:
         return None
 
@@ -41,7 +41,7 @@ def savefig(
     # We also track whether we auto-fetched a figure so that the caller can
     # use 'close="auto"' semantics.
     auto_fetched = False
-    
+
     if isinstance(fig_or_ax, Axes):
         fig = fig_or_ax.figure
     elif isinstance(fig_or_ax, Figure):
@@ -57,7 +57,7 @@ def savefig(
                 stacklevel=2,
             )
             return None
-        fig = plt.figure(fignums[-1])   # attach to the last active figure
+        fig = plt.figure(fignums[-1])  # attach to the last active figure
         auto_fetched = True
 
     # --- Normalize path and choose output file name ---
@@ -95,8 +95,10 @@ def savefig(
             i += 1
 
     final = (
-        outdir / f"{stem}{ext}") if overwrite else _unique_path(
-            outdir, stem, ext)
+        (outdir / f"{stem}{ext}")
+        if overwrite
+        else _unique_path(outdir, stem, ext)
+    )
 
     # --- Save ---
     try:
@@ -114,18 +116,19 @@ def savefig(
             **kwargs,
         )
         print(f"===> Plot saved to {final}")
-        
+
         # Smart close
         should_close = (
-            True if close is True
-            else False if close is False
-            else auto_fetched             # close only if we grabbed gcf()
+            True
+            if close is True
+            else False
+            if close is False
+            else auto_fetched  # close only if we grabbed gcf()
         )
         if should_close:
             plt.close(fig)
-            
+
         return final
-    
 
     except Exception as e:
         msg = f"Failed to save figure to '{final}': {e}"
@@ -135,7 +138,8 @@ def savefig(
             warnings.warn(msg, stacklevel=2)
         return None
 
-savefig.__doc__=r"""
+
+savefig.__doc__ = r"""
 Save a Matplotlib figure robustly.
 
 This helper wraps ``Figure.savefig`` with safe path handling,

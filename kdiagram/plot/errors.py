@@ -15,14 +15,14 @@ from scipy.stats import gaussian_kde, skew
 
 from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap, get_colors
+from ..core._io_utils import _get_valid_kwargs
 from ..decorators import check_non_emptiness, isdf
+from ..utils.fs import savefig as safe_savefig
 from ..utils.plot import (
     map_theta_to_span,
     set_axis_grid,
     setup_polar_axes,
 )
-from ..utils.fs import savefig as safe_savefig 
-from ..core._io_utils import _get_valid_kwargs
 from ..utils.validator import exist_features
 
 __all__ = ["plot_error_ellipses", "plot_error_bands", "plot_error_violins"]
@@ -35,7 +35,7 @@ def _plot_error_violins(
     title: str | None = None,
     figsize: tuple[float, float] = (9.0, 9.0),
     cmap: str = "viridis",
-    colors: list[str] =None, 
+    colors: list[str] = None,
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
     savefig: str | None = None,
@@ -102,7 +102,7 @@ def _plot_error_violins(
 
     # draw violins (two-lobed polygon around the angle line)
     violin_kws = _get_valid_kwargs(ax.fill, violin_kws, error="ignore")
-    
+
     for i, (ang, dens) in enumerate(zip(angles, violin_data)):
         if dens is None:
             continue
@@ -115,7 +115,7 @@ def _plot_error_violins(
 
         theta = x + float(ang)
         r = y
-        
+
         ax.fill(
             theta,
             r,
@@ -147,18 +147,18 @@ def _plot_error_violins(
 
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    # saving 
-    final =safe_savefig(
+    # saving
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
@@ -172,40 +172,37 @@ def plot_error_violins(
     title: str | None = None,
     figsize: tuple[float, float] = (9.0, 9.0),
     cmap: str = "viridis",
-    colors: list[str] =None, 
+    colors: list[str] = None,
     show_grid: bool = True,
     grid_props: dict[str, Any] | None = None,
     savefig: str | None = None,
     dpi: int = 300,
     acov: Acov = "default",
     ax: Axes | None = None,
-    mode: Literal["basic", "cbueth"] ="cbueth", # to honor the reviewer , I kept 
-    # his name as a mode "cbueth", 
-    # --- NEW options (backward compatible) ---
-    bw_method: float | str | None = None,   
-    overlay: bool = False,                  
-    overlay_angle: float | None = None,     
-    show_stats: bool = False,               
+    mode: Literal["basic", "cbueth"] = "cbueth",
+    bw_method: float | str | None = None,
+    overlay: bool = False,
+    overlay_angle: float | None = None,
+    show_stats: bool = False,
     **violin_kws,
 ):
     mode = str(mode).lower()
-    if mode =="basic": 
+    if mode == "basic":
         return _plot_error_violins(
             df,
             *error_cols,
-            names=names, 
-            title=title, 
-            figsize=figsize, 
-            cmap=cmap, 
-            show_grid=show_grid, 
-            grid_props=grid_props, 
-            savefig=savefig, 
-            dpi=dpi, 
-            acov=acov, 
-            ax=ax, 
+            names=names,
+            title=title,
+            figsize=figsize,
+            cmap=cmap,
+            show_grid=show_grid,
+            grid_props=grid_props,
+            savefig=savefig,
+            dpi=dpi,
+            acov=acov,
+            ax=ax,
             **violin_kws,
         )
-    # --- axes via utility (handles offset/dir/thetamax)
 
     # --- validate
     if not error_cols:
@@ -228,51 +225,51 @@ def plot_error_violins(
         warnings.warn("No data after NaN removal.", stacklevel=2)
         return None
 
- 
     # Build a nonnegative radial grid based on absolute error magnitude
     all_abs = np.abs(np.concatenate(arrays))
     r_max = float(np.max(all_abs)) if all_abs.size else 1.0
     r_grid = np.linspace(0.0, r_max, 200)
-    
+
     # KDE for positive/negative sides (mapped to |error|); normalize to [0, 1]
     violins = []
     for arr in arrays:
         pos = arr[arr >= 0.0]
         neg = -arr[arr < 0.0]  # reflect
-    
+
         dens_pos = None
         dens_neg = None
-    
+
         if pos.size > 1:
             dp = gaussian_kde(pos, bw_method=bw_method)(r_grid)
             dp = dp / (np.max(dp) if np.max(dp) > 0 else 1.0)
             dens_pos = dp
-    
+
         if neg.size > 1:
             dn = gaussian_kde(neg, bw_method=bw_method)(r_grid)
             dn = dn / (np.max(dn) if np.max(dn) > 0 else 1.0)
             dens_neg = dn
-    
+
         violins.append((dens_pos, dens_neg))
-    
+
     fig, ax, span = setup_polar_axes(
         ax,
         acov=acov,
         figsize=figsize,
-    )    
+    )
 
-    
     k = len(error_cols)
-    
+
     # Auto-overlay: with 1–2 models, overlay improves visual comparison
     # (you can change default to "auto" in the signature later if you like).
-    if overlay is None or (isinstance(overlay, str) and overlay.lower() == "auto"):
-        overlay = (k <= 2)
-    
+    if overlay is None or (
+        isinstance(overlay, str) and overlay.lower() == "auto"
+    ):
+        overlay = k <= 2
+
     # Headroom so outside text has space beyond the largest radius
     headroom = 1.26 if (not overlay and k <= 2) else 1.20
     ax.set_ylim(0, r_max * headroom)
-    
+
     if overlay:
         base = np.pi / 2 if overlay_angle is None else float(overlay_angle)
         angles = np.full(k, base, dtype=float)
@@ -280,7 +277,7 @@ def plot_error_violins(
     else:
         angles = np.linspace(0.0, float(span), k, endpoint=False)
         width = (float(span) / max(1, k)) * 0.78  # slightly slimmer
-    
+
     # colors
     colors = get_colors(
         k,
@@ -295,37 +292,43 @@ def plot_error_violins(
     edgecolor = violin_kws.pop("edgecolor", "black")
     lw = float(violin_kws.pop("linewidth", 0.8))
     violin_kws = _get_valid_kwargs(ax.fill, violin_kws, error="ignore")
-    
+
     # order small → large so big shapes don’t hide small ones
     areas = []
-    for (dpos, dneg) in violins:
-        a = (np.trapz(dpos, r_grid) if dpos is not None else 0.0) \
-          + (np.trapz(dneg, r_grid) if dneg is not None else 0.0)
+    for dpos, dneg in violins:
+        a = (np.trapz(dpos, r_grid) if dpos is not None else 0.0) + (
+            np.trapz(dneg, r_grid) if dneg is not None else 0.0
+        )
         areas.append(a)
     order = np.argsort(areas)
-    
+
     for rank, i in enumerate(order):
         (dpos, dneg), ang, col = violins[i], float(angles[i]), colors[i]
-    
+
         # fallback to zeros array if one side is missing
         z = np.zeros_like(r_grid)
         dpos = dpos if dpos is not None else z
         dneg = dneg if dneg is not None else z
-    
+
         # left lobe = negatives, right lobe = positives
-        left  = ang - (0.5 * width) * dneg
+        left = ang - (0.5 * width) * dneg
         right = ang + (0.5 * width) * dpos
-    
+
         theta = np.concatenate([left, right[::-1]])
-        r     = np.concatenate([r_grid, r_grid[::-1]])
-    
+        r = np.concatenate([r_grid, r_grid[::-1]])
+
         # legend label (stats only in legend)
         med = float(np.median(arrays[i]))
         skv = float(skew(arrays[i], bias=False))
-        label_i = names[i] if not show_stats else f"{names[i]}  (med={med:.2f}; skew={skv:.2f})"
-    
+        label_i = (
+            names[i]
+            if not show_stats
+            else f"{names[i]}  (med={med:.2f}; skew={skv:.2f})"
+        )
+
         ax.fill(
-            theta, r,
+            theta,
+            r,
             color=col,
             label=label_i,
             alpha=alpha_default,
@@ -334,51 +337,66 @@ def plot_error_violins(
             zorder=2 + rank,
             **violin_kws,
         )
-    
+
     # ----- zero-error reference for |error| radial scale -----
     # r=0 collapses to the center; draw a tiny marker instead.
     zero_sz = max(12, 10000.0 / max(1.0, ax.figure.bbox.width))  # scale a bit
-    ax.scatter([0.0], [0.0],
-               s=zero_sz, facecolors="none", edgecolors="black",
-               linewidths=1.0, marker="o", label="Zero Error (center)")
-    
+    ax.scatter(
+        [0.0],
+        [0.0],
+        s=zero_sz,
+        facecolors="none",
+        edgecolors="black",
+        linewidths=1.0,
+        marker="o",
+        label="Zero Error (center)",
+    )
+
     # ----- labels / grid / title -----
     ax.set_title(title or "Comparison of Error Distributions", fontsize=14)
     ax.set_yticklabels([])
-    
+
     # ----- labels / grid / title -----
     ax.set_title(title or "Comparison of Error Distributions", fontsize=14)
     ax.set_yticklabels([])
-    
+
     if overlay:
         ax.set_xticks([])  # legend only; no outside labels in overlay mode
     else:
         ax.set_xticks([])
-        r_out = r_max * (headroom + 0.04)   # just beyond the rim
+        r_out = r_max * (headroom + 0.04)  # just beyond the rim
         for name, ang in zip(names, angles):
-            _label_outside(ax, ang, r_out, name)  # clip_on=False inside helper
+            _label_outside(
+                ax, ang, r_out, name
+            )  # clip_on=False inside helper
 
     # single, clean legend (stats here, never on the plot)
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, loc="upper right",
-              bbox_to_anchor=(1.33, 1.06), frameon=False)
-    
+    ax.legend(
+        handles,
+        labels,
+        loc="upper right",
+        bbox_to_anchor=(1.33, 1.06),
+        frameon=False,
+    )
+
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
-    # saving 
-    final =safe_savefig(
+    # saving
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
+
 
 def _label_outside(ax, angle, r_out, text, *, fontsize=11):
     rot = np.degrees(angle) - 90
@@ -389,10 +407,14 @@ def _label_outside(ax, angle, r_out, text, *, fontsize=11):
         rot += 180
         ha = "right"
     ax.text(
-        angle, r_out, text,
-        rotation=rot, rotation_mode="anchor",
-        ha=ha, va="center",
-        clip_on=False, 
+        angle,
+        r_out,
+        text,
+        rotation=rot,
+        rotation_mode="anchor",
+        ha=ha,
+        va="center",
+        clip_on=False,
         fontsize=fontsize,
     )
 

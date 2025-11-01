@@ -4,18 +4,19 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Literal 
-from collections.abc import Sequence, Mapping, Callable
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any, Literal
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib as mpl
 from matplotlib.axes import Axes
 
 from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap
 from ..decorators import check_non_emptiness, isdf
+from ..utils.fs import savefig as safe_savefig
 from ..utils.handlers import columns_manager
 from ..utils.plot import (
     acov_to_span,
@@ -27,7 +28,6 @@ from ..utils.plot import (
     warn_acov_preference,
 )
 from ..utils.validator import ensure_2d, exist_features
-from ..utils.fs import savefig as safe_savefig 
 
 __all__ = [
     "plot_feature_fingerprint",
@@ -49,7 +49,7 @@ def plot_feature_interaction(
     theta_bins: int = 24,
     r_bins: int = 10,
     acov: Acov = "default",
-    mode: Literal["basic", "annular"] = "basic", 
+    mode: Literal["basic", "annular"] = "basic",
     title: str | None = None,
     figsize: tuple[float, float] = (8, 8),
     cmap: str = "viridis",
@@ -60,77 +60,81 @@ def plot_feature_interaction(
     edgecolor: str = "none",
     linewidth: float = 0.0,
     theta_ticks: Sequence[float] | None = None,
-    theta_ticklabels: Sequence[str] | Mapping[float, str] | Callable[[float], str] | None = None,
+    theta_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
     theta_tick_step: float | None = None,
     r_ticks: Sequence[float] | None = None,
-    r_ticklabels: Sequence[str] | Mapping[float, str] | Callable[[float], str] | None = None,
+    r_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
     r_tick_step: float | None = None,
     dpi: int = 300,
     ax: Axes | None = None,
-
-    ):
-    mode = str(mode).lower() 
+):
+    mode = str(mode).lower()
     if mode == "annular":
         return _plot_feature_interaction_annular(
-            df= df,
+            df=df,
             theta_col=theta_col,
-            r_col=r_col, 
+            r_col=r_col,
             color_col=color_col,
             statistic=statistic,
-            theta_period= theta_period,
-            theta_bins= theta_bins,
-            r_bins= r_bins,
-            acov= acov,
+            theta_period=theta_period,
+            theta_bins=theta_bins,
+            r_bins=r_bins,
+            acov=acov,
             title=title,
-            figsize= figsize,
-            cmap= cmap,
+            figsize=figsize,
+            cmap=cmap,
             show_grid=show_grid,
-            grid_props= grid_props,
-            mask_radius= mask_radius,
-            savefig= savefig,
-            dpi= dpi,
-            ax= ax,
-            edgecolor= edgecolor,
-            linewidth= linewidth,
-            theta_ticks= theta_ticks, 
-            theta_ticklabels= theta_ticklabels, 
-            theta_tick_step=theta_tick_step, 
-            r_ticks=r_ticks, 
-            r_ticklabels=r_ticklabels, 
-            r_tick_step=r_tick_step, 
+            grid_props=grid_props,
+            mask_radius=mask_radius,
+            savefig=savefig,
+            dpi=dpi,
+            ax=ax,
+            edgecolor=edgecolor,
+            linewidth=linewidth,
+            theta_ticks=theta_ticks,
+            theta_ticklabels=theta_ticklabels,
+            theta_tick_step=theta_tick_step,
+            r_ticks=r_ticks,
+            r_ticklabels=r_ticklabels,
+            r_tick_step=r_tick_step,
         )
 
     elif mode == "basic":
         return _plot_feature_interaction_basic(
-                    df= df,
-                    theta_col=theta_col,
-                    r_col=r_col, 
-                    color_col=color_col,
-                    statistic=statistic,
-                    theta_period= theta_period,
-                    theta_bins= theta_bins,
-                    r_bins= r_bins,
-                    acov= acov,
-                    title=title,
-                    figsize= figsize,
-                    cmap= cmap,
-                    show_grid=show_grid,
-                    grid_props= grid_props,
-                    mask_radius= mask_radius,
-                    savefig= savefig,
-                    dpi= dpi,
-                    ax= ax,
-                    theta_ticks= theta_ticks, 
-                    theta_ticklabels= theta_ticklabels, 
-                    theta_tick_step=theta_tick_step, 
-                    r_ticks=r_ticks, 
-                    r_ticklabels=r_ticklabels, 
-                    r_tick_step=r_tick_step, 
-                    
-                    
+            df=df,
+            theta_col=theta_col,
+            r_col=r_col,
+            color_col=color_col,
+            statistic=statistic,
+            theta_period=theta_period,
+            theta_bins=theta_bins,
+            r_bins=r_bins,
+            acov=acov,
+            title=title,
+            figsize=figsize,
+            cmap=cmap,
+            show_grid=show_grid,
+            grid_props=grid_props,
+            mask_radius=mask_radius,
+            savefig=savefig,
+            dpi=dpi,
+            ax=ax,
+            theta_ticks=theta_ticks,
+            theta_ticklabels=theta_ticklabels,
+            theta_tick_step=theta_tick_step,
+            r_ticks=r_ticks,
+            r_ticklabels=r_ticklabels,
+            r_tick_step=r_tick_step,
         )
     else:
         raise ValueError(f"Unknown mode: {mode!r}")
+
 
 def _plot_feature_interaction_basic(
     df: pd.DataFrame,
@@ -153,10 +157,16 @@ def _plot_feature_interaction_basic(
     dpi: int = 300,
     ax: Axes | None = None,
     theta_ticks: Sequence[float] | None = None,
-    theta_ticklabels: Sequence[str] | Mapping[float, str] | Callable[[float], str] | None = None,
+    theta_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
     theta_tick_step: float | None = None,
     r_ticks: Sequence[float] | None = None,
-    r_ticklabels: Sequence[str] | Mapping[float, str] | Callable[[float], str] | None = None,
+    r_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
     r_tick_step: float | None = None,
 ):
     warn_acov_preference(
@@ -258,22 +268,25 @@ def _plot_feature_interaction_basic(
     T, R = np.meshgrid(theta_edges, r_edges)
     cmap_obj = get_cmap(cmap, default="viridis")
     ax.grid(False)  # background grid off; we'll add styled grid next
-    
+
     th_raw = data[theta_col].to_numpy()
     tmin = float(data[theta_col].min())
     tmax = float(data[theta_col].max())
-    
+
     if theta_period is not None:
-        th_scaled = map_theta_to_span(th_raw, span=span, theta_period=theta_period)
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, theta_period=theta_period
+        )
         data_min = None
         data_max = None
     else:
-        th_scaled = map_theta_to_span(th_raw, span=span, data_min=tmin, data_max=tmax)
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, data_min=tmin, data_max=tmax
+        )
         data_min = tmin
         data_max = tmax
-    
-    data["theta_mapped"] = th_scaled
 
+    data["theta_mapped"] = th_scaled
 
     pcm = ax.pcolormesh(
         T,
@@ -298,7 +311,7 @@ def _plot_feature_interaction_basic(
     )
     ax.set_xlabel(theta_col)
     ax.set_ylabel(r_col, labelpad=22)
-    
+
     # θ ticks: generate if step is given and no explicit ticks
     if theta_ticks is None and theta_tick_step is not None:
         if theta_period is not None:
@@ -306,23 +319,26 @@ def _plot_feature_interaction_basic(
         else:
             start, stop = data_min, data_max
         theta_ticks = np.arange(start, stop + 1e-12, float(theta_tick_step))
-    
+
     if theta_ticks is not None:
         _apply_theta_ticks_generic(
-            ax, span=span, theta_ticks=theta_ticks,
+            ax,
+            span=span,
+            theta_ticks=theta_ticks,
             theta_ticklabels=theta_ticklabels,
-            theta_period=theta_period, data_min=data_min, data_max=data_max
+            theta_period=theta_period,
+            data_min=data_min,
+            data_max=data_max,
         )
-    
+
     # r ticks: generate if step is given and no explicit ticks
     if r_ticks is None and r_tick_step is not None:
         rmin = float(data[r_col].min())
         rmax = float(data[r_col].max())
         r_ticks = np.arange(rmin, rmax + 1e-12, float(r_tick_step))
-    
+
     if r_ticks is not None:
         _apply_r_ticks_generic(ax, r_ticks=r_ticks, r_ticklabels=r_ticklabels)
-
 
     # styled grid from shared utility
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
@@ -330,20 +346,21 @@ def _plot_feature_interaction_basic(
     if mask_radius:
         ax.set_yticklabels([])
 
-    # saving 
-    final =safe_savefig(
+    # saving
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
+
 
 def _plot_feature_interaction_annular(
     df: pd.DataFrame,
@@ -367,12 +384,17 @@ def _plot_feature_interaction_annular(
     ax: Axes | None = None,
     edgecolor: str = "none",
     linewidth: float = 0.0,
-    # NEW: fully generic tick controls
     theta_ticks: Sequence[float] | None = None,
-    theta_ticklabels: Sequence[str] | Mapping[float, str] | Callable[[float], str] | None = None,
+    theta_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
     theta_tick_step: float | None = None,
     r_ticks: Sequence[float] | None = None,
-    r_ticklabels: Sequence[str] | Mapping[float, str] | Callable[[float], str] | None = None,
+    r_ticklabels: Sequence[str]
+    | Mapping[float, str]
+    | Callable[[float], str]
+    | None = None,
     r_tick_step: float | None = None,
 ) -> Axes | None:
     """Curved annular rendering (reviewer mode).
@@ -396,8 +418,10 @@ def _plot_feature_interaction_annular(
     data = df[required].dropna().copy()
     if data.empty:
         warnings.warn(
-            "DataFrame is empty after dropping NaNs.", UserWarning, 
-            stacklevel=2)
+            "DataFrame is empty after dropping NaNs.",
+            UserWarning,
+            stacklevel=2,
+        )
         return None
 
     # ---- polar axes
@@ -412,10 +436,17 @@ def _plot_feature_interaction_annular(
     # ---- map theta to [0, span]
     th_raw = data[theta_col].to_numpy()
     if theta_period is not None:
-        th_scaled = map_theta_to_span(th_raw, span=span, theta_period=theta_period)
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, theta_period=theta_period
+        )
     else:
-        tmin, tmax = float(data[theta_col].min()), float(data[theta_col].max())
-        th_scaled = map_theta_to_span(th_raw, span=span, data_min=tmin, data_max=tmax)
+        tmin, tmax = (
+            float(data[theta_col].min()),
+            float(data[theta_col].max()),
+        )
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, data_min=tmin, data_max=tmax
+        )
     data["theta_mapped"] = th_scaled
 
     # ---- bin edges
@@ -424,7 +455,9 @@ def _plot_feature_interaction_annular(
     r_edges = np.linspace(r_min, r_max, r_bins + 1)
 
     # ---- assign bins
-    data["theta_bin"] = pd.cut(data["theta_mapped"], bins=theta_edges, include_lowest=True)
+    data["theta_bin"] = pd.cut(
+        data["theta_mapped"], bins=theta_edges, include_lowest=True
+    )
     data["r_bin"] = pd.cut(data[r_col], bins=r_edges, include_lowest=True)
 
     # ---- aggregate grid (r x theta)
@@ -457,20 +490,24 @@ def _plot_feature_interaction_annular(
     theta_widths = np.diff(theta_edges)
     r_bottoms = r_edges[:-1]
     r_heights = np.diff(r_edges)
-    
+
     th_raw = data[theta_col].to_numpy()
     tmin = float(data[theta_col].min())
     tmax = float(data[theta_col].max())
-    
+
     if theta_period is not None:
-        th_scaled = map_theta_to_span(th_raw, span=span, theta_period=theta_period)
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, theta_period=theta_period
+        )
         data_min = None
         data_max = None
     else:
-        th_scaled = map_theta_to_span(th_raw, span=span, data_min=tmin, data_max=tmax)
+        th_scaled = map_theta_to_span(
+            th_raw, span=span, data_min=tmin, data_max=tmax
+        )
         data_min = tmin
         data_max = tmax
-    
+
     data["theta_mapped"] = th_scaled
 
     # iterate bins; draw only finite cells
@@ -516,44 +553,48 @@ def _plot_feature_interaction_annular(
         else:
             start, stop = data_min, data_max
         theta_ticks = np.arange(start, stop + 1e-12, float(theta_tick_step))
-    
+
     if theta_ticks is not None:
         _apply_theta_ticks_generic(
-            ax, span=span, theta_ticks=theta_ticks,
+            ax,
+            span=span,
+            theta_ticks=theta_ticks,
             theta_ticklabels=theta_ticklabels,
-            theta_period=theta_period, data_min=data_min, data_max=data_max
+            theta_period=theta_period,
+            data_min=data_min,
+            data_max=data_max,
         )
-    
+
     # r ticks: generate if step is given and no explicit ticks
     if r_ticks is None and r_tick_step is not None:
         rmin = float(data[r_col].min())
         rmax = float(data[r_col].max())
         r_ticks = np.arange(rmin, rmax + 1e-12, float(r_tick_step))
-    
+
     if r_ticks is not None:
         _apply_r_ticks_generic(ax, r_ticks=r_ticks, r_ticklabels=r_ticklabels)
-     
-    final =safe_savefig(
+
+    final = safe_savefig(
         savefig,
-        fig, 
+        fig,
         dpi=dpi,
         bbox_inches="tight",
     )
-    if final is not None: 
-        plt.close(fig) 
-    else: 
+    if final is not None:
+        plt.close(fig)
+    else:
         fig.tight_layout()
-        plt.show() 
+        plt.show()
 
     return ax
 
 
 def _labels_from_spec(values, spec):
     """Return list of labels from a spec:
-       - None  -> default str(value)
-       - callable -> spec(v)
-       - Mapping -> spec.get(v, str(v))
-       - Sequence[str] -> must match length of values
+    - None  -> default str(value)
+    - callable -> spec(v)
+    - Mapping -> spec.get(v, str(v))
+    - Sequence[str] -> must match length of values
     """
     vals = list(values)
     if spec is None:
@@ -567,17 +608,28 @@ def _labels_from_spec(values, spec):
         raise ValueError("ticklabels length must match ticks.")
     return lab
 
+
 def _apply_theta_ticks_generic(
-    ax, *, span, theta_ticks, theta_ticklabels,
-    theta_period=None, data_min=None, data_max=None
+    ax,
+    *,
+    span,
+    theta_ticks,
+    theta_ticklabels,
+    theta_period=None,
+    data_min=None,
+    data_max=None,
 ):
     vals = np.asarray(theta_ticks, dtype=float)
     thetas = map_theta_to_span(
-        vals, span=span, theta_period=theta_period,
-        data_min=data_min, data_max=data_max
+        vals,
+        span=span,
+        theta_period=theta_period,
+        data_min=data_min,
+        data_max=data_max,
     )
     ax.set_xticks(thetas)
     ax.set_xticklabels(_labels_from_spec(vals, theta_ticklabels))
+
 
 def _apply_r_ticks_generic(ax, *, r_ticks, r_ticklabels):
     vals = np.asarray(r_ticks, dtype=float)

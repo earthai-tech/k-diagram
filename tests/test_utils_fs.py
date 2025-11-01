@@ -1,8 +1,8 @@
-
 import os
 import warnings
-import pytest
+
 import matplotlib
+import pytest
 
 # Use a non-interactive backend for tests
 matplotlib.use("Agg")
@@ -73,4 +73,3 @@ def test_savefig_none_is_noop():
     fig, _ = plt.subplots()
     out = safe_savefig(None, fig)
     assert out is None
-
