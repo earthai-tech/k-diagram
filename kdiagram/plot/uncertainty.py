@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import textwrap
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
@@ -44,6 +45,7 @@ from ..utils.validator import (
     _assert_all_types,
     exist_features,
 )
+from ..utils.fs import savefig as safe_savefig 
 
 __all__ = [
     "plot_actual_vs_predicted",
@@ -61,7 +63,6 @@ __all__ = [
     "plot_polar_quiver",
 ]
 
-
 @validate_params({"y_true": ["array-like"]})
 def plot_coverage(
     y_true,
@@ -78,16 +79,11 @@ def plot_coverage(
     cov_fill: bool = False,
     figsize: tuple[str, str] = None,
     title: str | None = None,
+    dpi: int =300, 
     savefig: str | None = None,
     verbose: int = 1,
     ax: Axes | None = None,
 ):
-    if ax is not None:
-        warnings.warn(
-            "`plot_coverage` currently does not suppport ax params."
-            "Setting  'ax' does nothing; present for API consistency.",
-            stacklevel=2,
-        )
     # Convert the true values to a numpy array for consistency
     y_true = np.array(y_true)
 
@@ -124,33 +120,15 @@ def plot_coverage(
         q_sorted = None
 
     # Compute coverage for each model in *y_preds.
-    #   - If pred has shape (n_samples, n_quantiles), we compute coverage
-    #     between min and max quantile per sample.
-    #   - If pred is 1D, treat as a point forecast and check exact match
-    #     (illustrative; typically coverage would be 0 unless data match).
     for _i, pred in enumerate(y_preds):
         pred = np.array(pred)
 
-        # if (q is not None) and (pred.ndim == 2):
         if pred.ndim == 2:
             if q_sorted is not None:
-                # No need since we used the first and last for
-                # computed coverage.
-                # --------------------
-                # if pred.shape[1] != len(q_sorted):
-                #     raise ValueError(
-                #         f"Model {i+1} predictions have"
-                #         f"{pred.shape[1]} quantiles, "
-                #         f"but 'q' has {len(q_sorted)} levels."
-                #     )
-                # ---------------------
-                # Align predictions with sorted quantiles
                 pred_sorted = pred[:, sorted_indices]
             else:
                 pred_sorted = np.sort(pred, axis=1)
 
-            # Sort columns to ensure ascending order of quantiles.
-            # pred_sorted = np.sort(pred, axis=1)
             lower_q = pred_sorted[:, 0]
             upper_q = pred_sorted[:, -1]
             in_interval = ((y_true >= lower_q) & (y_true <= upper_q)).astype(
@@ -164,7 +142,6 @@ def plot_coverage(
             coverage = np.mean(matches)
 
         else:
-            # If neither scenario applies, store None.
             coverage = None
 
         coverage_scores.append(coverage)
@@ -173,73 +150,83 @@ def plot_coverage(
     valid_cov = [c if c is not None else 0 for c in coverage_scores]
     x_idx = np.arange(num_models)
 
-    if kind in {"bar", "line", "pipe"}:
-        # Initialize the figure.
-        if figsize is not None:
-            plt.figure(figsize=figsize)
+    # ---- Axes / Figure handling (use ax if provided) ----------------------
+    if kind in {"bar", "line", "pipe", "pie"}:
+        if ax is None:
+            if figsize is not None:
+                fig, ax = plt.subplots(figsize=figsize)
+            else:
+                fig, ax = plt.subplots()
         else:
-            plt.figure()
-    # Plot according to the chosen 'kind'.
+            fig = ax.figure
+
+    elif kind == "radar":
+        if ax is None:
+            # create a polar axes if none is provided
+            if figsize is not None:
+                fig, ax = plt.subplots(
+                    figsize=figsize, subplot_kw={"projection": "polar"}
+                )
+            else:
+                fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+        else:
+            fig = ax.figure
+            if getattr(ax, "name", "") != "polar":
+                raise ValueError(
+                    "For kind='radar', the provided 'ax' must be a polar Axes."
+                )
+    else:
+        # No plotting; console output only
+        fig = None
+
+    # ---- Draw according to 'kind' -----------------------------------------
     if kind == "bar":
-        plt.bar(x_idx, valid_cov, color="blue", alpha=0.7)
+        ax.bar(x_idx, valid_cov, color="blue", alpha=0.7)
         for idx, val in enumerate(coverage_scores):
             if val is not None:
-                plt.text(
-                    x=idx,
-                    y=val + 0.01,
-                    s=f"{val:.2f}",
-                    ha="center",
-                    va="bottom",
+                ax.text(
+                    x=idx, y=val + 0.01, s=f"{val:.2f}",
+                    ha="center", va="bottom",
                 )
-        plt.xticks(x_idx, names)
-        plt.ylim([0, 1])
-        plt.ylabel("Coverage")
-        plt.xlabel("Models")
+        ax.set_xticks(x_idx)
+        ax.set_xticklabels(names)
+        ax.set_ylim([0, 1])
+        ax.set_ylabel("Coverage")
+        ax.set_xlabel("Models")
 
     elif kind == "line":
-        plt.plot(x_idx, valid_cov, marker="o")
+        ax.plot(x_idx, valid_cov, marker="o")
         for idx, val in enumerate(coverage_scores):
             if val is not None:
-                plt.text(
-                    x=idx,
-                    y=val + 0.01,
-                    s=f"{val:.2f}",
-                    ha="center",
-                    va="bottom",
+                ax.text(
+                    x=idx, y=val + 0.01, s=f"{val:.2f}",
+                    ha="center", va="bottom",
                 )
-        plt.xticks(x_idx, names)
-        plt.ylim([0, 1])
-        plt.ylabel("Coverage")
-        plt.xlabel("Models")
+        ax.set_xticks(x_idx)
+        ax.set_xticklabels(names)
+        ax.set_ylim([0, 1])
+        ax.set_ylabel("Coverage")
+        ax.set_xlabel("Models")
 
-    elif kind == "pie":
-        # Pie chart: each slice represents a model's coverage. By default,
-        # the slice size is coverage[i] out of the sum of coverage.
+    elif kind in {"pie", "pipe"}:  # keep your original alias
         total_cov = sum(valid_cov)
         if total_cov == 0:
-            # Avoid a zero-coverage pie chart.
-            plt.text(
-                0.5, 0.5, "No coverage to plot", ha="center", va="center"
-            )
+            ax.text(0.5, 0.5, "No coverage to plot", ha="center", va="center")
         else:
-            plt.pie(
+            ax.pie(
                 valid_cov,
                 labels=names,
                 autopct=pie_autopct,
                 startangle=pie_startangle,
                 colors=get_cmap(cmap)(np.linspace(0, 1, num_models)),
             )
-            plt.axis("equal")  # Make the pie chart a perfect circle.
+            ax.axis("equal")  # Make the pie chart a perfect circle.
 
     elif kind == "radar":
-        # #Radar chart: place each model's coverage as a radial axis.
-
         N = num_models
         angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
         angles = np.concatenate((angles, [angles[0]]))
         coverage_radar = np.concatenate((valid_cov, [valid_cov[0]]))
-
-        ax = plt.subplot(111, polar=True)
 
         # Plot main coverage line
         ax.plot(
@@ -250,85 +237,80 @@ def plot_coverage(
             label="Coverage",
         )
 
-        # Handle fill based on number of models
         if cov_fill:
             if num_models == 1:
-                # Single model: radial gradient fill up to coverage value
                 coverage_value = valid_cov[0]
                 theta = np.linspace(0, 2 * np.pi, 100)
                 r = np.linspace(0, coverage_value, 100)
                 R, Theta = np.meshgrid(r, theta)
 
-                # Create gradient using specified colormap
                 ax.grid(False)
                 ax.pcolormesh(
-                    Theta,
-                    R,
-                    R,
-                    cmap=cmap,
-                    shading="auto",
-                    alpha=radar_fill_alpha,
-                    zorder=0,  # Place behind main plot
+                    Theta, R, R, cmap=cmap, shading="auto",
+                    alpha=radar_fill_alpha, zorder=0,
                 )
                 ax.grid(True, which="both")
-                # Add red circle at coverage value
-                ax.plot(
-                    theta,
-                    [coverage_value] * len(theta),  # Constant radius
-                    color="red",
-                    linewidth=2,
-                    linestyle="-",
-                    # label=f'Coverage Value ({coverage_value:.2f})'
-                )
-
-                # Add concentric grid circles at 0.2, 0.4, 0.6, 0.8
-                # with correct properties
+                ax.plot(theta, [coverage_value] * len(theta),
+                        color="red", linewidth=2, linestyle="-")
                 ax.set_ylim(0, 1)
                 ax.set_yticks([0.2, 0.4, 0.6, 0.8])
-                ax.yaxis.grid(
-                    True,
-                    color="gray",
-                    linestyle="--",
-                    linewidth=0.5,
-                    alpha=0.7,
-                )
-
+                ax.yaxis.grid(True, color="gray", linestyle="--",
+                              linewidth=0.5, alpha=0.7)
             else:
-                # Multiple models: transparent fill between center and line
                 ax.fill(
-                    angles,
-                    coverage_radar,
-                    color=radar_color,
-                    alpha=radar_fill_alpha,
-                    zorder=0,
+                    angles, coverage_radar,
+                    color=radar_color, alpha=radar_fill_alpha, zorder=0,
                 )
-        # Final formatting
-        ax.set_thetagrids(angles[:-1] * 180 / np.pi, labels=names)
+        # Wrap each label to multiple lines (keeps parentheticals readable)
+        wrapped_names = [
+            textwrap.fill(n, width=18, break_long_words=False, break_on_hyphens=False)
+            for n in names
+        ]
+        
+        ax.set_thetagrids(
+            angles[:-1] * 180 / np.pi,
+            labels=wrapped_names,
+        )
+        # Push labels outward from the circle a bit (points)
+        pad = 8 if len(names) <= 4 else (10 if len(names) <= 6 else 12)
+        ax.tick_params(axis="x", pad=pad)   # add radial padding for labels
+        # ax.set_thetagrids(angles[:-1] * 180 / np.pi, labels=names)
+        # Optional: if there are many models (crowded), gently reduce fontsize
+        if len(names) >= 6:
+            for lbl in ax.get_xticklabels():
+                lbl.set_fontsize(max(lbl.get_fontsize() - 1, 8))
+    
         ax.set_ylim(0, 1)
-        plt.legend(loc="upper right")
+        ax.legend(loc="upper right")
 
     else:
         # Fallback: print coverage scores to the console for each model.
         for idx, val in enumerate(coverage_scores):
             print(f"{names[idx]} coverage: {val}")
 
+    # ---- Summary / titles / saving ----------------------------------------
     if verbose:
-        cov_dict = {
-            names[idx]: cov for idx, cov in enumerate(coverage_scores)
-        }
-
+        cov_dict = {names[idx]: cov for idx, cov in enumerate(coverage_scores)}
         summary = ResultSummary("CoverageScores").add_results(cov_dict)
         print(summary)
 
-    # Add title if provided.
-    if title is not None:
-        plt.title(title)
+    if title is not None and fig is not None:
+        # Title for this axes
+        ax.set_title(title)
+    
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
-    if savefig is not None:
-        plt.savefig(savefig, bbox_inches="tight")
-
-    plt.show()
-
+    return ax if fig is not None else None
 
 plot_coverage.__doc__ = r"""
 Plot overall coverage scores for forecast intervals or points.
@@ -563,185 +545,9 @@ def plot_model_drift(
     annotate: bool = True,
     grid_props: dict | None = None,
     savefig: str | None = None,
+    dpi: int =300, 
     ax: Axes | None = None,
 ):
-    r"""Visualize forecast drift across prediction horizons.
-
-    Renders a polar bar chart depicting how average model
-    uncertainty (or another metric) evolves as the forecast horizon
-    increases. Each bar corresponds to a specific forecast horizon,
-    arranged angularly.
-
-    This plot is crucial for diagnosing model degradation over
-    longer lead times, often termed *concept drift* or *model
-    aging* [1]_. A distinct increase in bar height (radius) for
-    later horizons signals inflating uncertainty or error, potentially
-    indicating a need for model retraining or adjustments to account
-    for changing dynamics. Use this visualization to assess if your
-    model's reliability holds as you forecast further into the
-    future.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        Input DataFrame containing the necessary quantile columns (or
-        columns specified in ``color_metric_cols``) for each forecast
-        horizon.
-
-    q_cols : list[tuple[str, str]], optional
-        A list where each element is a tuple containing the column
-        names for the lower and upper quantiles for a specific
-        horizon, e.g., ``[('q10_h1', 'q90_h1'), ('q10_h2', 'q90_h2')]``.
-        If ``None``, ``q10_cols`` and ``q90_cols`` must be provided
-        instead. Default is ``None``.
-
-    q10_cols : list[str], optional
-        List of column names representing the lower quantile (e.g.,
-        10th percentile) for each successive horizon. Must be provided
-        if ``q_cols`` is ``None``. Must have the same length as
-        ``q90_cols`` and ``horizons`` (if provided). Default is ``None``.
-
-    q90_cols : list[str], optional
-        List of column names representing the upper quantile (e.g.,
-        90th percentile) for each successive horizon. Must be provided
-        if ``q_cols`` is ``None``. Must have the same length as
-        ``q10_cols`` and ``horizons`` (if provided). Default is ``None``.
-
-    horizons : list of str or int, optional
-        Labels corresponding to each forecast horizon (plotted on the
-        angular axis). The order must match the order in ``q_cols`` or
-        ``q10_cols``/``q90_cols``. If ``None``, generic labels like
-        "Horizon 1", "Horizon 2", ... are generated.
-        Default is ``None``.
-
-    color_metric_cols : list of str, optional
-        If provided, the bars are colored based on the mean value of
-        these columns for each horizon (e.g., provide RMSE columns
-        like ``['rmse_h1', 'rmse_h2', ...]``). If ``None``, bars are
-        colored based on the calculated mean interval width (Q90-Q10).
-        Default is ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, optional
-
-        Specifies the angular coverage (span) of the plot. Use narrower
-        sectors for fewer horizons. Default is ``'quarter_circle'``.
-
-        - ``'default'``: Full circle (:math:`2\pi`, 360°).
-        - ``'half_circle'``: Half circle (:math:`\pi`, 180°).
-        - ``'quarter_circle'``: Quarter circle (:math:`\pi/2`, 90°).
-        - ``'eighth_circle'``: Eighth circle (:math:`\pi/4`, 45°).
-
-    value_label : str, optional
-        Label displayed for the radial axis, describing the metric
-        represented by the bar height. Default is
-        ``'Uncertainty Width (Q90 - Q10)'``.
-
-    cmap : str, optional
-        Name of the Matplotlib colormap used to color the bars based
-        on their radial value (or the `color_metric_cols` value).
-        Default is ``'coolwarm'``.
-
-    figsize : tuple of (float, float), optional
-        Figure dimensions ``(width, height)`` in inches. If ``None``,
-        uses the default ``(8, 8)``.
-
-    title : str, optional
-        Headline text displayed above the plot. Default is
-        ``'Model Forecast Drift Over Time'``.
-
-    show_grid : bool, optional
-        If ``True``, displays radial and angular grid lines to aid
-        interpretation. Default is ``True``.
-
-    annotate : bool, optional
-        If ``True``, displays the numeric value (mean width or mean
-        color metric) on top of each bar. Default is ``True``.
-
-    grid_props : dict, optional
-        Dictionary of keyword arguments to customize the appearance
-        of the grid lines (passed to ``ax.grid()``). E.g.,
-        ``{'linestyle': ':', 'linewidth': 0.5}``. Default is ``None``.
-
-    savefig : str, optional
-        Full path and filename to save the plot (e.g., 'drift.pdf').
-        If ``None``, the plot is displayed interactively.
-        Default is ``None``.
-
-    Returns
-    -------
-    matplotlib.axes.Axes
-        The polar axes object containing the bar chart, allowing
-        for further customization if desired.
-
-    Raises
-    ------
-    ValueError
-        If required quantile columns (`q_cols` or both `q10_cols`
-        and `q90_cols`) are missing from `df`, or if the lengths of
-        provided column lists/horizons mismatch.
-    TypeError
-        If data in the specified columns cannot be processed
-        numerically.
-
-    See Also
-    --------
-    kdiagram.plot.uncertainty.plot_uncertainty_drift : Visualize drift
-        of the uncertainty pattern using rings.
-    kdiagram.utils.plot.set_axis_grid : Helper for grid styling (if used).
-
-    Notes
-    -----
-    The primary radial value plotted for each horizon :math:`h` is the
-    mean interval width calculated across all :math:`N` samples:
-
-    .. math::
-       \bar{w}_h = \frac{1}{N}\sum_{j=1}^{N} \left( Q_{up, j, h} -
-       Q_{low, j, h} \right)
-
-    If ``color_metric_cols`` is provided, a similar average is
-    calculated for those columns to determine bar color.
-
-    Radii may be scaled relative to the maximum radius if a
-    restricted angular coverage (``acov`` is not 'default') is used,
-    to better fit the visual sector [2]_.
-
-    References
-    ----------
-
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic 
-       Forecasts. *International Journal of Forecasting*. Manuscript submitted.
-       
-    .. [2] Gama, J., Žliobaitė, I., Bifet, A., Pechenizkiy, M., &
-           Bouchachia, A. (2014). A survey on concept drift
-           adaptation. *ACM Computing Surveys (CSUR)*, 46(4), 1-37.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_model_drift
-    >>> # Example with synthetic data
-    >>> years = [2023, 2024, 2025, 2026]
-    >>> n_samples=50
-    >>> df_synth = pd.DataFrame()
-    >>> q10_cols, q90_cols = [], []
-    >>> for i, year in enumerate(years):
-    ...     ql, qu = f'val_{year}_q10', f'val_{year}_q90'
-    ...     q10_cols.append(ql); q90_cols.append(qu)
-    ...     q10 = np.random.rand(n_samples)*5 + i*0.5
-    ...     q90 = q10 + np.random.rand(n_samples)*2 + 1 + i*0.8
-    ...     df_synth[ql]=q10; df_synth[qu]=q90
-    >>> ax = plot_model_drift(
-    ...     df=df_synth,
-    ...     q10_cols=q10_cols,
-    ...     q90_cols=q90_cols,
-    ...     horizons=years,
-    ...     acov='quarter_circle', # Use 90 degree span
-    ...     title='Synthetic Model Drift Example'
-    ... )
-    """
     #
     # 1. Pair quantile columns
     q_cols = build_qcols_multiple(
@@ -788,6 +594,8 @@ def plot_model_drift(
             figsize=figsize,
             subplot_kw={"projection": "polar"},
         )
+    else : 
+        fig = ax.figure 
 
     # Orient polar chart: 0° at the top, clockwise direction
     ax.set_theta_offset(np.pi / 2)
@@ -826,23 +634,223 @@ def plot_model_drift(
             )
 
     # Ticks & labels
+
+    # Wrap long labels over 1–2 lines so they don’t collide with the rim
+    wrap_width = 32 if n_horizons <= 5 else (28 if n_horizons <= 8 else 24)
+    labels = [
+        textwrap.fill(str(h), width=wrap_width,
+                      break_long_words=False, break_on_hyphens=False)
+        for h in horizons
+    ]
+    
     ax.set_xticks(theta)
-    ax.set_xticklabels([str(h) for h in horizons])
+    ax.set_xticklabels(labels)
+    
+    # Push labels outward from the circle (points)
+    # Use a bit more pad when there are many labels
+    pad_pts = 10 if n_horizons <= 5 else (12 if n_horizons <= 8 else 14)
+    ax.tick_params(axis="x", pad=pad_pts)
+    
+    # Keep radial ticks hidden and place the radial ylabel inside the axes
     ax.set_yticklabels([])
-    ax.set_ylabel(value_label)
-    ax.set_title(title, fontsize=14, pad=20)
+    ax.set_ylabel(value_label, labelpad=52)  # adjust as you like
 
     # Optional grid
     set_axis_grid(ax, show_grid, grid_props=grid_props)
 
     # 6. Output handling
-    if savefig is not None:
-        fig.savefig(savefig, bbox_inches="tight")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
+plot_model_drift.__doc__=r"""
+Visualize forecast drift across prediction horizons.
+
+Renders a polar bar chart depicting how average model
+uncertainty (or another metric) evolves as the forecast horizon
+increases. Each bar corresponds to a specific forecast horizon,
+arranged angularly.
+
+This plot is crucial for diagnosing model degradation over
+longer lead times, often termed *concept drift* or *model
+aging* [1]_. A distinct increase in bar height (radius) for
+later horizons signals inflating uncertainty or error, potentially
+indicating a need for model retraining or adjustments to account
+for changing dynamics. Use this visualization to assess if your
+model's reliability holds as you forecast further into the
+future.
+
+Parameters
+----------
+df : pandas.DataFrame
+    Input DataFrame containing the necessary quantile columns (or
+    columns specified in ``color_metric_cols``) for each forecast
+    horizon.
+
+q_cols : list[tuple[str, str]], optional
+    A list where each element is a tuple containing the column
+    names for the lower and upper quantiles for a specific
+    horizon, e.g., ``[('q10_h1', 'q90_h1'), ('q10_h2', 'q90_h2')]``.
+    If ``None``, ``q10_cols`` and ``q90_cols`` must be provided
+    instead. Default is ``None``.
+
+q10_cols : list[str], optional
+    List of column names representing the lower quantile (e.g.,
+    10th percentile) for each successive horizon. Must be provided
+    if ``q_cols`` is ``None``. Must have the same length as
+    ``q90_cols`` and ``horizons`` (if provided). Default is ``None``.
+
+q90_cols : list[str], optional
+    List of column names representing the upper quantile (e.g.,
+    90th percentile) for each successive horizon. Must be provided
+    if ``q_cols`` is ``None``. Must have the same length as
+    ``q10_cols`` and ``horizons`` (if provided). Default is ``None``.
+
+horizons : list of str or int, optional
+    Labels corresponding to each forecast horizon (plotted on the
+    angular axis). The order must match the order in ``q_cols`` or
+    ``q10_cols``/``q90_cols``. If ``None``, generic labels like
+    "Horizon 1", "Horizon 2", ... are generated.
+    Default is ``None``.
+
+color_metric_cols : list of str, optional
+    If provided, the bars are colored based on the mean value of
+    these columns for each horizon (e.g., provide RMSE columns
+    like ``['rmse_h1', 'rmse_h2', ...]``). If ``None``, bars are
+    colored based on the calculated mean interval width (Q90-Q10).
+    Default is ``None``.
+
+acov : {'default', 'half_circle', 'quarter_circle', \
+    'eighth_circle'}, optional
+
+    Specifies the angular coverage (span) of the plot. Use narrower
+    sectors for fewer horizons. Default is ``'quarter_circle'``.
+
+    - ``'default'``: Full circle (:math:`2\pi`, 360°).
+    - ``'half_circle'``: Half circle (:math:`\pi`, 180°).
+    - ``'quarter_circle'``: Quarter circle (:math:`\pi/2`, 90°).
+    - ``'eighth_circle'``: Eighth circle (:math:`\pi/4`, 45°).
+
+value_label : str, optional
+    Label displayed for the radial axis, describing the metric
+    represented by the bar height. Default is
+    ``'Uncertainty Width (Q90 - Q10)'``.
+
+cmap : str, optional
+    Name of the Matplotlib colormap used to color the bars based
+    on their radial value (or the `color_metric_cols` value).
+    Default is ``'coolwarm'``.
+
+figsize : tuple of (float, float), optional
+    Figure dimensions ``(width, height)`` in inches. If ``None``,
+    uses the default ``(8, 8)``.
+
+title : str, optional
+    Headline text displayed above the plot. Default is
+    ``'Model Forecast Drift Over Time'``.
+
+show_grid : bool, optional
+    If ``True``, displays radial and angular grid lines to aid
+    interpretation. Default is ``True``.
+
+annotate : bool, optional
+    If ``True``, displays the numeric value (mean width or mean
+    color metric) on top of each bar. Default is ``True``.
+
+grid_props : dict, optional
+    Dictionary of keyword arguments to customize the appearance
+    of the grid lines (passed to ``ax.grid()``). E.g.,
+    ``{'linestyle': ':', 'linewidth': 0.5}``. Default is ``None``.
+
+savefig : str, optional
+    Full path and filename to save the plot (e.g., 'drift.pdf').
+    If ``None``, the plot is displayed interactively.
+    Default is ``None``.
+
+Returns
+-------
+matplotlib.axes.Axes
+    The polar axes object containing the bar chart, allowing
+    for further customization if desired.
+
+Raises
+------
+ValueError
+    If required quantile columns (`q_cols` or both `q10_cols`
+    and `q90_cols`) are missing from `df`, or if the lengths of
+    provided column lists/horizons mismatch.
+TypeError
+    If data in the specified columns cannot be processed
+    numerically.
+
+See Also
+--------
+kdiagram.plot.uncertainty.plot_uncertainty_drift : Visualize drift
+    of the uncertainty pattern using rings.
+kdiagram.utils.plot.set_axis_grid : Helper for grid styling (if used).
+
+Notes
+-----
+The primary radial value plotted for each horizon :math:`h` is the
+mean interval width calculated across all :math:`N` samples:
+
+.. math::
+   \bar{w}_h = \frac{1}{N}\sum_{j=1}^{N} \left( Q_{up, j, h} -
+   Q_{low, j, h} \right)
+
+If ``color_metric_cols`` is provided, a similar average is
+calculated for those columns to determine bar color.
+
+Radii may be scaled relative to the maximum radius if a
+restricted angular coverage (``acov`` is not 'default') is used,
+to better fit the visual sector [2]_.
+
+References
+----------
+
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic 
+   Forecasts. *International Journal of Forecasting*. Manuscript submitted.
+   
+.. [2] Gama, J., Žliobaitė, I., Bifet, A., Pechenizkiy, M., &
+       Bouchachia, A. (2014). A survey on concept drift
+       adaptation. *ACM Computing Surveys (CSUR)*, 46(4), 1-37.
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_model_drift
+>>> # Example with synthetic data
+>>> years = [2023, 2024, 2025, 2026]
+>>> n_samples=50
+>>> df_synth = pd.DataFrame()
+>>> q10_cols, q90_cols = [], []
+>>> for i, year in enumerate(years):
+...     ql, qu = f'val_{year}_q10', f'val_{year}_q90'
+...     q10_cols.append(ql); q90_cols.append(qu)
+...     q10 = np.random.rand(n_samples)*5 + i*0.5
+...     q90 = q10 + np.random.rand(n_samples)*2 + 1 + i*0.8
+...     df_synth[ql]=q10; df_synth[qu]=q90
+>>> ax = plot_model_drift(
+...     df=df_synth,
+...     q10_cols=q10_cols,
+...     q90_cols=q90_cols,
+...     horizons=years,
+...     acov='quarter_circle', # Use 90 degree span
+...     title='Synthetic Model Drift Example'
+... )
+"""
 
 @check_non_emptiness
 @isdf
@@ -862,6 +870,7 @@ def plot_velocity(
     savefig: str | None = None,
     cbar: bool = True,
     mask_angle: bool = False,
+    dpi: int=300, 
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -985,7 +994,9 @@ def plot_velocity(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-
+    else: 
+        fig = ax.figure 
+        
     # Set the angular limits based on angular coverage
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angle_span))  # set_thetamax expects degrees
@@ -1028,25 +1039,27 @@ def plot_velocity(
 
     # Set radial label based on normalization
     if normalize:
-        ax.set_ylabel("Normalized Average Velocity", labelpad=15, fontsize=10)
+        ax.set_ylabel("Normalized Average Velocity", labelpad=32, fontsize=10)
         # Ensure radial limits are appropriate for normalized data
         # ax.set_ylim(bottom=0, top=1.05) # Give slight padding
         # ax.set_yticks(np.linspace(0, 1, 5)) # Example radial ticks
     else:
-        ax.set_ylabel("Average Velocity", labelpad=15, fontsize=10)
+        ax.set_ylabel("Average Velocity", labelpad=32, fontsize=10)
         # Radial limits might need auto-scaling or manual setting
 
-    plt.tight_layout()  # Adjust layout
-
     # --- Save or Show ---
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
+
 
     return ax
 
@@ -1367,6 +1380,7 @@ def plot_interval_consistency(
     show_grid: bool = True,
     mask_angle: bool = False,
     savefig: str | None = None,
+    dpi: int =300, 
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -1517,6 +1531,9 @@ def plot_interval_consistency(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
+    else: 
+        fig = ax.figure 
+        
 
     # Set angular limits
     ax.set_thetamin(0)
@@ -1555,21 +1572,22 @@ def plot_interval_consistency(
         ax.set_xticklabels([])
 
     # Set radial axis label
-    ax.set_ylabel(radial_label, labelpad=15, fontsize=10)
+    ax.set_ylabel(radial_label, labelpad=32, fontsize=10)
     # Optional: adjust radial limits if needed, e.g., start at 0
     ax.set_ylim(bottom=0)
 
-    plt.tight_layout()  # Adjust layout
-
     # --- Save or Show ---
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
@@ -1882,6 +1900,7 @@ def plot_anomaly_magnitude(
     show_grid: bool = True,
     verbose: int = 1,
     cbar: bool = False,
+    dpi: int =300, 
     savefig: str | None = None,
     mask_angle: bool = False,
     ax: Axes | None = None,
@@ -2028,12 +2047,15 @@ def plot_anomaly_magnitude(
 
     # --- Plotting ---
     if ax is None:
-        fig, ax = plt.subplots(
-            figsize=figsize, subplot_kw={"projection": "polar"}
-        )
+        # Constrained layout avoids title / r-label overlap on polar axes
+        fig = plt.figure(figsize=figsize, constrained_layout=True)
+        ax = fig.add_subplot(111, projection="polar")
+    else:
+        fig = ax.figure
+
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(coverage))  # Expects degrees
-    ax.set_title(title, fontsize=14, y=1.08)  # Adjust position
+    # ax.set_title(title, fontsize=14, y=1.08)  # Adjust position
 
     # Setup grid
     if show_grid:
@@ -2128,12 +2150,19 @@ def plot_anomaly_magnitude(
         # Create a mappable object linked to the normalization and cmap_over
         sm = cm.ScalarMappable(norm=norm, cmap=cmap_over_obj)
         sm.set_array([])  # Needed for ScalarMappable
-        cbar_obj = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
+        # cbar_obj = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
+        cbar_obj = plt.colorbar(sm, ax=ax, pad=0.08, shrink=0.80)
         cbar_obj.set_label("Anomaly magnitude |Actual - Bound|", fontsize=10)
 
     # Set radial axis label
-    ax.set_ylabel("Anomaly Magnitude", labelpad=15, fontsize=10)
+    ax.set_title(title, fontsize=14, y=1.12)
+    ax.set_ylabel("Anomaly Magnitude", labelpad=24, fontsize=10)
+    
+    # Move the radial tick labels away from the y-label side
+    ax.set_rlabel_position(315)  # places radial tick labels near SE quadrant
+
     ax.set_ylim(bottom=0)  # Ensure radius starts at 0
+    
 
     # --- Logging ---
     if verbose > 0:
@@ -2157,16 +2186,17 @@ def plot_anomaly_magnitude(
         )
         print("-" * 50)
 
-    # --- Output ---
-    plt.tight_layout()
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        plt.show() 
+
 
     return ax
 
@@ -2498,6 +2528,7 @@ def plot_uncertainty_drift(
     show_legend: bool = True,
     mask_angle: bool = True,
     savefig: str | None = None,
+    dpi: int =300,
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -2631,6 +2662,9 @@ def plot_uncertainty_drift(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
+    else: 
+        fig = ax.figure 
+        
     ax.set_thetamin(np.degrees(theta_min_rad))  # Expects degrees
     ax.set_thetamax(np.degrees(theta_max_rad))  # Expects degrees
 
@@ -2709,16 +2743,12 @@ def plot_uncertainty_drift(
             fontsize=9,
         )
 
-    plt.tight_layout()  # Adjust layout
-
     # --- Save or Show ---
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
+    if savefig is not None:
+        safe_savefig(savefig, fig,  bbox_inches="tight", dpi=dpi)
+        plt.close(fig)
     else:
+        fig.tight_layout()  
         plt.show()
 
     return ax
@@ -3018,7 +3048,7 @@ def plot_actual_vs_predicted(
     title: str | None = None,
     line: bool = True,
     r_label: str | None = None,
-    cmap: str | None = None,  # Note: Currently unused
+    cmap: str | None = None,  
     alpha: float = 0.3,
     actual_props: dict[str, Any] | None = None,
     pred_props: dict[str, Any] | None = None,
@@ -3026,258 +3056,11 @@ def plot_actual_vs_predicted(
     grid_props: dict | None = None,
     show_legend: bool = True,
     mask_angle: bool = False,
+    dpi: int =300, 
     savefig: str | None = None,
     ax: Axes | None = None,
 ):
-    r"""Polar plot comparing actual observed vs predicted values.
 
-    This function generates a polar plot to visually compare actual
-    ground truth values against model predictions (typically a central
-    estimate like the median, Q50) for multiple data points or
-    locations arranged circularly [1]_.
-
-    - **Angular Position (`theta`)**: Represents each data point or
-      location. Points are currently plotted in their DataFrame index
-      order, mapped linearly onto the specified angular coverage
-      (`acov`). The `theta_col` parameter is intended for future use
-      in ordering points based on a specific feature (like latitude)
-      but is currently ignored for positioning.
-    - **Radial Distance (`r`)**: Represents the magnitude of the values.
-      Both the actual value (`actual_col`) and the predicted value
-      (`pred_col`) are plotted at the corresponding angle `theta`.
-
-    - **Visual Comparison**:
-
-      - Actual and predicted values are shown as either continuous
-        lines or individual dots based on the `line` parameter [2]_.
-      - Gray vertical lines connect the actual and predicted values
-        at each angle, visually highlighting the magnitude and
-        direction (over- or under-prediction) of the difference
-        at each point.
-
-    This plot facilitates:
-
-    - Quick visual assessment of prediction accuracy and bias across
-      samples.
-    - Identification of regions or conditions (if angle relates to a
-      feature) where the model performs well or poorly.
-    - Communication of model performance to stakeholders.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing actual and predicted value columns.
-        Decorators ensure it's a valid, non-empty pandas DataFrame.
-
-    actual_col : str
-        Name of the column holding the actual observed (ground truth)
-        values.
-
-    pred_col : str
-        Name of the column holding the corresponding predicted values
-        (e.g., the Q50 median prediction).
-
-    theta_col : str, optional
-        *Intended* column name for ordering points angularly based on
-        its values (e.g., 'latitude'). *Note: This parameter is
-        currently ignored for positioning/ordering in this implementation;
-        points use DataFrame index order.* A warning is issued if
-        provided. Default is ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, default='default'
-        Specifies the angular coverage (span) of the polar plot:
-        ``'default'`` (360°), ``'half_circle'`` (180°),
-        ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°).
-
-    figsize : tuple of (float, float), default=(8.0, 8.0)
-        Width and height of the figure in inches.
-
-    title : str, optional
-        Custom title for the plot. If ``None``, a default title is used.
-        Default is ``None``.
-
-    line : bool, default=True
-        Determines the plotting style:
-
-        - If ``True``, actual and predicted values are plotted as lines
-          connecting consecutive points.
-        - If ``False``, values are plotted as individual scatter dots.
-
-    r_label : str, optional
-        Custom label for the radial axis (representing value magnitude).
-        If ``None``, no label is set. Default is ``None``.
-
-    cmap : str, optional
-        *Note: This parameter is currently unused in the function.*
-        It might be intended for future use, perhaps coloring the
-        difference lines. Default is ``None``.
-
-    alpha : float, default=0.3
-        Transparency level applied to the gray difference lines drawn
-        between actual and predicted values, and also to the predicted
-        dots if ``line=False``.
-
-    actual_props : dict, optional
-        Dictionary of keyword arguments passed directly to the Matplotlib
-        `plot` or `scatter` function for the 'Actual' data series. Allows
-        customization (e.g., ``{'color': 'blue', 'linestyle': '--'}``).
-        Defaults to basic black line/dots if ``None``.
-
-    pred_props : dict, optional
-        Dictionary of keyword arguments passed directly to the Matplotlib
-        `plot` or `scatter` function for the 'Predicted' data series.
-        Allows customization (e.g., ``{'color': 'orange', 'marker': 'x'}``).
-        Defaults to basic red line/dots if ``None``.
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines.
-
-    show_legend : bool, default=True
-        If ``True``, display a legend labeling the 'Actual' and
-        'Predicted' series.
-
-    mute_degree : bool, default=False
-        If ``True``, hide the angular tick labels (degrees).
-
-    savefig : str, optional
-        File path to save the plot image. If ``None``, displays the plot
-        interactively. Default is ``None``.
-
-    Returns
-    -------
-    ax : matplotlib.axes._axes.Axes
-        The Matplotlib Axes object containing the polar plot. Note that
-        due to subplot_kw, it's specifically a PolarAxesSubplot.
-
-    Raises
-    ------
-    ValueError
-        If `actual_col` or `pred_col` are not found in `df`.
-    TypeError
-        If data in actual or predicted columns is not numeric.
-
-    See Also
-    --------
-    plot_anomaly_magnitude : Visualize only points outside prediction
-                             intervals.
-    matplotlib.pyplot.plot : Function for line plots.
-    matplotlib.pyplot.scatter : Function for scatter plots.
-
-    Notes
-    -----
-
-    - Rows with NaN values in `actual_col` or `pred_col` (or `theta_col`
-      if specified, though currently unused for position) are dropped.
-    - The gray lines indicating the difference are drawn individually
-      for each point using a loop. *Warning: This approach can be very
-      slow for large datasets (many thousands of points).* An alternative
-      like `fill_between` might be more efficient for showing shaded areas
-      but would require sorting by theta.
-    - The `theta_col` parameter is currently ignored for positioning;
-      angles are always based on the DataFrame index order after NaN
-      removal.
-    - The `cmap` parameter is currently unused. The difference lines are
-      hardcoded to 'gray'.
-    - Default plotting styles are black for actual and red for predicted,
-      but can be overridden using `actual_props` and `pred_props` [1]_.
-
-    Let :math:`y_j` be the actual value and :math:`\hat{y}_j` the
-    predicted value for data point (location) :math:`j` (:math:`j=0,
-    \dots, N-1` after NaN removal).
-
-    1. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
-       and :math:`\theta_{min}` the start angle from `acov`.
-
-       .. math::
-           \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
-
-    2. **Radial Coordinates**: The radial coordinates are directly the
-       values: :math:`r_{actual, j} = y_j` and :math:`r_{pred, j} =
-       \hat{y}_j`.
-
-    3. **Plotting**:
-
-       - Plot points/lines connecting :math:`(r_{actual, j}, \theta_j)`
-         and :math:`(r_{pred, j}, \theta_j)`.
-       - For each :math:`j`, draw a gray line segment connecting the points
-         :math:`(\min(y_j, \hat{y}_j), \theta_j)` and
-         :math:`(\max(y_j, \hat{y}_j), \theta_j)`.
-
-    References
-    ----------
-    
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-       
-    .. [2] Matplotlib documentation: https://matplotlib.org/stable/
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_actual_vs_predicted
-
-    **1. Random Example:**
-
-    >>> np.random.seed(0)
-    >>> N = 100
-    >>> df_avp_rand = pd.DataFrame({
-    ...     'Time': pd.date_range('2023-01-01', periods=N, freq='D'),
-    ...     'ActualTemp': 15 + 10 * np.sin(np.linspace(0, 4 * np.pi, N)) + np.random.randn(N) * 2,
-    ...     'PredictedTemp': 16 + 9 * np.sin(np.linspace(0, 4 * np.pi, N) + 0.1) + np.random.randn(N) * 1.5
-    ... })
-    >>> ax_avp_rand = plot_actual_vs_predicted(
-    ...     df=df_avp_rand,
-    ...     actual_col='ActualTemp',
-    ...     pred_col='PredictedTemp',
-    ...     theta_col='Time', # Note: Ignored for positioning
-    ...     acov='default',
-    ...     title='Temperature: Actual vs. Predicted',
-    ...     line=True, # Use lines
-    ...     r_label='Temperature (°C)',
-    ...     actual_props={'color': 'navy', 'linestyle': '-'},
-    ...     pred_props={'color': 'crimson', 'linestyle': '--'}
-    ... )
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Data - using dots):**
-
-    >>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    zhongshan_pred_2023_2026
-    ... except NameError:
-    ...    print("Creating dummy subsidence data for example...")
-    ...    N_sub = 150
-    ...    zhongshan_pred_2023_2026 = pd.DataFrame({
-    ...       'latitude': np.linspace(22.2, 22.8, N_sub),
-    ...       'subsidence_2023': np.random.rand(N_sub)*15 + np.linspace(0, 5, N_sub),
-    ...       'subsidence_2023_q50': np.random.rand(N_sub)*14 + np.linspace(0.5, 5.5, N_sub),
-    ...       # Add other columns if needed by other examples
-    ...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2022)*2 + 1
-    ...          for yr in range(2023, 2027)},
-    ...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2022)*2 + 5
-    ...          + np.linspace(0, (yr-2022)*3, N_sub)
-    ...          for yr in range(2023, 2027)},
-    ...     })
-
-    >>> ax_avp_sub = plot_actual_vs_predicted(
-    ...     df=zhongshan_pred_2023_2026.head(100), # Use subset for speed
-    ...     actual_col='subsidence_2023',
-    ...     pred_col='subsidence_2023_q50',
-    ...     theta_col='latitude',      # Note: Ignored for positioning
-    ...     acov='half_circle',      # Use 180 degrees
-    ...     title='Actual vs Predicted Subsidence (2023)',
-    ...     line=False,              # Use dots instead of lines
-    ...     r_label="Subsidence (mm)",
-    ...     mute_degree=True,
-    ...     pred_props={'marker': 'x', 'color': 'purple'} # Customize predicted dots
-    ... )
-    >>> # plt.show() called internally
-
-    """
     # If theta_col is provided but currently unused, warn:
     if theta_col is not None:
         warnings.warn(
@@ -3371,11 +3154,15 @@ def plot_actual_vs_predicted(
 
     # --- Plotting Setup ---
     if ax is None:
-        fig, ax = plt.subplots(
-            figsize=figsize, subplot_kw={"projection": "polar"}
-        )
+        fig = plt.figure(figsize=figsize, constrained_layout=True)
+        ax = fig.add_subplot(111, projection="polar")
+    else:
+        fig = ax.figure
+        
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
+    # NEW: move radial tick labels away from the title/left edge
+    ax.set_rlabel_position(225) # SW quadrant works well for default orientation
 
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
 
@@ -3473,7 +3260,8 @@ def plot_actual_vs_predicted(
     )
     if r_label:
         # Use set_ylabel for radial axis label, adjust padding
-        ax.set_ylabel(r_label, labelpad=15, fontsize=10)
+        ax.set_ylabel(r_label, labelpad=32, fontsize=10)
+        # _place_polar_ylabel(ax, r_label, angle=225, labelpad=32)
 
     # Add legend if requested and labels were provided in props
     if show_legend:
@@ -3490,21 +3278,273 @@ def plot_actual_vs_predicted(
                 stacklevel=2,
             )
 
-    plt.tight_layout()  # Adjust layout
-
     # --- Save or Show ---
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final = safe_savefig(
+        savefig,
+        fig,                      # or 'ax' — both work
+        dpi=dpi,
+        bbox_inches="tight",
+        pad_inches=0.2,
+    )
+    
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        plt.show() 
 
     return ax
 
 
+plot_actual_vs_predicted.__doc__= r"""
+Polar plot comparing actual observed vs predicted values.
+
+This function generates a polar plot to visually compare actual
+ground truth values against model predictions (typically a central
+estimate like the median, Q50) for multiple data points or
+locations arranged circularly [1]_.
+
+- **Angular Position (`theta`)**: Represents each data point or
+  location. Points are currently plotted in their DataFrame index
+  order, mapped linearly onto the specified angular coverage
+  (`acov`). The `theta_col` parameter is intended for future use
+  in ordering points based on a specific feature (like latitude)
+  but is currently ignored for positioning.
+- **Radial Distance (`r`)**: Represents the magnitude of the values.
+  Both the actual value (`actual_col`) and the predicted value
+  (`pred_col`) are plotted at the corresponding angle `theta`.
+
+- **Visual Comparison**:
+
+  - Actual and predicted values are shown as either continuous
+    lines or individual dots based on the `line` parameter [2]_.
+  - Gray vertical lines connect the actual and predicted values
+    at each angle, visually highlighting the magnitude and
+    direction (over- or under-prediction) of the difference
+    at each point.
+
+This plot facilitates:
+
+- Quick visual assessment of prediction accuracy and bias across
+  samples.
+- Identification of regions or conditions (if angle relates to a
+  feature) where the model performs well or poorly.
+- Communication of model performance to stakeholders.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing actual and predicted value columns.
+    Decorators ensure it's a valid, non-empty pandas DataFrame.
+
+actual_col : str
+    Name of the column holding the actual observed (ground truth)
+    values.
+
+pred_col : str
+    Name of the column holding the corresponding predicted values
+    (e.g., the Q50 median prediction).
+
+theta_col : str, optional
+    *Intended* column name for ordering points angularly based on
+    its values (e.g., 'latitude'). *Note: This parameter is
+    currently ignored for positioning/ordering in this implementation;
+    points use DataFrame index order.* A warning is issued if
+    provided. Default is ``None``.
+
+acov : {'default', 'half_circle', 'quarter_circle', \
+    'eighth_circle'}, default='default'
+    Specifies the angular coverage (span) of the polar plot:
+    ``'default'`` (360°), ``'half_circle'`` (180°),
+    ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°).
+
+figsize : tuple of (float, float), default=(8.0, 8.0)
+    Width and height of the figure in inches.
+
+title : str, optional
+    Custom title for the plot. If ``None``, a default title is used.
+    Default is ``None``.
+
+line : bool, default=True
+    Determines the plotting style:
+
+    - If ``True``, actual and predicted values are plotted as lines
+      connecting consecutive points.
+    - If ``False``, values are plotted as individual scatter dots.
+
+r_label : str, optional
+    Custom label for the radial axis (representing value magnitude).
+    If ``None``, no label is set. Default is ``None``.
+
+cmap : str, optional
+    *Note: This parameter is currently unused in the function.*
+    It might be intended for future use, perhaps coloring the
+    difference lines. Default is ``None``.
+
+alpha : float, default=0.3
+    Transparency level applied to the gray difference lines drawn
+    between actual and predicted values, and also to the predicted
+    dots if ``line=False``.
+
+actual_props : dict, optional
+    Dictionary of keyword arguments passed directly to the Matplotlib
+    `plot` or `scatter` function for the 'Actual' data series. Allows
+    customization (e.g., ``{'color': 'blue', 'linestyle': '--'}``).
+    Defaults to basic black line/dots if ``None``.
+
+pred_props : dict, optional
+    Dictionary of keyword arguments passed directly to the Matplotlib
+    `plot` or `scatter` function for the 'Predicted' data series.
+    Allows customization (e.g., ``{'color': 'orange', 'marker': 'x'}``).
+    Defaults to basic red line/dots if ``None``.
+
+show_grid : bool, default=True
+    If ``True``, display the polar grid lines.
+
+show_legend : bool, default=True
+    If ``True``, display a legend labeling the 'Actual' and
+    'Predicted' series.
+
+mute_degree : bool, default=False
+    If ``True``, hide the angular tick labels (degrees).
+
+savefig : str, optional
+    File path to save the plot image. If ``None``, displays the plot
+    interactively. Default is ``None``.
+
+Returns
+-------
+ax : matplotlib.axes._axes.Axes
+    The Matplotlib Axes object containing the polar plot. Note that
+    due to subplot_kw, it's specifically a PolarAxesSubplot.
+
+Raises
+------
+ValueError
+    If `actual_col` or `pred_col` are not found in `df`.
+TypeError
+    If data in actual or predicted columns is not numeric.
+
+See Also
+--------
+plot_anomaly_magnitude : Visualize only points outside prediction
+                         intervals.
+matplotlib.pyplot.plot : Function for line plots.
+matplotlib.pyplot.scatter : Function for scatter plots.
+
+Notes
+-----
+
+- Rows with NaN values in `actual_col` or `pred_col` (or `theta_col`
+  if specified, though currently unused for position) are dropped.
+- The gray lines indicating the difference are drawn individually
+  for each point using a loop. *Warning: This approach can be very
+  slow for large datasets (many thousands of points).* An alternative
+  like `fill_between` might be more efficient for showing shaded areas
+  but would require sorting by theta.
+- The `theta_col` parameter is currently ignored for positioning;
+  angles are always based on the DataFrame index order after NaN
+  removal.
+- The `cmap` parameter is currently unused. The difference lines are
+  hardcoded to 'gray'.
+- Default plotting styles are black for actual and red for predicted,
+  but can be overridden using `actual_props` and `pred_props` [1]_.
+
+Let :math:`y_j` be the actual value and :math:`\hat{y}_j` the
+predicted value for data point (location) :math:`j` (:math:`j=0,
+\dots, N-1` after NaN removal).
+
+1. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
+   and :math:`\theta_{min}` the start angle from `acov`.
+
+   .. math::
+       \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
+
+2. **Radial Coordinates**: The radial coordinates are directly the
+   values: :math:`r_{actual, j} = y_j` and :math:`r_{pred, j} =
+   \hat{y}_j`.
+
+3. **Plotting**:
+
+   - Plot points/lines connecting :math:`(r_{actual, j}, \theta_j)`
+     and :math:`(r_{pred, j}, \theta_j)`.
+   - For each :math:`j`, draw a gray line segment connecting the points
+     :math:`(\min(y_j, \hat{y}_j), \theta_j)` and
+     :math:`(\max(y_j, \hat{y}_j), \theta_j)`.
+
+References
+----------
+
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+   *International Journal of Forecasting*. Manuscript submitted.
+   
+.. [2] Matplotlib documentation: https://matplotlib.org/stable/
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_actual_vs_predicted
+
+**1. Random Example:**
+
+>>> np.random.seed(0)
+>>> N = 100
+>>> df_avp_rand = pd.DataFrame({
+...     'Time': pd.date_range('2023-01-01', periods=N, freq='D'),
+...     'ActualTemp': 15 + 10 * np.sin(np.linspace(0, 4 * np.pi, N)) + np.random.randn(N) * 2,
+...     'PredictedTemp': 16 + 9 * np.sin(np.linspace(0, 4 * np.pi, N) + 0.1) + np.random.randn(N) * 1.5
+... })
+>>> ax_avp_rand = plot_actual_vs_predicted(
+...     df=df_avp_rand,
+...     actual_col='ActualTemp',
+...     pred_col='PredictedTemp',
+...     theta_col='Time', # Note: Ignored for positioning
+...     acov='default',
+...     title='Temperature: Actual vs. Predicted',
+...     line=True, # Use lines
+...     r_label='Temperature (°C)',
+...     actual_props={'color': 'navy', 'linestyle': '-'},
+...     pred_props={'color': 'crimson', 'linestyle': '--'}
+... )
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Data - using dots):**
+
+>>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    zhongshan_pred_2023_2026
+... except NameError:
+...    print("Creating dummy subsidence data for example...")
+...    N_sub = 150
+...    zhongshan_pred_2023_2026 = pd.DataFrame({
+...       'latitude': np.linspace(22.2, 22.8, N_sub),
+...       'subsidence_2023': np.random.rand(N_sub)*15 + np.linspace(0, 5, N_sub),
+...       'subsidence_2023_q50': np.random.rand(N_sub)*14 + np.linspace(0.5, 5.5, N_sub),
+...       # Add other columns if needed by other examples
+...       **{f'subsidence_{yr}_q10': np.random.rand(N_sub)*(yr-2022)*2 + 1
+...          for yr in range(2023, 2027)},
+...       **{f'subsidence_{yr}_q90': np.random.rand(N_sub)*(yr-2022)*2 + 5
+...          + np.linspace(0, (yr-2022)*3, N_sub)
+...          for yr in range(2023, 2027)},
+...     })
+
+>>> ax_avp_sub = plot_actual_vs_predicted(
+...     df=zhongshan_pred_2023_2026.head(100), # Use subset for speed
+...     actual_col='subsidence_2023',
+...     pred_col='subsidence_2023_q50',
+...     theta_col='latitude',      # Note: Ignored for positioning
+...     acov='half_circle',      # Use 180 degrees
+...     title='Actual vs Predicted Subsidence (2023)',
+...     line=False,              # Use dots instead of lines
+...     r_label="Subsidence (mm)",
+...     mute_degree=True,
+...     pred_props={'marker': 'x', 'color': 'purple'} # Customize predicted dots
+... )
+>>> # plt.show() called internally
+
+"""
 @check_non_emptiness
 @isdf
 def plot_interval_width(
@@ -3523,6 +3563,7 @@ def plot_interval_width(
     cbar: bool = True,
     mask_angle: bool = True,
     savefig: str | None = None,
+    dpi:int=300,
     ax: Axes | None = None,
 ):
     # --- Input Validation ---
@@ -3675,6 +3716,9 @@ def plot_interval_width(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
+    else: 
+        fig = ax.figure 
+        
     ax.set_thetamin(0)
     ax.set_thetamax(np.degrees(angular_range))  # Expects degrees
 
@@ -3711,10 +3755,10 @@ def plot_interval_width(
         # Add the colorbar to the figure
         cbar_obj = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.7)
         # Set label dynamically based on whether z_col was used
-        cbar_obj.set_label(cbar_label, rotation=270, labelpad=15, fontsize=10)
+        cbar_obj.set_label(cbar_label, rotation=270, labelpad=32, fontsize=10)
 
     # Set radial axis label (useful to know radius means width)
-    ax.set_ylabel("Interval Width", labelpad=15, fontsize=10)
+    ax.set_ylabel("Interval Width", labelpad=32, fontsize=10)
     # Set radial limits, ensure 0 is included if widths are non-negative
     if np.all(r >= 0):
         ax.set_ylim(bottom=0)
@@ -3723,14 +3767,17 @@ def plot_interval_width(
     plt.tight_layout()  # Adjust layout
 
     # --- Save or Show ---
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
@@ -4010,6 +4057,7 @@ def plot_coverage_diagnostic(
     gradient_props: dict[str, Any] | None = None,
     mask_angle: bool = True,
     savefig: str | None = None,
+    dpi: int =300,
     verbose: int = 0,
     ax: Axes | None = None,
 ):
@@ -4110,6 +4158,9 @@ def plot_coverage_diagnostic(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
+    else:
+        fig = ax.figure 
+        
     ax.set_thetamin(np.degrees(theta_min_rad))
     ax.set_thetamax(np.degrees(theta_max_rad))
     # Set radial limits strictly to [0, 1] for coverage plot
@@ -4285,7 +4336,7 @@ def plot_coverage_diagnostic(
         )
 
     # Set radial axis label (Y-axis in polar)
-    ax.set_ylabel("Coverage (1=In, 0=Out)", labelpad=15, fontsize=10)
+    ax.set_ylabel("Coverage (1=In, 0=Out)", labelpad=32, fontsize=10)
 
     # --- Logging ---
     if verbose > 0:
@@ -4297,15 +4348,17 @@ def plot_coverage_diagnostic(
         print("-" * 50)
 
     # --- Output ---
-    plt.tight_layout()
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
@@ -4583,258 +4636,10 @@ def plot_temporal_uncertainty(
     mask_label: bool = False,
     mask_angle: bool = True,
     savefig: str | None = None,
+    dpi: int =300, 
     ax: Axes | None = None,
 ):
-    r"""Visualize multiple data series using polar scatter plots.
 
-    This function creates a general-purpose polar scatter plot to
-    visualize and compare one or more data series (columns) from a
-    DataFrame in a circular layout. Each series is plotted with a
-    distinct color [1]_.
-
-    - **Angular Position (`theta`)**: Represents each data point or
-      sample, ordered by the DataFrame index after removing rows with
-      NaNs in the selected `q_cols` (and `theta_col` if used for NaN
-      alignment). The points are mapped linearly onto the specified
-      angular coverage (`acov`). The `theta_col` parameter is currently
-      ignored for sorting/positioning but helps align data if it has NaNs.
-    - **Radial Distance (`r`)**: Represents the magnitude of the values
-      from each column specified in `q_cols`. Values can be optionally
-      normalized independently for each series using min-max scaling
-      (`normalize=True`).
-    - **Color**: Each data series (column in `q_cols`) is assigned a
-      unique color based on the specified `cmap` [2]_.
-
-    This plot is flexible and can be used for various purposes, such as:
-
-    - Comparing different model predictions for the same target.
-    - Visualizing different quantile predictions (e.g., Q10, Q50, Q90)
-      for a single time step to show uncertainty spread.
-    - Plotting related variables against each other in a polar context.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the data columns to be plotted.
-        Decorators ensure it's a valid, non-empty pandas DataFrame.
-
-    q_cols : str or list of str, default='auto'
-        Specifies the columns to plot.
-
-        - If ``'auto'``, attempts to automatically detect quantile columns
-          (e.g., names containing '_q' followed by numbers) using the
-          helper function `detect_quantiles_in`. Raises error if detection
-          fails or no such columns are found.
-        - If a list of strings, these column names are used directly.
-          Must contain at least one valid column name from `df`.
-
-    theta_col : str, optional
-        *Intended* for ordering points angularly based on this column's
-        values. *Note: Currently ignored for sorting/positioning; uses
-        index order. However, if provided and present in `df`, it is
-        included when checking for and dropping NaN values to ensure data
-        alignment between angles and plotted values.* A warning is issued
-        regarding its limited use. Default is ``None``.
-
-    names : list of str, optional
-        Custom labels for each data series specified in `q_cols`, used
-        in the plot legend. Must match the number of columns in `q_cols`.
-        If ``None``, generic labels like 'Q1', 'Q2', ... (or based on
-        detected quantile names) are generated. Default is ``None``.
-
-    acov : {'default', 'half_circle', 'quarter_circle', \
-        'eighth_circle'}, default='default'
-
-        Specifies the angular coverage (span) of the polar plot:
-        ``'default'`` (360°), ``'half_circle'`` (180°),
-        ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°).
-
-    figsize : tuple of (float, float), default=(8.0, 8.0)
-        Width and height of the figure in inches.
-
-    title : str, optional
-        Custom title for the plot. If ``None``, a default title is used.
-
-    cmap : str, default='tab10'
-        Name of the Matplotlib colormap used to assign distinct colors
-        to each data series specified in `q_cols`.
-
-    normalize : bool, default=True
-        If ``True``, normalize the values within *each column* specified
-        in `q_cols` independently to the range [0, 1] using min-max
-        scaling before plotting. Useful for comparing shapes of series
-        with different scales. If ``False``, raw values are plotted.
-
-    show_grid : bool, default=True
-        If ``True``, display the polar grid lines.
-
-    alpha : float, default=0.7
-        Transparency level for the scatter points (0=transparent, 1=opaque).
-
-    s : int, default=25
-        Marker size for the scatter points.
-
-    dot_style : str, default='o'
-        Marker style used for the scatter points (e.g., 'o', '.', 'x', '+').
-        Passed to `matplotlib.pyplot.scatter`.
-
-    legend_loc : str, default='upper right'
-        Location of the legend identifying the data series. Common values
-        include 'best', 'upper right', 'lower left', etc.
-
-    mask_angle : bool, default=True
-        If ``True``, hide the angular tick labels (degrees). Recommended
-        if the angle is based on index.
-
-    savefig : str, optional
-        File path to save the plot image. If ``None``, displays interactively.
-
-    Returns
-    -------
-    ax : matplotlib.axes._axes.Axes
-        The Matplotlib Axes object (PolarAxesSubplot) containing the plot.
-
-    Raises
-    ------
-    ValueError
-        If `q_cols='auto'` fails to find columns or `detect_quantiles_in` fails.
-        If `q_cols` (explicitly provided or auto-detected) is empty or
-        contains columns not found in `df`.
-        If `names` is provided but length doesn't match `q_cols`.
-        If `acov` value is invalid.
-    TypeError
-        If data in `q_cols` is not numeric.
-
-    See Also
-    --------
-    plot_polar_uncertainty_spread : Previous function focused on plotting
-                                   quantiles for uncertainty (potentially similar).
-    detect_quantiles_in : Helper function for automatic column detection.
-    matplotlib.pyplot.scatter : Underlying function for plotting points.
-
-    Notes
-    -----
-
-    - Normalization :math:`\aleph` (`normalize=True`) is applied independently to each
-      column in `q_cols`, scaling each series to its own [0, 1] range.
-    - Rows containing NaN values in *any* of the selected `q_cols` (and
-      `theta_col` if present) are dropped *before* plotting to ensure
-      alignment. `theta` angles are based on the index of this cleaned data.
-    - The `theta_col` parameter currently does not affect the order or
-      position of points but is used for consistent NaN handling.
-    - Radial axis ticks and labels are hidden by default (`set_yticklabels([])`)
-      as the radius represents potentially normalized values from multiple
-      series, making a single scale less meaningful.
-
-
-    Let :math:`\mathbf{V}_i` be the data vector for column `i` in `q_cols`
-    (length :math:`N`, after NaN removal based on all selected columns).
-
-    1. **Normalization** (if `normalize=True`, applied per column `i`):
-
-       .. math::
-
-           \mathbf{v}'_i = \aleph ( \mathbf{V}_i)
-
-       where
-
-       .. math::
-
-           \aleph(x)_j = \frac{x_j - \min(\mathbf{x})}{\max(\mathbf{x}) - \min(\mathbf{x})}
-
-       (Handles zero range by returning the original vector).
-
-    2. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
-       and :math:`\theta_{min}` the start angle from `acov`. For index
-       :math:`j` (:math:`j=0, \dots, N-1` of cleaned data):
-
-       .. math::
-           \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
-
-    3. **Radial Coordinate (`r`)**: For series `i` and point `j`:
-
-       :math:`r_{i,j} = v'_{i,j}` (if normalized) or
-       :math:`r_{i,j} = v_{i,j}` (if not normalized).
-
-    4. **Plotting**: For each series `i`, plot points :math:`(r_{i,j}, \theta_j)`
-       using `scatter` with a distinct color derived from `cmap`.
-
-    References
-    ----------
-    .. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
-       Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
-       *International Journal of Forecasting*. Manuscript submitted.
-       
-    .. [2] Matplotlib documentation: https://matplotlib.org/stable/
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from kdiagram.plot.uncertainty import plot_temporal_uncertainty
-
-    **1. Random Example (Comparing two series):**
-
-    >>> np.random.seed(42)
-    >>> N = 100
-    >>> df_comp_rand = pd.DataFrame({
-    ...     'Index': range(N),
-    ...     'ModelA_Pred': 50 + 10 * np.sin(np.linspace(0, 3 * np.pi, N)) + np.random.randn(N)*5,
-    ...     'ModelB_Pred': 55 + 12 * np.sin(np.linspace(0, 3 * np.pi, N) - 0.5) + np.random.randn(N)*4,
-    ... })
-    >>> ax_comp_rand = plot_temporal_uncertainty(
-    ...     df=df_comp_rand,
-    ...     q_cols=['ModelA_Pred', 'ModelB_Pred'],
-    ...     names=['Model A', 'Model B'],
-    ...     theta_col=None,           # Use index order
-    ...     acov='default',
-    ...     title='Comparison of Model A vs Model B',
-    ...     normalize=True,           # Normalize for shape comparison
-    ...     cmap='Set1',
-    ...     dot_style='x',            # Use 'x' markers
-    ...     mask_angle=False          # Show angle ticks
-    ... )
-    >>> # plt.show() called internally
-
-    **2. Concrete Example (Subsidence Quantiles for 2023):**
-
-    >>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame
-    >>> # Create dummy data if it doesn't exist
-    >>> try:
-    ...    zhongshan_pred_2023_2026
-    ... except NameError:
-    ...    print("Creating dummy subsidence data for example...")
-    ...    N_sub = 150
-    ...    zhongshan_pred_2023_2026 = pd.DataFrame({
-    ...       'latitude': np.linspace(22.2, 22.8, N_sub),
-    ...       'subsidence_2023_q10': np.random.rand(N_sub)*5 + 1 + np.linspace(0,2, N_sub),
-    ...       'subsidence_2023_q50': np.random.rand(N_sub)*5 + 3 + np.linspace(1,3, N_sub),
-    ...       'subsidence_2023_q90': np.random.rand(N_sub)*5 + 5 + np.linspace(2,4, N_sub),
-    ...     })
-    >>> # Ensure Q90 > Q50 > Q10 roughly
-    >>> zhongshan_pred_2023_2026['subsidence_2023_q50'] = np.maximum(
-    ...     zhongshan_pred_2023_2026['subsidence_2023_q50'],
-    ...     zhongshan_pred_2023_2026['subsidence_2023_q10'] + 0.1)
-    >>> zhongshan_pred_2023_2026['subsidence_2023_q90'] = np.maximum(
-    ...     zhongshan_pred_2023_2026['subsidence_2023_q90'],
-    ...     zhongshan_pred_2023_2026['subsidence_2023_q50'] + 0.1)
-    >>> ax_tu_sub = plot_temporal_uncertainty(
-    ...     df=zhongshan_pred_2023_2026.head(100), # Use subset
-    ...     # Explicitly list quantile columns for 2023
-    ...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q50',
-    ...             'subsidence_2023_q90'],
-    ...     theta_col='latitude',       # Used for NaN alignment, not order
-    ...     names=["Lower Bound (Q10)", "Median (Q50)", "Upper Bound (Q90)"],
-    ...     acov='eighth_circle',    # Use smaller angle span
-    ...     title='Uncertainty Spread for 2023 (Zhongshan)',
-    ...     normalize=False,          # Plot raw values
-    ...     cmap='coolwarm',          # Use diverging map for bounds
-    ...     mask_angle=True,
-    ...     s=30
-    ... )
-    >>> # plt.show() called internally
-
-    """
     # --- Input Validation and Column Setup ---
     # Handle 'auto' detection or process explicit list for q_cols
     if isinstance(q_cols, str) and q_cols.lower() == "auto":
@@ -5013,7 +4818,9 @@ def plot_temporal_uncertainty(
         fig, ax = plt.subplots(
             figsize=figsize, subplot_kw={"projection": "polar"}
         )
-
+    else: 
+        fig = ax.figure 
+        
     # Set angular limits
     ax.set_thetamin(np.degrees(theta_min_rad))
     ax.set_thetamax(np.degrees(theta_max_rad))
@@ -5066,21 +4873,275 @@ def plot_temporal_uncertainty(
     ):  # Only label if one series, unnormalized
         ax.set_ylabel(q_cols_list[0])
 
-    plt.tight_layout()
+    
 
     # --- Save or Show ---
-    if savefig:
-        try:
-            plt.savefig(savefig, bbox_inches="tight", dpi=300)
-            print(f"Plot saved to {savefig}")
-        except Exception as e:
-            print(f"Error saving plot to {savefig}: {e}")
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
 
+plot_temporal_uncertainty.__doc__= r"""
+Visualize multiple data series using polar scatter plots.
+
+This function creates a general-purpose polar scatter plot to
+visualize and compare one or more data series (columns) from a
+DataFrame in a circular layout. Each series is plotted with a
+distinct color [1]_.
+
+- **Angular Position (`theta`)**: Represents each data point or
+  sample, ordered by the DataFrame index after removing rows with
+  NaNs in the selected `q_cols` (and `theta_col` if used for NaN
+  alignment). The points are mapped linearly onto the specified
+  angular coverage (`acov`). The `theta_col` parameter is currently
+  ignored for sorting/positioning but helps align data if it has NaNs.
+- **Radial Distance (`r`)**: Represents the magnitude of the values
+  from each column specified in `q_cols`. Values can be optionally
+  normalized independently for each series using min-max scaling
+  (`normalize=True`).
+- **Color**: Each data series (column in `q_cols`) is assigned a
+  unique color based on the specified `cmap` [2]_.
+
+This plot is flexible and can be used for various purposes, such as:
+
+- Comparing different model predictions for the same target.
+- Visualizing different quantile predictions (e.g., Q10, Q50, Q90)
+  for a single time step to show uncertainty spread.
+- Plotting related variables against each other in a polar context.
+
+Parameters
+----------
+df : pd.DataFrame
+    Input DataFrame containing the data columns to be plotted.
+    Decorators ensure it's a valid, non-empty pandas DataFrame.
+
+q_cols : str or list of str, default='auto'
+    Specifies the columns to plot.
+
+    - If ``'auto'``, attempts to automatically detect quantile columns
+      (e.g., names containing '_q' followed by numbers) using the
+      helper function `detect_quantiles_in`. Raises error if detection
+      fails or no such columns are found.
+    - If a list of strings, these column names are used directly.
+      Must contain at least one valid column name from `df`.
+
+theta_col : str, optional
+    *Intended* for ordering points angularly based on this column's
+    values. *Note: Currently ignored for sorting/positioning; uses
+    index order. However, if provided and present in `df`, it is
+    included when checking for and dropping NaN values to ensure data
+    alignment between angles and plotted values.* A warning is issued
+    regarding its limited use. Default is ``None``.
+
+names : list of str, optional
+    Custom labels for each data series specified in `q_cols`, used
+    in the plot legend. Must match the number of columns in `q_cols`.
+    If ``None``, generic labels like 'Q1', 'Q2', ... (or based on
+    detected quantile names) are generated. Default is ``None``.
+
+acov : {'default', 'half_circle', 'quarter_circle', \
+    'eighth_circle'}, default='default'
+
+    Specifies the angular coverage (span) of the polar plot:
+    ``'default'`` (360°), ``'half_circle'`` (180°),
+    ``'quarter_circle'`` (90°), ``'eighth_circle'`` (45°).
+
+figsize : tuple of (float, float), default=(8.0, 8.0)
+    Width and height of the figure in inches.
+
+title : str, optional
+    Custom title for the plot. If ``None``, a default title is used.
+
+cmap : str, default='tab10'
+    Name of the Matplotlib colormap used to assign distinct colors
+    to each data series specified in `q_cols`.
+
+normalize : bool, default=True
+    If ``True``, normalize the values within *each column* specified
+    in `q_cols` independently to the range [0, 1] using min-max
+    scaling before plotting. Useful for comparing shapes of series
+    with different scales. If ``False``, raw values are plotted.
+
+show_grid : bool, default=True
+    If ``True``, display the polar grid lines.
+
+alpha : float, default=0.7
+    Transparency level for the scatter points (0=transparent, 1=opaque).
+
+s : int, default=25
+    Marker size for the scatter points.
+
+dot_style : str, default='o'
+    Marker style used for the scatter points (e.g., 'o', '.', 'x', '+').
+    Passed to `matplotlib.pyplot.scatter`.
+
+legend_loc : str, default='upper right'
+    Location of the legend identifying the data series. Common values
+    include 'best', 'upper right', 'lower left', etc.
+
+mask_angle : bool, default=True
+    If ``True``, hide the angular tick labels (degrees). Recommended
+    if the angle is based on index.
+
+savefig : str, optional
+    File path to save the plot image. If ``None``, displays interactively.
+
+Returns
+-------
+ax : matplotlib.axes._axes.Axes
+    The Matplotlib Axes object (PolarAxesSubplot) containing the plot.
+
+Raises
+------
+ValueError
+    If `q_cols='auto'` fails to find columns or `detect_quantiles_in` fails.
+    If `q_cols` (explicitly provided or auto-detected) is empty or
+    contains columns not found in `df`.
+    If `names` is provided but length doesn't match `q_cols`.
+    If `acov` value is invalid.
+TypeError
+    If data in `q_cols` is not numeric.
+
+See Also
+--------
+plot_polar_uncertainty_spread : Previous function focused on plotting
+                               quantiles for uncertainty (potentially similar).
+detect_quantiles_in : Helper function for automatic column detection.
+matplotlib.pyplot.scatter : Underlying function for plotting points.
+
+Notes
+-----
+
+- Normalization :math:`\aleph` (`normalize=True`) is applied independently to each
+  column in `q_cols`, scaling each series to its own [0, 1] range.
+- Rows containing NaN values in *any* of the selected `q_cols` (and
+  `theta_col` if present) are dropped *before* plotting to ensure
+  alignment. `theta` angles are based on the index of this cleaned data.
+- The `theta_col` parameter currently does not affect the order or
+  position of points but is used for consistent NaN handling.
+- Radial axis ticks and labels are hidden by default (`set_yticklabels([])`)
+  as the radius represents potentially normalized values from multiple
+  series, making a single scale less meaningful.
+
+
+Let :math:`\mathbf{V}_i` be the data vector for column `i` in `q_cols`
+(length :math:`N`, after NaN removal based on all selected columns).
+
+1. **Normalization** (if `normalize=True`, applied per column `i`):
+
+   .. math::
+
+       \mathbf{v}'_i = \aleph ( \mathbf{V}_i)
+
+   where
+
+   .. math::
+
+       \aleph(x)_j = \frac{x_j - \min(\mathbf{x})}{\max(\mathbf{x}) - \min(\mathbf{x})}
+
+   (Handles zero range by returning the original vector).
+
+2. **Angular Coordinate (`theta`)**: Let :math:`S` be the angular span
+   and :math:`\theta_{min}` the start angle from `acov`. For index
+   :math:`j` (:math:`j=0, \dots, N-1` of cleaned data):
+
+   .. math::
+       \theta_j = \left( \frac{j}{N} \times S \right) + \theta_{min}
+
+3. **Radial Coordinate (`r`)**: For series `i` and point `j`:
+
+   :math:`r_{i,j} = v'_{i,j}` (if normalized) or
+   :math:`r_{i,j} = v_{i,j}` (if not normalized).
+
+4. **Plotting**: For each series `i`, plot points :math:`(r_{i,j}, \theta_j)`
+   using `scatter` with a distinct color derived from `cmap`.
+
+References
+----------
+.. [1] Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, J., & Liu, W. (2025).
+   Analytics Framework for Interpreting Spatiotemporal Probabilistic Forecasts.
+   *International Journal of Forecasting*. Manuscript submitted.
+   
+.. [2] Matplotlib documentation: https://matplotlib.org/stable/
+
+Examples
+--------
+>>> import pandas as pd
+>>> import numpy as np
+>>> from kdiagram.plot.uncertainty import plot_temporal_uncertainty
+
+**1. Random Example (Comparing two series):**
+
+>>> np.random.seed(42)
+>>> N = 100
+>>> df_comp_rand = pd.DataFrame({
+...     'Index': range(N),
+...     'ModelA_Pred': 50 + 10 * np.sin(np.linspace(0, 3 * np.pi, N)) + np.random.randn(N)*5,
+...     'ModelB_Pred': 55 + 12 * np.sin(np.linspace(0, 3 * np.pi, N) - 0.5) + np.random.randn(N)*4,
+... })
+>>> ax_comp_rand = plot_temporal_uncertainty(
+...     df=df_comp_rand,
+...     q_cols=['ModelA_Pred', 'ModelB_Pred'],
+...     names=['Model A', 'Model B'],
+...     theta_col=None,           # Use index order
+...     acov='default',
+...     title='Comparison of Model A vs Model B',
+...     normalize=True,           # Normalize for shape comparison
+...     cmap='Set1',
+...     dot_style='x',            # Use 'x' markers
+...     mask_angle=False          # Show angle ticks
+... )
+>>> # plt.show() called internally
+
+**2. Concrete Example (Subsidence Quantiles for 2023):**
+
+>>> # Assume zhongshan_pred_2023_2026 is a loaded DataFrame
+>>> # Create dummy data if it doesn't exist
+>>> try:
+...    zhongshan_pred_2023_2026
+... except NameError:
+...    print("Creating dummy subsidence data for example...")
+...    N_sub = 150
+...    zhongshan_pred_2023_2026 = pd.DataFrame({
+...       'latitude': np.linspace(22.2, 22.8, N_sub),
+...       'subsidence_2023_q10': np.random.rand(N_sub)*5 + 1 + np.linspace(0,2, N_sub),
+...       'subsidence_2023_q50': np.random.rand(N_sub)*5 + 3 + np.linspace(1,3, N_sub),
+...       'subsidence_2023_q90': np.random.rand(N_sub)*5 + 5 + np.linspace(2,4, N_sub),
+...     })
+>>> # Ensure Q90 > Q50 > Q10 roughly
+>>> zhongshan_pred_2023_2026['subsidence_2023_q50'] = np.maximum(
+...     zhongshan_pred_2023_2026['subsidence_2023_q50'],
+...     zhongshan_pred_2023_2026['subsidence_2023_q10'] + 0.1)
+>>> zhongshan_pred_2023_2026['subsidence_2023_q90'] = np.maximum(
+...     zhongshan_pred_2023_2026['subsidence_2023_q90'],
+...     zhongshan_pred_2023_2026['subsidence_2023_q50'] + 0.1)
+>>> ax_tu_sub = plot_temporal_uncertainty(
+...     df=zhongshan_pred_2023_2026.head(100), # Use subset
+...     # Explicitly list quantile columns for 2023
+...     q_cols=['subsidence_2023_q10', 'subsidence_2023_q50',
+...             'subsidence_2023_q90'],
+...     theta_col='latitude',       # Used for NaN alignment, not order
+...     names=["Lower Bound (Q10)", "Median (Q50)", "Upper Bound (Q90)"],
+...     acov='eighth_circle',    # Use smaller angle span
+...     title='Uncertainty Spread for 2023 (Zhongshan)',
+...     normalize=False,          # Plot raw values
+...     cmap='coolwarm',          # Use diverging map for bounds
+...     mask_angle=True,
+...     s=30
+... )
+>>> # plt.show() called internally
+
+"""
 @check_non_emptiness
 @isdf
 def plot_radial_density_ring(
@@ -5231,20 +5292,21 @@ def plot_radial_density_ring(
         cb.set_label(
             "Normalized Density",
             rotation=270,
-            labelpad=15,
+            labelpad=32,
         )
 
     # output handling
-    fig.tight_layout()
-    if savefig:
-        fig.savefig(
-            savefig,
-            dpi=dpi,
-            bbox_inches="tight",
-        )
-        plt.close(fig)
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
@@ -5542,16 +5604,17 @@ def plot_polar_quiver(
         ax.set_yticklabels([])
 
     # ---- output
-    fig.tight_layout()
-    if savefig:
-        fig.savefig(
-            savefig,
-            dpi=dpi,
-            bbox_inches="tight",
-        )
-        plt.close(fig)
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 
@@ -5817,12 +5880,17 @@ def plot_polar_heatmap(
         ax.set_yticklabels([])
 
     # ---- Output
-    fig.tight_layout()
-    if savefig:
-        fig.savefig(savefig, dpi=dpi, bbox_inches="tight")
-        plt.close(fig)
-    else:
-        plt.show()
+    final =safe_savefig(
+        savefig,
+        fig, 
+        dpi=dpi,
+        bbox_inches="tight",
+    )
+    if final is not None: 
+        plt.close(fig) 
+    else: 
+        fig.tight_layout()
+        plt.show() 
 
     return ax
 

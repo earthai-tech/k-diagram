@@ -356,7 +356,6 @@ Let's simulate two new models for our stock prediction task:
        cmap='viridis',
        savefig="gallery/images/gallery_plot_error_violins_complex.png"
    )
-   plt.close()
 
 .. figure:: ../images/errors/gallery_plot_error_violins_complex.png
    :align: center
@@ -381,6 +380,165 @@ Let's simulate two new models for our stock prediction task:
    very wrong, with no middle ground—a critical insight for understanding
    its behavior.
 
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">
+
+**Use Case 3: Reviewer-Inspired Overlay — a Two-Model Face-Off**
+
+.. topic:: The Story Behind ``mode="cbueth"``
+   :class: hint
+
+   This plot's default mode has a special origin. During the
+   peer review for the ``kdiagram`` JOSS paper, a reviewer
+   (GitHub user **cbueth**) provided critical feedback. They
+   noted that the original design (now ``mode="basic"``)
+   could be difficult to interpret when comparing just two
+   models, especially if their distributions were skewed.
+   The reviewer asked: *"wouldn't it be easier to just plot
+   them on top of each other with transparency?"*
+   This single question inspired a complete redesign. The new
+   mode splits the violin into positive and negative error
+   lobes (to show bias/skew) and maps error *magnitude* to
+   the radius. To honor this transformative suggestion, the new
+   mode was named ``"cbueth"`` and made the default. This
+   use case shows their exact suggestion in action.
+
+This view implements ``mode="cbueth"`` by applying the reviewer's
+suggestion directly. When you compare only a few models (here, k=2),
+``overlay="auto"`` places them on a single spoke with transparency
+so differences are visible at a glance. Positive and negative
+errors form two lobes around the spoke (asymmetry ≈ skew). Summary
+stats (median, skew) stay **in the legend**, and the zero-error
+reference is a dot at the center.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import pandas as pd
+   import numpy as np
+   import matplotlib.pyplot as plt
+
+   # --- Data: two contrasting models ---
+
+   np.random.seed(0)
+   n_points = 2000
+   df_two = pd.DataFrame({
+   "Error Model A": np.random.normal(loc=0.5,  scale=1.5, size=n_points),
+   "Error Model B": np.random.normal(loc=-4.0, scale=1.5, size=n_points),
+   })
+
+   # --- Plot: overlay with transparency; stats in legend ---
+
+   kd.plot_error_violins(
+     df_two,
+     "Error Model A", "Error Model B",
+     names=["A (Balanced)", "B (Biased)"],
+     title="Two-Model Overlay",
+     mode="cbueth",
+     overlay="auto",         # overlay when k <= 2
+     show_stats=True,        # (median, skew) in legend
+     cmap="plasma",
+     savefig="gallery/images/errors/gallery_plot_error_violins_cbueth_overlay.png",
+   )
+   plt.close()
+
+
+.. figure:: ../images/errors/gallery_plot_error_violins_cbueth_overlay.png
+   :align: center
+   :width: 80%
+   :alt: Two models overlaid on a single polar spoke with transparent violins.
+
+   Two transparent violins share one spoke. The center dot marks zero
+   error; the legend reports median and skew, keeping the plot uncluttered.
+
+.. topic:: 🧠 Interpretation
+   :class: hint
+
+   Overlay makes local differences obvious. Here, **Model B** is clearly
+   shifted (negative bias, confirmed by med=-4.02) while **Model A**
+   stays closer to zero (med=0.48) with a tighter spread.
+   Asymmetry of each lobe hints at skew; the legend confirms it
+   numerically. Use this view when the audience needs a quick,
+   direct comparison of a small set of models.
+
+.. admonition:: Try it
+   :class: tip
+
+   * Rotate the shared spoke: ``overlay_angle=0`` (horizontal) or
+     ``np.pi/2`` (vertical).
+   * Smooth more/less with ``bw_method="scott"`` or a float like ``0.3``.
+   * Force split-spokes by setting ``overlay=False`` (see Use Case 4).
+
+.. raw:: html
+
+   <hr style="border-top: 1px solid #ccc; margin: 30px 0;">margin: 30px 0;">
+
+**Use Case 4: Three-Model Split-Spokes — Outside Labels, Clean Plot**
+
+For 3+ models, ``mode="cbueth"`` switches to split-spokes. Model names
+are drawn **outside the circle** to keep the plot readable; the legend
+continues to carry compact statistics.
+
+.. code-block:: python
+   :linenos:
+
+   import kdiagram as kd
+   import pandas as pd
+   import numpy as np
+   import matplotlib.pyplot as plt
+
+   # --- Data: balanced, biased, high-variance ---
+
+   np.random.seed(0)
+   n_points = 2000
+   df_three = pd.DataFrame({
+      "Error Model A": np.random.normal(loc=0.5,  scale=1.5, size=n_points),
+      "Error Model B": np.random.normal(loc=-4.0, scale=1.5, size=n_points),
+      "Error Model C": np.random.normal(loc=0.0,  scale=4.0, size=n_points),
+   })
+
+   # --- Plot: split spokes + outside labels; stats in legend ---
+
+   kd.plot_error_violins(
+      df_three,
+      "Error Model A", "Error Model B", "Error Model C",
+      names=["A (Balanced)", "B (Biased)", "C (Inconsistent)"],
+      title="Three-Model Comparison (cbueth split-spokes)",
+      mode="cbueth",
+      overlay=False,           # split spokes; model labels outside rim
+      show_stats=True,
+      colors = ["green", "red", "blue"], # take precedence over cmap
+      cmap="viridis",
+      savefig="gallery/images/errors/gallery_plot_error_violins_cbueth_split.png",
+   )
+
+.. figure:: ../images/errors/gallery_plot_error_violins_cbueth_split.png
+   :align: center
+   :width: 80%
+   :alt: Three polar violins on separate spokes with model labels outside the rim.
+
+   Each model occupies its own spoke; labels sit just outside the rim.
+   The center dot is the zero-error reference; legend shows median and
+   skew for quick comparison.
+
+.. topic:: 🧠 Interpretation
+   :class: hint
+
+   **Model A** remains closest to zero with modest spread (good baseline).
+   **Model B** is systematically negative (bias), and **Model C** is
+   widest (variance risk). The two-lobe shapes still reveal skew
+
+.. admonition:: Try it
+   :class: tip
+
+   * Toggle outside labels by switching ``overlay`` between ``False`` and
+     ``"auto"``.
+   * Compare palettes with ``cmap="plasma"`` or pass custom ``colors=...``.
+   * Stress-test variance: increase ``scale`` for one model and observe
+     the radial extent and lobe widths grow.
+  
 .. raw:: html
 
    <hr style="border-top: 2px solid #ccc; margin: 40px 0;">

@@ -92,7 +92,6 @@ a quick, high-level sense of the model's performance.
        pred_props={'s': 40, 'marker': 'x', 'alpha': 0.8, 'color':'#E53E3E'}, # Red 'x'
        savefig="gallery/images/gallery_avp_basic.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_avp_basic.png
    :align: center
@@ -147,16 +146,22 @@ corrects the under-prediction bias we suspected in the first use case.
 
    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8),
                                 subplot_kw={'projection': 'polar'})
-
+   
+   # after creating ax1, ax2, let extend re-position r default
+   for a in (ax1, ax2):
+       a.set_ylabel(None)
+       a.set_rlabel_position(225)
+       
    # Plot for the Biased Model
-   ax1 = kd.plot_actual_vs_predicted(
+   kd.plot_actual_vs_predicted(
        df=df_multi,
        actual_col='actual_sales',
        pred_col='biased_model',
        title='Biased Model Performance',
-       show_legend=False
+       show_legend=False, 
+       ax= ax1
    )
-   ax1.set_ylabel("Sales Volume")
+   ax1.set_ylabel("Sales Volume", labelpad=32)
 
    # Plot for the Tracking Model
    ax2 = kd.plot_actual_vs_predicted(
@@ -164,14 +169,13 @@ corrects the under-prediction bias we suspected in the first use case.
        actual_col='actual_sales',
        pred_col='tracking_model',
        title='Improved Tracking Model Performance',
-       pred_props={'color': '#38A169'} # Green for the good model
+       pred_props={'color': '#38A169'}, # Green for the good model 
+       ax= ax2
    )
-   ax2.set_ylabel("Sales Volume")
+   ax2.set_ylabel("Sales Volume", labelpad=32)
    
-   # and here create a subplot to add ax1 and ax2 ( is it possible ) ? 
    fig.suptitle('Use Case 2: Comparing Competing Models', fontsize=16)
-   fig.tight_layout(rect=[0, 0, 1, 0.96])
-   fig.savefig("gallery/images/gallery_avp_multi.png")
+   kd.savefig("gallery/images/gallery_avp_multi.png")
    plt.close(fig)
 
 .. figure:: ../images/uncertainty/gallery_avp_multi.png
@@ -228,7 +232,6 @@ layout to make the details easier to see.
        pred_props={'color': '#38A169', 'linewidth': 2.5, 'linestyle': '--', 'label': 'Forecast'},
        savefig="gallery/images/gallery_avp_focused.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_avp_focused.png
    :align: center
@@ -336,7 +339,6 @@ simulates such a balanced scenario.
        verbose=0,
        savefig="gallery/images/gallery_anomaly_magnitude_balanced.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_anomaly_magnitude_balanced.png
    :align: center
@@ -403,7 +405,6 @@ the more dangerous type of error.
        verbose=0,
        savefig="gallery/images/gallery_anomaly_magnitude_asymmetric.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_anomaly_magnitude_asymmetric.png
    :align: center
@@ -517,9 +518,8 @@ reliable.
        kind='bar',
        title='Use Case 1: Basic Coverage Comparison (Bar Chart)',
        verbose=0,
-       savefig="gallery/images/gallery_coverage_bar.png"
    )
-   plt.close()
+   kd.savefig("gallery/images/gallery_coverage_bar.png")
 
 .. figure:: ../images/uncertainty/gallery_coverage_bar.png
    :align: center
@@ -580,7 +580,6 @@ Let's expand our analysis to include a third model that is
        verbose=0,
        savefig="gallery/images/gallery_coverage_radar_multi.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_coverage_radar_multi.png
    :align: center
@@ -632,7 +631,6 @@ Let's create a presentation-ready plot for our best model, Model A.
        verbose=0,
        savefig="gallery/images/gallery_coverage_radar_single.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_coverage_radar_single.png
    :align: center
@@ -740,9 +738,9 @@ about 10% of the time.
        fill_gradient=True,
        coverage_line_color='darkorange',
        verbose=0,
-       savefig="gallery/images/gallery_coverage_diagnostic_scatter.png"
+       # savefig="gallery/images/gallery_coverage_diagnostic_scatter.png" or use kd.savefig (...)
    )
-   plt.close()
+   kd.savefig("gallery/images/gallery_coverage_diagnostic_scatter.png")
 
 .. figure:: ../images/uncertainty/gallery_coverage_diagnostic_scatter.png
    :align: center
@@ -811,7 +809,7 @@ year but systematically fails during the summer heatwaves.
        verbose=0,
        savefig="gallery/images/gallery_coverage_diagnostic_seasonal.png"
    )
-   plt.close()
+
 
 .. figure:: ../images/uncertainty/gallery_coverage_diagnostic_seasonal.png
    :align: center
@@ -932,7 +930,6 @@ it will fluctuate wildly.
        cmap='coolwarm',
        savefig="gallery/images/gallery_interval_consistency_basic.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_interval_consistency_basic.png
    :align: center
@@ -1009,8 +1006,7 @@ Let's create a scenario to highlight this difference.
        use_cv=True, title='Relative Variability (CV)', cmap='viridis'
    )
 
-   fig.tight_layout()
-   fig.savefig("gallery/images/gallery_interval_consistency_cv_vs_std.png")
+   kd.savefig("gallery/images/gallery_interval_consistency_cv_vs_std.png")
    plt.close(fig)
 
 .. figure:: ../images/uncertainty/gallery_interval_consistency_cv_vs_std.png
@@ -1299,7 +1295,7 @@ forecasts at four different lead times.
    # --- 1. Data Generation: Demand Forecasts for Multiple Horizons ---
    np.random.seed(0)
    n_samples = 100
-   horizons = ['1-Week Ahead', '2-Weeks Ahead', '3-Weeks Ahead', '4-Weeks Ahead']
+   horizons = ['1-Week Ahead', '2-Weeks', '3-Weeks', '4-Weeks']
    df = pd.DataFrame()
    q10_cols, q90_cols = [], []
 
@@ -1384,9 +1380,8 @@ giving us a simultaneous view of both uncertainty and accuracy drift.
        title='Use Case 2: Uncertainty Drift (Colored by MAE)',
        acov='eighth_circle', 
        cmap='YlOrRd', # Use a sequential colormap for error
-       savefig="gallery/images/gallery_model_drift_color.png"
    )
-   plt.close()
+   kd.savefig("gallery/images/gallery_model_drift_color.png")
 
 .. figure:: ../images/uncertainty/gallery_model_drift_color.png
    :align: center
@@ -1495,7 +1490,6 @@ predicted uncertainty is stable and symmetric.
        title='Use Case 1: Symmetric Stock Price Forecast',
        savefig="gallery/images/gallery_temporal_uncertainty_symmetric.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_temporal_uncertainty_symmetric.png
    :align: center
@@ -1555,7 +1549,6 @@ predicts a greater chance of large positive returns than large negative ones.
        title='Use Case 2: Skewed Stock Price Forecast',
        savefig="gallery/images/gallery_temporal_uncertainty_skewed.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_temporal_uncertainty_skewed.png
    :align: center
@@ -1667,7 +1660,6 @@ we expect the uncertainty to increase at the same rate everywhere.
        title='Use Case 1: Uniform Uncertainty Drift',
        savefig="gallery/images/gallery_uncertainty_drift_uniform.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_uncertainty_drift_uniform.png
    :align: center
@@ -1735,7 +1727,6 @@ grows much faster in a specific, localized region.
        cmap='plasma',
        savefig="gallery/images/gallery_uncertainty_drift_spatial.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_uncertainty_drift_spatial.png
    :align: center
@@ -1862,7 +1853,6 @@ areas that are sinking most rapidly.
        s=35,
        savefig="gallery/images/gallery_velocity_basic.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_velocity_basic.png
    :align: center
@@ -1933,7 +1923,6 @@ velocity), while most are predicted to shrink (negative velocity).
        cbar=True,
        savefig="gallery/images/gallery_velocity_directional.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_velocity_directional.png
    :align: center
@@ -2053,7 +2042,6 @@ Let's check if our simulated model meets this crucial criterion.
        r_label="Forecast Error",
        savefig="gallery/images/gallery_plot_density_ring_direct.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_plot_density_ring_direct.png
    :align: center
@@ -2104,7 +2092,6 @@ our simulated forecast's 10th and 90th percentiles.
        r_label="Interval Width (q90 - q10)",
        savefig="gallery/images/gallery_plot_density_ring_width.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_plot_density_ring_width.png
    :align: center
@@ -2155,7 +2142,6 @@ values from 2022 to 2023.
        r_label="Change (value_2023 - value_2022)",
        savefig="gallery/images/gallery_plot_density_ring_velocity.png"
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_plot_density_ring_velocity.png
    :align: center
@@ -2254,9 +2240,7 @@ quantifying the impact of adverse weather on package delivery times.
       )
 
       fig.suptitle('Use Case 4: Comparing Conditional Distributions', fontsize=16)
-      fig.tight_layout()
-      fig.savefig("gallery/images/gallery_plot_density_ring_conditional.png")
-      plt.close(fig)
+      kd.savefig("gallery/images/gallery_plot_density_ring_conditional.png")
 
 .. figure:: ../images/uncertainty/gallery_plot_density_ring_conditional.png
    :align: center
@@ -2370,7 +2354,6 @@ times to ensure proper staffing.
        title='Use Case 1: Density of Emergency Calls',
        cbar_label='Number of Incidents'
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_plot_polar_heatmap_basic.png
    :align: center
@@ -2436,8 +2419,6 @@ only makes large errors on hot afternoons.
        cmap='inferno',
        cbar_label='Count of High-Error Events'
    )
-   plt.close()
-
 
 .. figure:: ../images/uncertainty/gallery_plot_polar_heatmap_errors.png
    :align: center
@@ -2566,7 +2547,6 @@ show us the direction and magnitude of the change between the two forecasts.
        cmap='coolwarm',
        scale=30 # Adjusts arrow size for better visibility
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_polar_quiver_revisions.png
    :align: center
@@ -2637,7 +2617,6 @@ error).
        cmap='viridis',
        scale=150
    )
-   plt.close()
 
 .. figure:: ../images/uncertainty/gallery_polar_quiver_errors.png
    :align: center
@@ -2743,9 +2722,8 @@ patterns between summer and winter.
       )
 
       fig.suptitle('Use Case 3: Seasonal Comparison of Ocean Currents', fontsize=16)
-      fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-      fig.savefig("gallery/images/gallery_polar_quiver_seasonal.png")
-      plt.close(fig)
+      # fig.tight_layout(rect=[0, 0.03, 1, 0.95]) # handled by kd.savefig
+      kd.savefig("gallery/images/gallery_polar_quiver_seasonal.png", close=True)
 
 .. figure:: ../images/uncertainty/gallery_polar_quiver_seasonal.png
    :align: center

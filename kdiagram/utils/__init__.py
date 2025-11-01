@@ -27,6 +27,8 @@ from .q_utils import (
     reshape_quantile_data,
 )
 
+from .fs import savefig 
+
 __all__ = [
     "reshape_quantile_data",
     "melt_q_data",
@@ -48,4 +50,5 @@ __all__ = [
     "compute_crps",
     "get_forecast_arrays",
     "minmax_scaler",
+    "savefig", 
 ]
