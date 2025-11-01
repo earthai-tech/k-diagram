@@ -144,7 +144,7 @@ a set of helper utilities and a command-line interface (CLI) for
 generating key plots directly from data files. 
 
 
-# Engineering, API, and Extensibility
+# Engineering - API and Extensibility
 
 `k-diagram` is designed as a **small stack of composable layers** rather than a
 monolithic script. This architecture is directly reflected in its public API,
