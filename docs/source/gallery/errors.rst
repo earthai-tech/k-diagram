@@ -387,7 +387,7 @@ Let's simulate two new models for our stock prediction task:
    
 **Use Case 3: Reviewer-Inspired Overlay — a Two-Model Face-Off**
 
-.. topic:: The Story Behind mode="cbueth"
+.. topic:: The Story Behind mode="optimized"
    :class: hint
 
    This plot's default mode has a special origin. During the
@@ -402,10 +402,10 @@ Let's simulate two new models for our stock prediction task:
    mode splits the violin into positive and negative error
    lobes (to show bias/skew) and maps error *magnitude* to
    the radius. To honor this transformative suggestion, the new
-   mode was named ``"cbueth"`` and made the default. This
+   mode was named ``"optimized"`` and made the default. This
    use case shows their exact suggestion in action.
 
-This view implements ``mode="cbueth"`` by applying the reviewer's
+This view implements ``mode="optimized"`` by applying the reviewer's
 suggestion directly. When you compare only a few models (here, k=2),
 ``overlay="auto"`` places them on a single spoke with transparency
 so differences are visible at a glance. Positive and negative
@@ -437,7 +437,7 @@ reference is a dot at the center.
      "Error Model A", "Error Model B",
      names=["A (Balanced)", "B (Biased)"],
      title="Two-Model Overlay",
-     mode="cbueth",
+     mode="optimized",
      overlay="auto",         # overlay when k <= 2
      show_stats=True,        # (median, skew) in legend
      cmap="plasma",
@@ -478,7 +478,7 @@ reference is a dot at the center.
 
 **Use Case 4: Three-Model Split-Spokes — Outside Labels, Clean Plot**
 
-For 3+ models, ``mode="cbueth"`` switches to split-spokes. Model names
+For 3+ models, ``mode="optimized"`` switches to split-spokes. Model names
 are drawn **outside the circle** to keep the plot readable; the legend
 continues to carry compact statistics.
 
@@ -507,7 +507,7 @@ continues to carry compact statistics.
       "Error Model A", "Error Model B", "Error Model C",
       names=["A (Balanced)", "B (Biased)", "C (Inconsistent)"],
       title="Three-Model Comparison (cbueth split-spokes)",
-      mode="cbueth",
+      mode="optimized",
       overlay=False,           # split spokes; model labels outside rim
       show_stats=True,
       colors = ["green", "red", "blue"], # take precedence over cmap
