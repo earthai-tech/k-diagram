@@ -164,7 +164,7 @@ For periodic data, this grammar extends to human-readable labels via
 of "0.0 radians." These controls are paired with shared display options
 like `show_grid` to ensure a consistent look and feel.
 
-Crucially, every plotting function in `k-diagram` **returns a standard
+Crucially, every plotting function in `k-diagram` returns a standard
 Matplotlib `Axes` object. This is the package's **most important contract**:
 it **does not hide the figure** or return a custom object. This design choice
 ensures that users can immediately apply their existing Matplotlib knowledge
