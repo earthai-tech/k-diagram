@@ -1,0 +1,725 @@
+verbose : int, default=0
+    Controls the verbosity when fitting.
+
+ if self.verbose:
+    progress_bar = tqdm(range(self.n_estimators), ascii=True, ncols= 100,
+        desc=f'Fitting {self.__class__.__name__}', 
+    )
+
+    if self.verbose: 
+        progress_bar.update (1)
+                
+if self.verbose: 
+    progress_bar.close() 
+
+#since BaseAdalineStochastic has abstractMethod __init__, im not sure , it can be instanciated, 
+# therefore in the example using either AdalineStochasticClassifier or AdalineStochasticRegressor who inherit from BaseAdalineStochastic 
+
+# find the most intuitive name to replace <EncodingTransformer>
+
+
+#----------------------------------------------------------------------------------------------------------------------------------------------
+Read the code, Reorganize it and optimize it  the code so to implement robustly either *fit* or *run* method ( not both ) since we want to design 
+a strong API. Read below the fit/run implementation section so select the method that is suitable for the class. 
+
+
+`<subpackage>= mlops
+`<module_name>= automation`
+`<object>= `SimpleAutomation`
+
+**Instructions for documenting the `<object>`**:
+- Provide a detailed explanation of each parameter, ensuring that methods that do not start with `_` are properly documented for readability and 
+understanding.
+- Use the **Numpy docstring format** and **reST** markup for parameters, which is standard for scientific and technical packages. 
+- When mentioning methods (excluding those starting with `_`), ensure that parameters are properly formatted with single backticks (` `) for inline 
+parameters and double backticks (`` ``) for arguments, similar to the **scikit-learn API**. Also, remember to end the inner attributes with an 
+underscore (`_`) ( thoses who you think importants and not listed in the <object>.__init__, similar like scikit-learn API).
+- skip the documentation of __init__ method as parameters should be documented in class docstring 
+
+**Mathematical Formulations**:
+- If the `<object>` performs mathematical calculations, use `.. math::` for mathematical equations and `:math:` for inline mathematical expressions.
+
+**Examples and Notes**:
+- Include example usages in your documentation. For example:
+  
+  ```python
+  >>> from gofast.<subpackage>.<module_name> import <object>
+  ```
+  
+  - Add **Notes** that highlight important details or behaviors, and make sure the examples are clear for users.
+
+**See Also and References**:
+- Add a **See Also** section to reference similar classes or methods.
+- Use reST reference styles for citations, i.e., `[1]_` for inline citations, and `.. [1] <authors, etc.>` in the References section.
+
+**Line Length and Formatting**:
+- For better readability, come to a new line after 70 characters in both the class and method docstrings.
+- Vertically align parameters in the docstring, ensuring clarity and professionalism.
+
+**Code Improvements**:
+- **Error Fixing**: Ensure that the code is free from errors and check attributes naming, and that comments provide clarity to other developers.
+- If there are placeholders or simulate in the code or comments indicating that implementation is needed, make sure to fully implement these sections
+because we are designing a complete software package that need dealing with real-world scenarios.
+- Make the code clearer, well-documented, and syntactically correct to reflect a high level of Python expertise.
+- comment the code to help developper where you think it is very intuitive
+
+**Parameter Validation**:
+- Use `validate_params` from `sklearn.utils._param_validation` to validate the parameters. If necessary, use specific validators like `Interval`, 
+`StrOptions`, `HasMethods`, or `Hidden`, etc.
+  
+**External Dependencies**:
+- If the `<object>` methods require external dependencies that do not come with Python by default, use the `@ensure_pkg` decorator 
+from `gofast.tools.funcutils`:
+  
+  ```python
+  @ensure_pkg(
+      "<dependencies>", 
+      extra="<extra message for dependencies>", 
+      auto_install=INSTALL_DEPENDENCIES,  # global var defined in gofast.mlops._config
+      use_conda=USE_CONDA  # global var defined in gofast.mlops._config
+  )
+  ```
+  - Place this decorator at the top of the method or function that requires the external dependency.
+  
+- Before applying the `ensure_pkg` decorator, check if the module or package already comes by default with Python. If it does, there's no need 
+to use the decorator—just import it directly as is.
+
+If the code line is too long, you can break it using the "\" character or utilize Python's built-in mechanisms like parentheses to split the line. 
+In the case of dictionaries, lists, or similar data structures, if they become too lengthy, it is more professional to align them vertically for 
+improved readability and maintainability. This approach ensures a clean, structured, and professional coding style.
+Note that for better readability, come to a new line after 70 characters in both the class and method docstrings.
+
+**Design and Application**:
+- Rearrange the code implementation logically, ensuring a clean and maintainable structure.
+- Choose whether the `<object>` should implement the `fit` or `run` method, based on its use case, and ensure that other parts of the code 
+reflect the correct choice. 
+
+Key Implementation Guidelines: Fit or Run Method
+
+- **Fit Method**:
+   - The `fit` method is implemented when the class expects input data `X` (2D array) and optionally a target `y` along with other parameters
+   (`**fit_params`).
+   - Signature: `fit(X, y=None, **fit_params)`
+   - This method is used when the class is responsible for learning from data, similar to the `fit` method in the scikit-learn API.
+
+- **Run Method**:
+   - The `run` method is implemented in cases where the class requires other parameters for initialization or execution but does not require 
+   `X` or `y`.
+   - Signature: `run(*args, **run_kwargs)`
+   - The `run` method can be used for model tuning, initializing parameters, or validating conditions specified during class initialization. 
+   Unlike `fit`, the `run` method may not require any parameters.
+   - This is useful when the class is not data-driven but needs to initialize or execute certain processes.
+
+Important: 
+All classes must implement **either** the `fit` or `run` method before invoking any other method, ensuring that the object is properly initialized or 
+trained. This behavior is aligned with the scikit-learn API, where methods like `predict` cannot be called unless the model is already fitted.
+
+Both the `fit` and `run` methods should be validated to check whether they have been executed, ensuring that the object is in the correct state before
+ further methods are used. For validation, the following tools can be used:
+
+```python
+>>> from gofast.tools.validator import check_is_fitted, check_is_runned
+```
+
+These methods (`check_is_fitted` and `check_is_runned`) accept the following parameters:
+- `estimator`: The class instance being checked.
+- `attributes`: (Optional) List of attributes that indicate whether the object has been "fitted" or "runned" (e.g., `_is_fitted`, `_is_runned`).
+- `msg`: (Optional) A custom error message to display if the check fails.
+
+If the <object> serves as a base class for other classes to inherit from, the fit and run methods should be designed flexibly. 
+This allows subclasses to leverage the base implementation when applicable, while also providing the freedom for subclasses to override and 
+implement their own fit or run methods if needed. Following Python's RMO (Responsibility, Modularity, and Openness) principle, this approach ensures 
+that the base class offers a strong foundation while allowing derived classes to adapt and extend the functionality to suit their specific 
+requirements. 
+
+Note that the 'fit' method should always return 'self', while the 'run' method is governed by its decorator 'RunReturn'. The RunReturn decorators
+tell the run method to  return by defaut 'self' when all other methods of the <object> are private methods (RunReturn is in that case is used
+ without parenthesis) , OR tells the run method to return attribute value through the 'attribute_name' parameter. 
+
+If the code line is too long, you can break it using the "\" character or utilize Python's built-in mechanisms like parentheses to split the line. 
+In the case of dictionaries, lists, or similar data structures, if they become too lengthy, it is more professional to align them vertically for 
+improved readability and maintainability. This approach ensures a clean, structured, and professional coding style.
+
+I need ONLY the documentation and stop rewritting the entire code of the <object> 
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------
+<subpackage>=  utils 
+<module_name>= mathext 
+<object> = compute_importances 
+
+Document the <object> deeply by explaining professionnly each parameter in details including the methods that dont start with '_'. More details should be more appropriate for readers.
+Use Numpy docstring format and reST markup for parameters illustration. Mentions the methods ( excluding the one starts with '_', to the documentation). For inline paramaters use 
+single backstick (` `) and argument double backstrick (`` `` ). 
+Provide mathematical formulation of the <object> and and how it perfoms. Use .. math:: for mathematical equations and
+:math:` ` for inline math expression. 
+Add examples and Notes. In example use >>> from gofast.<subpackage>.<module_name> import <object> 
+Add see also and References 
+use reST references styles use [1]_ in inline citation and .. [1] <authors ect> in References sections. 
+In documentation, mentions the inline like [1]_ etc.
+Finaly, come back to new line after 65 characters in the class as well as the methods docstring. 
+Use parameters vertical alignment which is more professionals 
+
+write a professionnal maner using vertical style when the code is long line 
+
+Fix the code if errors and comment the code to help other developers when it is useful.
+If you find any placeholder in the code or a comment that need implementation then fully implement this part of the code. 
+Finally make the code more clear, well documented and syntaxically correct in professional manner as Python expert. 
+# comment the code and dont forget to add examples 
+16680504521
+I need ONLY the documentation and stop rewritting the entire code of the <object> 
+###########################
+
+<subpackage>= estimators 
+<module_name>= adaline
+<object> = AdalineClassifier
+
+maximum_characters_to_reach_in_one_line = <52> 
+
+Document the <object> deeply by explaining professionnly each parameter in details. 
+if object is a class then exlude the documentation of the methods that start with '_'. 
+More details of each parameter  should be more appropriate for readers.
+
+Use Numpy docstring format and reST markup for parameters illustration: 
+- For inline paramaters: when parameter is cite in inline use single backstick (e.g `<param1>`) 
+- For inline arguments: When argument is cite in inline use double backstrick (e.g. ``<argument_of_param1>`` ). 
+
+Provide mathematical formulation of the <object> and and how it perfoms: 
+- For inline math symbole annotations: If mathematical expression or symbole is make in inline in the text, the 
+   use (e.g. :math:`<symbol_math>` or eg. :math:`<short_equation>` . 
+- For robust math expression: Need to go back in that case , use the math reST symbol: .. math::  
+   e.g. 
+   .. math:: 
+        <expression_math> = .... 
+  
+- Add examples and Notes. 
+ for instance, In example use: 
+    >>> from gofast.<subpackage>.<module_name> import <object> 
+
+- Add see also and References 
+
+- To cite the reference in inline: 
+   - use reST references styles use [1]_ in inline citation: (e.g. """.<This docstring section  cited by [1]_...>""") 
+   
+   - In references sections, you need to list the references cited in the text as well as: 
+   
+    .. [1] <authors > ... 
+    
+    All listed references should be present in the docstring documentations in inline citations. 
+    
+    
+- In <object> docstring documentation, come back to new line after reaching <maximum_characters_to_reach_in_one_line>. 
+- In <object> code writing also, come back to new_line after reaching <maximum_characters_to_reach_in_one_line>. 
+  Also when writing the code: 
+  
+    - Use parameters vertical alignment which is more professionals. 
+    - write a professionnal maner using vertical style when the code is long and exceeding the 
+      <maximum_characters_to_reach_in_one_line>
+      Professional manner in Python can be used to break the error message back to new line or comments back to new lines. 
+      For instance when code is long, in Python for text , parenthesis can be used 
+     The code should much be prettier , clear and professionnals. 
+    During the doctring documentation : 
+ - if <object> is a class then list the Attributes ( including those ending with '_'),  except the attributes that starts with '_' , 
+   in Attributes section. 
+ - if <object> is class , list also the Methods of the class except the methods that starts with '_' in Methods section.
+ - In the example: 
+    call the object using : 
+    
+    >>> from gofast.<subpackage>.<module_name> import <object> 
+ 
+   - During the documentation, give more details about each parameter attributes for helping user and enrich the docstring.
+
+- Deeply comments the code to help other developpers to understand when it is helpful. 
+- Finally make the code more clear, well documented and syntaxically correct in professional manner as Python expert. 
+
+
+# Write the <object> documentation doctring only 
+# skip the documentation for brievity, just comment the code
+###############################################
+
+<subpackage>= mlops
+<module_name>= monitoring
+<object>= DataDriftMonitor
+ 
+maximum_characters_to_reach_in_one_line = <65> 
+
+<object> should be develop following the improved scikit-learn API leverage scikit-learn API where non-exposed attributed are 
+ ended with '_': 
+  - exposed attributes should not take '_' at the end. The paramaters passed in __init__ should not take in "_" at the 
+   the end. 
+  - The importance parameters that are not exposed should end with '_', and user can retrieved it. 
+<object> should implement the method either 'fit' or 'run' and not the both : 
+     - fit  expects array-like ( data, or X, y=None, or X and **fit_paramns). fit expect to take a data. 
+        if data  exists and is arraylike of numeric values X, y , then fit is appropiate. However , fit does not 
+        expect any data to be None or X is to be None or y to be None. At least one should not be None. 
+        
+     - run  expects to take model and not data(arraylike) and **run_kw  that contains other parameters (e.g., run(model, ..., **run_kw)) 
+     -YOU MAY Read  carefully and find the best strategy whether to use `fit` or `run`, the most appropriate for our API. 
+     
+    
+   Based on the way the <object> work, you should implement either 'fit' or 'run' before other methods 
+
+    Both the `fit` and `run` methods should be validated to check whether they have been executed, ensuring that the object is in the correct state before
+     further methods are used. For validation, the following tools can be used:
+
+    ```python
+    >>> from gofast.utils.validator import check_is_fitted, check_is_runned
+    ```
+
+    These methods (`check_is_fitted` and `check_is_runned`) accept the following parameters:
+    - `estimator`: The class instance being checked.
+    - `attributes`: (Optional) List of attributes that indicate whether the object has been "fitted" or "runned" (e.g., `_is_fitted`, `_is_runned`).
+    - `msg`: (Optional) A custom error message to display if the check fails.
+    - if <object> is a class and 'verbose' parameter is not implemented , then implement the verbose parameter (0 as default argument) 
+      in all <object> to let user tracking buggs. 
+      
+- In <object> code writing and commenting, come back to new line after reaching <maximum_characters_to_reach_in_one_line>. 
+- In <object> code writing also, come back to new_line after reaching <maximum_characters_to_reach_in_one_line>. 
+  Also when writing the code: 
+  
+    - Use parameters vertical alignment which is more professionals.
+    - write a professionnal maner using vertical style when the code is long and exceeding the 
+      <maximum_characters_to_reach_in_one_line>
+      Professional manner in Python can be used to break the error message back to new line or comments back to new lines. 
+      For instance when code is long, in Python for text , parenthesis can be used 
+     The code should much be prettier , clear and professionnals. 
+     
+- Deeply comments the code to help other developpers to understand when it is helpful. 
+- Finally make the code more clear, well documented and syntaxically correct in professional manner as Python expert. 
+ 
+
+During the doctring documentation : 
+ - if <object> is a class then list the attributes ( including those ending with '_'),  except the attributes that starts with '_' .
+ - if <object> is class , list also the methods of the class except the methods that starts with'_'.
+ - In the example: 
+    call the object using : 
+    
+    >>> from gofast.<subpackage>.<module_name> import <object> 
+ Fix the code if errors and comment the code to help other developers when it is useful.
+ 
+# During the documentation, give more details about each parameter attributes for helping user and enrich the docstring.
+# Write the class  documentation doctring only 
+
+# Skip the documentation docstring for brievity 
+
+
+Fix the code if errors and comment the code to help other developers when it is useful.
+If you find any placeholder in the code or a comment that need implementation then fully implement this part of the code. 
+
+# comment the code and dont forget to add examples 
+16680504521
+I need ONLY the documentation and stop rewritting the entire code of the <object> . 
+
+
+####################
+Docstring documentation only 
+
+<subpackage>=  core 
+<module_name>= array_manager
+<object> = to_numeric_dtypes
+
+maximum_characters_to_reach_in_one_line = <65> 
+
+Document the <object> deeply by explaining professionnly each parameter in details. 
+if object is a class then exlude the documentation of the methods that start with '_'. 
+More details of each parameter  should be more appropriate for readers.
+
+Use Numpy docstring format and reST markup for parameters illustration: 
+- For inline paramaters: when parameter is cite in inline use single backstick (e.g `<param1>`) 
+- For inline arguments: When argument is cite in inline use double backstrick (e.g. ``<argument_of_param1>`` ). 
+
+Provide mathematical formulation of the <object> and and how it perfoms: 
+- For inline math symbol annotations: If mathematical expression or symbole is make in inline in the text, the 
+   use (e.g. :math:`<symbol_math>` or eg. :math:`<short_equation>` . 
+- For robust math expression: Need to go back in that case , use the math reST symbol: .. math::  
+   e.g. 
+   
+   .. math:: 
+        <expression_math> = .... 
+  
+- Add examples and Notes. 
+ for instance, In example use: 
+    >>> from gofast.<subpackage>.<module_name> import <object> 
+
+- Add see also and References 
+
+- To cite the reference in inline: 
+   - use reST references styles use [1]_ in inline citation: (e.g. """.<This docstring section  cited by [1]_...>""") 
+   
+   - In references sections, you need to list the references cited in the text as well as: 
+   
+    .. [1] <authors > ... 
+    
+    All listed references should be present in the docstring documentations in inline citations. 
+    
+- In <object> docstring documentation, come back to new line after reaching <maximum_characters_to_reach_in_one_line>. 
+During the doctring documentation : 
+ - if <object> is a class then list the attributes ( including those ending with '_'),  
+   except the attributes that starts with '_' and those already exposed in __init__ method 
+   or other methods. Dont list in Attributes section the attributes that are already in 
+   are the parameter of the <object> or others methods of the <object>. 
+ - if <object> is class , list also the methods of the class except the methods that starts with'_'.
+ 
+ - In the example: 
+    call the object using : 
+    
+    >>> from gofast.<subpackage>.<module_name> import <object> 
+ 
+   - During the documentation, give more details about each parameter attributes for helping user and enrich the docstring.
+
+- Finally make the code more clear, well documented and syntaxically correct in professional manner as Python expert. 
+
+Finally, write the <object> documentation doctring only. Skip rewriting the <object> methods for brievity.
+
+
+###################
+write a decorator called EnsureMethod where that takes parameters method_name=None, error="raise", mode='strict',  verbose=False. The decorated class
+can implement fit or run method, or none of the both methods. What does the decorator EnsureMethod? when the user used the decorated class and 
+call run or fit, if the fit method exists in the decorated class, then it called it properly with its args and kwargs as a normal method and return 
+the value of fit. Same for the run method. If run method of the decorated class is called, run is called propertly and return the value of run. 
+Both can not be called at the same time.  However if the decorated class implement both methods fit and run, the run takes the priority. 
+Now if both methods (fit/run) are not implemented or do not exists, these are the scenarios:
+- if the method_name is given, it means the decorated class implement this method, then directly call this method whose name is given with parameter 
+'method_name'. 
+- if the method name is given and the decorated class does not implement this method, raise an error if error is 'raise' , warn the user 
+if error ='warn' and ignore and pass if error is 'ignore'. 
+- if method_name is not given while both method ( fit or run ) are not implemented: if error is raise, raise error  indicating Neither `fit` nor `run` methods are implemented. "
+if error is warn, then warn user like Neither `fit` nor `run` methods are implemented and pass. 
+- if any other method is called , and does not implement fit and not implement run  , or not implemented  the method_name or not given: 
+  - if mode is 'strict', note that method fit or run , one method should be implemented before calling other methods of the decorated class like scikit-learn fit method. 
+  - if mode is 'soft;, behave like normal class, not need fit and run to be implemented, before calling the method, then autorise to call the method. 
+
+Note when the decorator is called without parenthesis, it should use the default parameters values. 
+
+
+objects = <AdalineStochasticRegressor and AdalineStochasticClassifier> 
+We are going to apply a DRY ( Dont repeat yourself) technique , but creating a Base classe  
+of the two estimators who inherit from BaseEstimator and metaclass=ABCMeta where its 
+__init__ method is decorated by @abstractmethod. 
+The two other estimators <objects>  will inherit from these base class and 
+ClassifierMixin and RegressorMixin respectively . 
+use decorated @validate_params to validate all parameters of __init__ method of <objects > 
+Read the two estimators below and smartly rewrite the base class and the two estimators . 
+Skip the documentation for brievity 
+
+
+
+# revise these function and make it robust and versatile to select either 
+# polish the code to make it more robust , professionnal and efficienty. with 
+# checking parameters. You can also rename the function and parameter if not intuitive. 
+# elevate the style of programming like Python expert skill
+
+Modify the class so the class can handle binary , muticlass and mutilabel target.
+skip all the documentation and write only the class and methods codes without docstring .  
+
+
+>>> from sklearn.datasets import load_iris
+>>> from gofast.estimators.perceptron import GradientDescentClassifier
+>>> iris = load_iris()
+>>> X = iris.data
+>>> y = iris.target
+>>> gd_clf = GradientDescentClassifier(eta0=0.001, max_iter=1000, verbose=True, early_stopping=True)
+>>> gd_clf.fit(X_std, y)
+>>> y_pred = gd_clf.predict(X_std)
+>>> print('Accuracy:', np.mean(y_pred == y))
+
+selection_obj = < SwarmSearchCV > from gofast.models.selection.py module 
+base_selection_object  = <PSOBaseSearch> from gofast.models._selection.py module that innherit from scikit-learn BaseSearchCV class 
+
+I have write <selection_obj> as search , optimization method,  inherit from <base_selection_object>. The < selection_obj> seems to work with all estimators in scikit learn whether supervectors machine, tree , ensemble etc.. 
+it should follow the same structure of some selection methods like GridSearchCV, RandomizedSearch CV or BayesSearchCV and perform simmilary. 
+I want you to revise the code deeply and fix all the issues, ( Skip the documentation and doctrsing for brievity , just comment the code') and to make it versatile enough. 
+Base on the structure of the <selection_method>, select whether the grid parameter should be "param_space", or "param_grid", the most appropriate and intuitive 
+based ion its conception. Write the class and module more professionnaly  using the famous Python expert skill. 
+If you want to use some undefined function, use them and dont rewrite them since they are all defined in gofast package 
+write the <base_selection_object> before the <selection_object> itself. 
+
+
+
+I want to create a nice API for Gofast package. 
+all fonction, method and classes can help be fetched via  my_params function 
+
+for instance
+class Example :
+	"""doctring and parameters ""
+   def __init__(self, *args, **kwargs ) 
+       pass 
+    def my_custom_method(self, *args, **kwargs) 
+	   pass 
+
+when user call 
+Example.my_params # nicely display the Example parameters *args and kwargs 
+Example.help acts similar like help(Example) 
+
+Example.my_custom_method.my_params # also display the parameters 
+Example.my_custom_method.help display the help of custom function. acts similarly like  
+
+I think you can create HelpMeta class so all class who inhertits whill behave like this 
+
+
+def function( *args, **kwargs): 
+   pass 
+
+function.my_params # display nicely the parameters of the function 
+function.help  act similar like help(function) in all gofast package 
+
+propose smartly how can we implement this so , all the class, method and functions will acts like 
+this in gofast package 
+
+
+
+# # revise the class according to: 
+# # In fact I have seen the error. why predict_proba and predict are wrong. 
+# # Indeed classifier is mostly scikitlearn classifier that can hancle multiclass 
+# # so before using classifier for y , dont need to binarize again, it can be apply 
+# # to the classifier and can handle it , for instance LogisticRegression can handle 
+# # multiclass that ie mean predict multiclass label. 
+# # so the nonlinearity_out and nonlinearity_in can be applied to X and does 
+# # not modified the shape 
+# # howerver , the best strategy is the use the classifier to predict probability of 
+# # the class and use nonlinearity_out to apply to this probabilities 
+# # Then the predict proba method just concatenate the default prediction and y_pred_proba 
+# # prediction with the shape egal to (n_samples, n_classes ) 
+# # However the predict method use the predict probabilities predicted and converted 
+# # to class label using np.argmax  . 
+
+# # what do you think because I think this make sense with the HammersteinWienerClassifier
+# # we expect this will definitively fix the error in shape etc 
+
+# class HammersteinWienerClassifier(BaseEstimator, ClassifierMixin):
+#     def __init__(self, classifier="LogisticRegression", nonlinearity_in='tanh',
+#                  nonlinearity_out='sigmoid', memory_depth=5, verbose=False):
+#         self.classifier = classifier
+#         self.nonlinearity_in = nonlinearity_in
+#         self.nonlinearity_out = nonlinearity_out
+#         self.memory_depth = memory_depth
+#         self.verbose = verbose
+
+#     def _validate_parameters(self):
+#         func_dict = {
+#             'tanh': np.tanh,
+#             'sigmoid': lambda x: 1 / (1 + np.exp(-x)),
+#             'relu': lambda x: np.maximum(0, x),
+#             'leaky_relu': lambda x: np.where(x > 0, x, 0.01 * x)
+#         }
+#         if isinstance(self.nonlinearity_in, str):
+#             if self.nonlinearity_in not in func_dict:
+#                 raise ValueError(f"nonlinearity_in '{self.nonlinearity_in}' is not supported. Choose from {list(func_dict.keys())}")
+#             self.nonlinearity_in = func_dict[self.nonlinearity_in]
+#         elif not callable(self.nonlinearity_in):
+#             raise ValueError("nonlinearity_in must be a callable function")
+
+#         if isinstance(self.nonlinearity_out, str):
+#             if self.nonlinearity_out not in func_dict:
+#                 raise ValueError(f"nonlinearity_out '{self.nonlinearity_out}' is not supported. Choose from {list(func_dict.keys())}")
+#             self.nonlinearity_out = func_dict[self.nonlinearity_out]
+#         elif not callable(self.nonlinearity_out):
+#             raise ValueError("nonlinearity_out must be a callable function")
+
+#         if not isinstance(self.memory_depth, int) or self.memory_depth < 1:
+#             raise ValueError("memory_depth must be a positive integer")
+
+#         self.classifier = select_default_estimator(self.classifier, 'classification')
+
+#     def fit(self, X, y, sample_weight=None):
+#         X, y = check_X_y(X, y, estimator=self)
+#         self.lb_ = LabelBinarizer().fit(y)
+
+#         if self.verbose:
+#             print("Fitting Hammerstein Wiener Classifier....")
+#         X_lagged = self._preprocess_data(X)
+#         y_adjusted = y[self.memory_depth:]
+
+#         if sample_weight is not None:
+#             sample_weight = np.array(sample_weight)
+#             if sample_weight.shape[0] != y_adjusted.shape[0]:
+#                 raise ValueError("Sample weights array length must match the adjusted target array length.")
+#             self.classifier.fit(X_lagged, y_adjusted, sample_weight=sample_weight[self.memory_depth:])
+#         else:
+#             self.classifier.fit(X_lagged, y_adjusted)
+
+#         self.fitted_ = True
+#         if self.verbose:
+#             print("Fitting Hammerstein Wiener Classifier completed.")
+#         return self
+
+#     def _preprocess_data(self, X):
+#         self._validate_parameters()
+#         if self.verbose:
+#             print("Start preprocessing X and control Memory Depth...")
+#         X_transformed = self.nonlinearity_in(X)
+#         n_samples, n_features = X_transformed.shape
+#         if n_samples <= self.memory_depth:
+#             raise ValueError("Not enough samples to match the memory depth")
+#         X_lagged = np.zeros((n_samples - self.memory_depth, self.memory_depth * n_features))
+#         for i in range(self.memory_depth, n_samples):
+#             X_lagged[i - self.memory_depth, :] = X_transformed[i - self.memory_depth:i, :].flatten()
+#         if self.verbose:
+#             print("Preprocess X and Memory depth control completed.")
+#         return X_lagged
+
+#     def predict0(self, X):
+#         check_is_fitted(self, 'fitted_')
+#         X = check_array(X)
+#         #X_lagged = self._preprocess_data(X)
+#         proba = self.predict_proba(X)
+#         return np.argmax(proba, axis=1)
+    
+#     def predict(self, X):
+#         check_is_fitted(self, 'fitted_')
+#         X = check_array(X)
+#         X_lagged = self._preprocess_data(X)
+#         y_linear = np.asarray( self.classifier.predict(X_lagged)) 
+#         print(y_linear [:2])
+#         y_pred = self.nonlinearity_out(y_linear)
+        
+#         print(y_pred [:2])
+#         if self.lb_.classes_.shape[0] > 2:
+#             y_pred = np.argmax(y_pred, axis=1)
+#             print("yes")
+#         else:
+#             y_pred = np.where(y_pred >= 0.5, 1, 0)
+#             print("yop")
+
+#         default_prediction = np.array([self.lb_.classes_[0]] * self.memory_depth)
+#         print(default_prediction)
+
+#         y_pred_full = np.concatenate((default_prediction, y_pred))
+
+#         return y_pred # y_pred_full
+
+#     def predict_proba(self, X):
+#         check_is_fitted(self, 'fitted_')
+#         X = check_array(X, accept_large_sparse=True, accept_sparse=True, input_name="X")
+#         X_lagged = self._preprocess_data(X)
+#         proba_linear = np.asarray(self.classifier.predict_proba(X_lagged))
+        
+#         if self.lb_.classes_.shape[0] > 2:
+#             proba = np.zeros_like(proba_linear)
+#             for i in range(proba_linear.shape[1]):
+#                 proba[:, i] = self.nonlinearity_out(proba_linear[:, i])
+#             return proba
+#         else:
+#             return self.nonlinearity_out(proba_linear)
+
+
+# scenario 1
+# ensure method takes parameters: method_name, error, mode="strict", fitted_or_runned_attr=None , verbose 
+@EnsureMethod # with no parenthesis , decorator operates with its default values 
+class TestClass:
+    def fit(self, *args, **kwargs):
+        print("Executing fit method with args:", args, "and kwargs:", kwargs)
+
+# here only fit method is applied. 
+tc =TestClass() # initialization well executed. 
+tc.fit( ) # will execute fit method properly with its args and kwargs ....
+tc.run () # if since the default error is 'raise' in the decorator 
+# then an error is raised indicated that 'fit' is implemented and not run 
+# and call explicity fit to proceed 
+# if error is 'warn' , warn user to call explicity fit 
+tc.<other_method> # executed the method properly as usual 
+
+
+# scenario2 ;
+@EnsureMethod (method_name="custom_method")
+class TestClass:
+    def fit(self, *args, **kwargs):
+        print("Executing fit method with args:", args, "and kwargs:", kwargs)
+tc.custom_method () # raise error 
+# here method_name is passed while the method is not implemented, an error will  raise 
+# not dependendig of the error status. 
+
+# scenario3 ;
+@EnsureMethod (method_name="custom_method")
+class TestClass:
+    def run(self, *args, **kwargs):
+        print("Executing run method with args:", args, "and kwargs:", kwargs)
+tc.custom_method () # raise error similar like above 
+# here method_name is passed while the method is not implemented, an error will  raise 
+# not dependendig of the error status. 
+
+
+# scenario4 ; # custom method exist and fit also exists 
+@EnsureMethod (method_name="custom_method")
+class TestClass:
+    def custom_method(self, *args, **kwargs):
+        print("Executing custom method with args:", args, "and kwargs:", kwargs)
+        
+    def fit(self, *args, **kwargs):
+        print("Executing fit method with args:", args, "and kwargs:", kwargs)
+
+tc.custom_method () 
+# Normally fit is usually calle before any other method 
+# in 'strict mode, before executing the custom method since it is implemented, 
+# it will check whether the fitted_or_runned_attr( parameter) is True, 
+# if True then execute custom method, if false, raise error indicating the 
+# fit method that exist is not fitted yet. expected to be fitted before executing 
+# custom_method.
+
+# in soft mode, no check is performed , and run custom method directly. 
+
+# this behavior is also valid when run is implemented as well as custom_method. 
+
+tc.run() # here the method_name is defined. When user call run(), automatically 
+# called custom_method
+# while when user called fit, fit method is called.  
+
+# scenario5: 
+@EnsureMethod (method_name=None)
+class TestClass:
+    def custom_method(self, *args, **kwargs):
+        print("Executing custom method with args:", args, "and kwargs:", kwargs)
+        
+# here method_name is not set and fit or run are not implementeed, 
+tc.fit()  # when user call fit, pass it and raise a warning if warning is warn 
+# to let the user than the class does not implement run or fit and can call 
+# all other methods.
+tc.run() # when user call run , pass it and raise a warning if warning is warn 
+# to let the user aware. 
+#note in this situation, even error is raise, behave like warn since all class 
+# in gofast package should implement fit or run. 
+# if error is ignore, pass silently since both method are not present. 
+
+
+# scenario6: 
+@EnsureMethod (method_name=None)
+class TestClass:
+    def custom_method(self, *args, **kwargs):
+        print("Executing custom method with args:", args, "and kwargs:", kwargs) 
+    
+    def fit(self, *args, **kwargs):
+        print("Executing fit method with args:", args, "and kwargs:", kwargs)
+
+    def run(self, *args, **kwargs):
+        print("Executing run method with args:", args, "and kwargs:", kwargs)
+        
+# here both method are present. 
+tc.fit () # execute fit method 
+tc.run()# execute run method 
+tc.custom_method() # will depend whether object is runned (
+# as run takes priority on fit  based on mode parameter and fitted_or_runned_attribute. 
+# before executing the custom_method. 
+# if mode ='soft', executing custom_method directly 
+
+# scenario7: 
+@EnsureMethod (method_name="custom_method")
+class TestClass:
+    def custom_method(self, *args, **kwargs):
+        print("Executing custom method with args:", args, "and kwargs:", kwargs)
+        
+tc.fit() # call custom method  since custom method exists
+# or 
+tc.run() # call custom_method  since custom method exists 
+ For instance of:
+    - for functions/method : 
+       <example_function_or_method> ( 
+            param1= argument1, 
+            param2= ...
+            param3 =...
+            *args =... # if exists 
+            **kw = ... # if exists 
+          ) 
+          # If the code is long that exceed <maximum_characters_to_reach_in_one_line>, use parenthesis for break
+          the code and come to new newlines. 
+          # for error or warnings messages, use python "" to break the messgae and come to new lines 
+          # if the error or warning message or comments exceed the <maximum_characters_to_reach_in_one_line> ... 
+          

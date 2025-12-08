@@ -27,6 +27,15 @@ from ..utils.validator import exist_features
 
 __all__ = ["plot_error_ellipses", "plot_error_bands", "plot_error_violins"]
 
+def _get_mode (mode): 
+    """ Find mode. Fallback to optimized if mode is "cbueth", 
+    This will be deprecated in future version. 
+    
+    """
+    mode = str(mode).lower() 
+    if mode in {"optimized", "cbueth"}: 
+        return "cbueth" 
+    return mode 
 
 def _plot_error_violins(
     df: pd.DataFrame,
@@ -179,7 +188,7 @@ def plot_error_violins(
     dpi: int = 300,
     acov: Acov = "default",
     ax: Axes | None = None,
-    mode: Literal["basic", "cbueth"] = "cbueth",
+    mode: Literal["basic", "cbueth", "optimized"] = "optimized",
     bw_method: float | str | None = None,
     overlay: bool = False,
     overlay_angle: float | None = None,
@@ -187,6 +196,8 @@ def plot_error_violins(
     **violin_kws,
 ):
     mode = str(mode).lower()
+    mode = _get_mode (mode ) 
+    
     if mode == "basic":
         return _plot_error_violins(
             df,
@@ -467,14 +478,14 @@ acov : {'default', 'half_circle', 'quarter_circle', 'eighth_circle'},
     - ``'quarter_circle'``: :math:`\tfrac{\pi}{2}`
     - ``'eighth_circle'``: :math:`\tfrac{\pi}{4}`
     
-mode : {'cbueth', 'basic'}, default='cbueth'
+mode : {'optimized', 'basic'}, default='cbueth'
     The plotting mode to use.
 
-    - ``'cbueth'``: (Default) A mode inspired by reviewer feedback
+    - ``'optimized'`` or ``'cbueth'`` (Default) A mode inspired by reviewer feedback
       (see Notes). It maps error magnitude to the radius, splits
       violins into positive/negative lobes, and uses a central
       dot for the zero reference. This mode is optimized for
-      detecting bias and skew.
+      detecting bias and skew. 
     - ``'basic'``: The original implementation where the radial
       axis directly represents the error value (positive and
       negative), and violins are centered on their assigned angle.

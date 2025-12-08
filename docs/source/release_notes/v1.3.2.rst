@@ -8,7 +8,7 @@ Version 1.3.2
 
 This is a polish and feature-enhancement release focused on **flexible axis labeling**, 
 **new rendering modes**, and **standardized figure saving**. It introduces an 
-"annular" (curved) mode for feature interactions, a  new "cbueth" 
+"annular" (curved) mode for feature interactions, a  new "optimized" 
 (reviewer-inspired) mode for error violins, and a unified `kdiagram.savefig` 
 helper to streamline saving plots.
 
@@ -45,7 +45,7 @@ New Features
     mappings, or callables for labels).
 
 * |Feature| **Reviewer-Inspired Polar Error Violins**
-  (``mode="cbueth"`` in :func:`~kdiagram.plot.errors.plot_error_violins`): A new
+  (``mode="optimized"`` in :func:`~kdiagram.plot.errors.plot_error_violins`): A new
   mode, named in honor of a JOSS reviewer, that provides superior
   visual comparison.
 
@@ -62,7 +62,7 @@ Enhancements
 ~~~~~~~~~~~~
 
 * |Enhancement| **Smarter Outside-Rim Labeling:** Polar plots that
-  use split spokes, like ``plot_error_violins(mode="cbueth")``
+  use split spokes, like ``plot_error_violins(mode="optimized")``
   and ``plot_model_drift``, now
   place labels just **outside the rim** with adaptive headroom and
   upright text, preventing label-data collisions.
@@ -73,7 +73,7 @@ Enhancements
   and provides a ``dpi`` argument for consistent saving.
 
 * |Enhancement| **Improved Error Violin Visuals:** The new
-  ``mode="cbueth"`` uses a central dot for the zero-error reference
+  ``mode="optimized"`` uses a central dot for the zero-error reference
   (instead of a full circle) and has adaptive radial headroom to
   ensure outside labels don’t clip.
 
@@ -127,7 +127,7 @@ Documentation
 * |Docs| **Gallery Updates for Error Violins:** Added **Use Case 3
   (Two-Model Overlay)** and **Use Case 4 (Three-Model Split-Spokes)**
   to the error-violins gallery, demonstrating the new
-  ``mode="cbueth"`` with narrative, code, and interpretation.
+  ``mode="optimized"`` with narrative, code, and interpretation.
 * |Docs| **Gallery Updates for Feature Interaction:** The feature
   interaction guide now documents ``mode="annular"`` and the new
   *generic tick API*, including examples with domain-aware ticks
@@ -147,7 +147,7 @@ Testing & QA
   annular rendering and the new **generic tick controls**
   (sequence, mapping, and callable).
 * |Tests| Added a new test suite for
-  ``plot_error_violins(mode="cbueth")``, checking overlay
+  ``plot_error_violins(mode="optimized")``, checking overlay
   behavior, outside label placement, and that stats correctly
   appear in the legend.
 
@@ -156,7 +156,7 @@ Backwards Compatibility Notes
 
 * **Default Error-Violin Mode:** The default for
   :func:`~kdiagram.plot.errors.plot_error_violins` is now
-  **`mode="cbueth"`**. To reproduce legacy
+  **`mode="optimized"`**. To reproduce legacy
   visuals, you must explicitly set `mode="basic"`.
 * **Figure Saving**. If you were previously calling the internal
   ``safe_savefig``, please switch to the public ``kdiagram.savefig``.
@@ -170,4 +170,4 @@ Acknowledgments
 
 Special thanks to the JOSS reviewers **C. Bueth** and **ChinniAbburi** for their 
 expertises, overlay and curved annular rendering suggestions that directly inspired
-``mode="cbueth"`` and ``mode="annular"``.
+``mode="optimized"`` and ``mode="annular"``.
