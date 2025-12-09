@@ -89,8 +89,8 @@ and gain a deeper, more actionable understanding of their forecasting models.
 
 `k-diagram` is implemented in Python [@python3; @pythonbook], leveraging
 core scientific libraries including `numpy` [@harris2020array],
-`pandas` [@mckinney-proc-scipy-2010; @reback2020; @pandasdev],
-`matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth], and
+`pandas` [@mckinney-proc-scipy-2010; @pandasdev],
+`matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth; @lu2020securing], and
 `scikit-learn` [@scikit-learn]. The core functionality is organized
 around a cohesive API designed to diagnose key aspects of forecast
 quality through four primary pillars of analysis 
