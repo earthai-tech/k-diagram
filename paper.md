@@ -89,8 +89,8 @@ and gain a deeper, more actionable understanding of their forecasting models.
 
 `k-diagram` is implemented in Python [@python3; @pythonbook], leveraging
 core scientific libraries including `numpy` [@harris2020array],
-`pandas` [@mckinney-proc-scipy-2010; @reback2020pandas],
-`matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth], and
+`pandas` [@mckinney-proc-scipy-2010; @pandasdev],
+`matplotlib` [@Hunter:2007], `scipy` [@2020SciPy-NMeth; @lu2020securing], and
 `scikit-learn` [@scikit-learn]. The core functionality is organized
 around a cohesive API designed to diagnose key aspects of forecast
 quality through four primary pillars of analysis 
@@ -143,20 +143,19 @@ mapping them to angle and radius. All functionalities are supported by
 a set of helper utilities and a command-line interface (CLI) for
 generating key plots directly from data files. 
 
-
 # Engineering - API and Extensibility
 
-`k-diagram` is designed as a **small stack of composable layers** rather than a
+`k-diagram` is designed as a small stack of composable layers rather than a
 monolithic script. This architecture is directly reflected in its public API,
-which is **data-first**, **predictable**, and geared toward **integration** with the
+which is data-first, predictable, and geared toward integration with the
 scientific Python ecosystem.
 
 The primary API entry points are the `plot_*` functions. These functions are
 designed to be thin, predictable wrappers that accept data in common
 formats—either a tidy `pandas` DataFrame with explicit column selectors
 (e.g., `q_cols=('q10','q50','q90')`, `y_true='actual'`) or plain `numpy` arrays.
-In either case, inputs are **validated early** to provide clear error messages.
-A core feature of the API is its **explicit "polar grammar"**. Users have direct
+In either case, inputs are validated early to provide clear error messages.
+A core feature of the API is its explicit "polar grammar." Users have direct
 control over the geometry of their plots through parameters like `acov`
 (angular coverage), `zero_at` (orientation), and `clockwise` (direction).
 For periodic data, this grammar extends to human-readable labels via
@@ -165,40 +164,38 @@ of "0.0 radians." These controls are paired with shared display options
 like `show_grid` to ensure a consistent look and feel.
 
 Crucially, every plotting function in `k-diagram` returns a standard
-Matplotlib `Axes` object. This is the package's **most important contract**:
-it **does not hide the figure** or return a custom object. This design choice
-ensures that users can immediately apply their existing Matplotlib knowledge
-to annotate, combine subplots, or save figures in a standard, compositional
-workflow. Indeed, the proposed API is supported by an **internal utility layer** that handles the
+Matplotlib `Axes` object. This is the package's main contract: it does not
+hide the figure or return a custom object. This design choice ensures that
+users can immediately apply their existing Matplotlib knowledge to annotate,
+combine subplots, or save figures in a standard, compositional workflow.
+The proposed API is supported by an internal utility layer that handles the
 heavy lifting. The layer manages column detection, quantile pairing,
 angular mapping (`map_theta_to_span`), and color handling. This separation
-keeps the user-facing plot logic (the **"'what to draw'"**) independent from the
-rendering and validation logic (the **"'how to draw'"**). **Cross-cutting concerns**,
+keeps the user-facing plot logic (the "what to draw") independent from the
+rendering and validation logic (the "how to draw"). Cross-cutting concerns,
 like ensuring consistent polar grids (`setup_polar_axes`) or managing
-compatibility shims (`kdiagram.compat`), are **centralized**.
+compatibility shims (`kdiagram.compat`), are centralized.
 
-Furthermore, the layered design yields significant benefits in **performance and testability**.
-Data transformations are **vectorized using NumPy and Pandas**, and **no hidden
-global state** is used. Each function depends only on its arguments, making
-its behavior **pure and easy to test**. Transforms and validators are unit-tested
-for correctness, while the rendering pipeline is exercised with **headless smoke tests** 
-that assert on labels and returned object types rather than
-fragile pixel comparisons. The CLI simply wraps this
-same public API, guaranteeing identical figures from both scripts and
-interactive sessions.
+Furthermore, the layered design yields significant benefits in performance and
+testability. Data transformations are vectorized using NumPy and pandas, and
+no hidden global state is used. Each function depends only on its arguments,
+making its behavior pure and easy to test. Transforms and validators are
+unit-tested for correctness, while the rendering pipeline is exercised with
+headless smoke tests that assert on labels and returned object types rather
+than fragile pixel comparisons. The CLI simply wraps this same public API,
+guaranteeing identical figures from both scripts and interactive sessions.
 
-Finally, the composable structure makes the package **straightforward to extend**.
-Adding a new diagnostic follows a **consistent pattern**: transform the input
-data, lay out the coordinate system using the **shared helpers**, and render
-with standard Matplotlib primitives. Because the shared helpers manage the
-complex parts of polar geometry and styling, new plot functions remain
-small and readable. Therefore, this flexibility even allows a single data transform
-to back both a polar and a Cartesian renderer, which is exposed in some
-functions via the `kind="polar"|"cartesian"` toggle.
-The full [development page](https://k-diagram.readthedocs.io/en/latest/development.html)
+Finally, the composable structure makes the package straightforward to extend.
+Adding a new diagnostic follows a consistent pattern: transform the input
+data, lay out the coordinate system using the shared helpers, and render with
+standard Matplotlib primitives. Because the shared helpers manage the complex
+parts of polar geometry and styling, new plot functions remain small and
+readable. This flexibility even allows a single data transform to back both
+a polar and a Cartesian renderer, which is exposed in some functions via the
+`kind="polar"|"cartesian"` toggle. The full
+[development page](https://k-diagram.readthedocs.io/en/latest/development.html)
 describes these conventions in detail, allowing external contributors to add
 new diagnostics without guessing at internal idioms.
-
 
 # Illustrative Diagnostics and Application
 
