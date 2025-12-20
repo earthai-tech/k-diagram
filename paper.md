@@ -122,7 +122,7 @@ Building on this, the second pillar focuses on established methods for
 **Model Evaluation and Comparison**. The package implements well-regarded
 evaluation techniques, adapting them for enhanced clarity. Functions in
 `kdiagram.plot.evaluation` generate **Taylor Diagrams**, based on the
-original formulation by [@Taylor2001], to holistically compare models
+original formulation by @Taylor2001, to holistically compare models
 on correlation, standard deviation, and Root-Mean-Square Deviation. 
 Complementing this, the `kdiagram.plot.comparison` module provides standard 
 **Reliability Diagrams** for assessing probability calibration, 
