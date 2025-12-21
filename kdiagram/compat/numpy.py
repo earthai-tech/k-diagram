@@ -6,6 +6,9 @@ A compatibility layer so k-diagram works under both NumPy 1.x and 2.x.
 Avoids removed aliases (np.bool, np.int, np.float, …).
 """
 
+from __future__ import annotations 
+
+from typing import Any
 import numpy as np
 from numpy.lib import NumpyVersion as _NV
 
@@ -37,10 +40,7 @@ NP_STR = np.str_  # exists
 # ---- Moved / renamed helpers ----
 in1d = np.isin
 row_stack = np.vstack
-try:
-    trapz = np.trapezoid  # new name
-except AttributeError:
-    trapz = np.trapz  # old name
+
 
 # ---- AxisError location changed in 2.x ----
 try:
@@ -52,12 +52,45 @@ except Exception:
 default_int = np.intp
 
 
-# === AxisError import compatibility ===
-# In NumPy 2.x it lives under numpy.exceptions.
-try:
-    from numpy.exceptions import AxisError  # Noqa
-except ImportError:
-    from numpy import AxisError
+def trapz(
+    y: Any,
+    x: Any | None = None,
+    dx: float = 1.0,
+    axis: int = -1,
+) -> Any:
+    """
+    Compatibility wrapper for trapezoidal integration.
+
+    NumPy 2.0+ removed ``numpy.trapz``. This wrapper prefers
+    ``numpy.trapezoid`` when available, otherwise falls back to
+    ``numpy.trapz`` on older NumPy versions.
+
+    Parameters
+    ----------
+    y : array-like
+        Input values to integrate.
+    x : array-like, optional
+        Sample positions corresponding to `y`.
+    dx : float, default=1.0
+        Spacing between sample points when `x` is None.
+    axis : int, default=-1
+        Axis along which to integrate.
+
+    Returns
+    -------
+    integral : array-like
+        Approximation to the integral of `y` along `axis`.
+    """
+    fn = getattr(np, "trapezoid", None)
+    if fn is not None:
+        return fn(y, x=x, dx=dx, axis=axis)
+
+    fn = getattr(np, "trapz", None)
+    if fn is None:
+        raise AttributeError(
+            "Neither numpy.trapezoid nor numpy.trapz is available."
+        )
+    return fn(y, x=x, dx=dx, axis=axis)
 
 
 # ---- Promotion warnings helper (NumPy 2.x only) ----
