@@ -25,6 +25,12 @@
     <a href="https://github.com/earthai-tech/k-diagram/releases/latest">
         <img alt="GitHub Release" src="https://img.shields.io/github/v/release/earthai-tech/k-diagram">
     </a>
+    <a href="https://joss.theoj.org/papers/b1b83d205263117e0b54b670d4600174">
+      <img src="https://joss.theoj.org/papers/b1b83d205263117e0b54b670d4600174/status.svg">
+    </a>
+    <a href="https://doi.org/10.5281/zenodo.17211576">
+      <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17211576.svg" alt="DOI">
+   </a>
 </p>
   
   <p>
