@@ -1,0 +1,87 @@
+.. _release_v1_3_5:
+
+----------------
+Version 1.3.5
+----------------
+
+*(Released: 2025-12-22)*
+
+This is a stability and compatibility release focused on **NumPy 2.x
+support**, **robust polar error-violin rendering**, and **cleaner CLI
+behavior**. It resolves a breaking change introduced by NumPy 2.0
+(removal of ``numpy.trapz``) that affected error-violin plotting and
+downstream tests.
+
+In addition, this release tightens internal compatibility utilities so
+plotting functions behave consistently across NumPy versions.
+
+New Features
+~~~~~~~~~~~~~
+
+* |Feature| **NumPy integration compatibility helper**
+  (``kdiagram.compat.numpy.trapz``):
+
+  A new wrapper providing trapezoidal integration across NumPy versions.
+
+  - Uses ``numpy.trapezoid`` on NumPy 2.0+.
+  - Falls back to ``numpy.trapz`` on older NumPy versions.
+  - Centralizes numerical-compat logic in one place for maintainability.
+
+Enhancements
+~~~~~~~~~~~~
+
+* |Enhancement| **More robust polygon ordering in error violins**:
+
+  In :func:`~kdiagram.plot.errors.plot_error_violins`
+  (``mode="optimized"`` / ``mode="cbueth"``), the "small -> large" ordering
+  used to draw filled polygons now relies on the compat integration helper,
+  ensuring consistent z-ordering and reducing accidental occlusion when
+  overlaying models.
+
+Bug Fixes
+~~~~~~~~~
+
+* |Fix| **NumPy 2.0+ crash in error-violin plots**:
+
+  Fixed ``AttributeError: module 'numpy' has no attribute 'trapz'`` that
+  caused failures in:
+
+  - ``plot_error_violins`` overlay mode tests
+  - split-spokes tests
+  - CLI plot tests
+  - warning behavior tests for mismatched names
+
+* |Fix| **CLI stability for error-violin plotting**:
+
+  The ``plot-error-violins`` CLI command now runs reliably under NumPy 2.x
+  by avoiding direct calls to removed NumPy APIs in the plotting backend.
+
+Documentation
+~~~~~~~~~~~~~
+
+* |Docs| **Release notes updated for NumPy 2.x**:
+
+  Added guidance that ``k-diagram`` supports NumPy 2.x and that numerical
+  integration in visual diagnostics is routed through ``kdiagram.compat``.
+
+Testing & QA
+~~~~~~~~~~~~~~
+
+* |Tests| **NumPy 2.x regression coverage**:
+
+  Updated and validated the error-violin test suite to ensure overlay and
+  split-spokes behaviors continue to pass under NumPy 2.x environments.
+
+Backwards Compatibility Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **No API breakage intended.** This release is a compatibility patch:
+  user-facing plotting signatures are unchanged. If you previously relied
+  on ``numpy.trapz`` indirectly through ``k-diagram``, that behavior is now
+  provided via ``kdiagram.compat.numpy.trapz``.
+
+Acknowledgments
+~~~~~~~~~~~~~~~~
+
+Thanks to the community and CI environments that surfaced NumPy 2.x
+compatibility regressions early, enabling a targeted fix in this release.

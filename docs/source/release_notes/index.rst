@@ -3,17 +3,18 @@
 =============
 Release Notes
 =============
-   
+
 This section documents notable changes to **k-diagram** across official
 releases. We follow semantic versioning (MAJOR.MINOR.PATCH). For upgrade
 guidance, breaking changes are called out in each version page.
 
 .. note::
-   The latest stable release is **v1.3.2**.
+   The latest stable release is **v1.3.5**.
 
 Quick links
 -----------
 
+- :doc:`v1.3.5 <v1.3.5>` — NumPy 2.x compatibility and error-violin stability fixes.
 - :doc:`v1.3.2 <v1.3.2>` — New rendering modes, flexible labeling, and robust saving.
 - :doc:`v1.3.0 <v1.3.0>` — New contextual plots and data processing utilities.
 - :doc:`v1.2.0 <v1.2.0>` — New error analysis module and advanced uncertainty plots.
@@ -28,11 +29,10 @@ Contents
    :maxdepth: 1
    :caption: Versions
 
+   v1.3.5
    v1.3.2
    v1.3.0
    v1.2.0
    v1.1.0
    v1.0.3
    v1.0.0
-
-
