@@ -191,7 +191,7 @@ k-diagram --help
 **Example: Generate a Coverage Diagnostic plot:**
 
 ```bash
-k-diagram plot_coverage_diagnostic data.csv \
+k-diagram plot-coverage-diagnostic data.csv \
     --actual-col actual_obs \
     --q-cols q10_pred q90_pred \
     --title "Coverage for My Model" \
