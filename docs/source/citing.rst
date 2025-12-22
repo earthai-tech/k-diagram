@@ -9,50 +9,48 @@ citing it. Proper citation acknowledges the effort involved in
 developing and maintaining the software and helps others find and
 verify the tools you used.
 
-We recommend citing the software paper (JOSS) **and** the software
-package itself. You may also cite any related application or methods
-papers that informed your work.
+We recommend citing the software paper (JOSS) **and** (optionally) the
+software package/repository version you used. You may also cite any
+related methods or application papers that informed your work.
 
-Software Paper (Planned JOSS Submission)
-----------------------------------------
+Software Paper (JOSS)
+---------------------
 
-This paper focuses on the ``k-diagram`` software and is intended for
-the open-source and scientific software community.
+This paper describes the ``k-diagram`` software and its core ideas.
 
 .. code-block:: bibtex
 
-    @article{kouadio_kdiagram_joss_prep_2025,
-      author       = {Kouadio, Kouao Laurent},
-      title        = {k-diagram: Rethinking Forecasting Uncertainty via
-                      Polar-Based Visualization},
-      note         = {In preparation for submission to the Journal of
-                      Open Source Software (JOSS)},
-      year         = {2025},
-      howpublished = {\url{https://github.com/earthai-tech/k-diagram}},
-      release      = {|release|}
+    @article{Kouadio2025,
+      doi       = {10.21105/joss.08661},
+      url       = {https://doi.org/10.21105/joss.08661},
+      year      = {2025},
+      publisher = {The Open Journal},
+      volume    = {10},
+      number    = {116},
+      pages     = {8661},
+      author    = {Kouadio, Kouao Laurent},
+      title     = {k-diagram: Rethinking Forecasting Uncertainty via Polar-based Visualization},
+      journal   = {Journal of Open Source Software}
     }
 
 Citing the Software Package
 ---------------------------
 
-If you wish to cite the software artifact directly, include the
-author, title, version used, and repository URL.
+If you wish to cite the software artifact directly (e.g., a specific
+version in a reproducible workflow), include the author, title, version
+used, and repository URL.
 
 **Recommended format:**
 
-  Kouadio, K. L. (2025). *k-diagram: Rethinking Forecasting
-  Uncertainty via Polar-Based Visualization* (Version |release|).
-  GitHub Repository. https://github.com/earthai-tech/k-diagram
-
+  Kouadio, K. L. (2025). *k-diagram: Rethinking Forecasting Uncertainty via
+  Polar-based Visualization* (Version |release|). GitHub Repository.
+  https://github.com/earthai-tech/k-diagram
 
 .. note::
-   
+
    Replace ``|release|`` with the specific version you used. You can
    check the installed version with ``k-diagram --version`` or
-   ``import kdiagram; print(kdiagram.__version__)``.)
-
-   Furthermore, we plan to archive stable releases on Zenodo to provide a persistent
-   DOI. Please check the repository for updates once DOIs are issued.
+   ``import kdiagram; print(kdiagram.__version__)``.
 
 Related Publications
 --------------------
@@ -62,46 +60,64 @@ with ``k-diagram``, consider citing the relevant papers below.
 
 .. note::
 
-   Some entries are submitted or in preparation. DOI, volume, and page
+   Some entries are submitted. DOI, volume, and page
    information will be added once available.
 
-Land Subsidence Uncertainty Analysis (IJF submission)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CAS: Cluster-Aware Scoring for Probabilistic Forecasts (IJF submission)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This paper analyzes the structure and consistency of predictive
-uncertainty in land-subsidence forecasting using diagnostic diagrams
-related to ``k-diagram``.
+This paper introduces **CAS (Cluster-Aware Severity / Cluster-Aware Scoring)**,
+a metric that penalizes bursty, clustered forecast errors and complements
+traditional scoring rules.
+
+Examples and reproducible scripts are provided in the repository:
+https://github.com/earthai-tech/k-diagram/tree/main/examples/cas
 
 .. code-block:: bibtex
 
-    @unpublished{kouadio_subsidence_ijf_2025,
-      author  = {Kouadio, Kouao Laurent and Liu, Rong and
-                 Loukou, Kouam{\\'e} Gb{\\`e}l{\\`e} Hermann},
-      title   = {Analytics Framework for Interpreting Spatiotemporal
-                 Probabilistic Forecasts},
+    @unpublished{kouadio_cas_ijf_2025,
+      author  = {Kouadio, Kouao Laurent and Liu, Rong},
+      title   = {CAS: Cluster-Aware Scoring for Probabilistic Forecasts},
       journal = {International Journal of Forecasting},
       note    = {Submitted},
       year    = {2025}
     }
 
-Urban Land Subsidence Forecasting (Nature Communications)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Physics-Informed Urban Land Subsidence Forecasting (Nature submission)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This paper introduces a physics-informed deep learning framework and
-applies visualization techniques related to ``k-diagram`` to forecast
-urban land subsidence.
+This paper introduces GeoPriorSubsNet, a physics-informed deep learning
+framework for probabilistic, city-scale land-subsidence forecasting and
+diagnostics.
 
 .. code-block:: bibtex
 
-    @article{liu_subsidence_nat_comm_2025,
-      author  = {Kouadio, Kouao Laurent and Liu, Rong and Jiang, Shiyu
-                 and Liu, Jianxin and Kouamelan, Serge and Liu, Wenxiang
-                 and Qing, Zhanhui and Zheng, Zhiwen},
-      title   = {Forecasting Urban Land Subsidence in the Era of Rapid
-                 Urbanization and Climate Stress},
+    @unpublished{kouadio_geopriorsubsnet_nature_2025,
+      author  = {Kouadio, Kouao Laurent and Liu, Rong and Jiang, Shiyu and
+                 Liu, Zhuo and Kouamelan, Serge and Liu, Wenxiang and
+                 Qing, Zhanhui and Zheng, Zhiwen},
+      title   = {Physics-Informed Deep Learning Reveals Divergent Urban Land Subsidence Regimes},
       journal = {Nature Communications},
-      year    = {2025},
-      note    = {Submitted}
+      note    = {Submitted},
+      year    = {2025}
+    }
+
+A Diagnostic Framework for Spatiotemporal Forecast Uncertainty (Environmental Modelling \& Software submission)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This paper proposes a diagnostic framework for interpreting probabilistic
+forecast uncertainty and applies it to land subsidence forecasting,
+including comparisons across model families.
+
+.. code-block:: bibtex
+
+    @unpublished{kouadio_diagnostic_framework_ems_2025,
+      author  = {Kouadio, Kouao Laurent and Liu, Rong and Loukou, Kouam{\'e} Gb{\`e}l{\`e} Hermann and
+                 Liu, Wenxiang and Qing, Zhanhui and Liu, Zhuo},
+      title   = {A Diagnostic Framework for Spatiotemporal Forecast Uncertainty},
+      journal = {Environmental Modelling \& Software},
+      note    = {Submitted},
+      year    = {2025}
     }
 
 Thank you for citing ``k-diagram``!

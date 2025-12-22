@@ -230,17 +230,16 @@ file for details.
 
 ## 📞 Contact & Support
 
-  * **Bug Reports & Feature Requests:** The best place to report issues,
-    ask questions about usage, or request new features is the
-    [**GitHub Issues**](https://github.com/earthai-tech/k-diagram/issues) page for the project.
+* **Bug reports & feature requests:** Please use the project’s **GitHub Issues** 
+  tracker to report bugs, ask usage questions, or suggest enhancements:
+  [GitHub Issues](https://github.com/earthai-tech/k-diagram/issues)
 
-  * **Author Contact:** For direct inquiries related to the project's
-    origins or specific collaborations, you can reach the author:
+* **Author contact:** For collaboration inquiries or questions about the 
+  project’s background, you can contact the author:
+  
+  **Laurent Kouadio** — [https://lkouadio.com/](https://lkouadio.com/)
+  📧 **[etanoyau@gmail.com](mailto:etanoyau@gmail.com)**
 
-      * **Name:** Laurent Kouadio
-      * 📧 **Email:** [etanoyau@gmail.com](mailto:etanoyau@gmail.com)
-
----
 
 [badge-ci]: https://img.shields.io/github/actions/workflow/status/earthai-tech/k-diagram/python-package-conda.yml?branch=main&style=flat-square
 [link-ci]: https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml
