@@ -6,9 +6,10 @@ A compatibility layer so k-diagram works under both NumPy 1.x and 2.x.
 Avoids removed aliases (np.bool, np.int, np.float, …).
 """
 
-from __future__ import annotations 
+from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
 from numpy.lib import NumpyVersion as _NV
 

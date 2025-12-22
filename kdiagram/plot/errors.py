@@ -15,7 +15,7 @@ from scipy.stats import gaussian_kde, skew
 
 from ..api.typing import Acov
 from ..compat.matplotlib import get_cmap, get_colors
-from ..compat.numpy import trapz 
+from ..compat.numpy import trapz
 from ..core._io_utils import _get_valid_kwargs
 from ..decorators import check_non_emptiness, isdf
 from ..utils.fs import savefig as safe_savefig
@@ -28,15 +28,17 @@ from ..utils.validator import exist_features
 
 __all__ = ["plot_error_ellipses", "plot_error_bands", "plot_error_violins"]
 
-def _get_mode (mode): 
-    """ Find mode. Fallback to optimized if mode is "cbueth", 
-    This will be deprecated in future version. 
-    
+
+def _get_mode(mode):
+    """Find mode. Fallback to optimized if mode is "cbueth",
+    This will be deprecated in future version.
+
     """
-    mode = str(mode).lower() 
-    if mode in {"optimized", "cbueth"}: 
-        return "cbueth" 
-    return mode 
+    mode = str(mode).lower()
+    if mode in {"optimized", "cbueth"}:
+        return "cbueth"
+    return mode
+
 
 def _plot_error_violins(
     df: pd.DataFrame,
@@ -197,8 +199,8 @@ def plot_error_violins(
     **violin_kws,
 ):
     mode = str(mode).lower()
-    mode = _get_mode (mode ) 
-    
+    mode = _get_mode(mode)
+
     if mode == "basic":
         return _plot_error_violins(
             df,
@@ -313,7 +315,7 @@ def plot_error_violins(
         )
         areas.append(float(a))
     order = np.argsort(areas)
-    
+
     for rank, i in enumerate(order):
         (dpos, dneg), ang, col = violins[i], float(angles[i]), colors[i]
 
