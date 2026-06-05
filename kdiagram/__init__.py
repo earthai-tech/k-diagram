@@ -36,7 +36,7 @@ try:
     __version__ = _pkg_version("k-diagram")
 except PackageNotFoundError:
     # fallback when running from source without install
-    __version__ = "1.4.0"
+    __version__ = "1.4.1"
 
 _required_dependencies = [
     ("numpy", None),
