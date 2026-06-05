@@ -1,0 +1,198 @@
+.. _release_v1_4_0:
+
+----------------
+Version 1.4.0
+----------------
+
+*(Released: 2026-06-05)*
+
+This is a major feature release that introduces a complete **Spatial
+Diagnostics Module** for interpreting spatiotemporal probabilistic
+forecasts across geographic networks of sites. It adds three
+polar-spatial hybrid plots — including the "hedgehog" polar diagnostic
+— and expands the gallery with high-level annotated examples for every
+spatial function.
+
+This release accompanies the publication of the associated methodology
+paper: *Kouadio et al. (2026), Environmental Modelling & Software, 107052*
+(:doi:`10.1016/j.envsoft.2026.107052`).
+
+New Features
+~~~~~~~~~~~~~
+
+* |Feature| **Spatial Scatter Plot**
+  (:func:`~kdiagram.plot.spatial.plot_spatial_scatter`):
+
+  Geographic scatter of forecast quality at individual sites.
+
+  - Color-encodes any scalar metric (CRPS, interval width, coverage,
+    residual, etc.) at each (lon, lat) position.
+  - ``bubble=True`` additionally scales marker area to a second column,
+    making two diagnostic dimensions visible in one map.
+  - Accepts a projected or geographic ``ax``; falls back to a plain
+    Cartesian axes when GeoPandas is unavailable.
+
+* |Feature| **Spatial Heatmap**
+  (:func:`~kdiagram.plot.spatial.plot_spatial_heatmap`):
+
+  Interpolated severity surface from scattered site measurements.
+
+  - Cubic-spline or nearest-neighbor interpolation over a regular grid,
+    with optional contour overlay (``show_contours=True``).
+  - ``cmap``, ``levels``, and ``vmin/vmax`` expose full colormap control
+    for publication-quality figures.
+
+* |Feature| **Spatial Uncertainty Map**
+  (:func:`~kdiagram.plot.spatial.plot_spatial_uncertainty`):
+
+  Side-by-side or single-panel map of prediction-interval widths.
+
+  - Highlights over-confident and over-dispersed regions by coloring
+    interval width with a diverging palette.
+  - ``hotspot_quantile`` parameter draws an optional contour around
+    the highest-uncertainty sites.
+
+* |Feature| **Spatial Coverage Map**
+  (:func:`~kdiagram.plot.spatial.plot_spatial_coverage`):
+
+  Empirical coverage-rate map for evaluating calibration across space.
+
+  - ``nominal_coverage`` reference line and per-site deviation coloring
+    expose geographic calibration failures at a glance.
+  - ``flag_below`` marks sites that fall below a user-defined threshold
+    with a distinct marker style.
+
+* |Feature| **Spatial Model Comparison**
+  (:func:`~kdiagram.plot.spatial.plot_spatial_comparison`):
+
+  Multi-panel geographic comparison of metric fields from several models
+  or forecast horizons.
+
+  - Accepts a list of ``value_cols`` — one panel per column, with a shared
+    colorbar and identical spatial extent for fair comparison.
+  - ``ncols`` controls the subplot grid layout.
+
+* |Feature| **Spatial Ordering Plot**
+  (:func:`~kdiagram.plot.spatial.plot_spatial_ordering`):
+
+  Geographic map that color-codes sites by their traversal rank and draws
+  directional arrows indicating the ordering sequence.
+
+  - ``order_by`` supports ``"lat"``, ``"lon"``, or any DataFrame column.
+  - ``order_col`` allows a pre-computed rank or custom ordering key.
+  - Returns the rank-ordered DataFrame alongside the axes for downstream
+    use in polar diagnostics.
+
+* |Feature| **Polar Hedgehog Diagnostic**
+  (:func:`~kdiagram.plot.spatial.plot_polar_from_spatial`):
+
+  Maps the geographic rank of each site to a polar angle
+  (θᵢ = 2πi/N, North-clockwise), with radius proportional to the
+  forecast metric, producing the "hedgehog" diagnostic introduced in the
+  EnvSoft paper.
+
+  - **Single-horizon mode**: one spike per site, colored by metric value.
+  - **Multi-horizon ring mode**: K concentric rings, one per forecast
+    horizon, normalized to a shared radial budget so all rings fit
+    without overlap.
+  - ``color_col`` overrides the default color encoding with any
+    additional site attribute.
+  - Reference rings at 25 %, 50 %, 75 %, and 100 % of the radial scale
+    aid quantitative reading.
+
+* |Feature| **Paired Spatial-Polar Composite**
+  (:func:`~kdiagram.plot.spatial.plot_paired_spatial_polar`):
+
+  Two-panel figure: geographic site map (left) + polar hedgehog (right),
+  sharing a colorbar and a common site ordering so geographic and
+  diagnostic views remain directly linked.
+
+  - Identical API to :func:`~kdiagram.plot.spatial.plot_polar_from_spatial`
+    for the polar panel; ``figsize`` scales both panels together.
+  - Returns ``(ax_map, ax_polar)`` for further customization.
+
+Enhancements
+~~~~~~~~~~~~
+
+* |Enhancement| **Vectorized spike rendering**: the internal
+  ``_polar_spikes`` helper bins sites by color value and renders all
+  spikes in one ``ax.plot`` call per bin using NaN separators, keeping
+  performance acceptable for networks of hundreds of sites.
+
+* |Enhancement| **Robust site-ordering helper** (``_compute_site_order``):
+  a private utility shared by all three spatial-polar functions that
+  handles latitude, longitude, arbitrary column, or pre-computed-rank
+  ordering, with consistent tie-breaking and ascending/descending
+  control.
+
+* |Enhancement| **CAS metrics module improvements**
+  (:mod:`kdiagram.metrics`):
+  :func:`~kdiagram.metrics.cluster_aware_severity_score` parameter
+  handling and column naming aligned with the published paper
+  (``is_anomaly`` flag column, ``kernel``/``lambda_``/``gamma``
+  keyword arguments).
+
+Documentation
+~~~~~~~~~~~~~
+
+* |Docs| **New Spatial Gallery** (``docs/source/gallery/spatial.rst``):
+  Eighteen gallery images with high-level, interpretation-focused
+  examples for every spatial function, including an *Application
+  Dashboard* section showing all eight plots applied together to a
+  single network dataset.
+
+* |Docs| **Expanded Spatial User Guide**
+  (``docs/source/user_guide/spatial.rst``):
+  Added detailed sections for :func:`~kdiagram.plot.spatial.plot_spatial_ordering`,
+  :func:`~kdiagram.plot.spatial.plot_polar_from_spatial`, and
+  :func:`~kdiagram.plot.spatial.plot_paired_spatial_polar`, including
+  parameter tables, worked examples, and interpretation guidance.
+
+* |Docs| **Updated Citations** (``docs/source/citing.rst``):
+  The Environmental Modelling & Software paper is now listed with full
+  journal metadata and BibTeX entry. The IEEE TGRS under-review paper
+  on physics-informed deep learning for land subsidence is added as a
+  second reference.
+
+* |Docs| **Footcite references** in the spatial user guide link inline
+  to the published EnvSoft paper via ``sphinxcontrib.bibtex``.
+
+Testing & QA
+~~~~~~~~~~~~~~
+
+* |Tests| **New spatial-polar test suites**
+  (``tests/test_plot_spatial.py``):
+
+  - ``TestPlotSpatialOrdering`` — 14 tests covering default ordering,
+    custom column ordering, arrow rendering, color-encoding options,
+    and ``savefig`` integration.
+  - ``TestPlotPolarFromSpatial`` — 17 tests covering single-horizon
+    mode, multi-horizon ring mode, reference rings, ``color_col``
+    override, and polar-axes validation (``ax.name == "polar"``).
+  - ``TestPlotPairedSpatialPolar`` — 15 tests covering two-axes
+    return value, shared colorbar, panel independence, and combined
+    ``order_col`` + multi-horizon modes.
+  - Updated namespace export tests to verify all eight spatial
+    functions are importable from both ``kdiagram.plot`` and
+    ``kdiagram`` top-level.
+
+Backwards Compatibility Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **No API breakage.** All new functions are additive. Existing spatial
+  functions (``plot_spatial_scatter`` through ``plot_spatial_comparison``)
+  are unchanged.
+* **New top-level exports**: ``plot_spatial_ordering``,
+  ``plot_polar_from_spatial``, and ``plot_paired_spatial_polar`` are
+  now available at ``kdiagram.*``.
+
+Acknowledgments
+~~~~~~~~~~~~~~~~
+
+This release implements the diagnostic framework described in the
+peer-reviewed paper:
+
+  Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, W., Qing, Z., & Liu, Z.
+  (2026). A diagnostic framework for interpreting spatiotemporal
+  probabilistic forecasts. *Environmental Modelling & Software*, 107052.
+  ISSN 1364-8152. https://doi.org/10.1016/j.envsoft.2026.107052
