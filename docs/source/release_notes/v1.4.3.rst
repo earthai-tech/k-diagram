@@ -1,0 +1,36 @@
+.. _release_v1_4_3:
+
+----------------
+Version 1.4.3
+----------------
+
+*(Released: 2026-06-05)*
+
+Maintenance release that fixes the GitHub Actions publish workflow
+introduced in v1.4.2.
+
+Changes since v1.4.2
+~~~~~~~~~~~~~~~~~~~~~
+
+* |Fix| **CI publish workflow — remove TestPyPI step**:
+
+  The ``publish-testpypi`` job has been removed from
+  ``.github/workflows/publish.yml``.  When the ``TEST_PYPI_API_TOKEN``
+  secret is absent or empty, ``pypa/gh-action-pypi-publish`` silently
+  falls back to OIDC trusted publishing and fails with::
+
+      Trusted publishing exchange failure:
+      GitHub: missing or insufficient OIDC token permissions,
+      the ACTIONS_ID_TOKEN_REQUEST_TOKEN environment variable was unset
+
+  The pipeline is now: **test → build → publish-pypi → github-release**,
+  using only ``PYPI_API_TOKEN``.  This is the recommended minimal setup
+  for projects that do not require a TestPyPI dry-run gate.
+
+All other fixes from v1.4.1 / v1.4.2 are included unchanged — see
+:doc:`v1.4.2 <v1.4.2>` and :doc:`v1.4.1 <v1.4.1>` for the full list.
+
+Backwards Compatibility Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **No API changes.** Pure CI and release-process improvement.

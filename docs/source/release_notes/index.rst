@@ -9,11 +9,14 @@ releases. We follow semantic versioning (MAJOR.MINOR.PATCH). For upgrade
 guidance, breaking changes are called out in each version page.
 
 .. note::
-   The latest stable release is **v1.4.0**.
+   The latest stable release is **v1.4.3**.
 
 Quick links
 -----------
 
+- :doc:`v1.4.3 <v1.4.3>` — Remove TestPyPI step; fixes OIDC fallback failure in publish workflow.
+- :doc:`v1.4.2 <v1.4.2>` — API-token publish workflow; supersedes v1.4.1.
+- :doc:`v1.4.1 <v1.4.1>` — Compatibility patch for pandas 2.2+, StringDtype, and Matplotlib colormap registry.
 - :doc:`v1.4.0 <v1.4.0>` — Spatial diagnostics module, hedgehog polar diagnostic, and EnvSoft paper publication.
 - :doc:`v1.3.5 <v1.3.5>` — NumPy 2.x compatibility and error-violin stability fixes.
 - :doc:`v1.3.2 <v1.3.2>` — New rendering modes, flexible labeling, and robust saving.
@@ -30,6 +33,9 @@ Contents
    :maxdepth: 1
    :caption: Versions
 
+   v1.4.3
+   v1.4.2
+   v1.4.1
    v1.4.0
    v1.3.5
    v1.3.2

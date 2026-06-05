@@ -1,0 +1,109 @@
+.. _release_v1_4_1:
+
+----------------
+Version 1.4.1
+----------------
+
+*(Released: 2026-06-05)*
+
+This is a compatibility patch that fixes test-suite failures on
+**pandas 2.2+** (Python 3.11 / 3.12 / 3.13) and corrects a
+**Matplotlib colormap-registry** regression introduced in the test
+helpers on older Python 3.9 environments. No public API is changed.
+
+Bug Fixes
+~~~~~~~~~
+
+* |Fix| **pandas 2.2+ — ``DataFrame.to_gbq`` removed**:
+
+  ``pandas.DataFrame.to_gbq`` was dropped in pandas 2.2.
+  ``DataFramePropertyHandler.writers()`` in
+  ``kdiagram.core.property`` previously evaluated ``obj.to_gbq``
+  eagerly when building its writer-dispatch dict, causing an
+  ``AttributeError`` that cascaded through 25 write-related tests
+  on Python 3.11 / 3.12 / 3.13.
+
+  Fixed by building the dict without the ``.gbq`` entry and
+  conditionally adding it only when ``hasattr(obj, "to_gbq")``.
+
+* |Fix| **pandas 2.x / 3.x — ``StringDtype`` not coerced in
+  ``recheck_data_types``**:
+
+  In pandas 3.x (and pandas 2.x with ``future.infer_string=True``),
+  string-like DataFrame columns use ``pd.StringDtype`` instead of
+  ``object`` dtype. The previous ``dtype == "object"`` guard in
+  :func:`~kdiagram.utils.validator.recheck_data_types` did not
+  recognise ``StringDtype`` columns, leaving them unconverted and
+  causing ``TypeError: Cannot interpret StringDtype as a data type``
+  when downstream code called ``np.issubdtype`` on the result.
+
+  Fixed by broadening the column-type check to include
+  ``pd.StringDtype`` alongside ``object`` dtype.
+
+* |Fix| **pandas 2.x — ``UserWarning`` no longer emitted by
+  ``pd.to_datetime``**:
+
+  Older pandas emitted ``UserWarning("Could not infer format …")``
+  before raising on mixed-type date columns; pandas 2.x raises
+  ``ValueError`` directly without any warning.  Two tests in
+  ``test_utils_validator`` expected that warning and failed with
+  "DID NOT WARN" on Python 3.11 / 3.12 / 3.13.
+
+  Fixed by emitting the ``UserWarning`` ourselves inside the
+  ``except`` block of :func:`~kdiagram.utils.validator.recheck_data_types`,
+  keeping behavior consistent across all supported pandas versions.
+
+* |Fix| **Matplotlib ``ColormapRegistry`` — ``.get_cmap()`` not a
+  method**:
+
+  The ``patch_get_cmap`` test fixture called
+  ``matplotlib.colormaps.get_cmap(name)``; ``ColormapRegistry``
+  exposes subscript access (``colormaps[name]``) but not
+  ``.get_cmap()``.  The call raised ``AttributeError``, was silently
+  caught, returned ``None``, and then
+  ``_sample_colors("tab10", 12)`` crashed with
+  ``TypeError: 'NoneType' object is not callable`` on local Python
+  3.9 environments with older Matplotlib.
+
+  Fixed by switching the fixture to ``matplotlib.colormaps[name]``
+  with a fallback to ``matplotlib.cm.get_cmap(name)`` for
+  Matplotlib < 3.5.
+
+Testing & QA
+~~~~~~~~~~~~~~
+
+* |Tests| **Updated test assertions for pandas extension types**:
+
+  Replaced ``np.issubdtype(dtype, np.number/floating)`` calls with
+  ``pd.api.types.is_numeric_dtype / is_float_dtype`` in
+  ``test_utils_validator`` — NumPy cannot interpret pandas extension
+  dtypes such as ``StringDtype``.
+
+* |Tests| **Robust ``is_string_dtype`` guard**:
+
+  The assertion that a mixed-date column remains unconverted now
+  checks ``pd.api.types.is_string_dtype`` rather than
+  ``is_object_dtype``, covering both ``object`` (pandas < 3.x) and
+  ``StringDtype`` (pandas 3.x).
+
+* |Tests| **GBQ mock uses ``raising=False``**:
+
+  ``test_write_gbq_passthrough`` now passes ``raising=False`` to
+  ``monkeypatch.setattr`` so the fake ``to_gbq`` can be injected
+  even when the attribute no longer exists on
+  ``pandas.DataFrame``.
+
+Backwards Compatibility Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **No API changes.** This is a pure compatibility patch; all public
+  function signatures and return types are unchanged.
+* The ``.gbq`` writer is still available at runtime whenever
+  ``pandas_gbq`` (or an equivalent library) has monkey-patched
+  ``DataFrame.to_gbq`` back onto the class.
+
+Acknowledgments
+~~~~~~~~~~~~~~~~
+
+Thanks to the CI matrix on Python 3.11 / 3.12 / 3.13 for surfacing
+the pandas 2.2+ breakage promptly.
