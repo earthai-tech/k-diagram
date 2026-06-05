@@ -1001,7 +1001,8 @@ def recheck_data_types(
         # pandas >= 2.0 may use StringDtype instead of object for string
         # columns; handle both so coercion works across pandas versions.
         _is_string_like = pd.api.types.is_object_dtype(col_dtype) or (
-            hasattr(pd, "StringDtype") and isinstance(col_dtype, pd.StringDtype)
+            hasattr(pd, "StringDtype")
+            and isinstance(col_dtype, pd.StringDtype)
         )
         if _is_string_like:
             if coerce_datetime:
