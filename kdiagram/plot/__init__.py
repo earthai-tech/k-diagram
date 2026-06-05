@@ -41,6 +41,16 @@ from .relationship import (
     plot_relationship,
     plot_residual_relationship,
 )
+from .spatial import (
+    plot_paired_spatial_polar,
+    plot_polar_from_spatial,
+    plot_spatial_comparison,
+    plot_spatial_coverage,
+    plot_spatial_heatmap,
+    plot_spatial_ordering,
+    plot_spatial_scatter,
+    plot_spatial_uncertainty,
+)
 from .taylor_diagram import (
     plot_taylor_diagram,
     plot_taylor_diagram_in,
@@ -112,4 +122,12 @@ __all__ = [
     "plot_cas_profile",
     "plot_glyphs",
     "plot_cas_layers",
+    "plot_spatial_scatter",
+    "plot_spatial_heatmap",
+    "plot_spatial_uncertainty",
+    "plot_spatial_coverage",
+    "plot_spatial_comparison",
+    "plot_spatial_ordering",
+    "plot_polar_from_spatial",
+    "plot_paired_spatial_polar",
 ]

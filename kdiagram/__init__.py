@@ -36,7 +36,7 @@ try:
     __version__ = _pkg_version("k-diagram")
 except PackageNotFoundError:
     # fallback when running from source without install
-    __version__ = "1.3.6.dev0"
+    __version__ = "1.4.0"
 
 _required_dependencies = [
     ("numpy", None),
@@ -94,12 +94,14 @@ from .plot import (  # noqa: E402
     plot_interval_width,
     plot_model_comparison,
     plot_model_drift,
+    plot_paired_spatial_polar,
     plot_pinball_loss,
     plot_pit_histogram,
     plot_polar_classification_report,
     plot_polar_confusion_matrix,
     plot_polar_confusion_matrix_in,
     plot_polar_confusion_multiclass,
+    plot_polar_from_spatial,
     plot_polar_heatmap,
     plot_polar_pr_curve,
     plot_polar_quiver,
@@ -111,6 +113,12 @@ from .plot import (  # noqa: E402
     plot_relationship,
     plot_reliability_diagram,
     plot_residual_relationship,
+    plot_spatial_comparison,
+    plot_spatial_coverage,
+    plot_spatial_heatmap,
+    plot_spatial_ordering,
+    plot_spatial_scatter,
+    plot_spatial_uncertainty,
     plot_taylor_diagram,
     plot_taylor_diagram_in,
     plot_temporal_uncertainty,
@@ -160,6 +168,14 @@ __all__ = [
     "plot_error_relationship",
     "plot_residual_relationship",
     "plot_conditional_quantiles",
+    "plot_spatial_scatter",
+    "plot_spatial_heatmap",
+    "plot_spatial_uncertainty",
+    "plot_spatial_coverage",
+    "plot_spatial_comparison",
+    "plot_spatial_ordering",
+    "plot_polar_from_spatial",
+    "plot_paired_spatial_polar",
     "plot_pinball_loss",
     "plot_polar_classification_report",
     "plot_polar_confusion_matrix",

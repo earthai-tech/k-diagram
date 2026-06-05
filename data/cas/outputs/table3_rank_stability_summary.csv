@@ -1,0 +1,4 @@
+domain,mean_tau,median_tau,min_tau,n_settings
+hydro,1.0,1.0,1.0,17
+subsidence,1.0,1.0,1.0,17
+wind,1.0,1.0,1.0,17

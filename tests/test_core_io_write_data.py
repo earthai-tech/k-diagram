@@ -92,7 +92,8 @@ def test_write_gbq_passthrough(monkeypatch: pytest.MonkeyPatch) -> None:
         seen["kw"] = kw
         return "JOB123"
 
-    monkeypatch.setattr(pd.DataFrame, "to_gbq", fake_to_gbq)
+    # raising=False lets us add to_gbq even when pandas >= 2.2 removed it
+    monkeypatch.setattr(pd.DataFrame, "to_gbq", fake_to_gbq, raising=False)
     job = write_data(df, None, format="gbq", project_id="p")
     assert job == "JOB123"
     assert seen["called"] and seen["kw"]["project_id"] == "p"

@@ -1,0 +1,10 @@
+domain,model,achieved_fbr,burst_recall,n_episodes
+hydro,qar,0.0,1.0,8
+hydro,qgbm,0.0,1.0,9
+hydro,xtft,0.0,1.0,4
+wind,qar,0.0,1.0,53
+wind,qgbm,0.0,1.0,152
+wind,xtft,0.0,1.0,59
+subsidence,qar,0.0,1.0,1
+subsidence,qgbm,0.0,1.0,10
+subsidence,xtft,0.0,1.0,4

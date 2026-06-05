@@ -221,7 +221,7 @@ def test_build_data_if_paths_and_type_coercions_and_col_conversion():
     assert list(out2.columns) == ["c_0", "c_1"]
     # dtype coercion: first col numeric, second stays
     # date/object depending on parse success
-    assert np.issubdtype(out2.dtypes.iloc[0], np.number)
+    assert pd.api.types.is_numeric_dtype(out2.dtypes.iloc[0])
 
     # Series -> DataFrame
     ser = pd.Series([1, 2, 3], name="s")
@@ -270,10 +270,10 @@ def test_recheck_data_types_handles_mixed_types_and_warns():
         )
 
     # Assert that types were coerced correctly where possible
-    assert np.issubdtype(out["a"].dtype, np.number)
-    assert np.issubdtype(out["c"].dtype, np.floating)
-    # Assert that the problematic column remains an object
-    assert pd.api.types.is_object_dtype(out["b"].dtype)
+    assert pd.api.types.is_numeric_dtype(out["a"].dtype)
+    assert pd.api.types.is_float_dtype(out["c"].dtype)
+    # The problematic column stays as string-like (object or StringDtype)
+    assert pd.api.types.is_string_dtype(out["b"].dtype)
 
 
 def test_recheck_data_types_handles_non_df_input():

@@ -997,19 +997,33 @@ def recheck_data_types(
             ) from e
 
     for column in data.columns:
-        if data[column].dtype == "object":
+        col_dtype = data[column].dtype
+        # pandas >= 2.0 may use StringDtype instead of object for string
+        # columns; handle both so coercion works across pandas versions.
+        _is_string_like = pd.api.types.is_object_dtype(col_dtype) or (
+            hasattr(pd, "StringDtype")
+            and isinstance(col_dtype, pd.StringDtype)
+        )
+        if _is_string_like:
             if coerce_datetime:
                 try:
                     data[column] = pd.to_datetime(data[column])
                     continue  # Skip further processing if datetime conversion is successful
                 except (TypeError, ValueError):
-                    pass  # Continue if datetime conversion fails
+                    # pandas >= 2.x no longer emits a UserWarning here;
+                    # emit one ourselves so callers can detect the failure.
+                    warnings.warn(
+                        f"Could not infer format for column '{column}'; "
+                        "keeping as-is.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
 
             if coerce_numeric:
                 try:
                     data[column] = pd.to_numeric(data[column])
-                except ValueError:
-                    pass  # Keep as object if conversion fails
+                except (ValueError, TypeError):
+                    pass  # Keep as-is if conversion fails
 
     if return_as_numpy == "auto" and not is_frame:
         return_as_numpy = (

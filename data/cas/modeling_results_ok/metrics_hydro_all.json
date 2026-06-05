@@ -1,0 +1,134 @@
+[
+  {
+    "domain": "hydro",
+    "model": "qgbm",
+    "horizon": 1,
+    "n": 38,
+    "coverage": 0.13157894736842105,
+    "delta_cov": -0.768421052631579,
+    "winkler": 0.4049662944387101,
+    "crps": 0.023150896302716134,
+    "cas": 0.8393294267441502
+  },
+  {
+    "domain": "hydro",
+    "model": "qar",
+    "horizon": 1,
+    "n": 38,
+    "coverage": 0.7368421052631579,
+    "delta_cov": -0.16315789473684217,
+    "winkler": 0.07471555098325544,
+    "crps": 0.006290418125746552,
+    "cas": 0.04124799918307799
+  },
+  {
+    "domain": "hydro",
+    "model": "xtft",
+    "horizon": 1,
+    "n": 38,
+    "coverage": 0.0,
+    "delta_cov": -0.9,
+    "winkler": NaN,
+    "crps": 0.0,
+    "cas": NaN
+  },
+  {
+    "domain": "hydro",
+    "model": "qgbm",
+    "horizon": 3,
+    "n": 35,
+    "coverage": 0.14285714285714285,
+    "delta_cov": -0.7571428571428571,
+    "winkler": 0.5178408715474347,
+    "crps": 0.024326789580052095,
+    "cas": 1.0719443713106072
+  },
+  {
+    "domain": "hydro",
+    "model": "qar",
+    "horizon": 3,
+    "n": 35,
+    "coverage": 0.6,
+    "delta_cov": -0.30000000000000004,
+    "winkler": 0.0939234847709263,
+    "crps": 0.010267299977434445,
+    "cas": 0.04316377418686741
+  },
+  {
+    "domain": "hydro",
+    "model": "xtft",
+    "horizon": 3,
+    "n": 35,
+    "coverage": 0.0,
+    "delta_cov": -0.9,
+    "winkler": NaN,
+    "crps": 0.0,
+    "cas": NaN
+  },
+  {
+    "domain": "hydro",
+    "model": "qgbm",
+    "horizon": 5,
+    "n": 33,
+    "coverage": 0.21212121212121213,
+    "delta_cov": -0.6878787878787879,
+    "winkler": 0.25771359922742093,
+    "crps": 0.023152561335500338,
+    "cas": 0.4424027644952473
+  },
+  {
+    "domain": "hydro",
+    "model": "qar",
+    "horizon": 5,
+    "n": 33,
+    "coverage": 0.5151515151515151,
+    "delta_cov": -0.3848484848484849,
+    "winkler": 0.12620516025549633,
+    "crps": 0.013888051247872695,
+    "cas": 0.06479917751624978
+  },
+  {
+    "domain": "hydro",
+    "model": "xtft",
+    "horizon": 5,
+    "n": 33,
+    "coverage": 0.0,
+    "delta_cov": -0.9,
+    "winkler": NaN,
+    "crps": 0.0,
+    "cas": NaN
+  },
+  {
+    "domain": "hydro",
+    "model": "qgbm",
+    "horizon": 7,
+    "n": 32,
+    "coverage": 0.0,
+    "delta_cov": -0.9,
+    "winkler": 0.5599526826113514,
+    "crps": 0.03539022379986772,
+    "cas": 0.8320110136225839
+  },
+  {
+    "domain": "hydro",
+    "model": "qar",
+    "horizon": 7,
+    "n": 32,
+    "coverage": 0.6875,
+    "delta_cov": -0.21250000000000002,
+    "winkler": 0.10577125766337883,
+    "crps": 0.013377448223386502,
+    "cas": 0.095470972574076
+  },
+  {
+    "domain": "hydro",
+    "model": "xtft",
+    "horizon": 7,
+    "n": 32,
+    "coverage": 0.0,
+    "delta_cov": -0.9,
+    "winkler": NaN,
+    "crps": 0.0,
+    "cas": NaN
+  }
+]

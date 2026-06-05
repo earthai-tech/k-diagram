@@ -31,8 +31,13 @@ def patch_get_cmap(monkeypatch):
         if name is None:
             return None
         try:
-            # Modern, non-deprecated API (MPL ≥3.5)
-            return matplotlib.colormaps.get_cmap(name)
+            # MPL >= 3.5: ColormapRegistry supports __getitem__
+            return matplotlib.colormaps[name]
+        except Exception:
+            pass
+        try:
+            # Fallback for MPL < 3.5
+            return matplotlib.cm.get_cmap(name)
         except Exception:
             return None
 
