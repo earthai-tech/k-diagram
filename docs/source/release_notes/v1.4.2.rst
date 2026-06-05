@@ -1,0 +1,43 @@
+.. _release_v1_4_2:
+
+----------------
+Version 1.4.2
+----------------
+
+*(Released: 2026-06-05)*
+
+This is a maintenance release that supersedes v1.4.1. It contains the
+same compatibility fixes as v1.4.1 (pandas 2.2+, ``StringDtype``,
+Matplotlib colormap registry) and additionally ships a corrected
+**automated PyPI publish workflow** that uses repository API-token
+secrets instead of OIDC trusted publishing.
+
+Changes since v1.4.1
+~~~~~~~~~~~~~~~~~~~~~
+
+* |Enhancement| **CI publish workflow — API-token authentication**:
+
+  The GitHub Actions publish workflow
+  (``.github/workflows/publish.yml``) now authenticates to both
+  TestPyPI and PyPI using repository secrets
+  (``TEST_PYPI_API_TOKEN`` and ``PYPI_API_TOKEN``) via the
+  ``password:`` parameter of ``pypa/gh-action-pypi-publish``.
+
+  The previous v1.4.1 workflow used OIDC trusted publishing
+  (``id-token: write``) which required additional one-time
+  setup on pypi.org before it could publish.  The token-based
+  approach works immediately with standard repository secrets and
+  requires no trusted-publisher registration on PyPI.
+
+  The ``permissions: id-token: write`` entries and the
+  GitHub Environment blocks (``testpypi`` / ``pypi``) have been
+  removed from the publish jobs as they are no longer needed.
+
+All other fixes from v1.4.1 are included unchanged — see
+:doc:`v1.4.1 <v1.4.1>` for the full list.
+
+Backwards Compatibility Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **No API changes.** Pure CI and release-process improvement.
+
