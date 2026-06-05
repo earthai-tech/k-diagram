@@ -69,35 +69,13 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # ── 3. Publish to TestPyPI ───────────────────────────────────────────────────
-  # Uses the repository secret TEST_PYPI_API_TOKEN.
-  # Generate a token at https://test.pypi.org/manage/account/token/
-  # and store it in Settings → Secrets → Actions → TEST_PYPI_API_TOKEN.
-  publish-testpypi:
-    name: Publish to TestPyPI
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download dist artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-
-  # ── 4. Publish to PyPI ───────────────────────────────────────────────────────
+  # ── 3. Publish to PyPI ───────────────────────────────────────────────────────
   # Uses the repository secret PYPI_API_TOKEN.
   # Generate a token at https://pypi.org/manage/account/token/
   # and store it in Settings → Secrets → Actions → PYPI_API_TOKEN.
   publish-pypi:
     name: Publish to PyPI
-    needs: publish-testpypi
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
@@ -112,9 +90,8 @@ jobs:
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
-  # ── 5. Create GitHub Release ─────────────────────────────────────────────────
-  # Creates a GitHub Release from the tag so the "release" badge in README
-  # reflects the new version. The release notes are auto-generated from
+  # ── 4. Create GitHub Release ─────────────────────────────────────────────────
+  # Creates a GitHub Release from the tag; release notes auto-generated from
   # commit messages since the previous tag.
   github-release:
     name: Create GitHub Release
