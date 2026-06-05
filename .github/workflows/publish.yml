@@ -70,19 +70,13 @@ jobs:
           retention-days: 7
 
   # ── 3. Publish to TestPyPI ───────────────────────────────────────────────────
-  # Requires a "testpypi" GitHub Environment and a Trusted Publisher configured
-  # at https://test.pypi.org/manage/account/publishing/
-  #   Publisher: earthai-tech/k-diagram  workflow: publish.yml  env: testpypi
+  # Uses the repository secret TEST_PYPI_API_TOKEN.
+  # Generate a token at https://test.pypi.org/manage/account/token/
+  # and store it in Settings → Secrets → Actions → TEST_PYPI_API_TOKEN.
   publish-testpypi:
     name: Publish to TestPyPI
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/k-diagram
-
-    permissions:
-      id-token: write   # required for OIDC trusted publishing
 
     steps:
       - name: Download dist artifacts
@@ -95,21 +89,16 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
   # ── 4. Publish to PyPI ───────────────────────────────────────────────────────
-  # Requires a "pypi" GitHub Environment and a Trusted Publisher configured
-  # at https://pypi.org/manage/account/publishing/
-  #   Publisher: earthai-tech/k-diagram  workflow: publish.yml  env: pypi
+  # Uses the repository secret PYPI_API_TOKEN.
+  # Generate a token at https://pypi.org/manage/account/token/
+  # and store it in Settings → Secrets → Actions → PYPI_API_TOKEN.
   publish-pypi:
     name: Publish to PyPI
     needs: publish-testpypi
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/k-diagram
-
-    permissions:
-      id-token: write   # required for OIDC trusted publishing
 
     steps:
       - name: Download dist artifacts
@@ -120,6 +109,8 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
 
   # ── 5. Create GitHub Release ─────────────────────────────────────────────────
   # Creates a GitHub Release from the tag so the "release" badge in README
