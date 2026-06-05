@@ -24,6 +24,7 @@ Browse through the sections below to see `k-diagram` in action.
    relationship
    feature_based
    anomaly
+   spatial
    evaluation
    taylor_diagram
    context

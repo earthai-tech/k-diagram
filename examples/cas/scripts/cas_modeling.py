@@ -43,7 +43,7 @@ import statsmodels.api as sm
 from sklearn.preprocessing import LabelEncoder
 
 from kdiagram.metrics import (
-    clustered_aware_severity_score as cas_score,
+    cluster_aware_severity_score as cas_score,
 )
 
 XTFT_AVAILABLE = True
@@ -809,20 +809,24 @@ def run_domain(domain: str) -> tuple[pd.DataFrame, pd.DataFrame]:
             pd.concat([dtr_h, dva_h]), dte_h, QUANTILES, lag_col="y_lag1"
         )
         dyn_cols = [c for c in feats_all if c != "series_lab"]
-        xtft = fit_xtft_one_h(
-            dtr_h,
-            dva_h,
-            dte_h,
-            domain,
-            QUANTILES,
-            lookback=XTFT_LOOKBACK[domain],
-            dyn_cols=dyn_cols,
-        )
+        try:
+            xtft = fit_xtft_one_h(
+                dtr_h,
+                dva_h,
+                dte_h,
+                domain,
+                QUANTILES,
+                lookback=XTFT_LOOKBACK[domain],
+                dyn_cols=dyn_cols,
+            )
+        except Exception as _xtft_err:
+            print(f"  [warn] XTFT failed ({type(_xtft_err).__name__}); using NaN.")
+            xtft = {q: np.full(len(dte_h), np.nan) for q in QUANTILES}
 
         pred_map = {
             "qgbm": qgbm,
             "qar": qar,
-            "xtft" if XTFT_AVAILABLE else "xtft_unavailable": xtft,
+            "xtft": xtft,
         }
         p_df, m_df = eval_and_pack(dte_h, pred_map, domain, h)
         preds_all.append(p_df)

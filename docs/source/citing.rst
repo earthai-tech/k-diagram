@@ -58,7 +58,8 @@ Related Publications
 If your work uses concepts, diagnostics, or applications demonstrated
 with ``k-diagram``, consider citing the relevant papers below.
 
-.. note::
+Diagnostic Framework Paper (Environmental Modelling & Software — Published)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    Some entries are submitted. DOI, volume, and page
    information will be added once available.
@@ -83,41 +84,62 @@ https://github.com/earthai-tech/k-diagram/tree/main/examples/cas
       year    = {2025}
     }
 
-Physics-Informed Urban Land Subsidence Forecasting (Nature submission)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Diagnostic Framework Paper (Environmental Modelling & Software — Published)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This paper introduces GeoPriorSubsNet, a physics-informed deep learning
-framework for probabilistic, city-scale land-subsidence forecasting and
-diagnostics.
+This is the primary methods paper that introduces the diagnostic
+framework underlying ``k-diagram``, including the spatial-polar
+visualization paradigm, the CAS score, and their application to
+spatiotemporal probabilistic forecasts of land subsidence.
+
+**Full citation:**
+
+  Kouadio, K. L., Liu, R., Loukou, K. G. H., Liu, W., Qing, Z., & Liu, Z.
+  (2026). A diagnostic framework for interpreting spatiotemporal
+  probabilistic forecasts. *Environmental Modelling & Software*, 107052.
+  ISSN 1364-8152.
+  https://doi.org/10.1016/j.envsoft.2026.107052
 
 .. code-block:: bibtex
 
-    @unpublished{kouadio_geopriorsubsnet_nature_2025,
-      author  = {Kouadio, Kouao Laurent and Liu, Rong and Jiang, Shiyu and
-                 Liu, Zhuo and Kouamelan, Serge and Liu, Wenxiang and
-                 Qing, Zhanhui and Zheng, Zhiwen},
-      title   = {Physics-Informed Deep Learning Reveals Divergent Urban Land Subsidence Regimes},
-      journal = {Nature Communications},
-      note    = {Submitted},
-      year    = {2025}
+    @article{kouadio_envsoft_2026,
+      author  = {Kouadio, Kouao Laurent and Liu, Rong and
+                 Loukou, Kouam{\'e} Gb{\`e}l{\`e} Hermann and
+                 Liu, Wenxiang and Qing, Zhanhui and Liu, Zhuo},
+      title   = {A diagnostic framework for interpreting spatiotemporal
+                 probabilistic forecasts},
+      journal = {Environmental Modelling \& Software},
+      year    = {2026},
+      pages   = {107052},
+      issn    = {1364-8152},
+      doi     = {10.1016/j.envsoft.2026.107052},
+      url     = {https://www.sciencedirect.com/science/article/pii/S1364815226001994}
     }
 
-A Diagnostic Framework for Spatiotemporal Forecast Uncertainty (Environmental Modelling \& Software submission)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Urban Land Subsidence Regimes (IEEE TGRS — Under Review)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This paper proposes a diagnostic framework for interpreting probabilistic
-forecast uncertainty and applies it to land subsidence forecasting,
-including comparisons across model families.
+This paper introduces a physics-informed deep learning framework for
+diagnosing divergent urban land-subsidence regimes and applies the
+spatial-polar visualization techniques implemented in ``k-diagram``.
+
+.. note::
+
+   This manuscript is currently under review.  Citation details will
+   be updated once the DOI is assigned.
 
 .. code-block:: bibtex
 
-    @unpublished{kouadio_diagnostic_framework_ems_2025,
-      author  = {Kouadio, Kouao Laurent and Liu, Rong and Loukou, Kouam{\'e} Gb{\`e}l{\`e} Hermann and
-                 Liu, Wenxiang and Qing, Zhanhui and Liu, Zhuo},
-      title   = {A Diagnostic Framework for Spatiotemporal Forecast Uncertainty},
-      journal = {Environmental Modelling \& Software},
-      note    = {Submitted},
-      year    = {2025}
+    @unpublished{kouadio_tgrs_2026,
+      author = {Kouadio, Kouao Laurent and Liu, Rong and Liu, Zhuo and
+                Jiang, Shiyu and Kouamelan, Serge Kouamelan and
+                Liu, Wenxiang and Qing, Zhanhui and Zheng, Zhiwen},
+      title  = {Physics-Informed Deep Learning Reveals Divergent Urban
+                Land Subsidence Regimes},
+      note   = {Under review in {IEEE} Transactions on Geoscience and
+                Remote Sensing},
+      year   = {2026}
+    }
     }
 
 Thank you for citing ``k-diagram``!

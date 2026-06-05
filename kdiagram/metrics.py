@@ -12,9 +12,19 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_array
+import sklearn
+from packaging.version import Version
+from sklearn.utils.validation import check_array as _sklearn_check_array
 
 from .compat.sklearn import Hidden, Interval, StrOptions, validate_params
+
+_SKLEARN_GE_16 = Version(sklearn.__version__) >= Version("1.6")
+
+
+def check_array(arr, **kwargs):
+    if not _SKLEARN_GE_16 and "ensure_all_finite" in kwargs:
+        kwargs["force_all_finite"] = kwargs.pop("ensure_all_finite")
+    return _sklearn_check_array(arr, **kwargs)
 from .utils.validator import check_consistent_length, exist_features
 
 __all__ = ["clustered_anomaly_severity", "cluster_aware_severity_score"]
@@ -35,7 +45,7 @@ ArrayLike = Union[np.ndarray, pd.Series]
         "kernel": [StrOptions({"box", "triangular", "gaussian", "epan"})],
         "eps": [Hidden(Interval(Real, 0, 1, closed="neither"))],
         "gamma": [Interval(Real, 0, None, closed="neither")],
-        "lambda_": [Interval(Real, 0, None, closed="neither")],
+        "lambda_": [Interval(Real, 0, None, closed="left")],
         "multioutput": [StrOptions({"uniform_average", "raw_values"})],
         "nan_policy": [StrOptions({"omit", "propagate", "raise"})],
         "return_details": [bool],
@@ -50,7 +60,7 @@ def cluster_aware_severity_score(
     sort_by: ArrayLike | None = None,
     normalize: str = "band",
     density_source: str = "indicator",
-    kernel: str = "box",
+    kernel: str = "triangular",
     lambda_: float = 1.0,
     gamma: float = 1.0,
     eps: float = 1e-12,
@@ -494,7 +504,7 @@ def clustered_anomaly_severity(
         sort_by=None,
         normalize="band",  # unit-free
         density_source="indicator",  # matches paper
-        kernel="box",  # rolling box by default
+        kernel="triangular",  # paper primary kernel K(u)=(1-u)_+
         lambda_=1.0,
         gamma=1.0,
         eps=1e-12,
@@ -631,7 +641,8 @@ CAS Score (from DataFrame): 0.2222
 
 
 def _rolling_kernel(
-    a: np.ndarray, w: int, kernel: str, eps: float = 1e-12
+    a: np.ndarray, w: int, kernel: str, eps: float = 1e-12,
+    exclude_self: bool = False,
 ) -> np.ndarray:
     w = int(max(1, w))
     if kernel == "box":
@@ -653,6 +664,13 @@ def _rolling_kernel(
         k = k / k.sum()
     else:
         raise ValueError("bad kernel")
+    # Paper eq. (6) requires r≠t: zero out center weight and renormalize
+    # so density reflects only neighbouring violations, not the point itself.
+    if exclude_self and w > 1:
+        k[w // 2] = 0.0
+        total = k.sum()
+        if total > 0:
+            k = k / total
     pad = w // 2
     ap = np.pad(a, (pad, pad), mode="edge")
     conv = np.convolve(ap, k, mode="valid")
@@ -711,6 +729,9 @@ def _cas_core(
     if y.size == 0:
         return (np.nan, pd.DataFrame()) if return_details else np.nan
 
+    # Guarantee lo ≤ up per-point (handles crossed quantile predictions).
+    lo, up = np.minimum(lo, up), np.maximum(lo, up)
+
     is_under = y < lo
     is_over = y > up
     A = np.where(is_under | is_over, 1.0, 0.0)
@@ -718,7 +739,7 @@ def _cas_core(
     m = np.where(is_under, lo - y, 0.0) + np.where(is_over, y - up, 0.0)
 
     if normalize == "band":
-        w = (up - lo) + eps
+        w = (up - lo) + eps   # always positive after swap
         m = m / w
     elif normalize == "mad":
         med = np.median(y)
@@ -727,7 +748,7 @@ def _cas_core(
 
     src = A if density_source == "indicator" else m
 
-    d = _rolling_kernel(src, window_size, kernel, eps=eps)
+    d = _rolling_kernel(src, window_size, kernel, eps=eps, exclude_self=True)
     d = np.clip(d, 0.0, 1.0)
 
     S = m * (1.0 + lambda_ * (d**gamma))

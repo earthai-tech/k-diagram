@@ -1,0 +1,56 @@
+{
+  "script": "preprocessing_cas_data.py",
+  "input": "data\\cas\\preprocessed\\hydro_clean.csv",
+  "outdir": "data\\cas\\preprocessed",
+  "freq": null,
+  "horizons": [
+    1,
+    3,
+    5,
+    7
+  ],
+  "lags": [
+    1,
+    2,
+    3,
+    7
+  ],
+  "rolls": [
+    3,
+    7
+  ],
+  "splits": {
+    "val_size": 0.15,
+    "test_size": 0.15
+  },
+  "seed": 13,
+  "outputs": {
+    "combined": "data\\cas\\preprocessed\\combined_clean_hydro.parquet",
+    "features_wide": "data\\cas\\preprocessed\\features_wide_hydro.parquet",
+    "supervised_long": "data\\cas\\preprocessed\\supervised_long_hydro.parquet"
+  },
+  "schema": {
+    "minimal": [
+      "domain",
+      "series_id",
+      "t",
+      "y"
+    ],
+    "generated_time_features": [
+      "year",
+      "month",
+      "weekofyear",
+      "dayofyear",
+      "dayofweek",
+      "sin_doy",
+      "cos_doy",
+      "sin_dow",
+      "cos_dow"
+    ],
+    "targets": {
+      "supervised_long": "y_future"
+    },
+    "split_column": "split"
+  },
+  "notes": "Rolling windows are past-only (shifted). Splits are time-ordered per series. Parquet preferred, CSV.GZ fallback."
+}

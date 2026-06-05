@@ -35,6 +35,7 @@ forecasting models and data.
    feature_based
    evaluation
    anomaly
+   spatial
    taylor_diagram
    context
    hist

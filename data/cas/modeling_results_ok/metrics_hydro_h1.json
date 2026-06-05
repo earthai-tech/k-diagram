@@ -1,0 +1,35 @@
+[
+  {
+    "domain": "hydro",
+    "model": "qgbm",
+    "horizon": 1,
+    "n": 38,
+    "coverage": 0.13157894736842105,
+    "delta_cov": -0.768421052631579,
+    "winkler": 0.4049662944387101,
+    "crps": 0.023150896302716134,
+    "cas": 0.8393294267441502
+  },
+  {
+    "domain": "hydro",
+    "model": "qar",
+    "horizon": 1,
+    "n": 38,
+    "coverage": 0.7368421052631579,
+    "delta_cov": -0.16315789473684217,
+    "winkler": 0.07471555098325544,
+    "crps": 0.006290418125746552,
+    "cas": 0.04124799918307799
+  },
+  {
+    "domain": "hydro",
+    "model": "xtft",
+    "horizon": 1,
+    "n": 38,
+    "coverage": 0.0,
+    "delta_cov": -0.9,
+    "winkler": NaN,
+    "crps": 0.0,
+    "cas": NaN
+  }
+]

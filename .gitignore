@@ -194,3 +194,32 @@ joss_reviews.md
 # data/ 
 # examples/
 docs/source/_autosummary/
+
+# Review / paper revision working directories (not tracked)
+_review/
+review/
+ensoft_paper_rev/
+
+# CAS paper working files (reviewer comments, draft manuscripts, references)
+examples/cas_reviewer_comments
+examples/cas_reviewer_coments
+examples/cas-references.bib
+examples/new-cas*.pdf
+examples/new-cas*.tex
+examples/figures/
+
+# EnvSoft paper revision PDFs
+envsoft-paper*.pdf
+ensoft-paper*.pdf
+
+# Temporary test artefacts
+temp_test_plot.png
+temp_*.png
+temp_*.pdf
+
+# Windows duplicate files created by Save-As dialogs
+*\ (1).*
+* (1).*
+
+# Claude Code local memory (not part of the project)
+.claude/
