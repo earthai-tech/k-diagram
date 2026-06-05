@@ -32,11 +32,12 @@ sys.path.insert(0, str(_HERE))
 
 # results_config._find_repo_root stops at examples/cas/ because examples/cas/data/ exists.
 # Force the correct data root via env var before importing results_config.
-import os as _os
+import os  # noqa: E402
+
 _REPO_ROOT = _HERE.parents[2]  # scripts -> cas -> examples -> k-diagram
 _REAL_DATA = _REPO_ROOT / "data" / "cas"
 if _REAL_DATA.exists():
-    _os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_REAL_DATA))
+    os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_REAL_DATA))
 
 try:
     from results_config import OUTDIR
@@ -49,19 +50,19 @@ _REPO = _HERE.parents[2]
 if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 
-from kdiagram.metrics import cluster_aware_severity_score
+from kdiagram.metrics import cluster_aware_severity_score  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Style constants (consistent with results_config)
 # ---------------------------------------------------------------------------
-COLOR_BAND = "#AED6F1"        # light blue fill for prediction band
-COLOR_MEDIAN = "#1A5276"      # dark blue for median line
-COLOR_OBS_OK = "#2ECC71"      # green for covered observations
-COLOR_OBS_VIO = "#C0392B"     # red for violation observations
-COLOR_STEM = "#E74C3C"        # red for severity stems
-COLOR_GRID = "#D5D8DC"        # light grey grid
+COLOR_BAND = "#AED6F1"  # light blue fill for prediction band
+COLOR_MEDIAN = "#1A5276"  # dark blue for median line
+COLOR_OBS_OK = "#2ECC71"  # green for covered observations
+COLOR_OBS_VIO = "#C0392B"  # red for violation observations
+COLOR_STEM = "#E74C3C"  # red for severity stems
+COLOR_GRID = "#D5D8DC"  # light grey grid
 
-WINDOW_SIZE = 5   # h = 2  (triangular kernel reaches ±2 steps)
+WINDOW_SIZE = 5  # h = 2  (triangular kernel reaches ±2 steps)
 LAMBDA = 1.0
 GAMMA = 1.0
 KERNEL = "triangular"
@@ -70,10 +71,10 @@ KERNEL = "triangular"
 # Synthetic dataset
 # ---------------------------------------------------------------------------
 N = 30
-Q10 = np.zeros(N)         # lower bound = 0
-Q90 = np.ones(N)          # upper bound = 1   → band width = 1
+Q10 = np.zeros(N)  # lower bound = 0
+Q90 = np.ones(N)  # upper bound = 1   → band width = 1
 Y_COVER = 0.5 * np.ones(N)
-Y_VIOLATE = 1.1 * np.ones(N)   # relative exceedance e = (1.1-1.0)/1.0 = 0.1
+Y_VIOLATE = 1.1 * np.ones(N)  # relative exceedance e = (1.1-1.0)/1.0 = 0.1
 
 # Q50 (forecast median) at midpoint of band
 Q50 = 0.5 * np.ones(N)
@@ -97,7 +98,8 @@ def make_y(violation_idx: list[int]) -> np.ndarray:
 def compute_cas_details(y, name=""):
     y_pred = np.column_stack([Q10, Q90])
     score, df = cluster_aware_severity_score(
-        y, y_pred,
+        y,
+        y_pred,
         window_size=WINDOW_SIZE,
         kernel=KERNEL,
         lambda_=LAMBDA,
@@ -141,8 +143,12 @@ cov_clu = np.mean((y_clu >= Q10) & (y_clu <= Q90))
 exc_iso = df_iso["magnitude"].mean()
 exc_clu = df_clu["magnitude"].mean()
 
-print(f"\n  Isolated  -> Coverage {cov_iso:.3f}  Winkler {wink_iso:.3f}  CAS {cas_iso:.5f}")
-print(f"  Clustered -> Coverage {cov_clu:.3f}  Winkler {wink_clu:.3f}  CAS {cas_clu:.5f}")
+print(
+    f"\n  Isolated  -> Coverage {cov_iso:.3f}  Winkler {wink_iso:.3f}  CAS {cas_iso:.5f}"
+)
+print(
+    f"  Clustered -> Coverage {cov_clu:.3f}  Winkler {wink_clu:.3f}  CAS {cas_clu:.5f}"
+)
 
 # ---------------------------------------------------------------------------
 # Figure layout
@@ -151,7 +157,8 @@ t = np.arange(N)
 
 fig = plt.figure(figsize=(14, 8))
 gs = gridspec.GridSpec(
-    3, 2,
+    3,
+    2,
     figure=fig,
     height_ratios=[2.2, 1.2, 1.2],
     hspace=0.55,
@@ -173,7 +180,9 @@ ax_bar = fig.add_subplot(gs[2, :])
 def _draw_fanplot(ax, y, viol_idx, title, show_ylabel=True):
     """Draw prediction band + observations for one configuration."""
     # Prediction band
-    ax.fill_between(t, Q10, Q90, color=COLOR_BAND, alpha=0.55, label="90% P.I.")
+    ax.fill_between(
+        t, Q10, Q90, color=COLOR_BAND, alpha=0.55, label="90% P.I."
+    )
     # Median
     ax.plot(t, Q50, color=COLOR_MEDIAN, lw=1.8, ls="--", label="Median")
 
@@ -184,19 +193,34 @@ def _draw_fanplot(ax, y, viol_idx, title, show_ylabel=True):
     mask_vio[viol_idx] = True
 
     ax.scatter(
-        t[mask_ok], y[mask_ok],
-        color=COLOR_OBS_OK, s=30, zorder=4, label="Covered"
+        t[mask_ok],
+        y[mask_ok],
+        color=COLOR_OBS_OK,
+        s=30,
+        zorder=4,
+        label="Covered",
     )
     ax.scatter(
-        t[mask_vio], y[mask_vio],
-        color=COLOR_OBS_VIO, s=60, marker="v", zorder=5, label="Violation"
+        t[mask_vio],
+        y[mask_vio],
+        color=COLOR_OBS_VIO,
+        s=60,
+        marker="v",
+        zorder=5,
+        label="Violation",
     )
 
     # Vertical drop lines at violations
     for idx in viol_idx:
         ax.vlines(
-            idx, Q90[idx], y[idx],
-            colors=COLOR_OBS_VIO, lw=1.2, ls="-", alpha=0.7, zorder=3
+            idx,
+            Q90[idx],
+            y[idx],
+            colors=COLOR_OBS_VIO,
+            lw=1.2,
+            ls="-",
+            alpha=0.7,
+            zorder=3,
         )
 
     ax.set_title(title, fontweight="bold", pad=6)
@@ -212,9 +236,13 @@ def _draw_fanplot(ax, y, viol_idx, title, show_ylabel=True):
     # Annotate violation indices
     ax.annotate(
         f"{len(viol_idx)} violations",
-        xy=(0.98, 0.94), xycoords="axes fraction",
-        ha="right", va="top", fontsize=9.5,
-        color=COLOR_OBS_VIO, style="italic"
+        xy=(0.98, 0.94),
+        xycoords="axes fraction",
+        ha="right",
+        va="top",
+        fontsize=9.5,
+        color=COLOR_OBS_VIO,
+        style="italic",
     )
     return ax
 
@@ -225,7 +253,8 @@ def _draw_stems(ax, df, title, show_ylabel=True):
     sv = df["severity"].values
 
     markerline, stemlines, baseline = ax.stem(
-        t_vals, sv,
+        t_vals,
+        sv,
         linefmt=COLOR_STEM,
         markerfmt="o",
         basefmt="k-",
@@ -247,21 +276,45 @@ def _draw_stems(ax, df, title, show_ylabel=True):
 
 
 # Plot time series
-_draw_fanplot(ax_ts_l, y_iso, ISOLATED_IDX, "Isolated violations", show_ylabel=True)
-_draw_fanplot(ax_ts_r, y_clu, CLUSTERED_IDX, "Clustered violations", show_ylabel=False)
+_draw_fanplot(
+    ax_ts_l, y_iso, ISOLATED_IDX, "Isolated violations", show_ylabel=True
+)
+_draw_fanplot(
+    ax_ts_r, y_clu, CLUSTERED_IDX, "Clustered violations", show_ylabel=False
+)
 
 # Add violation-position labels below the isolation panel
 for idx in ISOLATED_IDX:
-    ax_ts_l.text(idx, -0.07, str(idx), ha="center", va="top", fontsize=7.5, color=COLOR_OBS_VIO)
+    ax_ts_l.text(
+        idx,
+        -0.07,
+        str(idx),
+        ha="center",
+        va="top",
+        fontsize=7.5,
+        color=COLOR_OBS_VIO,
+    )
 for idx in CLUSTERED_IDX:
-    ax_ts_r.text(idx, -0.07, str(idx), ha="center", va="top", fontsize=7.5, color=COLOR_OBS_VIO)
+    ax_ts_r.text(
+        idx,
+        -0.07,
+        str(idx),
+        ha="center",
+        va="top",
+        fontsize=7.5,
+        color=COLOR_OBS_VIO,
+    )
 
 # Common legend on top-right panel only
 handles, labels = ax_ts_l.get_legend_handles_labels()
 ax_ts_r.legend(
-    handles, labels,
-    loc="upper right", fontsize=9, frameon=True,
-    framealpha=0.9, edgecolor="0.7"
+    handles,
+    labels,
+    loc="upper right",
+    fontsize=9,
+    frameon=True,
+    framealpha=0.9,
+    edgecolor="0.7",
 )
 
 # Plot severity stems
@@ -275,10 +328,16 @@ _draw_stems(ax_sv_r, df_clu, "Local severity (clustered)", show_ylabel=False)
 for ax, cas in [(ax_sv_l, cas_iso), (ax_sv_r, cas_clu)]:
     ax.annotate(
         f"CAS = {cas:.4f}",
-        xy=(0.97, 0.93), xycoords="axes fraction",
-        ha="right", va="top", fontsize=10.5, fontweight="bold",
+        xy=(0.97, 0.93),
+        xycoords="axes fraction",
+        ha="right",
+        va="top",
+        fontsize=10.5,
+        fontweight="bold",
         color=COLOR_STEM,
-        bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=COLOR_STEM, lw=0.8)
+        bbox=dict(
+            boxstyle="round,pad=0.3", fc="white", ec=COLOR_STEM, lw=0.8
+        ),
     )
 
 # ---------------------------------------------------------------------------
@@ -298,12 +357,24 @@ x = np.arange(len(metric_names))
 bw = 0.32
 
 bars_iso = ax_bar.bar(
-    x - bw / 2, iso_vals, bw,
-    color="#2196F3", alpha=0.82, label="Isolated", edgecolor="white", lw=0.8
+    x - bw / 2,
+    iso_vals,
+    bw,
+    color="#2196F3",
+    alpha=0.82,
+    label="Isolated",
+    edgecolor="white",
+    lw=0.8,
 )
 bars_clu = ax_bar.bar(
-    x + bw / 2, clu_vals, bw,
-    color="#E53935", alpha=0.82, label="Clustered", edgecolor="white", lw=0.8
+    x + bw / 2,
+    clu_vals,
+    bw,
+    color="#E53935",
+    alpha=0.82,
+    label="Clustered",
+    edgecolor="white",
+    lw=0.8,
 )
 
 # Value annotations on bars
@@ -314,7 +385,9 @@ for bars in (bars_iso, bars_clu):
             bar.get_x() + bar.get_width() / 2.0,
             h + 0.002,
             f"{h:.4f}",
-            ha="center", va="bottom", fontsize=8.5
+            ha="center",
+            va="bottom",
+            fontsize=8.5,
         )
 
 ax_bar.set_xticks(x)
@@ -322,7 +395,7 @@ ax_bar.set_xticklabels(metric_names, fontsize=10.5)
 ax_bar.set_ylabel("Metric value")
 ax_bar.set_title(
     "Metric comparison: same violations, different arrangement",
-    fontweight="bold"
+    fontweight="bold",
 )
 ax_bar.legend(loc="upper right", fontsize=10, frameon=True, framealpha=0.9)
 ax_bar.grid(True, axis="y", color=COLOR_GRID)
@@ -338,9 +411,13 @@ ax_bar.annotate(
     arrowprops=dict(arrowstyle="<->", color="black", lw=1.2),
 )
 ax_bar.text(
-    x[-1], max(cas_iso, cas_clu) * 1.15,
-    f"+{100*(cas_clu - cas_iso)/cas_iso:.0f}%",
-    ha="center", fontsize=9, color="black", fontweight="bold"
+    x[-1],
+    max(cas_iso, cas_clu) * 1.15,
+    f"+{100 * (cas_clu - cas_iso) / cas_iso:.0f}%",
+    ha="center",
+    fontsize=9,
+    color="black",
+    fontweight="bold",
 )
 
 # ---------------------------------------------------------------------------
@@ -349,7 +426,9 @@ ax_bar.text(
 fig.suptitle(
     "Controlled rearrangement experiment\n"
     r"$n=30$, 6 violations, $\hat{e}=0.1$, triangular kernel, $h=2$, $\lambda=1$, $\gamma=1$",
-    y=1.01, fontsize=13, fontweight="bold"
+    y=1.01,
+    fontsize=13,
+    fontweight="bold",
 )
 
 # ---------------------------------------------------------------------------

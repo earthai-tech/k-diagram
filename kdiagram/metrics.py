@@ -17,6 +17,7 @@ from packaging.version import Version
 from sklearn.utils.validation import check_array as _sklearn_check_array
 
 from .compat.sklearn import Hidden, Interval, StrOptions, validate_params
+from .utils.validator import check_consistent_length, exist_features
 
 _SKLEARN_GE_16 = Version(sklearn.__version__) >= Version("1.6")
 
@@ -25,7 +26,6 @@ def check_array(arr, **kwargs):
     if not _SKLEARN_GE_16 and "ensure_all_finite" in kwargs:
         kwargs["force_all_finite"] = kwargs.pop("ensure_all_finite")
     return _sklearn_check_array(arr, **kwargs)
-from .utils.validator import check_consistent_length, exist_features
 
 __all__ = ["clustered_anomaly_severity", "cluster_aware_severity_score"]
 
@@ -641,7 +641,10 @@ CAS Score (from DataFrame): 0.2222
 
 
 def _rolling_kernel(
-    a: np.ndarray, w: int, kernel: str, eps: float = 1e-12,
+    a: np.ndarray,
+    w: int,
+    kernel: str,
+    eps: float = 1e-12,
     exclude_self: bool = False,
 ) -> np.ndarray:
     w = int(max(1, w))
@@ -739,7 +742,7 @@ def _cas_core(
     m = np.where(is_under, lo - y, 0.0) + np.where(is_over, y - up, 0.0)
 
     if normalize == "band":
-        w = (up - lo) + eps   # always positive after swap
+        w = (up - lo) + eps  # always positive after swap
         m = m / w
     elif normalize == "mad":
         med = np.median(y)

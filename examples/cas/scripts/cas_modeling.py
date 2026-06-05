@@ -820,7 +820,9 @@ def run_domain(domain: str) -> tuple[pd.DataFrame, pd.DataFrame]:
                 dyn_cols=dyn_cols,
             )
         except Exception as _xtft_err:
-            print(f"  [warn] XTFT failed ({type(_xtft_err).__name__}); using NaN.")
+            print(
+                f"  [warn] XTFT failed ({type(_xtft_err).__name__}); using NaN."
+            )
             xtft = {q: np.full(len(dte_h), np.nan) for q in QUANTILES}
 
         pred_map = {

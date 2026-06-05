@@ -47,6 +47,7 @@ __all__ = [
 # Private helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_fig_ax(
     ax: Axes | None,
     figsize: tuple[float, float],
@@ -101,6 +102,7 @@ def _try_basemap(ax: Axes, add_basemap: bool) -> None:
         return
     try:
         import contextily as ctx  # noqa: F401
+
         ctx.add_basemap(ax, crs="EPSG:4326", zoom="auto")
     except Exception:
         warnings.warn(
@@ -114,6 +116,7 @@ def _try_basemap(ax: Axes, add_basemap: bool) -> None:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 @check_non_emptiness
 @isdf
@@ -274,11 +277,17 @@ def plot_spatial_scatter(
     fig, ax = _make_fig_ax(ax, figsize)
 
     sc = ax.scatter(
-        x, y, c=c, s=sizes,
+        x,
+        y,
+        c=c,
+        s=sizes,
         cmap=get_cmap(cmap, default="viridis"),
-        vmin=vmin, vmax=vmax,
-        alpha=alpha, edgecolors=edgecolor,
-        linewidths=linewidths, marker=marker,
+        vmin=vmin,
+        vmax=vmax,
+        alpha=alpha,
+        edgecolors=edgecolor,
+        linewidths=linewidths,
+        marker=marker,
         **kwargs,
     )
 
@@ -451,10 +460,12 @@ def plot_spatial_heatmap(
     fig, ax = _make_fig_ax(ax, figsize)
 
     im_kw = dict(
-        aspect="auto", origin="lower",
+        aspect="auto",
+        origin="lower",
         extent=[x.min(), x.max(), y.min(), y.max()],
         cmap=get_cmap(cmap, default="viridis"),
-        vmin=vmin, vmax=vmax,
+        vmin=vmin,
+        vmax=vmax,
         interpolation="bilinear",
     )
     im_kw.update(kwargs)
@@ -471,8 +482,10 @@ def plot_spatial_heatmap(
 
     if scatter_overlay:
         sc_kw = dict(
-            c=scatter_color, s=scatter_s,
-            alpha=scatter_alpha, edgecolors="none",
+            c=scatter_color,
+            s=scatter_s,
+            alpha=scatter_alpha,
+            edgecolors="none",
         )
         sc_kw.update(scatter_kwargs or {})
         ax.scatter(x, y, **sc_kw)
@@ -625,8 +638,8 @@ def plot_spatial_uncertainty(
         return None
 
     data["_covered"] = (
-        (data[actual_col] >= data[q_low_col]) &
-        (data[actual_col] <= data[q_up_col])
+        (data[actual_col] >= data[q_low_col])
+        & (data[actual_col] <= data[q_up_col])
     ).astype(float)
     data["_width"] = (data[q_up_col] - data[q_low_col]).clip(lower=0.0)
 
@@ -655,11 +668,16 @@ def plot_spatial_uncertainty(
     fig, ax = _make_fig_ax(ax, figsize)
 
     sc = ax.scatter(
-        x, y, c=deviation, s=sizes,
+        x,
+        y,
+        c=deviation,
+        s=sizes,
         cmap=get_cmap(cmap, default="RdBu_r"),
         norm=norm,
-        alpha=alpha, edgecolors=edgecolor,
-        linewidths=linewidths, marker=marker,
+        alpha=alpha,
+        edgecolors=edgecolor,
+        linewidths=linewidths,
+        marker=marker,
         **kwargs,
     )
 
@@ -676,12 +694,19 @@ def plot_spatial_uncertainty(
         w_mid = (w_lo + w_hi) / 2.0
         for st, wt in zip(size_ticks, [w_lo, w_mid, w_hi]):
             ax.scatter(
-                [], [], s=st, c="grey", alpha=0.6, edgecolors="k",
+                [],
+                [],
+                s=st,
+                c="grey",
+                alpha=0.6,
+                edgecolors="k",
                 linewidths=0.4,
                 label=f"width ≈ {wt:.2g}",
             )
         ax.legend(
-            title="Interval width", fontsize=8, title_fontsize=9,
+            title="Interval width",
+            fontsize=8,
+            title_fontsize=9,
             loc="lower right",
         )
 
@@ -834,11 +859,16 @@ def plot_spatial_coverage(
     fig, ax = _make_fig_ax(ax, figsize)
 
     sc = ax.scatter(
-        x, y, c=deviation, s=s,
+        x,
+        y,
+        c=deviation,
+        s=s,
         cmap=get_cmap(cmap, default="RdBu"),
         norm=norm,
-        alpha=alpha, edgecolors=edgecolor,
-        linewidths=linewidths, marker=marker,
+        alpha=alpha,
+        edgecolors=edgecolor,
+        linewidths=linewidths,
+        marker=marker,
         **kwargs,
     )
 
@@ -854,13 +884,18 @@ def plot_spatial_coverage(
             ax.annotate(f"{cv:{fmt}}", (xi, yi), **ann_kw)
         if tol is not None and abs(dv) > tol:
             ax.annotate(
-                "★", (xi, yi),
-                fontsize=10, ha="center", va="top",
+                "★",
+                (xi, yi),
+                fontsize=10,
+                ha="center",
+                va="top",
                 color="crimson" if dv < 0 else "steelblue",
             )
 
     ax.set_title(
-        title if title is not None else f"Coverage deviation from {nominal:.0%}",
+        title
+        if title is not None
+        else f"Coverage deviation from {nominal:.0%}",
         fontsize=13,
     )
     ax.set_xlabel(xlabel or x_col, fontsize=11)
@@ -1016,7 +1051,8 @@ def plot_spatial_comparison(
         figsize = (5.5 * actual_ncols, 4.5 * nrows)
 
     fig, axes_arr = plt.subplots(
-        nrows, actual_ncols,
+        nrows,
+        actual_ncols,
         figsize=figsize,
         squeeze=False,
         layout="constrained",
@@ -1040,7 +1076,7 @@ def plot_spatial_comparison(
     scatter_handles = []
     axes_flat = axes_arr.flat
 
-    for idx, (col, name) in enumerate(zip(metric_cols, names)):
+    for _idx, (col, name) in enumerate(zip(metric_cols, names)):
         ax = next(axes_flat)
         c = data[col].to_numpy(dtype=float)
 
@@ -1048,11 +1084,17 @@ def plot_spatial_comparison(
         panel_vmax = _vmax if shared_scale else (vmax or float(np.nanmax(c)))
 
         sc = ax.scatter(
-            x, y, c=c, s=s,
+            x,
+            y,
+            c=c,
+            s=s,
             cmap=cmap_obj,
-            vmin=panel_vmin, vmax=panel_vmax,
-            alpha=alpha, edgecolors=edgecolor,
-            linewidths=linewidths, marker=marker,
+            vmin=panel_vmin,
+            vmax=panel_vmax,
+            alpha=alpha,
+            edgecolors=edgecolor,
+            linewidths=linewidths,
+            marker=marker,
             **kwargs,
         )
         scatter_handles.append(sc)
@@ -1078,13 +1120,18 @@ def plot_spatial_comparison(
         cbar = fig.colorbar(
             scatter_handles[0],
             ax=axes_arr[:, -1].tolist(),
-            shrink=0.8, pad=0.02,
+            shrink=0.8,
+            pad=0.02,
         )
         if colorbar_label:
             cbar.set_label(colorbar_label, fontsize=10)
 
-    axes_list = [axes_arr[r, c] for r in range(nrows) for c in range(actual_ncols)
-                 if axes_arr[r, c].get_visible()]
+    axes_list = [
+        axes_arr[r, c]
+        for r in range(nrows)
+        for c in range(actual_ncols)
+        if axes_arr[r, c].get_visible()
+    ]
 
     return _finish(fig, axes_list, savefig, dpi)
 
@@ -1092,6 +1139,7 @@ def plot_spatial_comparison(
 # ---------------------------------------------------------------------------
 # Polar-from-spatial helpers
 # ---------------------------------------------------------------------------
+
 
 def _compute_site_order(
     df: pd.DataFrame,
@@ -1139,7 +1187,9 @@ def _polar_spikes(
     N = len(thetas)
     n_bins = min(64, N)
     bin_idx = np.floor(
-        np.clip((color_vals - norm.vmin) / max(norm.vmax - norm.vmin, 1e-12), 0, 1)
+        np.clip(
+            (color_vals - norm.vmin) / max(norm.vmax - norm.vmin, 1e-12), 0, 1
+        )
         * (n_bins - 1)
     ).astype(int)
 
@@ -1148,10 +1198,17 @@ def _polar_spikes(
         if not mask.any():
             continue
         color = cmap_obj(norm(float(np.mean(color_vals[mask]))))
-        t = np.empty(3 * mask.sum()); r = np.empty_like(t)
-        t[0::3] = thetas[mask]; t[1::3] = thetas[mask]; t[2::3] = np.nan
-        r[0::3] = r_base;        r[1::3] = radii[mask];   r[2::3] = np.nan
-        ax.plot(t, r, "-", color=color, lw=lw, alpha=alpha, solid_capstyle="butt")
+        t = np.empty(3 * mask.sum())
+        r = np.empty_like(t)
+        t[0::3] = thetas[mask]
+        t[1::3] = thetas[mask]
+        t[2::3] = np.nan
+        r[0::3] = r_base
+        r[1::3] = radii[mask]
+        r[2::3] = np.nan
+        ax.plot(
+            t, r, "-", color=color, lw=lw, alpha=alpha, solid_capstyle="butt"
+        )
 
 
 def _polar_reference_rings(
@@ -1166,9 +1223,18 @@ def _polar_reference_rings(
     """Draw concentric reference circles with radial labels."""
     t_circle = np.linspace(0, 2 * np.pi, 360)
     for rv in np.linspace(0, r_max, n_labels + 1)[1:]:
-        ax.plot(t_circle, np.full(360, rv), "-", color=color, lw=lw, alpha=0.45)
-        ax.text(label_angle, rv, f"{rv:{label_fmt}}",
-                ha="left", va="center", fontsize=7.5, color=color)
+        ax.plot(
+            t_circle, np.full(360, rv), "-", color=color, lw=lw, alpha=0.45
+        )
+        ax.text(
+            label_angle,
+            rv,
+            f"{rv:{label_fmt}}",
+            ha="left",
+            va="center",
+            fontsize=7.5,
+            color=color,
+        )
 
 
 def _setup_polar_ax(ax, zero_loc: str = "N", clockwise: bool = True) -> None:
@@ -1184,6 +1250,7 @@ def _setup_polar_ax(ax, zero_loc: str = "N", clockwise: bool = True) -> None:
 # ---------------------------------------------------------------------------
 # Public API — polar-from-spatial functions
 # ---------------------------------------------------------------------------
+
 
 @check_non_emptiness
 @isdf
@@ -1304,22 +1371,30 @@ def plot_spatial_ordering(
     exist_features(df, features=_ord_cols)
     data = df[_ord_cols].dropna().copy()
     if data.empty:
-        warnings.warn("plot_spatial_ordering: no data after dropping NaNs.",
-                      stacklevel=2)
+        warnings.warn(
+            "plot_spatial_ordering: no data after dropping NaNs.",
+            stacklevel=2,
+        )
         return None
 
-    ordered = _compute_site_order(data, x_col, y_col, order_by, order_ascending, order_col)
+    ordered = _compute_site_order(
+        data, x_col, y_col, order_by, order_ascending, order_col
+    )
     N = len(ordered)
     order_vals = ordered["_site_order"].to_numpy(dtype=float)
 
     fig, ax = _make_fig_ax(ax, figsize)
 
     sc = ax.scatter(
-        ordered[x_col], ordered[y_col],
-        c=order_vals, s=s,
+        ordered[x_col],
+        ordered[y_col],
+        c=order_vals,
+        s=s,
         cmap=get_cmap(cmap, default="viridis"),
-        vmin=0, vmax=N - 1,
-        alpha=alpha, edgecolors=edgecolor,
+        vmin=0,
+        vmax=N - 1,
+        alpha=alpha,
+        edgecolors=edgecolor,
         **kwargs,
     )
 
@@ -1336,8 +1411,12 @@ def plot_spatial_ordering(
             yi = float(ordered[y_col].iloc[i])
             xj = float(ordered[x_col].iloc[i + 1])
             yj = float(ordered[y_col].iloc[i + 1])
-            ax.annotate("", xy=(xj, yj), xytext=(xi, yi),
-                        arrowprops=dict(arrowstyle="->", **akw))
+            ax.annotate(
+                "",
+                xy=(xj, yj),
+                xytext=(xi, yi),
+                arrowprops=dict(arrowstyle="->", **akw),
+            )
 
     # Site labels
     if label_sites is None:
@@ -1347,13 +1426,21 @@ def plot_spatial_ordering(
         if 0 <= idx < N:
             ax.annotate(
                 str(idx + 1),
-                (float(ordered[x_col].iloc[idx]),
-                 float(ordered[y_col].iloc[idx])),
-                xytext=(4, 4), textcoords="offset points",
-                fontsize=8, fontweight="bold", color="0.2",
+                (
+                    float(ordered[x_col].iloc[idx]),
+                    float(ordered[y_col].iloc[idx]),
+                ),
+                xytext=(4, 4),
+                textcoords="offset points",
+                fontsize=8,
+                fontweight="bold",
+                color="0.2",
             )
 
-    ax.set_title(title or f"Geographic domain and site ordering ({order_by})", fontsize=12)
+    ax.set_title(
+        title or f"Geographic domain and site ordering ({order_by})",
+        fontsize=12,
+    )
     ax.set_xlabel(xlabel or x_col, fontsize=10)
     ax.set_ylabel(ylabel or y_col, fontsize=10)
     set_axis_grid(ax, show_grid=show_grid, grid_props=grid_props)
@@ -1539,17 +1626,23 @@ def plot_polar_from_spatial(
 
     data = df[list(dict.fromkeys(required))].dropna().copy()
     if data.empty:
-        warnings.warn("plot_polar_from_spatial: no data after dropping NaNs.",
-                      stacklevel=2)
+        warnings.warn(
+            "plot_polar_from_spatial: no data after dropping NaNs.",
+            stacklevel=2,
+        )
         return None
 
-    ordered = _compute_site_order(data, x_col, y_col, order_by, order_ascending, order_col)
+    ordered = _compute_site_order(
+        data, x_col, y_col, order_by, order_ascending, order_col
+    )
     N = len(ordered)
     thetas = 2 * np.pi * np.arange(N) / N
 
     # ---- polar axes ----
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw={"projection": "polar"}
+        )
     else:
         fig = ax.figure
     _setup_polar_ax(ax, zero_loc=zero_loc, clockwise=clockwise)
@@ -1566,7 +1659,9 @@ def plot_polar_from_spatial(
         _vmax = vmax if vmax is not None else float(np.nanmax(color_vals))
         norm = mcolors.Normalize(vmin=_vmin, vmax=_vmax)
 
-        _polar_spikes(ax, thetas, radii, color_vals, cmap_obj, norm, lw, alpha)
+        _polar_spikes(
+            ax, thetas, radii, color_vals, cmap_obj, norm, lw, alpha
+        )
 
         r_max = float(np.nanmax(radii))
         ax.set_ylim(0, r_max * 1.08)
@@ -1602,40 +1697,78 @@ def plot_polar_from_spatial(
             r_top = r_base + (metric_k / global_max) * ring_step
 
             # batch-color within ring by value
-            norm_k = mcolors.Normalize(
+            mcolors.Normalize(
                 vmin=float(np.nanmin(metric_k)),
                 vmax=float(np.nanmax(metric_k)),
             )
             hcolor = horizon_colors[k]
-            t = np.empty(3 * N); r = np.empty(3 * N)
-            t[0::3] = thetas; t[1::3] = thetas; t[2::3] = np.nan
-            r[0::3] = r_base;  r[1::3] = r_top;   r[2::3] = np.nan
-            ax.plot(t, r, "-", color=hcolor, lw=lw, alpha=alpha,
-                    solid_capstyle="butt")
+            t = np.empty(3 * N)
+            r = np.empty(3 * N)
+            t[0::3] = thetas
+            t[1::3] = thetas
+            t[2::3] = np.nan
+            r[0::3] = r_base
+            r[1::3] = r_top
+            r[2::3] = np.nan
+            ax.plot(
+                t,
+                r,
+                "-",
+                color=hcolor,
+                lw=lw,
+                alpha=alpha,
+                solid_capstyle="butt",
+            )
 
             # ring boundary + label
-            ax.plot(t_circle, np.full(360, r_base), "-",
-                    color="0.55", lw=0.4, alpha=0.5)
-            ax.text(ring_label_angle, r_base + ring_step * 0.55,
-                    horizon_labels[k],
-                    ha="left", va="center", fontsize=8, fontweight="bold",
-                    color=hcolor if isinstance(hcolor, str) else "k")
+            ax.plot(
+                t_circle,
+                np.full(360, r_base),
+                "-",
+                color="0.55",
+                lw=0.4,
+                alpha=0.5,
+            )
+            ax.text(
+                ring_label_angle,
+                r_base + ring_step * 0.55,
+                horizon_labels[k],
+                ha="left",
+                va="center",
+                fontsize=8,
+                fontweight="bold",
+                color=hcolor if isinstance(hcolor, str) else "k",
+            )
 
         # outer boundary
-        ax.plot(t_circle, np.full(360, K * ring_step), "-",
-                color="0.45", lw=0.7, alpha=0.6)
+        ax.plot(
+            t_circle,
+            np.full(360, K * ring_step),
+            "-",
+            color="0.45",
+            lw=0.7,
+            alpha=0.6,
+        )
         ax.set_ylim(0, K * ring_step * 1.05)
 
     # ---- angular site labels ----
     if label_n_sites > 0:
         r_lim = ax.get_ylim()[1]
         for idx in np.linspace(0, N - 1, label_n_sites, dtype=int):
-            ax.text(thetas[idx], r_lim * 1.09, str(idx + 1),
-                    ha="center", va="center", fontsize=8, color="0.4")
+            ax.text(
+                thetas[idx],
+                r_lim * 1.09,
+                str(idx + 1),
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="0.4",
+            )
 
     ax.set_title(
         title or f"Polar view: angle = ordered sites;\nradius = {metric_col}",
-        fontsize=10, pad=14,
+        fontsize=10,
+        pad=14,
     )
 
     return _finish(fig, ax, savefig, dpi)
@@ -1809,11 +1942,15 @@ def plot_paired_spatial_polar(
 
     data = df[list(dict.fromkeys(required))].dropna().copy()
     if data.empty:
-        warnings.warn("plot_paired_spatial_polar: no data after dropping NaNs.",
-                      stacklevel=2)
+        warnings.warn(
+            "plot_paired_spatial_polar: no data after dropping NaNs.",
+            stacklevel=2,
+        )
         return None
 
-    ordered = _compute_site_order(data, x_col, y_col, order_by, order_ascending, order_col)
+    ordered = _compute_site_order(
+        data, x_col, y_col, order_by, order_ascending, order_col
+    )
     N = len(ordered)
 
     # ---- figure layout ----
@@ -1829,10 +1966,14 @@ def plot_paired_spatial_polar(
 
     # ========================== left: geographic map ==========================
     sc = ax_map.scatter(
-        ordered[x_col], ordered[y_col],
-        c=metric_vals, s=map_s,
-        cmap=cmap_obj, norm=norm_shared,
-        alpha=alpha, edgecolors="none",
+        ordered[x_col],
+        ordered[y_col],
+        c=metric_vals,
+        s=map_s,
+        cmap=cmap_obj,
+        norm=norm_shared,
+        alpha=alpha,
+        edgecolors="none",
         **kwargs,
     )
 
@@ -1844,12 +1985,18 @@ def plot_paired_spatial_polar(
         step = arrow_step if arrow_step is not None else max(1, N // 15)
         for i in range(0, N - 1, step):
             ax_map.annotate(
-                "", xy=(float(ordered[x_col].iloc[i + 1]),
-                         float(ordered[y_col].iloc[i + 1])),
-                xytext=(float(ordered[x_col].iloc[i]),
-                        float(ordered[y_col].iloc[i])),
-                arrowprops=dict(arrowstyle="->", color="0.55",
-                                lw=0.6, mutation_scale=7),
+                "",
+                xy=(
+                    float(ordered[x_col].iloc[i + 1]),
+                    float(ordered[y_col].iloc[i + 1]),
+                ),
+                xytext=(
+                    float(ordered[x_col].iloc[i]),
+                    float(ordered[y_col].iloc[i]),
+                ),
+                arrowprops=dict(
+                    arrowstyle="->", color="0.55", lw=0.6, mutation_scale=7
+                ),
             )
 
     if map_label_sites:
@@ -1857,12 +2004,17 @@ def plot_paired_spatial_polar(
             if 0 <= idx < N:
                 ax_map.annotate(
                     lbl,
-                    (float(ordered[x_col].iloc[idx]),
-                     float(ordered[y_col].iloc[idx])),
-                    xytext=(3, 3), textcoords="offset points",
-                    fontsize=8, fontweight="bold",
-                    bbox=dict(boxstyle="round,pad=0.2", fc="white",
-                              alpha=0.72, lw=0),
+                    (
+                        float(ordered[x_col].iloc[idx]),
+                        float(ordered[y_col].iloc[idx]),
+                    ),
+                    xytext=(3, 3),
+                    textcoords="offset points",
+                    fontsize=8,
+                    fontweight="bold",
+                    bbox=dict(
+                        boxstyle="round,pad=0.2", fc="white", alpha=0.72, lw=0
+                    ),
                 )
 
     ax_map.set_title(map_title or f"Map view: {metric_col}", fontsize=11)
@@ -1877,11 +2029,20 @@ def plot_paired_spatial_polar(
     if not hcols:
         # single-horizon spikes
         color_vals = (
-            ordered[color_col].to_numpy(dtype=float) if color_col
+            ordered[color_col].to_numpy(dtype=float)
+            if color_col
             else metric_vals
         )
-        _polar_spikes(ax_pol, thetas, metric_vals, color_vals,
-                      cmap_obj, norm_shared, polar_lw, alpha)
+        _polar_spikes(
+            ax_pol,
+            thetas,
+            metric_vals,
+            color_vals,
+            cmap_obj,
+            norm_shared,
+            polar_lw,
+            alpha,
+        )
         r_max = float(np.nanmax(metric_vals))
         ax_pol.set_ylim(0, r_max * 1.08)
         _polar_reference_rings(ax_pol, r_max, n_ring_labels, ring_label_angle)
@@ -1904,29 +2065,63 @@ def plot_paired_spatial_polar(
 
         for k, col in enumerate(all_cols):
             r_base = k * ring_step
-            r_top = r_base + (ordered[col].to_numpy(dtype=float) / global_max) * ring_step
+            r_top = (
+                r_base
+                + (ordered[col].to_numpy(dtype=float) / global_max)
+                * ring_step
+            )
             hcolor = horizon_colors[k]
-            t = np.empty(3 * N); r = np.empty(3 * N)
-            t[0::3] = thetas; t[1::3] = thetas; t[2::3] = np.nan
-            r[0::3] = r_base;  r[1::3] = r_top;   r[2::3] = np.nan
-            ax_pol.plot(t, r, "-", color=hcolor, lw=polar_lw, alpha=alpha,
-                        solid_capstyle="butt")
-            ax_pol.plot(t_circle, np.full(360, r_base), "-",
-                        color="0.55", lw=0.4, alpha=0.5)
-            ax_pol.text(ring_label_angle, r_base + ring_step * 0.55,
-                        horizon_labels[k], ha="left", va="center",
-                        fontsize=8, fontweight="bold",
-                        color=hcolor if isinstance(hcolor, str) else "k")
+            t = np.empty(3 * N)
+            r = np.empty(3 * N)
+            t[0::3] = thetas
+            t[1::3] = thetas
+            t[2::3] = np.nan
+            r[0::3] = r_base
+            r[1::3] = r_top
+            r[2::3] = np.nan
+            ax_pol.plot(
+                t,
+                r,
+                "-",
+                color=hcolor,
+                lw=polar_lw,
+                alpha=alpha,
+                solid_capstyle="butt",
+            )
+            ax_pol.plot(
+                t_circle,
+                np.full(360, r_base),
+                "-",
+                color="0.55",
+                lw=0.4,
+                alpha=0.5,
+            )
+            ax_pol.text(
+                ring_label_angle,
+                r_base + ring_step * 0.55,
+                horizon_labels[k],
+                ha="left",
+                va="center",
+                fontsize=8,
+                fontweight="bold",
+                color=hcolor if isinstance(hcolor, str) else "k",
+            )
 
-        ax_pol.plot(t_circle, np.full(360, K * ring_step), "-",
-                    color="0.45", lw=0.7, alpha=0.6)
+        ax_pol.plot(
+            t_circle,
+            np.full(360, K * ring_step),
+            "-",
+            color="0.45",
+            lw=0.7,
+            alpha=0.6,
+        )
         ax_pol.set_ylim(0, K * ring_step * 1.05)
 
     ax_pol.set_title(
-        polar_title or (
-            f"Polar view: angle = ordered sites;\nradius = {metric_col}"
-        ),
-        fontsize=10, pad=14,
+        polar_title
+        or (f"Polar view: angle = ordered sites;\nradius = {metric_col}"),
+        fontsize=10,
+        pad=14,
     )
 
     if title:

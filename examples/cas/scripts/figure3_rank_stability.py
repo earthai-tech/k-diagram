@@ -40,11 +40,12 @@ from scipy.stats import kendalltau
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
-import os as _os
+import os  # noqa: E402
+
 _REPO_ROOT = _HERE.parents[2]
 _REAL_DATA = _REPO_ROOT / "data" / "cas"
 if _REAL_DATA.exists():
-    _os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_REAL_DATA))
+    os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_REAL_DATA))
 
 try:
     from results_config import (
@@ -66,9 +67,19 @@ except ModuleNotFoundError:
     OUTDIR.mkdir(parents=True, exist_ok=True)
     PRED_WIND = DATA_ROOT / "modeling_results_ok" / "predictions_wind.csv"
     PRED_HYDRO = DATA_ROOT / "modeling_results_ok" / "predictions_hydro.csv"
-    PRED_SUBS = DATA_ROOT / "modeling_results_ok" / "predictions_subsidence.csv"
-    DOMAIN_COLOR = {"hydro": "#0072B2", "wind": "#E69F00", "subsidence": "#009E73"}
-    DOMAIN_LABEL = {"hydro": "Hydro", "wind": "Wind", "subsidence": "Subsidence"}
+    PRED_SUBS = (
+        DATA_ROOT / "modeling_results_ok" / "predictions_subsidence.csv"
+    )
+    DOMAIN_COLOR = {
+        "hydro": "#0072B2",
+        "wind": "#E69F00",
+        "subsidence": "#009E73",
+    }
+    DOMAIN_LABEL = {
+        "hydro": "Hydro",
+        "wind": "Wind",
+        "subsidence": "Subsidence",
+    }
     DOMAIN_ORDER = ["hydro", "wind", "subsidence"]
     MODEL_ORDER = ["qar", "qgbm", "xtft"]
     MODEL_LABEL = {"qar": "QAR", "qgbm": "QGBM", "xtft": "XTFT"}
@@ -78,16 +89,17 @@ except ModuleNotFoundError:
         q90c = np.maximum(q90, q50c)
         return q10, q50c, q90c
 
+
 _REPO = _HERE.parents[2]
 if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 
-from kdiagram.metrics import cluster_aware_severity_score
+from kdiagram.metrics import cluster_aware_severity_score  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Parameter grid (18 settings)
 # ---------------------------------------------------------------------------
-H_VALUES = [3, 5, 7]           # window_size
+H_VALUES = [3, 5, 7]  # window_size
 LAMBDA_VALUES = [0.5, 1.0, 2.0]
 GAMMA_VALUES = [1.0, 2.0]
 KERNEL = "triangular"
@@ -96,15 +108,16 @@ KERNEL = "triangular"
 H_DEFAULT, LAM_DEFAULT, GAM_DEFAULT = 5, 1.0, 1.0
 
 PRED_FILES = {
-    "hydro":       PRED_HYDRO,
-    "wind":        PRED_WIND,
-    "subsidence":  PRED_SUBS,
+    "hydro": PRED_HYDRO,
+    "wind": PRED_WIND,
+    "subsidence": PRED_SUBS,
 }
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def load_all(pred_file, domain):
     df = pd.read_csv(pred_file)
@@ -130,9 +143,12 @@ def mean_cas(df, model, h, lam, gam):
         y_pred = np.column_stack([q10, q90])
         try:
             s = cluster_aware_severity_score(
-                y, y_pred,
-                window_size=h, kernel=KERNEL,
-                lambda_=lam, gamma=gam,
+                y,
+                y_pred,
+                window_size=h,
+                kernel=KERNEL,
+                lambda_=lam,
+                gamma=gam,
             )
             if np.isfinite(s):
                 scores.append(s)
@@ -175,7 +191,11 @@ for domain in DOMAIN_ORDER:
 # Build full result table
 rows = []
 all_settings = list(itertools.product(H_VALUES, LAMBDA_VALUES, GAMMA_VALUES))
-is_default = lambda h, lam, gam: (h == H_DEFAULT and lam == LAM_DEFAULT and gam == GAM_DEFAULT)
+
+
+def is_default(h, lam, gam):
+    return h == H_DEFAULT and lam == LAM_DEFAULT and gam == GAM_DEFAULT
+
 
 for domain in DOMAIN_ORDER:
     df = data[domain]
@@ -186,7 +206,10 @@ for domain in DOMAIN_ORDER:
             cas_dict[model] = mean_cas(df, model, h, lam, gam)
         rows.append(
             dict(
-                domain=domain, h=h, lam=lam, gam=gam,
+                domain=domain,
+                h=h,
+                lam=lam,
+                gam=gam,
                 default=is_default(h, lam, gam),
                 **{f"cas_{m}": cas_dict[m] for m in MODEL_ORDER},
                 ranking=model_ranking(cas_dict),
@@ -200,9 +223,9 @@ results = pd.DataFrame(rows)
 # ---------------------------------------------------------------------------
 tau_rows = []
 for domain in DOMAIN_ORDER:
-    default_row = results[
-        (results.domain == domain) & results.default
-    ].iloc[0]
+    default_row = results[(results.domain == domain) & results.default].iloc[
+        0
+    ]
     default_ranking = default_row["ranking"]
 
     for _, row in results[results.domain == domain].iterrows():
@@ -210,7 +233,9 @@ for domain in DOMAIN_ORDER:
         tau_rows.append(
             dict(
                 domain=domain,
-                h=row["h"], lam=row["lam"], gam=row["gam"],
+                h=row["h"],
+                lam=row["lam"],
+                gam=row["gam"],
                 default=row["default"],
                 tau=tau,
             )
@@ -222,7 +247,12 @@ tau_df = pd.DataFrame(tau_rows)
 summary = (
     tau_df[~tau_df.default]
     .groupby("domain")["tau"]
-    .agg(mean_tau="mean", median_tau="median", min_tau="min", n_settings="count")
+    .agg(
+        mean_tau="mean",
+        median_tau="median",
+        min_tau="min",
+        n_settings="count",
+    )
     .reset_index()
 )
 print("\n  Rank-stability summary (Table 4):")
@@ -251,18 +281,23 @@ with plt.rc_context({"figure.constrained_layout.use": False}):
 fig.set_constrained_layout(False)
 
 # Reserve right margin for the colorbar
-fig.subplots_adjust(left=0.07, right=0.88, top=0.91, bottom=0.07,
-                    hspace=0.52, wspace=0.38)
+fig.subplots_adjust(
+    left=0.07, right=0.88, top=0.91, bottom=0.07, hspace=0.52, wspace=0.38
+)
 
 # Two-zone layout: heatmap block (rows 0..N_DOMAINS-1) + bar chart (last row)
 outer_gs = fig.add_gridspec(
-    2, 1,
+    2,
+    1,
     height_ratios=[3.0, 1.3],
     hspace=0.45,
-    left=0.07, right=0.88, top=0.91, bottom=0.07,
+    left=0.07,
+    right=0.88,
+    top=0.91,
+    bottom=0.07,
 )
 heat_gs = outer_gs[0].subgridspec(N_DOMAINS, N_H, hspace=0.52, wspace=0.38)
-bar_ax  = fig.add_subplot(outer_gs[1])
+bar_ax = fig.add_subplot(outer_gs[1])
 
 all_heat_axes = []
 last_im = None
@@ -285,9 +320,12 @@ for di, domain in enumerate(DOMAIN_ORDER):
                     mat[gi, li] = row["tau"].values[0]
 
         im = ax.imshow(
-            mat, aspect="auto",
-            vmin=TAU_VMIN, vmax=TAU_VMAX,
-            cmap=CMAP, origin="upper",
+            mat,
+            aspect="auto",
+            vmin=TAU_VMIN,
+            vmax=TAU_VMAX,
+            cmap=CMAP,
+            origin="upper",
         )
         last_im = im
 
@@ -299,9 +337,14 @@ for di, domain in enumerate(DOMAIN_ORDER):
                 cell_norm = (val - TAU_VMIN) / (TAU_VMAX - TAU_VMIN)
                 txt_color = "black" if 0.25 < cell_norm < 0.75 else "white"
                 ax.text(
-                    li, gi, txt,
-                    ha="center", va="center",
-                    fontsize=9.5, fontweight="bold", color=txt_color,
+                    li,
+                    gi,
+                    txt,
+                    ha="center",
+                    va="center",
+                    fontsize=9.5,
+                    fontweight="bold",
+                    color=txt_color,
                 )
 
         # Black border on the default cell (lam=1.0, gam=1.0)
@@ -309,23 +352,37 @@ for di, domain in enumerate(DOMAIN_ORDER):
         def_gi = GAMMA_VALUES.index(GAM_DEFAULT)
         ax.add_patch(
             plt.Rectangle(
-                (def_li - 0.5, def_gi - 0.5), 1, 1,
-                fill=False, edgecolor="black", lw=2.5, zorder=5
+                (def_li - 0.5, def_gi - 0.5),
+                1,
+                1,
+                fill=False,
+                edgecolor="black",
+                lw=2.5,
+                zorder=5,
             )
         )
 
         ax.set_xticks(range(len(LAMBDA_VALUES)))
         ax.set_yticks(range(len(GAMMA_VALUES)))
-        ax.set_xticklabels([f"$\\lambda$={v}" for v in LAMBDA_VALUES], fontsize=8.5)
-        ax.set_yticklabels([f"$\\gamma$={v}" for v in GAMMA_VALUES], fontsize=8.5)
+        ax.set_xticklabels(
+            [f"$\\lambda$={v}" for v in LAMBDA_VALUES], fontsize=8.5
+        )
+        ax.set_yticklabels(
+            [f"$\\gamma$={v}" for v in GAMMA_VALUES], fontsize=8.5
+        )
 
         if hi == 0:
             ax.set_ylabel(
-                DOMAIN_LABEL[domain], fontweight="bold",
-                color=col, fontsize=11, labelpad=6,
+                DOMAIN_LABEL[domain],
+                fontweight="bold",
+                color=col,
+                fontsize=11,
+                labelpad=6,
             )
         if di == 0:
-            ax.set_title(f"$h = {h_val}$", fontsize=11, fontweight="bold", pad=5)
+            ax.set_title(
+                f"$h = {h_val}$", fontsize=11, fontweight="bold", pad=5
+            )
         if di == N_DOMAINS - 1:
             ax.set_xlabel("Cluster weight", fontsize=8.5)
 
@@ -334,9 +391,9 @@ for di, domain in enumerate(DOMAIN_ORDER):
 
 # ── Colorbar: placed in the reserved right strip [0.90, top..bottom of heatmap]
 # Compute the bounding box of the heatmap block in figure coordinates.
-fig.canvas.draw()   # needed so get_position() is accurate
+fig.canvas.draw()  # needed so get_position() is accurate
 heat_positions = [ax.get_position() for ax in all_heat_axes]
-cbar_left   = 0.905
+cbar_left = 0.905
 cbar_bottom = min(p.y0 for p in heat_positions)
 cbar_height = max(p.y1 for p in heat_positions) - cbar_bottom
 cbar_ax = fig.add_axes([cbar_left, cbar_bottom, 0.018, cbar_height])
@@ -356,19 +413,29 @@ cbar.ax.tick_params(labelsize=9)
 x = np.arange(N_DOMAINS)
 bw = 0.25
 
-stat_labels = [("mean_tau", "Mean $\\tau$", "o-"), ("median_tau", "Median $\\tau$", "s--"), ("min_tau", "Min $\\tau$", "^:")]
+stat_labels = [
+    ("mean_tau", "Mean $\\tau$", "o-"),
+    ("median_tau", "Median $\\tau$", "s--"),
+    ("min_tau", "Min $\\tau$", "^:"),
+]
 colors_stat = ["#2196F3", "#4CAF50", "#FF5722"]
 
-for si, (col_key, stat_label, fmt) in enumerate(stat_labels):
+for si, (col_key, stat_label, _fmt) in enumerate(stat_labels):
     vals = [
         summary[summary.domain == d][col_key].values[0]
-        if d in summary.domain.values else np.nan
+        if d in summary.domain.values
+        else np.nan
         for d in DOMAIN_ORDER
     ]
     bars = bar_ax.bar(
-        x + (si - 1) * bw, vals, bw,
-        color=colors_stat[si], alpha=0.82,
-        label=stat_label, edgecolor="white", lw=0.8
+        x + (si - 1) * bw,
+        vals,
+        bw,
+        color=colors_stat[si],
+        alpha=0.82,
+        label=stat_label,
+        edgecolor="white",
+        lw=0.8,
     )
     for bar, v in zip(bars, vals):
         if np.isfinite(v):
@@ -376,24 +443,26 @@ for si, (col_key, stat_label, fmt) in enumerate(stat_labels):
                 bar.get_x() + bar.get_width() / 2,
                 v + 0.01,
                 f"{v:.2f}",
-                ha="center", va="bottom", fontsize=8.5
+                ha="center",
+                va="bottom",
+                fontsize=8.5,
             )
 
 # Domain-color patches at x-tick labels
 bar_ax.set_xticks(x)
-bar_ax.set_xticklabels(
-    [DOMAIN_LABEL[d] for d in DOMAIN_ORDER], fontsize=11
-)
+bar_ax.set_xticklabels([DOMAIN_LABEL[d] for d in DOMAIN_ORDER], fontsize=11)
 for tick, d in zip(bar_ax.get_xticklabels(), DOMAIN_ORDER):
     tick.set_color(DOMAIN_COLOR[d])
     tick.set_fontweight("bold")
 
-bar_ax.axhline(1.0, color="0.4", lw=0.8, ls="--", label="Perfect stability ($\\tau=1$)")
+bar_ax.axhline(
+    1.0, color="0.4", lw=0.8, ls="--", label="Perfect stability ($\\tau=1$)"
+)
 bar_ax.set_ylim(-0.05, 1.30)
 bar_ax.set_ylabel("Kendall $\\tau$")
 bar_ax.set_title(
     "Rank-stability summary (mean / median / min Kendall $\\tau$ across 17 non-default settings)",
-    fontweight="bold"
+    fontweight="bold",
 )
 bar_ax.legend(loc="lower right", fontsize=9, frameon=True, framealpha=0.9)
 bar_ax.grid(True, axis="y", alpha=0.22, ls="--")
@@ -406,7 +475,9 @@ for sp in ("top", "right"):
 fig.suptitle(
     "Rank stability of CAS under parameter variation\n"
     "(black border = default; each cell = $\\tau$ vs. default ranking)",
-    y=0.99, fontsize=12.5, fontweight="bold"
+    y=0.99,
+    fontsize=12.5,
+    fontweight="bold",
 )
 
 # ---------------------------------------------------------------------------

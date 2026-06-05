@@ -17,9 +17,9 @@ import sys
 from pathlib import Path
 
 # ── path setup ────────────────────────────────────────────────────────────────
-_HERE  = Path(__file__).resolve().parent
-_REPO  = _HERE.parents[2]
-_DATA  = _REPO / "data" / "cas"
+_HERE = Path(__file__).resolve().parent
+_REPO = _HERE.parents[2]
+_DATA = _REPO / "data" / "cas"
 os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_DATA))
 
 sys.path.insert(0, str(_REPO))
@@ -29,24 +29,24 @@ sys.path.insert(0, str(_HERE))
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-import numpy as np
-import pandas as pd
-import tensorflow as tf
-from fusionlab.nn.hybrid import XTFT
-from fusionlab.nn.losses import combined_quantile_loss
-from sklearn.preprocessing import LabelEncoder
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import tensorflow as tf  # noqa: E402
+from fusionlab.nn.hybrid import XTFT  # noqa: E402
+from fusionlab.nn.losses import combined_quantile_loss  # noqa: E402
+from sklearn.preprocessing import LabelEncoder  # noqa: E402
 
 print(f"TF:         {tf.__version__}")
 print(f"Python:     {sys.version.split()[0]}")
 
 # ── config ────────────────────────────────────────────────────────────────────
-DOMAIN     = "hydro"
-QUANTILES  = [0.10, 0.50, 0.90]
-LOOKBACK   = 12   # reduced from 60 — hydro has ~160 rows/horizon
-SEED       = 42
-EPOCHS     = 60
-PATIENCE   = 10
-BATCH      = 32   # smaller batches for small dataset
+DOMAIN = "hydro"
+QUANTILES = [0.10, 0.50, 0.90]
+LOOKBACK = 12  # reduced from 60 — hydro has ~160 rows/horizon
+SEED = 42
+EPOCHS = 60
+PATIENCE = 10
+BATCH = 32  # smaller batches for small dataset
 
 PQT_DIR = _DATA / "preprocessed"
 OUT_DIR = _DATA / "modeling_results_ok"
@@ -62,13 +62,26 @@ tf.random.set_seed(SEED)
 # ── feature columns (only those present in supervised_long_hydro.parquet) ────
 # Missing: y_lag14, y_lag28, y_roll14_mean/std, y_roll30_mean/std
 DYN_COLS_CANDIDATES = [
-    "p_mm_day", "t_c",
-    "sin_doy", "cos_doy", "sin_dow", "cos_dow",
-    "y_lag1", "y_lag2", "y_lag3", "y_lag7", "y_lag14", "y_lag28",
-    "y_roll3_mean", "y_roll3_std",
-    "y_roll7_mean", "y_roll7_std",
-    "y_roll14_mean", "y_roll14_std",
-    "y_roll30_mean", "y_roll30_std",
+    "p_mm_day",
+    "t_c",
+    "sin_doy",
+    "cos_doy",
+    "sin_dow",
+    "cos_dow",
+    "y_lag1",
+    "y_lag2",
+    "y_lag3",
+    "y_lag7",
+    "y_lag14",
+    "y_lag28",
+    "y_roll3_mean",
+    "y_roll3_std",
+    "y_roll7_mean",
+    "y_roll7_std",
+    "y_roll14_mean",
+    "y_roll14_std",
+    "y_roll30_mean",
+    "y_roll30_std",
 ]
 
 
@@ -91,14 +104,14 @@ def _sample_by_series(df, target_rows, seed=SEED):
 def _xtft_windows(df, lookback, dyn_cols, le):
     xs, xd, xf, ys, idx_out = [], [], [], [], []
     known = set(le.classes_.tolist())
-    unk   = le.transform(["__UNK__"])[0]
-    df    = df.reset_index(drop=True)
+    unk = le.transform(["__UNK__"])[0]
+    df = df.reset_index(drop=True)
 
     for sid, g in df.groupby("series_id", sort=False):
-        g    = g.sort_values("t").reset_index(drop=True)
-        s    = le.transform([str(sid)])[0] if str(sid) in known else unk
+        g = g.sort_values("t").reset_index(drop=True)
+        s = le.transform([str(sid)])[0] if str(sid) in known else unk
         Xd_g = g[dyn_cols].values.astype("float32")
-        y_g  = g["y_future"].values.astype("float32")
+        y_g = g["y_future"].values.astype("float32")
 
         for i in range(lookback, len(g)):
             xs.append([s])
@@ -107,17 +120,17 @@ def _xtft_windows(df, lookback, dyn_cols, le):
             ys.append([y_g[i]])
             idx_out.append(g.index[i])
 
-    Xs = np.asarray(xs,  dtype="float32")
-    Xd = np.asarray(xd,  dtype="float32")
-    Xf = np.asarray(xf,  dtype="float32")
-    Y  = np.asarray(ys,  dtype="float32")[:, np.newaxis, :]
+    Xs = np.asarray(xs, dtype="float32")
+    Xd = np.asarray(xd, dtype="float32")
+    Xf = np.asarray(xf, dtype="float32")
+    Y = np.asarray(ys, dtype="float32")[:, np.newaxis, :]
     return Xs, Xd, Xf, Y, np.asarray(idx_out)
 
 
 # ── load data ─────────────────────────────────────────────────────────────────
 name = f"supervised_long_{DOMAIN}"
-pqt  = PQT_DIR / f"{name}.parquet"
-csv  = PQT_DIR / f"{name}.csv"
+pqt = PQT_DIR / f"{name}.parquet"
+csv = PQT_DIR / f"{name}.csv"
 if csv.exists():
     df = pd.read_csv(csv)
     print(f"Loaded CSV: {csv}")
@@ -128,18 +141,25 @@ elif pqt.exists():
     except Exception as e:
         raise RuntimeError(
             f"Parquet read failed ({e}). "
-            f"Convert to CSV first: python -c \"import pandas as pd; "
+            f'Convert to CSV first: python -c "import pandas as pd; '
             f"pd.read_parquet('{pqt}').to_csv('{csv}', index=False)\""
-        )
+        ) from e
 else:
     raise FileNotFoundError(f"No {name}.parquet/csv in {PQT_DIR}")
 
-df["t"]         = pd.to_datetime(df["t"], errors="coerce")
+df["t"] = pd.to_datetime(df["t"], errors="coerce")
 df["series_id"] = df["series_id"].astype(str)
 df = df.dropna(subset=["t"])
 
 # Keep only needed columns
-keep = ["series_id", "t", "y", "split", "horizon", "y_future"] + DYN_COLS_CANDIDATES
+keep = [
+    "series_id",
+    "t",
+    "y",
+    "split",
+    "horizon",
+    "y_future",
+] + DYN_COLS_CANDIDATES
 df = df[[c for c in keep if c in df.columns]].copy()
 
 # Downsample hydro for memory
@@ -165,10 +185,9 @@ print(f"Splits — train: {len(dtr):,}  val: {len(dva):,}  test: {len(dte):,}")
 # Label encoder over all series
 all_tr = pd.concat([dtr, dva], ignore_index=True)
 le = LabelEncoder()
-all_ids = np.concatenate([
-    all_tr["series_id"].unique(),
-    np.array(["__UNK__"])
-])
+all_ids = np.concatenate(
+    [all_tr["series_id"].unique(), np.array(["__UNK__"])]
+)
 le.fit(all_ids)
 
 # ── per-horizon XTFT loop ─────────────────────────────────────────────────────
@@ -186,17 +205,27 @@ for h in horizons:
         print(f"  h={h}: skipped (empty split)")
         continue
 
-    print(f"\n  h={h}: train={len(dtr_h)}  val={len(dva_h)}  test={len(dte_h)}")
+    print(
+        f"\n  h={h}: train={len(dtr_h)}  val={len(dva_h)}  test={len(dte_h)}"
+    )
 
     try:
-        Xs_tr, Xd_tr, Xf_tr, Y_tr, _    = _xtft_windows(dtr_h, LOOKBACK, dyn_cols, le)
-        Xs_va, Xd_va, Xf_va, Y_va, _    = _xtft_windows(dva_h, LOOKBACK, dyn_cols, le)
-        Xs_te, Xd_te, Xf_te, _,   te_idx = _xtft_windows(dte_h, LOOKBACK, dyn_cols, le)
+        Xs_tr, Xd_tr, Xf_tr, Y_tr, _ = _xtft_windows(
+            dtr_h, LOOKBACK, dyn_cols, le
+        )
+        Xs_va, Xd_va, Xf_va, Y_va, _ = _xtft_windows(
+            dva_h, LOOKBACK, dyn_cols, le
+        )
+        Xs_te, Xd_te, Xf_te, _, te_idx = _xtft_windows(
+            dte_h, LOOKBACK, dyn_cols, le
+        )
 
         if len(Xs_tr) == 0:
             raise ValueError("No training windows")
 
-        print(f"    Windows — train: {len(Xs_tr)}  val: {len(Xs_va)}  test: {len(Xs_te)}")
+        print(
+            f"    Windows — train: {len(Xs_tr)}  val: {len(Xs_va)}  test: {len(Xs_te)}"
+        )
 
         # Build model fresh each horizon
         mdl = XTFT(
@@ -218,25 +247,35 @@ for h in horizons:
             use_batch_norm=False,
             final_agg="last",
         )
-        _ = mdl([Xs_tr[:2], Xd_tr[:2], Xf_tr[:2]])   # build weights
+        _ = mdl([Xs_tr[:2], Xd_tr[:2], Xf_tr[:2]])  # build weights
         loss_fn = combined_quantile_loss(mdl.quantiles)
         mdl.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss=loss_fn)
 
-        cb = [tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=PATIENCE,
-                restore_best_weights=True, verbose=0)]
+        cb = [
+            tf.keras.callbacks.EarlyStopping(
+                monitor="val_loss",
+                patience=PATIENCE,
+                restore_best_weights=True,
+                verbose=0,
+            )
+        ]
 
         mdl.fit(
-            [Xs_tr, Xd_tr, Xf_tr], Y_tr,
+            [Xs_tr, Xd_tr, Xf_tr],
+            Y_tr,
             validation_data=([Xs_va, Xd_va, Xf_va], Y_va),
-            epochs=EPOCHS, batch_size=BATCH,
-            verbose=0, callbacks=cb,
+            epochs=EPOCHS,
+            batch_size=BATCH,
+            verbose=0,
+            callbacks=cb,
         )
 
         raw = mdl.predict([Xs_te, Xd_te, Xf_te], verbose=0)
         raw = np.asarray(raw)
-        if   raw.ndim == 4: raw = raw[:, 0, :, 0]
-        elif raw.ndim == 3: raw = raw[:, 0, :]
+        if raw.ndim == 4:
+            raw = raw[:, 0, :, 0]
+        elif raw.ndim == 3:
+            raw = raw[:, 0, :]
 
         # Align predictions to dte_h rows
         dte_h = dte_h.reset_index(drop=True)
@@ -251,17 +290,19 @@ for h in horizons:
         q50[te_idx_k] = raw[:k, 1]
         q90[te_idx_k] = raw[:k, 2]
 
-        part = pd.DataFrame({
-            "domain":    DOMAIN,
-            "model":     "xtft",
-            "horizon":   h,
-            "series_id": dte_h["series_id"].values,
-            "t":         dte_h["t"].values,
-            "y":         dte_h["y_future"].values,
-            "q10":       q10,
-            "q50":       q50,
-            "q90":       q90,
-        })
+        part = pd.DataFrame(
+            {
+                "domain": DOMAIN,
+                "model": "xtft",
+                "horizon": h,
+                "series_id": dte_h["series_id"].values,
+                "t": dte_h["t"].values,
+                "y": dte_h["y_future"].values,
+                "q10": q10,
+                "q50": q50,
+                "q90": q90,
+            }
+        )
         all_rows.append(part)
 
         n_filled = int(np.isfinite(q10).sum())
@@ -273,21 +314,24 @@ for h in horizons:
 
     except Exception as exc:
         import traceback
+
         print(f"    [WARN] h={h} failed: {exc}")
         traceback.print_exc()
         # Still append NaN rows so downstream merge stays aligned
         dte_h = dte_h.reset_index(drop=True)
-        part = pd.DataFrame({
-            "domain":    DOMAIN,
-            "model":     "xtft",
-            "horizon":   h,
-            "series_id": dte_h["series_id"].values,
-            "t":         dte_h["t"].values,
-            "y":         dte_h["y_future"].values,
-            "q10":       np.nan,
-            "q50":       np.nan,
-            "q90":       np.nan,
-        })
+        part = pd.DataFrame(
+            {
+                "domain": DOMAIN,
+                "model": "xtft",
+                "horizon": h,
+                "series_id": dte_h["series_id"].values,
+                "t": dte_h["t"].values,
+                "y": dte_h["y_future"].values,
+                "q10": np.nan,
+                "q50": np.nan,
+                "q90": np.nan,
+            }
+        )
         all_rows.append(part)
 
 # ── save ──────────────────────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ from kdiagram.metrics import (
 # Shared fixtures
 # ---------------------------------------------------------------------------
 
-N = 21          # odd → clean centre index at 10
+N = 21  # odd → clean centre index at 10
 LO = np.zeros(N)
 UP = np.ones(N)  # width = 1 everywhere
 BASE = np.full(N, 0.5, dtype=float)  # inside the interval everywhere
@@ -35,6 +35,7 @@ def _bounds(lo, up):
 # Paper property 1 – Non-negativity (eq. CAS_nonnegative)
 # ---------------------------------------------------------------------------
 
+
 class TestNonNegativity:
     @pytest.mark.parametrize("seed", [0, 1, 42])
     def test_random_data_nonneg(self, seed):
@@ -46,7 +47,9 @@ class TestNonNegativity:
         s = cluster_aware_severity_score(y_noisy, _bounds(lo, up))
         assert s >= 0.0
 
-    @pytest.mark.parametrize("kernel", ["box", "triangular", "epan", "gaussian"])
+    @pytest.mark.parametrize(
+        "kernel", ["box", "triangular", "epan", "gaussian"]
+    )
     def test_all_kernels_nonneg(self, kernel):
         y = BASE.copy()
         y[5] = 1.8
@@ -60,14 +63,15 @@ class TestNonNegativity:
 # Paper property 2 – CAS = 0 when no violations
 # ---------------------------------------------------------------------------
 
+
 class TestZeroNoViolations:
     def test_all_inside(self):
         assert cluster_aware_severity_score(BASE, _bounds(LO, UP)) == 0.0
 
     def test_on_boundary_not_violation(self):
         y = BASE.copy()
-        y[3] = 0.0   # exactly on lower bound → not a violation (strict <)
-        y[7] = 1.0   # exactly on upper bound → not a violation (strict >)
+        y[3] = 0.0  # exactly on lower bound → not a violation (strict <)
+        y[7] = 1.0  # exactly on upper bound → not a violation (strict >)
         assert cluster_aware_severity_score(y, _bounds(LO, UP)) == 0.0
 
     def test_clustered_anomaly_severity_zero(self):
@@ -79,6 +83,7 @@ class TestZeroNoViolations:
 # Paper eq. (6): sum over r≠t; isolated ⟹ δ_t = 0 ⟹ c_t = e_t
 # Paper eq. (CAS_A): CAS_A = k·e / n  (k=1 violation, e=exceedance)
 # ---------------------------------------------------------------------------
+
 
 class TestSelfExclusion:
     def test_density_zero_for_isolated_violation(self):
@@ -115,8 +120,8 @@ class TestSelfExclusion:
         n = 61
         lo, up = np.zeros(n), np.ones(n)
         y = np.full(n, 0.5)
-        y[5] = 1.7    # over by 0.7, e=0.7
-        y[55] = 1.4   # over by 0.4, e=0.4  (distance=50 >> window=21)
+        y[5] = 1.7  # over by 0.7, e=0.7
+        y[55] = 1.4  # over by 0.4, e=0.4  (distance=50 >> window=21)
         expected = (0.7 + 0.4) / n
         s = cluster_aware_severity_score(y, _bounds(lo, up))
         assert s == pytest.approx(expected, abs=1e-12)
@@ -127,8 +132,11 @@ class TestSelfExclusion:
 # Same violations; clustered ⟹ CAS_B > CAS_A (eq. CAS_cluster_sensitive)
 # ---------------------------------------------------------------------------
 
+
 class TestRearrangementTheorem:
-    @pytest.mark.parametrize("kernel", ["box", "triangular", "epan", "gaussian"])
+    @pytest.mark.parametrize(
+        "kernel", ["box", "triangular", "epan", "gaussian"]
+    )
     def test_clustered_beats_isolated_all_kernels(self, kernel):
         n = 50
         lo, up = np.zeros(n), np.ones(n)
@@ -170,8 +178,12 @@ class TestRearrangementTheorem:
             np.sum(np.maximum(y_cl - up, 0) + np.maximum(lo - y_cl, 0)),
         )
 
-        cas_iso = cluster_aware_severity_score(y_iso, _bounds(lo, up), window_size=5)
-        cas_cl = cluster_aware_severity_score(y_cl, _bounds(lo, up), window_size=5)
+        cas_iso = cluster_aware_severity_score(
+            y_iso, _bounds(lo, up), window_size=5
+        )
+        cas_cl = cluster_aware_severity_score(
+            y_cl, _bounds(lo, up), window_size=5
+        )
         assert cas_cl > cas_iso
 
 
@@ -179,6 +191,7 @@ class TestRearrangementTheorem:
 # Paper property 5 – Scale invariance (eq. scale_invariance)
 # Affine transform y* = a·y+b, L* = a·L+b, U* = a·U+b  → CAS unchanged
 # ---------------------------------------------------------------------------
+
 
 class TestScaleInvariance:
     @pytest.mark.parametrize("a,b", [(3.0, 5.0), (0.1, -2.0), (100.0, 0.0)])
@@ -198,22 +211,28 @@ class TestScaleInvariance:
 # (eq. cas_expanded, first component only)
 # ---------------------------------------------------------------------------
 
+
 class TestLambdaZero:
     def test_lambda_zero_equals_mean_exceedance(self):
         y = BASE.copy()
-        y[8:11] = 1.5   # 3 over-violations, e=0.5 each
+        y[8:11] = 1.5  # 3 over-violations, e=0.5 each
         lo, up = LO, UP
 
         # With λ=0 the cluster term vanishes → CAS = (1/n)Σ v_t·e_t
         cas_l0 = cluster_aware_severity_score(y, _bounds(lo, up), lambda_=0.0)
 
-        exc = np.sum(np.maximum(y - up, 0) + np.maximum(lo - y, 0))
+        np.sum(np.maximum(y - up, 0) + np.maximum(lo - y, 0))
         width = up - lo
-        expected = float(np.mean(
-            np.where((y < lo) | (y > up),
-                     (np.maximum(y - up, 0) + np.maximum(lo - y, 0)) / (width + 1e-12),
-                     0.0)
-        ))
+        expected = float(
+            np.mean(
+                np.where(
+                    (y < lo) | (y > up),
+                    (np.maximum(y - up, 0) + np.maximum(lo - y, 0))
+                    / (width + 1e-12),
+                    0.0,
+                )
+            )
+        )
         assert cas_l0 == pytest.approx(expected, abs=1e-12)
 
     def test_lambda_positive_increases_score_when_clustered(self):
@@ -229,6 +248,7 @@ class TestLambdaZero:
 # (eqs. violation_indicator, relative_exceedance, local_density, pointwise_cas)
 # ---------------------------------------------------------------------------
 
+
 class TestPointwiseComponents:
     def _get_details(self, y, lo, up, **kw):
         _, det = cluster_aware_severity_score(
@@ -242,7 +262,7 @@ class TestPointwiseComponents:
         lo = np.zeros(5)
         up = np.ones(5)
         det = self._get_details(y, lo, up, window_size=3)
-        assert det.loc[2, "is_anomaly"] is True or det.loc[2, "is_anomaly"] == True
+        assert det.loc[2, "is_anomaly"] is True or det.loc[2, "is_anomaly"]
         assert det.loc[2, "type"] == "over"
         assert det.loc[2, "magnitude"] == pytest.approx(0.8, abs=1e-12)
 
@@ -266,7 +286,7 @@ class TestPointwiseComponents:
 
     def test_isolated_violation_density_zero(self):
         y = BASE.copy()
-        y[10] = 1.5   # isolated: all neighbours inside interval
+        y[10] = 1.5  # isolated: all neighbours inside interval
         det = self._get_details(y, LO, UP)
         assert det.loc[10, "local_density"] == pytest.approx(0.0, abs=1e-12)
 
@@ -284,12 +304,16 @@ class TestPointwiseComponents:
         y = BASE.copy()
         y[9] = 1.5
         y[10] = 1.5
-        det = self._get_details(y, LO, UP, lambda_=1.0, gamma=1.0, window_size=21)
+        det = self._get_details(
+            y, LO, UP, lambda_=1.0, gamma=1.0, window_size=21
+        )
         for i in [9, 10]:
             m = det.loc[i, "magnitude"]
             d = det.loc[i, "local_density"]
             expected_sev = m * (1.0 + 1.0 * d**1.0)
-            assert det.loc[i, "severity"] == pytest.approx(expected_sev, abs=1e-12)
+            assert det.loc[i, "severity"] == pytest.approx(
+                expected_sev, abs=1e-12
+            )
 
     def test_score_equals_mean_severity(self):
         y = BASE.copy()
@@ -304,20 +328,29 @@ class TestPointwiseComponents:
 # Relative exceedance: wider interval → smaller e for same absolute overshoot
 # ---------------------------------------------------------------------------
 
+
 class TestRelativeExceedance:
     def test_wide_interval_lower_cas(self):
         y = np.array([2.0])
         # Narrow: lo=0, up=1; over by 1, width=1, e=1
-        s_narrow = cluster_aware_severity_score(y, _bounds(np.array([0.0]), np.array([1.0])))
+        s_narrow = cluster_aware_severity_score(
+            y, _bounds(np.array([0.0]), np.array([1.0]))
+        )
         # Wide: lo=0, up=3; inside – no violation
-        s_wide = cluster_aware_severity_score(y, _bounds(np.array([0.0]), np.array([3.0])))
+        s_wide = cluster_aware_severity_score(
+            y, _bounds(np.array([0.0]), np.array([3.0]))
+        )
         assert s_narrow > s_wide
 
     def test_normalisation_band_vs_mad(self):
         y = BASE.copy()
         y[10] = 1.5
-        s_band = cluster_aware_severity_score(y, _bounds(LO, UP), normalize="band")
-        s_mad = cluster_aware_severity_score(y, _bounds(LO, UP), normalize="mad")
+        s_band = cluster_aware_severity_score(
+            y, _bounds(LO, UP), normalize="band"
+        )
+        s_mad = cluster_aware_severity_score(
+            y, _bounds(LO, UP), normalize="mad"
+        )
         # Both must be non-negative; they may differ in value
         assert s_band >= 0.0
         assert s_mad >= 0.0
@@ -327,13 +360,16 @@ class TestRelativeExceedance:
 # Triangular kernel: default per paper §4.4 (K(u)=(1-u)_+)
 # ---------------------------------------------------------------------------
 
+
 class TestTriangularDefault:
     def test_default_kernel_matches_explicit_triangular(self):
         y = BASE.copy()
         y[9] = 1.5
         y[10] = 1.5
         s_default = cluster_aware_severity_score(y, _bounds(LO, UP))
-        s_tri = cluster_aware_severity_score(y, _bounds(LO, UP), kernel="triangular")
+        s_tri = cluster_aware_severity_score(
+            y, _bounds(LO, UP), kernel="triangular"
+        )
         assert s_default == pytest.approx(s_tri, abs=1e-15)
 
     def test_clustered_anomaly_severity_default_is_triangular(self):
@@ -341,13 +377,16 @@ class TestTriangularDefault:
         y[9] = 1.5
         y[10] = 1.5
         s_helper = clustered_anomaly_severity(y, LO, UP)
-        s_api = cluster_aware_severity_score(y, _bounds(LO, UP), kernel="triangular")
+        s_api = cluster_aware_severity_score(
+            y, _bounds(LO, UP), kernel="triangular"
+        )
         assert s_helper == pytest.approx(s_api, abs=1e-12)
 
 
 # ---------------------------------------------------------------------------
 # API: both public functions, all calling conventions
 # ---------------------------------------------------------------------------
+
 
 class TestAPIConventions:
     def test_clustered_anomaly_severity_array_mode(self):
@@ -366,9 +405,19 @@ class TestAPIConventions:
 
     def test_dataframe_return_details_columns(self):
         df = pd.DataFrame({"y": BASE, "lo": LO, "up": UP})
-        s, det = clustered_anomaly_severity("y", "lo", "up", data=df, return_details=True)
-        required = {"y_true", "y_qlow", "y_qup", "is_anomaly", "type",
-                    "magnitude", "local_density", "severity"}
+        s, det = clustered_anomaly_severity(
+            "y", "lo", "up", data=df, return_details=True
+        )
+        required = {
+            "y_true",
+            "y_qlow",
+            "y_qup",
+            "is_anomaly",
+            "type",
+            "magnitude",
+            "local_density",
+            "severity",
+        }
         assert required.issubset(set(det.columns))
         assert len(det) == N
 
@@ -386,8 +435,9 @@ class TestAPIConventions:
         y[10, 1] = 1.5
         lo = np.zeros((n, 2))
         up = np.ones((n, 2))
-        y_pred = np.stack([_bounds(lo[:, 0], up[:, 0]),
-                           _bounds(lo[:, 1], up[:, 1])], axis=1)
+        y_pred = np.stack(
+            [_bounds(lo[:, 0], up[:, 0]), _bounds(lo[:, 1], up[:, 1])], axis=1
+        )
         s = cluster_aware_severity_score(y, y_pred)
         assert isinstance(s, float) and s > 0.0
 
@@ -403,7 +453,9 @@ class TestAPIConventions:
     def test_multioutput_raw_values(self):
         n = 20
         y = np.c_[np.full(n, 0.5), np.full(n, 0.5)]
-        y_pred = np.c_[np.zeros(n), np.ones(n), np.zeros(n) - 1, np.ones(n) + 1]
+        y_pred = np.c_[
+            np.zeros(n), np.ones(n), np.zeros(n) - 1, np.ones(n) + 1
+        ]
         s = cluster_aware_severity_score(y, y_pred, multioutput="raw_values")
         assert s.shape == (2,)
         assert (s >= 0).all()
@@ -412,6 +464,7 @@ class TestAPIConventions:
 # ---------------------------------------------------------------------------
 # NaN handling (nan_policy)
 # ---------------------------------------------------------------------------
+
 
 class TestNaNPolicy:
     def _data_with_nan(self):
@@ -446,6 +499,7 @@ class TestNaNPolicy:
 # sample_weight and sort_by
 # ---------------------------------------------------------------------------
 
+
 class TestWeightAndSort:
     def test_high_weight_on_violation_inflates_score(self):
         y = BASE.copy()
@@ -454,9 +508,13 @@ class TestWeightAndSort:
         lo, up = LO, UP
         w_uniform = np.ones(N)
         w_heavy = np.ones(N)
-        w_heavy[2] = 1000.0   # heavily weight the first violation
-        s_u = cluster_aware_severity_score(y, _bounds(lo, up), sample_weight=w_uniform)
-        s_h = cluster_aware_severity_score(y, _bounds(lo, up), sample_weight=w_heavy)
+        w_heavy[2] = 1000.0  # heavily weight the first violation
+        s_u = cluster_aware_severity_score(
+            y, _bounds(lo, up), sample_weight=w_uniform
+        )
+        s_h = cluster_aware_severity_score(
+            y, _bounds(lo, up), sample_weight=w_heavy
+        )
         assert s_h > s_u
 
     def test_sort_by_reorders_before_density(self):
@@ -489,6 +547,7 @@ class TestWeightAndSort:
 # Error handling
 # ---------------------------------------------------------------------------
 
+
 class TestErrorHandling:
     def test_bad_kernel_raises(self):
         with pytest.raises(ValueError):
@@ -502,7 +561,7 @@ class TestErrorHandling:
 
     def test_wrong_y_pred_shape_raises(self):
         with pytest.raises(ValueError):
-            cluster_aware_severity_score(BASE, BASE)   # 1-D y_pred
+            cluster_aware_severity_score(BASE, BASE)  # 1-D y_pred
 
     def test_dataframe_mode_type_error(self):
         with pytest.raises(TypeError):

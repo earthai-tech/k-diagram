@@ -42,11 +42,12 @@ import pandas as pd
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
-import os as _os
+import os  # noqa: E402
+
 _REPO_ROOT = _HERE.parents[2]
 _REAL_DATA = _REPO_ROOT / "data" / "cas"
 if _REAL_DATA.exists():
-    _os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_REAL_DATA))
+    os.environ.setdefault("KDIAGRAM_DATA_DIR", str(_REAL_DATA))
 
 try:
     from results_config import (
@@ -70,9 +71,19 @@ except ModuleNotFoundError:
     OUTDIR.mkdir(parents=True, exist_ok=True)
     PRED_WIND = DATA_ROOT / "modeling_results_ok" / "predictions_wind.csv"
     PRED_HYDRO = DATA_ROOT / "modeling_results_ok" / "predictions_hydro.csv"
-    PRED_SUBS = DATA_ROOT / "modeling_results_ok" / "predictions_subsidence.csv"
-    DOMAIN_COLOR = {"hydro": "#0072B2", "wind": "#E69F00", "subsidence": "#009E73"}
-    DOMAIN_LABEL = {"hydro": "Hydro", "wind": "Wind", "subsidence": "Subsidence"}
+    PRED_SUBS = (
+        DATA_ROOT / "modeling_results_ok" / "predictions_subsidence.csv"
+    )
+    DOMAIN_COLOR = {
+        "hydro": "#0072B2",
+        "wind": "#E69F00",
+        "subsidence": "#009E73",
+    }
+    DOMAIN_LABEL = {
+        "hydro": "Hydro",
+        "wind": "Wind",
+        "subsidence": "Subsidence",
+    }
     DOMAIN_ORDER = ["hydro", "wind", "subsidence"]
     MODEL_ORDER = ["qar", "qgbm", "xtft"]
     MODEL_LABEL = {"qar": "QAR", "qgbm": "QGBM", "xtft": "XTFT"}
@@ -84,27 +95,29 @@ except ModuleNotFoundError:
         q90c = np.maximum(q90, q50c)
         return q10, q50c, q90c
 
+
 PRED_FILES = {
-    "hydro":       PRED_HYDRO,
-    "wind":        PRED_WIND,
-    "subsidence":  PRED_SUBS,
+    "hydro": PRED_HYDRO,
+    "wind": PRED_WIND,
+    "subsidence": PRED_SUBS,
 }
 
 # ---------------------------------------------------------------------------
 # Risk-index parameters
 # ---------------------------------------------------------------------------
-H_PAST = 5           # causal window width (past h steps)
+H_PAST = 5  # causal window width (past h steps)
 LAMBDA = 1.0
 GAMMA = 1.0
-L_MIN = 3            # minimum run length to be a "long episode"
-L_NEAR = 2           # alert counts as "near onset" if within first L_NEAR steps
-N_THETA = 80         # number of threshold values to sweep
-TARGET_FBR = 0.10    # target false-burst rate for the summary annotation
+L_MIN = 3  # minimum run length to be a "long episode"
+L_NEAR = 2  # alert counts as "near onset" if within first L_NEAR steps
+N_THETA = 80  # number of threshold values to sweep
+TARGET_FBR = 0.10  # target false-burst rate for the summary annotation
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def causal_density(v: np.ndarray, h: int) -> np.ndarray:
     """
@@ -116,8 +129,8 @@ def causal_density(v: np.ndarray, h: int) -> np.ndarray:
     n = len(v)
     d = np.zeros(n, dtype=float)
     # Build triangular weights for lags 1..h
-    lags = np.arange(1, h + 1)          # 1, 2, …, h
-    weights = np.maximum(0.0, 1.0 - lags / h)   # K(1/h), K(2/h), …, K(1)
+    lags = np.arange(1, h + 1)  # 1, 2, …, h
+    weights = np.maximum(0.0, 1.0 - lags / h)  # K(1/h), K(2/h), …, K(1)
     weight_sum = weights.sum()
     if weight_sum == 0:
         return d
@@ -126,15 +139,16 @@ def causal_density(v: np.ndarray, h: int) -> np.ndarray:
     for t in range(1, n):
         # Look back up to h steps
         max_lag = min(t, h)
-        past_v = v[t - max_lag: t][::-1]   # lag 1 first
+        past_v = v[t - max_lag : t][::-1]  # lag 1 first
         w = weights[:max_lag]
         w = w / w.sum() if w.sum() > 0 else w
         d[t] = np.dot(w, past_v)
     return d
 
 
-def geometry_pressure(q10: np.ndarray, q50: np.ndarray, q90: np.ndarray,
-                      eps: float = 1e-9) -> np.ndarray:
+def geometry_pressure(
+    q10: np.ndarray, q50: np.ndarray, q90: np.ndarray, eps: float = 1e-9
+) -> np.ndarray:
     """
     ψ_t = 2·(max(q50−q10, q90−q50) / (q90−q10) − 0.5)
     Ranges from 0 (perfectly symmetric) to 1 (median at one edge).
@@ -160,7 +174,7 @@ def compute_risk_index(df_sub: pd.DataFrame):
     psi = geometry_pressure(q10, q50, q90)
 
     # R = 0 when no past violations AND symmetric forecast
-    R = (1.0 + LAMBDA * d_past ** GAMMA) * (1.0 + psi) - 1.0
+    R = (1.0 + LAMBDA * d_past**GAMMA) * (1.0 + psi) - 1.0
     return R, v
 
 
@@ -203,9 +217,13 @@ def _alert_bursts(alert_times: np.ndarray) -> list[tuple[int, int]]:
     return bursts
 
 
-def detection_curve(R: np.ndarray, v: np.ndarray,
-                    episodes: list[tuple[int, int]],
-                    l_near: int, n_theta: int):
+def detection_curve(
+    R: np.ndarray,
+    v: np.ndarray,
+    episodes: list[tuple[int, int]],
+    l_near: int,
+    n_theta: int,
+):
     """
     Sweep θ and return (fbr_arr, recall_arr) arrays.
 
@@ -228,9 +246,7 @@ def detection_curve(R: np.ndarray, v: np.ndarray,
     rec_arr = []
 
     # Build episode onset sets
-    onset_sets = [
-        set(range(s, min(s + l_near, e + 1))) for s, e in episodes
-    ]
+    onset_sets = [set(range(s, min(s + l_near, e + 1))) for s, e in episodes]
     all_onset = set().union(*onset_sets) if onset_sets else set()
 
     for theta in thresholds:
@@ -246,7 +262,8 @@ def detection_curve(R: np.ndarray, v: np.ndarray,
 
         # True burst: any alert in burst overlaps an episode onset window
         true_bursts = sum(
-            1 for bs, be in bursts
+            1
+            for bs, be in bursts
             if any(a in all_onset for a in range(bs, be + 1))
         )
         false_bursts = n_bursts - true_bursts
@@ -254,9 +271,7 @@ def detection_curve(R: np.ndarray, v: np.ndarray,
 
         # Detected episodes
         alert_set = set(alert_times.tolist())
-        detected = sum(
-            1 for onset in onset_sets if onset & alert_set
-        )
+        detected = sum(1 for onset in onset_sets if onset & alert_set)
         recall = detected / n_ep if n_ep > 0 else 0.0
 
         fbr_arr.append(fbr)
@@ -290,7 +305,7 @@ def read_at_target_fbr(fbr_arr, rec_arr, target=TARGET_FBR):
 # ---------------------------------------------------------------------------
 print("Computing risk-index curves …")
 
-curves = {}   # {(domain, model): (fbr_arr, rec_arr)}
+curves = {}  # {(domain, model): (fbr_arr, rec_arr)}
 summary_rows = []
 
 for domain in DOMAIN_ORDER:
@@ -300,17 +315,25 @@ for domain in DOMAIN_ORDER:
     for model in MODEL_ORDER:
         sub = df_all[df_all["model"] == model]
         if sub.empty or sub["q10"].isna().all():
-            curves[(domain, model)] = (np.array([0.0, 1.0]), np.array([0.0, 0.0]))
-            summary_rows.append(dict(
-                domain=domain, model=model,
-                achieved_fbr=np.nan, burst_recall=np.nan, n_episodes=0
-            ))
+            curves[(domain, model)] = (
+                np.array([0.0, 1.0]),
+                np.array([0.0, 0.0]),
+            )
+            summary_rows.append(
+                dict(
+                    domain=domain,
+                    model=model,
+                    achieved_fbr=np.nan,
+                    burst_recall=np.nan,
+                    n_episodes=0,
+                )
+            )
             continue
 
         # Concatenate all horizons into one time stream per domain
         all_R, all_v, all_ep = [], [], []
         offset = 0
-        for horizon, grp in sub.groupby("horizon"):
+        for _horizon, grp in sub.groupby("horizon"):
             grp = grp.reset_index(drop=True)
             R_h, v_h = compute_risk_index(grp)
             ep_h = find_episodes(v_h, L_MIN)
@@ -324,15 +347,21 @@ for domain in DOMAIN_ORDER:
         R_full = np.concatenate(all_R)
         v_full = np.concatenate(all_v)
 
-        fbr_arr, rec_arr = detection_curve(R_full, v_full, all_ep, L_NEAR, N_THETA)
+        fbr_arr, rec_arr = detection_curve(
+            R_full, v_full, all_ep, L_NEAR, N_THETA
+        )
         curves[(domain, model)] = (fbr_arr, rec_arr)
 
         ach_fbr, ach_rec = read_at_target_fbr(fbr_arr, rec_arr, TARGET_FBR)
-        summary_rows.append(dict(
-            domain=domain, model=model,
-            achieved_fbr=ach_fbr, burst_recall=ach_rec,
-            n_episodes=len(all_ep)
-        ))
+        summary_rows.append(
+            dict(
+                domain=domain,
+                model=model,
+                achieved_fbr=ach_fbr,
+                burst_recall=ach_rec,
+                n_episodes=len(all_ep),
+            )
+        )
 
         print(
             f"  {domain}/{model}: "
@@ -355,7 +384,9 @@ for ax_idx, domain in enumerate(DOMAIN_ORDER):
     col = DOMAIN_COLOR[domain]
 
     for model in MODEL_ORDER:
-        fbr_arr, rec_arr = curves.get((domain, model), (np.array([]), np.array([])))
+        fbr_arr, rec_arr = curves.get(
+            (domain, model), (np.array([]), np.array([]))
+        )
         if len(fbr_arr) == 0:
             continue
 
@@ -369,7 +400,8 @@ for ax_idx, domain in enumerate(DOMAIN_ORDER):
         zord = 4 if model == "qar" else 3
 
         ax.plot(
-            fbr_s, rec_s,
+            fbr_s,
+            rec_s,
             ls=MODEL_STYLE.get(model, "-"),
             lw=lw,
             marker=MODEL_MARK.get(model, "o"),
@@ -385,22 +417,32 @@ for ax_idx, domain in enumerate(DOMAIN_ORDER):
         ach_fbr, ach_rec = read_at_target_fbr(fbr_arr, rec_arr, TARGET_FBR)
         if np.isfinite(ach_fbr) and np.isfinite(ach_rec):
             ax.scatter(
-                ach_fbr, ach_rec,
-                s=70, color=col,
+                ach_fbr,
+                ach_rec,
+                s=70,
+                color=col,
                 marker=MODEL_MARK.get(model, "o"),
-                edgecolors="white", lw=1.2, zorder=6
+                edgecolors="white",
+                lw=1.2,
+                zorder=6,
             )
 
     # Reference FBR line
     ax.axvline(
-        TARGET_FBR, color="0.4", lw=1.0, ls=":", label=f"Target FBR={TARGET_FBR}"
+        TARGET_FBR,
+        color="0.4",
+        lw=1.0,
+        ls=":",
+        label=f"Target FBR={TARGET_FBR}",
     )
 
     # Diagonal (random alert)
     ax.plot([0, 1], [0, 1], color="0.80", lw=0.8, ls="--", label="Random")
 
     # Decorations
-    ax.set_title(DOMAIN_LABEL[domain], fontweight="bold", color=col, fontsize=12)
+    ax.set_title(
+        DOMAIN_LABEL[domain], fontweight="bold", color=col, fontsize=12
+    )
     ax.set_xlabel("False-burst rate (FBR)")
     if ax_idx == 0:
         ax.set_ylabel("Burst recall")
@@ -422,7 +464,9 @@ fig.suptitle(
     rf"(causal window $h={H_PAST}$, $\lambda={LAMBDA}$, $\gamma={GAMMA}$; "
     rf"episode $\geq {L_MIN}$ consecutive violations; "
     rf"detection within first {L_NEAR} steps of onset)",
-    y=1.05, fontsize=12, fontweight="bold"
+    y=1.05,
+    fontsize=12,
+    fontweight="bold",
 )
 
 # ---------------------------------------------------------------------------

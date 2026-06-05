@@ -44,8 +44,8 @@ from pathlib import Path
 from matplotlib.figure import Figure
 
 # ── repo-aware paths ──────────────────────────────────────────────────────────
-_HERE   = Path(__file__).resolve().parent
-_REPO   = _HERE.parents[2]
+_HERE = Path(__file__).resolve().parent
+_REPO = _HERE.parents[2]
 _OUTDIR = _REPO / "data" / "cas" / "outputs"
 _VECTORS = _REPO / "examples" / "figures" / "vectors"
 
@@ -102,15 +102,17 @@ FORMAT_KWARGS: dict[str, dict] = {
     "eps": {"dpi": 300},
     "pdf": {},
     "png": {"dpi": 300},
-    "ps":  {"dpi": 300},
+    "ps": {"dpi": 300},
 }
 
 # ── matplotlib hook ───────────────────────────────────────────────────────────
-_orig_savefig       = Figure.savefig
+_orig_savefig = Figure.savefig
 _active_extra_fmts: list[str] = []
 
 
-def _patched_savefig(self: Figure, filename: object, **kwargs: object) -> None:
+def _patched_savefig(
+    self: Figure, filename: object, **kwargs: object
+) -> None:
     """Drop-in replacement for Figure.savefig that also writes extra formats."""
     _orig_savefig(self, filename, **kwargs)  # original save
 
@@ -131,7 +133,9 @@ def _patched_savefig(self: Figure, filename: object, **kwargs: object) -> None:
             _orig_savefig(self, extra_path, format=fmt, **kw)
             print(f"    [{fmt.upper():>3}] {extra_path.name}")
         except Exception as exc:
-            print(f"    [WARN] {fmt.upper()} failed for {extra_path.name}: {exc}")
+            print(
+                f"    [WARN] {fmt.upper()} failed for {extra_path.name}: {exc}"
+            )
 
 
 def _install_hook(extra_fmts: list[str]) -> None:
@@ -146,6 +150,7 @@ def _uninstall_hook() -> None:
 
 # ── per-script runner ─────────────────────────────────────────────────────────
 
+
 def run_figure_script(script: Path, extra_fmts: list[str]) -> bool:
     """Run one figure script with the multi-format hook active.  Returns True on success."""
     print(f"\n{'-' * 62}")
@@ -156,7 +161,7 @@ def run_figure_script(script: Path, extra_fmts: list[str]) -> bool:
         runpy.run_path(str(script), run_name="__main__")
         return True
     except SystemExit:
-        return True   # some scripts call sys.exit(0)
+        return True  # some scripts call sys.exit(0)
     except Exception as exc:
         print(f"  [ERROR] {script.name} raised: {exc}")
         return False
@@ -165,6 +170,7 @@ def run_figure_script(script: Path, extra_fmts: list[str]) -> bool:
 
 
 # ── copy to vectors/ ──────────────────────────────────────────────────────────
+
 
 def copy_to_vectors(
     registry: list[tuple[str, list[tuple[str, str]]]],
@@ -195,6 +201,7 @@ def copy_to_vectors(
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
@@ -230,6 +237,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
+
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
@@ -281,7 +289,9 @@ def main(argv: list[str] | None = None) -> None:
     if not args.no_copy and vector_fmts:
         copy_to_vectors(registry, vector_fmts, _VECTORS, _OUTDIR)
     elif not vector_fmts:
-        print("\n[INFO] No vector formats in --formats; skipping copy to vectors/.")
+        print(
+            "\n[INFO] No vector formats in --formats; skipping copy to vectors/."
+        )
 
     print("\n[Done] export_figures_multi_format.py complete.")
 
