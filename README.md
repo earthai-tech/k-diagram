@@ -11,7 +11,13 @@
         <img alt="Docs Status" src="https://img.shields.io/readthedocs/k-diagram?style=flat-square">
     </a>
     <a href="https://github.com/earthai-tech/k-diagram/blob/main/LICENSE">
-        <img alt="License" src="https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&color=purple">
+        <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-purple?style=flat-square&logo=apache">
+    </a>
+    <a href="https://pypi.org/project/k-diagram/">
+        <img alt="PyPI Version" src="https://img.shields.io/pypi/v/k-diagram?style=flat-square&color=blue">
+    </a>
+    <a href="https://pypi.org/project/k-diagram/">
+        <img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/k-diagram?style=flat-square">
     </a>
     <a href="https://github.com/psf/black">
         <img alt="Black" src="https://img.shields.io/badge/code%20style-Black-000000.svg?style=flat-square">
@@ -245,7 +251,7 @@ file for details.
 [link-ci]: https://github.com/earthai-tech/k-diagram/actions/workflows/python-package-conda.yml
 [badge-docs]: https://readthedocs.org/projects/k-diagram/badge/?version=latest&style=flat-square
 [link-docs]: https://k-diagram.readthedocs.io/en/latest/?badge=latest
-[badge-license]: https://img.shields.io/github/license/earthai-tech/k-diagram?style=flat-square&logo=apache&color=purple
+[badge-license]: https://img.shields.io/badge/license-Apache%202.0-purple?style=flat-square&logo=apache
 [badge-black]: https://img.shields.io/badge/code%20style-Black-000000.svg?style=flat-square
 [link-black]: https://github.com/psf/black
 [badge-contrib]: https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square
