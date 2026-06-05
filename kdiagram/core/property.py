@@ -123,7 +123,10 @@ class PandasDataHandlers:
             bound methods that write ``obj`` to the target
             format.
         """
-        return {
+        # DataFrame.to_gbq was removed in pandas 2.2; guard so the dict
+        # can be built on any pandas version and GBQ callers can still
+        # mock the attribute in tests (monkeypatch raises=False).
+        writers: dict = {
             ".csv": obj.to_csv,
             ".hdf": obj.to_hdf,
             ".sql": obj.to_sql,
@@ -134,7 +137,6 @@ class PandasDataHandlers:
             ".feather": obj.to_feather,
             ".tex": obj.to_latex,
             ".stata": obj.to_stata,
-            ".gbq": obj.to_gbq,
             ".rec": obj.to_records,
             ".str": obj.to_string,
             ".clip": obj.to_clipboard,
@@ -142,3 +144,6 @@ class PandasDataHandlers:
             ".parq": obj.to_parquet,
             ".pkl": obj.to_pickle,
         }
+        if hasattr(obj, "to_gbq"):
+            writers[".gbq"] = obj.to_gbq
+        return writers
