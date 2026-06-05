@@ -223,3 +223,6 @@ temp_*.pdf
 
 # Claude Code local memory (not part of the project)
 .claude/
+
+# Generated figure outputs under examples/cas/data/
+examples/cas/data/
