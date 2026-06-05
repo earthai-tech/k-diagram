@@ -27,6 +27,7 @@ def check_array(arr, **kwargs):
         kwargs["force_all_finite"] = kwargs.pop("ensure_all_finite")
     return _sklearn_check_array(arr, **kwargs)
 
+
 __all__ = ["clustered_anomaly_severity", "cluster_aware_severity_score"]
 
 
